@@ -2031,6 +2031,19 @@
   .ct-empty{color:var(--stone); font-size:0.88rem; margin:8px 0 0;}
   @media print{ .cal-btn{display:none !important;} }
   @media screen and (prefers-color-scheme: dark){ .ct-gnew{background:#3A8558;} .ct-gpick label:has(input:checked){background:#1E3528;} }
+  .time-adj-btn{display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:7px 14px; border:none; border-radius:999px; background:rgba(255,255,255,0.16); color:inherit; font-family:inherit; font-weight:700; font-size:0.84rem; cursor:pointer; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.45);}
+  .time-adj-btn.on{background:#F0CF86; color:#17352A; box-shadow:none;}
+  html.ec-guest .time-adj-btn{display:none;}
+  .ta-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--ring-line); text-align:left;}
+  .ec-dialog-msg + .ta-row{border-top:none;}
+  .ta-lab b{display:block; font-size:0.95rem;}
+  .ta-lab span{display:block; font-size:0.78rem; color:var(--stone); margin-top:2px; line-height:1.35;}
+  .ta-step{flex:none; display:flex; align-items:center; gap:6px;}
+  .ta-step button{width:42px; height:42px; border:none; border-radius:50%; background:var(--sage-light); color:var(--forest); font-size:1.3rem; font-weight:800; cursor:pointer; font-family:inherit;}
+  .ta-step output{min-width:78px; text-align:center; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1rem;}
+  .ta-total{margin:6px 0 12px; padding:10px 12px; border-radius:12px; background:var(--sage-light); font-weight:700; font-size:0.9rem; text-align:center;}
+  @media print{ .time-adj-btn{display:none !important;} }
+  @media screen and (prefers-color-scheme: dark){ .ta-step button{background:#1E3528; color:#A7D8B4;} .ta-total{background:#1E3528;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2435,7 +2448,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.2 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.3 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -2846,6 +2859,18 @@
   var LEVEL_LABEL = {debutant:'Débutant',intermediaire:'Intermédiaire',avance:'Avancé',senior:'Senior · adapté APA'};
   var ZONE_LABEL = {full:'Corps complet',haut:'Haut du corps',bas:'Bas du corps',gainage:'Gainage'};
   var WORK_FACTOR = 1;
+  // Temps réglés à la main sur une séance : w = secondes ajoutées à l'effort du corps de séance,
+  // t = transition / récup entre deux exercices, r = récup entre deux tours
+  var SESSION_ADJ = null;
+  function adjFor(s){ return (s && s.adj) ? {w:+s.adj.w || 0, t:s.adj.t, r:s.adj.r, main:s.main || []} : null; }
+  function cleanAdj(a){
+    if(!a || typeof a !== 'object') return null;
+    var o = {}, n;
+    n = Math.round(+a.w); if(n && n >= -60 && n <= 120) o.w = n;
+    n = Math.round(+a.t); if(a.t != null && n >= 5 && n <= 300) o.t = n;
+    n = Math.round(+a.r); if(a.r != null && n >= 5 && n <= 600) o.r = n;
+    return Object.keys(o).length ? o : null;
+  }
 
   // Exercices privilégiés par sport (séance « préparation pour ton sport » et programmes).
   var SPORT_LABEL = {course:'Course et trail', velo:'Vélo', vtt:'VTT', kayak:'Canoë-kayak slalom'};
@@ -2909,6 +2934,7 @@
     stabilite:        {debutant:30, intermediaire:25, avance:20, senior:40}
   };
   function circuitRestSec(theme, level){
+    if(SESSION_ADJ && SESSION_ADJ.t) return SESSION_ADJ.t;
     var t = CIRCUIT_REST_SECONDS[theme] || CIRCUIT_REST_SECONDS.equilibre;
     return t[level] || TRANSITION_SECONDS[level] || 20;
   }
@@ -3088,6 +3114,7 @@
     secs = Math.max(12, Math.round(secs * THEME_TIME_MULT[theme]));
     // Progression d'un programme : le temps d'effort du corps de séance évolue d'une semaine à l'autre.
     if(ex.block === 'principal' && WORK_FACTOR !== 1) secs = Math.max(12, Math.round(secs * WORK_FACTOR));
+    if(SESSION_ADJ && SESSION_ADJ.w && SESSION_ADJ.main.indexOf(ex) > -1 && !(ex.breath && ex.breath.length)) secs = Math.max(10, secs + SESSION_ADJ.w);
     // Respiration guidée : uniquement des cycles complets, pour finir sur une expiration
     if(ex.breath && ex.breath.length){
       var cyc = ex.breath.reduce(function(a, ph){ return a + ph.seconds; }, 0);
@@ -3271,8 +3298,10 @@
     return ex.note || '';
   }
 
+  function roundRestSec(theme, level){ return (SESSION_ADJ && SESSION_ADJ.r) || REST_SECONDS_BY_THEME[theme][level]; }
+  function transSec(level){ return (SESSION_ADJ && SESSION_ADJ.t) || TRANSITION_SECONDS[level]; }
   function restNoteFor(level, theme, rounds){
-    var secs = REST_SECONDS_BY_THEME[theme][level];
+    var secs = roundRestSec(theme, level);
     var themeText = {
       equilibre:"Récupération standard entre chaque tour du circuit.",
       force:"Récupération longue entre chaque tour : l'objectif est la qualité de chaque effort, pas la fatigue.",
@@ -3316,7 +3345,7 @@
         }
       });
       if(t < rounds){
-        timeline.push({type:'rest', label:'Récupération entre tours', sublabel:'Tour '+t+'/'+rounds+' terminé', duration:REST_SECONDS_BY_THEME[theme][level], ex:null, blockLabel:'Corps de séance'});
+        timeline.push({type:'rest', label:'Récupération entre tours', sublabel:'Tour '+t+'/'+rounds+' terminé', duration:roundRestSec(theme, level), ex:null, blockLabel:'Corps de séance'});
       }
     }
     return timeline;
@@ -3338,14 +3367,14 @@
       if(block.key === 'principal'){
         var circuitSteps = buildCircuitTimeline(block.list, level, theme, rounds);
         timeline = timeline.concat(circuitSteps);
-        timeline.push({type:'transition', label:'Transition', sublabel:'Prépare le prochain mouvement', duration: TRANSITION_SECONDS[level], ex:null, blockLabel: block.label});
+        timeline.push({type:'transition', label:'Transition', sublabel:'Prépare le prochain mouvement', duration: transSec(level), ex:null, blockLabel: block.label});
       } else {
         var blockTheme = block.themed ? theme : 'equilibre';
         block.list.forEach(function(ex){
           var steps = buildExerciseSteps(ex, level, blockTheme);
           steps.forEach(function(st){ st.blockLabel = block.label; });
           timeline = timeline.concat(steps);
-          timeline.push({type:'transition', label:'Transition', sublabel:'Prépare le prochain mouvement', duration: TRANSITION_SECONDS[level], ex:null, blockLabel: block.label});
+          timeline.push({type:'transition', label:'Transition', sublabel:'Prépare le prochain mouvement', duration: transSec(level), ex:null, blockLabel: block.label});
         });
       }
     });
@@ -4326,7 +4355,7 @@
     var prefer = (silent && opts.prefer) ? opts.prefer : ((!silent && state.sport && SPORT_PREFER[state.sport]) ? SPORT_PREFER[state.sport] : null);
     if(!silent && uiMode === 'program'){ generateProgram(); return; }
     if(!silent) clearSharedHash();
-    WORK_FACTOR = 1;
+    WORK_FACTOR = 1; SESSION_ADJ = null;
     var msg = silent ? {textContent:''} : document.getElementById('formMsg');
     msg.textContent = '';
 
@@ -4473,7 +4502,7 @@
   }
 
   function sessionModified(session){
-    if(session.composed) return true;
+    if(session.composed || session.adj) return true;
     if(session.removed && session.removed.length) return true;
     return ['warm','cardio','main','cool'].some(function(k){ return session[k].some(function(x){ return x.coachAdded; }); });
   }
@@ -4489,6 +4518,7 @@
     lastRenderSession = session;
     lastSession = session;
     WORK_FACTOR = session.workFactor || 1;
+    SESSION_ADJ = adjFor(session);
     var html = '';
     if(session.programRef && currentProgram){
       var pr = session.programRef;
@@ -4511,6 +4541,7 @@
     html += '<div><div class="session-title">'+title+'</div>';
     html += '<div class="session-meta">'+LEVEL_LABEL[session.level]+' · '+(session.sport && SPORT_LABEL[session.sport] ? SPORT_LABEL[session.sport]+' ('+THEME_LABEL[session.theme].toLowerCase()+')' : THEME_LABEL[session.theme])+' · '+((sessionModified(session) || session.programRef) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes))+' minutes environ'+(session.rounds ? ' · '+session.rounds+' tours' : '')+(session.chair ? ' · sur chaise' : (session.noFloor ? ' · sans passage au sol' : ''))+'</div>'
       + ((session.removed && session.removed.length) ? '<div class="removed-note">'+session.removed.length+' exercice'+(session.removed.length>1?'s':'')+' retiré'+(session.removed.length>1?'s':'')+' · <button type="button" data-undo-all>Tout remettre</button></div>' : '')
+      + (session.main && session.main.length ? '<button type="button" class="time-adj-btn'+(session.adj ? ' on' : '')+'" data-time-adj>⏱ '+(session.adj ? 'Temps réglés · modifier' : 'Régler les temps')+'</button>' : '')
       + '</div>';
     html += '<div class="session-actions">';
     html += '<button class="btn-start" id="startBtn">Démarrer la séance ▶</button>';
@@ -4945,7 +4976,8 @@
       cm:((document.getElementById('shareCoachMsg') || {}).value || '').trim() || undefined,
       mm:sessionModified(session) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes),
       no:notesOf(session) || undefined,
-      ad:addedOf(session) || undefined
+      ad:addedOf(session) || undefined,
+      aj:session.adj || undefined
     };
     return b64urlEncode(JSON.stringify(payload));
   }
@@ -5052,6 +5084,7 @@
     };
     if(totalExercises(session) === 0){ showToast("Ce lien ne contient aucun exercice.", false); return false; }
     applyCoachData(session, data.no, data.ad);
+    var aj = cleanAdj(data.aj); if(aj) session.adj = aj;
     if(data.n) document.getElementById('athleteName').value = data.n;
     displaySession(session, data.t || 'Séance', false);
     return true;
@@ -5188,7 +5221,7 @@
   // au plus près de la durée choisie ; la progression fait ensuite varier le temps d'effort.
   function calibrateRounds(t){
     if(!t.main.length || !t.rounds) return;
-    var keep = WORK_FACTOR; WORK_FACTOR = 1;
+    var keep = WORK_FACTOR; WORK_FACTOR = 1; SESSION_ADJ = null;
     var best = t.rounds, bestGap = Infinity, base = t.rounds;
     for(var r = Math.max(1, base - 2); r <= base + 2; r++){
       t.rounds = r;
@@ -5211,16 +5244,17 @@
       equip: currentProgram.equip, zone: tpl.zone, noFloor: currentProgram.noFloor, chair: !!currentProgram.chair,
       workFactor: factorFor(week), programRef: {week: week, slot: slot}, title: tpl.title, composed: !!tpl.composed
     };
+    if(tpl.adj) ses.adj = tpl.adj;
     // Semaine allégée : temps d'effort réduit et un tour de moins.
     if(PHASES[phaseOf(week)].deload && ses.rounds > 2) ses.rounds = ses.rounds - 1;
     return ses;
   }
 
   function minutesWithFactor(ses){
-    var keep = WORK_FACTOR;
-    WORK_FACTOR = ses.workFactor || 1;
+    var keep = WORK_FACTOR, keepA = SESSION_ADJ;
+    WORK_FACTOR = ses.workFactor || 1; SESSION_ADJ = adjFor(ses);
     var m = sessionMinutes(ses);
-    WORK_FACTOR = keep;
+    WORK_FACTOR = keep; SESSION_ADJ = keepA;
     return m;
   }
 
@@ -5265,7 +5299,7 @@
     }
     var results = document.getElementById('results');
     results.innerHTML = html;
-    lastSession = null; lastRenderSession = null; WORK_FACTOR = 1;
+    lastSession = null; lastRenderSession = null; WORK_FACTOR = 1; SESSION_ADJ = null;
     renderCurrentProgramLink();
     if(scrollTop !== false){
       results.classList.remove('reveal'); void results.offsetWidth; results.classList.add('reveal');
@@ -5291,7 +5325,7 @@
 
   // Sauvegarde locale (le programme reste sur le téléphone)
   function serializeTpl(t){
-    return {z:t.zone, th:t.theme, r:t.rounds, t:t.title, cp:t.composed ? 1 : undefined, w:idsOf(t.warm), c:idsOf(t.cardio), m:idsOf(t.main), k:idsOf(t.cool), no:notesOf(t) || undefined, ad:addedOf(t) || undefined};
+    return {z:t.zone, th:t.theme, r:t.rounds, t:t.title, cp:t.composed ? 1 : undefined, w:idsOf(t.warm), c:idsOf(t.cardio), m:idsOf(t.main), k:idsOf(t.cool), no:notesOf(t) || undefined, ad:addedOf(t) || undefined, aj:t.adj || undefined};
   }
   function programPayload(P){
     return {v:1, kind:'p', id:P.id, o:P.obj, ti:P.title || undefined, wk:P.weeks, spw:P.spw, d:P.duration, l:P.level, e:P.equip, nf:P.noFloor?1:0, ch:P.chair?1:undefined, n:P.athlete || undefined,
@@ -5311,6 +5345,7 @@
       };
       applyCoachData(tpl, t.no, t.ad);
       if(t.cp) tpl.composed = true;
+      var aj = cleanAdj(t.aj); if(aj) tpl.adj = aj;
       return tpl;
     }); });
     return {id:d.id || ('p'+Date.now()), obj:d.o, title:d.ti || '', by:d.by || '', cm:d.cm || '', weeks:d.wk, spw:d.spw, duration:d.d, level:d.l, equip:d.e || ['poids_du_corps'], noFloor:!!d.nf, chair:!!d.ch, athlete:d.n || '', blocks:blocks, done:done || {}};
@@ -5541,7 +5576,8 @@
       sport: lastSession.sport || null,
       chair: !!lastSession.chair,
       notes: notesOf(lastSession),
-      added: addedOf(lastSession)
+      added: addedOf(lastSession),
+      adj: lastSession.adj || undefined
     });
     persistSavedList(list);
     renderSavedSessionsList();
@@ -5586,6 +5622,7 @@
       chair: !!rec.chair
     };
     applyCoachData(session, rec.notes, rec.added);
+    var aj = cleanAdj(rec.adj); if(aj) session.adj = aj;
     return session;
   }
 
@@ -5780,7 +5817,7 @@
     return {title:title || sess.title, level:sess.level, theme:sess.theme, rounds:sess.rounds, durationMinutes:sess.durationMinutes,
       warmIds:idsOf(sess.warm), cardioIds:idsOf(sess.cardio), mainIds:idsOf(sess.main), coolIds:idsOf(sess.cool),
       equip:sess.equip || null, zone:sess.zone || null, noFloor:!!sess.noFloor, sport:sess.sport || null, chair:!!sess.chair,
-      notes:notesOf(sess), added:addedOf(sess)};
+      notes:notesOf(sess), added:addedOf(sess), adj:sess.adj || undefined};
   }
   var qs = document.createElement('div');
   qs.className = 'quick-start'; qs.hidden = true;
@@ -7413,7 +7450,7 @@
     function startComposed(title, level, r){
       if(window.ecShowView) window.ecShowView('renfo');
       try{ clearSharedHash(); }catch(e){}
-      WORK_FACTOR = 1;
+      WORK_FACTOR = 1; SESSION_ADJ = null;
       var session = {warm:[], cardio:[], main:[], cool:[], level:level, theme:'equilibre', rounds:r, durationMinutes:30,
         equip:state.equip.slice(), zone:'full', noFloor:false, chair:false, sport:null, composed:true};
       displaySession(session, escapeHtml(title), false);
@@ -8097,6 +8134,70 @@
       var box = $(p[0]); if(!box) return;
       new MutationObserver(function(){ addBtn(box, p[1]); }).observe(box, {childList:true, subtree:true});
       addBtn(box, p[1]);
+    });
+  })();
+
+  // ---------- Régler les temps d'une séance générée ----------
+  (function(){
+    function lim(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function sgn(n){ return n > 0 ? '+' + n + ' s' : (n < 0 ? '−' + (-n) + ' s' : 'Standard'); }
+    function openAdj(){
+      var S = lastSession; if(!S || !S.main || !S.main.length) return;
+      var keepAdj = S.adj, lv = S.level, th = S.theme;
+      SESSION_ADJ = null;
+      var defT = circuitRestSec(th, lv), defR = REST_SECONDS_BY_THEME[th][lv];
+      var ex = S.main.filter(function(x){ return x.type === 'temps'; })[0], baseW = ex ? scaleTempsRaw(ex, lv, th).secs : 0;
+      SESSION_ADJ = adjFor(S);
+      var v = {w:(keepAdj && keepAdj.w) || 0, t:(keepAdj && keepAdj.t) || defT, r:(keepAdj && keepAdj.r) || defR};
+      var old = document.getElementById('timeAdjDialog'); if(old) old.remove();
+      var wrap = document.createElement('div'); wrap.id = 'timeAdjDialog'; wrap.className = 'ec-dialog-backdrop';
+      function row(k, lab, sub){ return '<div class="ta-row"><div class="ta-lab"><b>' + lab + '</b><span>' + sub + '</span></div>'
+        + '<div class="ta-step"><button type="button" data-k="' + k + '" data-d="-1" aria-label="Moins">−</button><output id="ta_' + k + '"></output><button type="button" data-k="' + k + '" data-d="1" aria-label="Plus">＋</button></div></div>'; }
+      wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Régler les temps">'
+        + '<p class="ec-dialog-msg">⏱ Régler les temps</p>'
+        + row('w', 'Temps d’effort', 'chaque exercice du corps de séance<span id="ta_ex"></span>')
+        + row('t', 'Transition', 'entre deux exercices')
+        + (S.rounds > 1 ? row('r', 'Récup entre tours', 'après chaque tour complet') : '')
+        + '<p class="ta-total" id="ta_total"></p>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-reset>Par défaut</button><button type="button" class="ec-dialog-ok">Appliquer</button></div></div>';
+      document.body.appendChild(wrap);
+      function cand(){ return cleanAdj({w:v.w, t:v.t !== defT ? v.t : null, r:v.r !== defR ? v.r : null}); }
+      function upd(){
+        wrap.querySelector('#ta_w').textContent = sgn(v.w);
+        wrap.querySelector('#ta_t').textContent = v.t + ' s';
+        var r = wrap.querySelector('#ta_r'); if(r) r.textContent = v.r + ' s';
+        wrap.querySelector('#ta_ex').textContent = ex ? ' (ex. ' + ex.name + ' : ' + fmtDose(Math.max(10, baseW + v.w)) + ')' : '';
+        var keep = S.adj, c = cand(); if(c) S.adj = c; else delete S.adj;
+        SESSION_ADJ = adjFor(S); var m = sessionMinutes(S);
+        if(keep) S.adj = keep; else delete S.adj; SESSION_ADJ = adjFor(S);
+        wrap.querySelector('#ta_total').textContent = 'Durée de la séance : ' + m + ' min environ';
+      }
+      wrap.addEventListener('click', function(e){
+        if(e.target === wrap){ wrap.remove(); return; }
+        var b = e.target.closest('[data-k]');
+        if(b){
+          var k = b.getAttribute('data-k'), d = +b.getAttribute('data-d');
+          if(k === 'w') v.w = lim(v.w + 5 * d, -30, 90);
+          if(k === 't') v.t = lim(v.t + 5 * d, 5, 120);
+          if(k === 'r') v.r = lim(v.r + (v.r >= 60 ? 15 : 5) * d, 10, 300);
+          upd(); return;
+        }
+        if(e.target.closest('[data-reset]')){ v = {w:0, t:defT, r:defR}; upd(); return; }
+        if(e.target.closest('.ec-dialog-ok')){
+          var c = cand();
+          if(c) S.adj = c; else delete S.adj;
+          if(S.programRef && currentProgram){ var tpl = templateFor(S.programRef.week, S.programRef.slot); if(c) tpl.adj = c; else delete tpl.adj; }
+          wrap.remove();
+          displaySession(S, S.title, true);
+          if(S.programRef && currentProgram) saveProgram();
+          showToast(c ? 'Temps mis à jour ✓ Le chrono suivra ces réglages.' : 'Temps d’origine remis.', false);
+        }
+      });
+      upd();
+    }
+    window.ecTimeAdj = openAdj;
+    document.addEventListener('click', function(e){
+      if(e.target.closest && e.target.closest('[data-time-adj]')){ e.preventDefault(); openAdj(); }
     });
   })();
 
