@@ -2521,7 +2521,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.8 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.9 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -4658,7 +4658,6 @@
 
     var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, sport:(!silent && state.sport) || null};
     if(silent){ session.title = title; return session; }
-    calibrateSession(session);
     displaySession(session, title);
   }
   // Calage final : la durée réelle (celle du chrono) colle à la durée choisie,
