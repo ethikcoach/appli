@@ -1468,7 +1468,7 @@
   }
   // « Séance seule » : lien signé qui ouvre uniquement cette séance, sans donner accès au reste de l'appli
   function ecGuestSig(p){ return (ecHash('seance|' + p + '|' + EC_SIGN) + '00000000').slice(0, 8); }
-  var EC_GUEST = (function(){ var m = /^#[sre]=([A-Za-z0-9_-]+)&g=([a-z0-9]{8})$/.exec(location.hash || ''); return !!(m && ecGuestSig(m[1]) === m[2]); })();
+  var EC_GUEST = (function(){ var m = /^#[spre]=([A-Za-z0-9_-]+)&g=([a-z0-9]{8})$/.exec(location.hash || ''); return !!(m && ecGuestSig(m[1]) === m[2]); })();
   // Adresse de partage sans la clé d'accès de l'expéditeur
   function ecCleanBase(){ try{ var u = new URL(location.href.split('#')[0]); u.searchParams.delete('acces'); return u.toString(); }catch(e){ return location.href.split('#')[0]; } }
   // Le verrou s'applique sur le site en ligne (ethikcoach.fr, netlify.app), pas dans l'aperçu de travail.
@@ -1968,7 +1968,8 @@
 
   .compose-btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:50px; margin:4px 0 12px; border:none; border-radius:18px;
     background:var(--card); color:var(--forest); font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1rem; cursor:pointer; box-shadow:var(--shadow-1), inset 0 0 0 1.5px var(--forest);}
-  .compose-box{max-width:420px;}
+  .compose-box{max-width:420px; max-height:88vh; overflow-y:auto;}
+  .ct-btn.ghost{background:var(--card); color:var(--forest); box-shadow:inset 0 0 0 1.5px var(--forest); margin-top:8px;}
   .cp-lab{display:block; font-size:0.8rem; font-weight:700; color:var(--stone); margin:14px 0 6px; text-align:left;}
   .cp-chips{display:flex; flex-wrap:wrap; gap:6px;}
   .cp-chips .chip{padding:8px 14px; font-size:0.86rem;}
@@ -2218,6 +2219,7 @@
     <button class="generate-btn" id="generateBtn">Générer ma séance</button>
     <div class="form-msg" id="formMsg"></div>
     <button type="button" class="compose-btn coach-only" data-compose>✍️ Composer une séance moi-même</button>
+    <button type="button" class="compose-btn coach-only" data-compose-prog>📅 Composer un programme</button>
 
     <div class="current-program" id="currentProgram" hidden></div>
 
@@ -2341,6 +2343,7 @@
       <h3>Composer une séance</h3>
       <p class="ct-note" style="margin-top:0">Choisis toi-même chaque exercice, puis envoie la séance à un athlète.</p>
       <button type="button" class="ct-btn" data-compose>✍️ Composer une séance</button>
+      <button type="button" class="ct-btn ghost" data-compose-prog>📅 Composer un programme</button>
     </div>
 
     <div class="ct-card">
@@ -2409,7 +2412,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.0 · mise à jour du 10 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.1 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -4934,6 +4937,7 @@
   }
 
   function shareUrlFor(session){
+    if(window.__ecShareMode === 'prog' && window.ecProgUrl) return window.ecProgUrl();
     if(window.__ecShareMode === 'ex' && window.ecExUrl) return window.ecExUrl();
     if(window.__ecShareMode === 'breath' && window.ecBreathUrl) return window.ecBreathUrl();
     var base = SHARE_BASE_URL || ecCleanBase();
@@ -4944,6 +4948,7 @@
   }
 
   function shareMessageFor(session, url){
+    if(window.__ecShareMode === 'prog' && window.ecProgMessage) return window.ecProgMessage(url);
     if(window.__ecShareMode === 'ex' && window.ecExMessage) return window.ecExMessage(url);
     if(window.__ecShareMode === 'breath' && window.ecBreathMessage) return window.ecBreathMessage(url);
     var name = (document.getElementById('athleteName').value || '').trim();
@@ -5038,6 +5043,7 @@
   var progForm = {obj:'reprise', weeks:6, spw:2};
 
   var PROG_OBJECTIVES = {
+    perso:     {label:'Personnalisé', desc:'Programme composé par le coach', hidden:true, themes:['equilibre'], zones:{1:['full'],2:['full','full'],3:['full','full','full'],4:['full','full','full','full']}},
     reprise:   {label:'Remise en forme', desc:'Reprendre une activité régulière, tout le corps', themes:['equilibre'],
                 zones:{1:['full'], 2:['full','full'], 3:['bas','haut','full'], 4:['bas','haut','gainage','full']}},
     force:     {label:'Gagner en force', desc:'Efforts courts et intenses, récupérations longues', themes:['force'],
@@ -5080,6 +5086,7 @@
     var h = '';
     Object.keys(PROG_OBJECTIVES).forEach(function(k){
       var o = PROG_OBJECTIVES[k];
+      if(o.hidden) return;
       h += '<button type="button" class="chip" data-obj="'+k+'">'+o.label+'<small>'+o.desc+'</small></button>';
     });
     g.innerHTML = h;
@@ -5179,7 +5186,7 @@
       warm: tpl.warm, cardio: tpl.cardio, main: tpl.main, cool: tpl.cool,
       level: currentProgram.level, theme: tpl.theme, rounds: tpl.rounds, durationMinutes: currentProgram.duration,
       equip: currentProgram.equip, zone: tpl.zone, noFloor: currentProgram.noFloor, chair: !!currentProgram.chair,
-      workFactor: factorFor(week), programRef: {week: week, slot: slot}, title: tpl.title
+      workFactor: factorFor(week), programRef: {week: week, slot: slot}, title: tpl.title, composed: !!tpl.composed
     };
     // Semaine allégée : temps d'effort réduit et un tour de moins.
     if(PHASES[phaseOf(week)].deload && ses.rounds > 2) ses.rounds = ses.rounds - 1;
@@ -5200,8 +5207,9 @@
     var total = P.weeks * P.spw, doneCount = Object.keys(P.done).filter(function(k){ return P.done[k]; }).length;
     var equipLabels = P.equip.map(function(e){ return EQUIP_LABEL[e]; }).join(' + ');
     var html = '<div class="session-head"><div>';
-    html += '<div class="session-title">Programme ' + obj.label.charAt(0).toLowerCase() + obj.label.slice(1) + ' — ' + P.weeks + ' semaines</div>';
-    html += '<div class="session-meta">' + (P.athlete ? escapeHtml(P.athlete) + ' · ' : '') + P.spw + ' séance' + (P.spw>1?'s':'') + ' par semaine · ' + P.duration + ' min · ' + LEVEL_LABEL[P.level] + ' · ' + equipLabels + (P.chair ? ' · sur chaise' : (P.noFloor ? ' · sans passage au sol' : '')) + '</div>';
+    if(P.by) html = '<div class="shared-banner"><strong>Programme proposé par ' + escapeHtml(P.by) + ', ton coach</strong>' + (P.cm ? '<span class="coach-msg">« ' + escapeHtml(P.cm) + ' »</span>' : '') + 'Ouvre la séance du jour, puis coche-la quand elle est faite.</div>' + html;
+    html += '<div class="session-title">' + (P.title ? escapeHtml(P.title) : 'Programme ' + obj.label.charAt(0).toLowerCase() + obj.label.slice(1)) + ' — ' + P.weeks + ' semaines</div>';
+    html += '<div class="session-meta">' + (P.athlete ? escapeHtml(P.athlete) + ' · ' : '') + P.spw + ' séance' + (P.spw>1?'s':'') + ' par semaine · ' + (P.obj === 'perso' ? '' : P.duration + ' min · ') + LEVEL_LABEL[P.level] + ' · ' + equipLabels + (P.chair ? ' · sur chaise' : (P.noFloor ? ' · sans passage au sol' : '')) + '</div>';
     html += '<div class="prog-progress"><div class="prog-bar"><span style="width:'+Math.round(100*doneCount/total)+'%"></span></div>'+doneCount+' / '+total+' séances faites</div>';
     html += '</div><div class="session-actions">';
     var isSaved = findSavedProgram(P.id);
@@ -5221,7 +5229,7 @@
         var tpl = templateFor(w, sl);
         var ses = sessionFromTemplate(tpl, w, sl);
         var isDone = !!P.done[w+'-'+sl];
-        var names = tpl.main.slice(0,4).map(function(x){ return x.name.replace(/\s*\([^)]*\)/g,''); }).join(', ') + (tpl.main.length > 4 ? '…' : '');
+        var names = !(tpl.warm.length + tpl.cardio.length + tpl.main.length + tpl.cool.length) ? '✍️ À composer : ouvre la séance pour ajouter tes exercices' : (!tpl.main.length ? (tpl.warm.concat(tpl.cool)).slice(0,4).map(function(x){ return x.name; }).join(', ') : '') + tpl.main.slice(0,4).map(function(x){ return x.name.replace(/\s*\([^)]*\)/g,''); }).join(', ') + (tpl.main.length > 4 ? '…' : '');
         html += '<div class="prog-card'+(isDone ? ' done' : '')+'">'
           + '<div class="prog-card-top"><span class="prog-letter">Séance '+SLOT_LETTERS[sl]+'</span><span class="prog-dur">≈ '+minutesWithFactor(ses)+' min</span></div>'
           + '<div class="prog-focus">'+ZONE_LABEL[tpl.zone]+' · '+THEME_LABEL[tpl.theme]+'</div>'
@@ -5247,7 +5255,8 @@
   function openProgramSession(week, slot){
     var tpl = templateFor(week, slot);
     var ses = sessionFromTemplate(tpl, week, slot);
-    displaySession(ses, tpl.title + ' · ' + THEME_LABEL[tpl.theme]);
+    displaySession(ses, tpl.composed ? escapeHtml(tpl.title) + ' · semaine ' + (week + 1) : tpl.title + ' · ' + THEME_LABEL[tpl.theme]);
+    if(tpl.composed && totalExercises(ses) === 0){ var eb = document.getElementById('editModeBtn'); if(eb && !editMode) eb.click(); }
   }
 
   function toggleProgDone(week, slot){
@@ -5259,10 +5268,10 @@
 
   // Sauvegarde locale (le programme reste sur le téléphone)
   function serializeTpl(t){
-    return {z:t.zone, th:t.theme, r:t.rounds, t:t.title, w:idsOf(t.warm), c:idsOf(t.cardio), m:idsOf(t.main), k:idsOf(t.cool), no:notesOf(t) || undefined, ad:addedOf(t) || undefined};
+    return {z:t.zone, th:t.theme, r:t.rounds, t:t.title, cp:t.composed ? 1 : undefined, w:idsOf(t.warm), c:idsOf(t.cardio), m:idsOf(t.main), k:idsOf(t.cool), no:notesOf(t) || undefined, ad:addedOf(t) || undefined};
   }
   function programPayload(P){
-    return {v:1, kind:'p', id:P.id, o:P.obj, wk:P.weeks, spw:P.spw, d:P.duration, l:P.level, e:P.equip, nf:P.noFloor?1:0, ch:P.chair?1:undefined, n:P.athlete || undefined,
+    return {v:1, kind:'p', id:P.id, o:P.obj, ti:P.title || undefined, wk:P.weeks, spw:P.spw, d:P.duration, l:P.level, e:P.equip, nf:P.noFloor?1:0, ch:P.chair?1:undefined, n:P.athlete || undefined,
       b:P.blocks.map(function(bl){ return bl.map(serializeTpl); })};
   }
   function programFromPayload(d, done){
@@ -5278,9 +5287,10 @@
         cardio:map(t.c), main:map(t.m), cool:map(t.k)
       };
       applyCoachData(tpl, t.no, t.ad);
+      if(t.cp) tpl.composed = true;
       return tpl;
     }); });
-    return {id:d.id || ('p'+Date.now()), obj:d.o, weeks:d.wk, spw:d.spw, duration:d.d, level:d.l, equip:d.e || ['poids_du_corps'], noFloor:!!d.nf, chair:!!d.ch, athlete:d.n || '', blocks:blocks, done:done || {}};
+    return {id:d.id || ('p'+Date.now()), obj:d.o, title:d.ti || '', by:d.by || '', cm:d.cm || '', weeks:d.wk, spw:d.spw, duration:d.d, level:d.l, equip:d.e || ['poids_du_corps'], noFloor:!!d.nf, chair:!!d.ch, athlete:d.n || '', blocks:blocks, done:done || {}};
   }
   function saveProgram(){
     if(!currentProgram) return;
@@ -5316,20 +5326,34 @@
   // Envoi du programme par lien
   function openProgramShare(){
     if(!currentProgram) return;
-    var base = SHARE_BASE_URL || ecCleanBase();
-    var url = base + '#p=' + b64urlEncode(JSON.stringify(programPayload(currentProgram)));
-    var P = currentProgram, name = P.athlete || (document.getElementById('athleteName').value || '').trim();
-    var msg = (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n')
-      + 'Voici ton programme « ' + PROG_OBJECTIVES[P.obj].label + ' » : ' + P.weeks + ' semaines, ' + P.spw + ' séance' + (P.spw>1?'s':'') + ' par semaine de ' + P.duration + ' min. '
-      + 'Ouvre le lien, choisis ta séance de la semaine et appuie sur « Démarrer la séance ». Coche chaque séance faite pour suivre ta progression.\n' + url;
+    window.__ecShareMode = 'prog';
+    var url = window.ecProgUrl();
     document.getElementById('shareLink').value = url;
-    document.getElementById('shareMessage').value = msg;
+    document.getElementById('shareMessage').value = window.ecProgMessage(url);
     document.getElementById('shareNative').style.display = navigator.share ? '' : 'none';
     document.getElementById('shareWarn').style.display = shareBaseOk() ? 'none' : 'block';
     document.getElementById('shareTitle').textContent = 'Envoyer le programme';
+    var pb = document.getElementById('sharePdf'); if(pb) pb.style.display = 'none';
     refreshShareChannels();
     document.getElementById('shareBackdrop').classList.add('open');
   }
+  window.ecProgUrl = function(){
+    var base = SHARE_BASE_URL || ecCleanBase(), k = window.__ecShareKey;
+    if(k && k !== '__guest' && k.indexOf('h:') !== 0 && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', k); base = u.toString(); }catch(e){} }
+    var pl = programPayload(currentProgram), nm = (document.getElementById('athleteName').value || '').trim();
+    if(nm) pl.n = nm;
+    if(EC_IS_COACH) pl.by = 'Benoît';
+    var cmv = ((document.getElementById('shareCoachMsg') || {}).value || '').trim(); if(cmv) pl.cm = cmv;
+    var p = b64urlEncode(JSON.stringify(pl));
+    return base + '#p=' + p + (k === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
+  };
+  window.ecProgTitle = function(){ var P = currentProgram; return P ? (P.title || ('Programme ' + PROG_OBJECTIVES[P.obj].label.toLowerCase())) : 'Programme'; };
+  window.ecProgMessage = function(url){
+    var P = currentProgram, name = (document.getElementById('athleteName').value || '').trim() || P.athlete;
+    return (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n')
+      + 'Voici ton programme « ' + window.ecProgTitle() + ' » : ' + P.weeks + ' semaines, ' + P.spw + ' séance' + (P.spw>1?'s':'') + ' par semaine. '
+      + 'Ouvre le lien, choisis ta séance de la semaine et appuie sur « Démarrer la séance ». Coche chaque séance faite pour suivre ta progression.\n' + url;
+  };
 
   function loadSharedProgramFromHash(){
     var m = /^#p=([A-Za-z0-9_-]+)/.exec(location.hash || '');
@@ -6928,6 +6952,7 @@
     function sessChoices(){
       var out = [];
       if(lastSession && totalExercises(lastSession) > 0) out.push({v:'last', ico:'💪', t:'Dernière séance : ' + (function(){ var d = document.createElement('div'); d.innerHTML = lastSession.title || ''; return d.textContent; })()});
+      if(currentProgram) out.push({v:'prog', ico:'📅', t:'Programme : ' + window.ecProgTitle() + ' (' + currentProgram.weeks + ' sem.)'});
       if(lastBreathSession) out.push({v:'breath', ico:'🌬️', t:'Dernière respiration : ' + BREATH_INTENTIONS[lastBreathSession.intention].label.toLowerCase()});
       document.querySelectorAll('#savedSessionsList .saved-item').forEach(function(it, i){
         var n = it.querySelector('.saved-item-name'); if(n && it.querySelector('.saved-load')) out.push({v:'fav' + i, ico:'⭐', t:n.textContent});
@@ -6942,9 +6967,9 @@
         if(!l) return; l.click();
       }
       if(an) an.value = who || ''; if(cm) cm.value = cmText || '';
-      window.__ecShareKey = ''; window.__ecShareMode = v === 'breath' ? 'breath' : 'renfo';
-      var url = v === 'breath' ? window.ecBreathUrl() : shareUrlFor(lastSession);
-      var m = /#([sr])=([A-Za-z0-9_-]+)/.exec(url);
+      window.__ecShareKey = ''; window.__ecShareMode = v === 'breath' ? 'breath' : (v === 'prog' ? 'prog' : 'renfo');
+      var url = v === 'breath' ? window.ecBreathUrl() : (v === 'prog' ? window.ecProgUrl() : shareUrlFor(lastSession));
+      var m = /#([spr])=([A-Za-z0-9_-]+)/.exec(url);
       var item = m ? {k:m[1], p:m[2], t:window.ecInboxTitle(m[1]), cm:cmText || undefined} : null;
       if(an) an.value = keepN; if(cm) cm.value = keepC; window.__ecShareMode = keepMode; window.__ecShareKey = keepKey;
       if(item) window.ecInboxSend(h, item, who);
@@ -7600,7 +7625,7 @@
     addBtn();
     // Le mode renfo reprend la main dès qu'on envoie une séance de renfo ou un programme
     document.addEventListener('click', function(e){
-      if(e.target.closest && e.target.closest('#shareSessionBtn, [data-prog-share]')){ window.__ecShareMode = 'renfo'; var pb = document.getElementById('sharePdf'); if(pb) pb.style.display = ''; }
+      if(e.target.closest && e.target.closest('#shareSessionBtn')){ window.__ecShareMode = 'renfo'; var pb = document.getElementById('sharePdf'); if(pb) pb.style.display = ''; }
     }, true);
 
     // Ouverture d'un lien de respiration reçu
@@ -7660,11 +7685,12 @@
     window.ecInboxTitle = function(k){
       if(k === 'r') return 'Respiration : ' + BREATH_INTENTIONS[lastBreathSession.intention].label.toLowerCase();
       if(k === 'e'){ var ex = exById(window.__ecShareEx); return 'Exercice : ' + (ex ? ex.name : ''); }
+      if(k === 'p') return 'Programme : ' + window.ecProgTitle();
       return txt(lastSession && lastSession.title) || 'Séance';
     };
     if(btn) btn.addEventListener('click', function(){
       var h = targetHash(window.__ecShareKey); if(!h) return;
-      var m = /#([sre])=([A-Za-z0-9_-]+)/.exec($('#shareLink').value || ''); if(!m) return;
+      var m = /#([spre])=([A-Za-z0-9_-]+)/.exec($('#shareLink').value || ''); if(!m) return;
       var item = {k:m[1], p:m[2], t:window.ecInboxTitle(m[1]), cm:(($('#shareCoachMsg') || {}).value || '').trim() || undefined};
       closeShareSheet();
       window.ecInboxSend(h, item, nameOf(window.__ecShareKey));
@@ -7692,7 +7718,7 @@
       window.scrollTo(0, 0);
     }
     function rowHtml(it, isNew){
-      return '<div class="ib-row' + (isNew ? ' new' : '') + '"><div class="ib-ico">' + (it.k === 'r' ? '🌬️' : (it.k === 'e' ? '🎯' : '💪')) + '</div><div class="ib-info"><b>' + escapeHtml(it.t || 'Séance') + '</b>'
+      return '<div class="ib-row' + (isNew ? ' new' : '') + '"><div class="ib-ico">' + (it.k === 'r' ? '🌬️' : (it.k === 'e' ? '🎯' : (it.k === 'p' ? '📅' : '💪'))) + '</div><div class="ib-info"><b>' + escapeHtml(it.t || 'Séance') + '</b>'
         + '<span>' + (isNew ? 'Nouveau · ' : '') + fmt(it.at) + (it.cm ? ' · « ' + escapeHtml(it.cm) + ' »' : '') + '</span></div>'
         + '<button type="button" data-ib="' + it.id + '">Ouvrir</button></div>';
     }
@@ -7705,7 +7731,7 @@
         card.addEventListener('click', onClick);
       }
       card.hidden = !fresh.length;
-      card.innerHTML = fresh.length ? '<div class="ib-head">📩 ' + (fresh.length > 1 ? (fresh.every(function(x){ return x.k !== 'e'; }) ? fresh.length + ' nouvelles séances de Benoît' : fresh.length + ' nouveaux envois de Benoît') : (fresh[0].k === 'e' ? 'Nouvel exercice de Benoît' : 'Nouvelle séance de Benoît')) + '</div>' + fresh.slice(0, 3).map(function(x){ return rowHtml(x, true); }).join('') : '';
+      card.innerHTML = fresh.length ? '<div class="ib-head">📩 ' + (fresh.length > 1 ? (fresh.every(function(x){ return x.k === 's' || x.k === 'r'; }) ? fresh.length + ' nouvelles séances de Benoît' : fresh.length + ' nouveaux envois de Benoît') : (fresh[0].k === 'e' ? 'Nouvel exercice de Benoît' : (fresh[0].k === 'p' ? 'Nouveau programme de Benoît' : 'Nouvelle séance de Benoît'))) + '</div>' + fresh.slice(0, 3).map(function(x){ return rowHtml(x, true); }).join('') : '';
       var sv = document.getElementById('svCoachCard');
       if(!sv){
         var anchor = document.querySelector('#suiviView .sv-stats');
@@ -7791,6 +7817,46 @@
       setTimeout(loadExFromHash, 0);
     }
     window.addEventListener('hashchange', function(){ if(/^#e=/.test(location.hash || '')) loadExFromHash(); });
+  })();
+
+  // ---------- Programme composé par le coach ----------
+  (function(){
+    function $(s){ return document.querySelector(s); }
+    function chips(id, vals, cur, lab){ return '<div class="cp-chips" id="' + id + '">' + vals.map(function(v){ return '<button type="button" class="chip' + (v === cur ? ' active' : '') + '" data-v="' + v + '">' + (lab ? lab(v) : v) + '</button>'; }).join('') + '</div>'; }
+    function pick(w, id){ var c = w.querySelector('#' + id + ' .chip.active'); return c ? c.getAttribute('data-v') : null; }
+    function openProgComposer(){
+      var old = document.getElementById('composeDialog'); if(old) old.remove();
+      var wrap = document.createElement('div'); wrap.id = 'composeDialog'; wrap.className = 'ec-dialog-backdrop';
+      wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Composer un programme">'
+        + '<p class="ec-dialog-msg">Composer un programme</p>'
+        + '<label class="cp-lab" for="cpTitle">Nom du programme</label><input type="text" id="cpTitle" class="ec-dialog-input" maxlength="80" value="Programme de Benoît">'
+        + '<div class="cp-lab">Nombre de semaines</div>' + chips('cpWeeks', ['2','4','6','8','12'], '4')
+        + '<div class="cp-lab">Séances par semaine</div>' + chips('cpSpw', ['1','2','3','4'], '2')
+        + '<div class="cp-lab">Niveau (règle les temps d’effort)</div>' + chips('cpLevel', ['debutant','intermediaire','avance','senior'], state.level || 'intermediaire', function(l){ return (LEVEL_LABEL[l] || l).replace(/ ·.*$/, ''); })
+        + '<div class="cp-lab">Tours du corps de séance</div>' + chips('cpRounds', ['1','2','3','4','5'], '3')
+        + '<p class="cp-note">Chaque séance (A, B…) revient chaque semaine, avec un temps d’effort qui augmente et une semaine allégée toutes les 4 semaines. Tu composes ensuite chaque séance avec « ＋ Ajouter un exercice ».</p>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel">Annuler</button><button type="button" class="ec-dialog-ok">Créer</button></div></div>';
+      document.body.appendChild(wrap);
+      wrap.querySelectorAll('.cp-chips').forEach(function(g){ g.addEventListener('click', function(e){ var c = e.target.closest('.chip'); if(!c) return; g.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('active', x === c); }); }); });
+      function close(){ wrap.remove(); }
+      wrap.querySelector('.ec-dialog-cancel').addEventListener('click', close);
+      wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+      wrap.querySelector('.ec-dialog-ok').addEventListener('click', function(){
+        var title = $('#cpTitle').value.trim() || 'Programme de Benoît', weeks = +pick(wrap, 'cpWeeks') || 4, spw = +pick(wrap, 'cpSpw') || 2;
+        var level = pick(wrap, 'cpLevel') || 'intermediaire', r = +pick(wrap, 'cpRounds') || 3;
+        close();
+        var slots = [];
+        for(var i = 0; i < spw; i++) slots.push({zone:'full', theme:'equilibre', rounds:r, title:'Séance ' + SLOT_LETTERS[i], composed:true, warm:[], cardio:[], main:[], cool:[]});
+        currentProgram = {id:Date.now().toString(36) + Math.random().toString(36).slice(2, 6), obj:'perso', title:title, weeks:weeks, spw:spw, duration:30, level:level,
+          equip:state.equip.slice(), noFloor:false, chair:false, athlete:'', blocks:[slots], done:{}};
+        if(window.ecShowView) window.ecShowView('renfo');
+        saveProgram(); showProgram(true);
+        showToast('Ouvre la séance A, puis B… pour y ajouter tes exercices. Elles reviennent chaque semaine.', false);
+      });
+      setTimeout(function(){ var t = $('#cpTitle'); if(t){ t.focus(); t.select(); } }, 40);
+    }
+    window.ecComposeProg = openProgComposer;
+    document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('[data-compose-prog]')){ e.preventDefault(); openProgComposer(); } }, true);
   })();
 
   // ---------- Bouton retour du téléphone ----------
