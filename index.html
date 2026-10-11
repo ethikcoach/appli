@@ -2076,6 +2076,9 @@
   .ct-tabs button span{font-size:1.1rem; line-height:1;}
   .ct-tabs button.active{background:var(--forest); color:#fff;}
   .ct-pane[hidden]{display:none;}
+  .block-title .bt-dur{margin-left:auto; padding:3px 10px; border-radius:999px; background:var(--sage-light); color:var(--forest); font-size:0.74rem; font-weight:800; letter-spacing:0; text-transform:none; white-space:nowrap;}
+  .sh-tags span.sh-total{background:#fff; color:#17352A; font-weight:800;}
+  @media screen and (prefers-color-scheme: dark){ .block-title .bt-dur{background:#1E3528; color:#A7D8B4;} }
   .coach-tools .ct-pub.ok{display:none;}
   .ct-netok{font-size:0.88rem; line-height:1.45; color:var(--ink); box-shadow:var(--shadow-1), inset 0 0 0 1.5px var(--forest) !important;}
   .ct-netok[hidden]{display:none;}
@@ -2518,7 +2521,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.7 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.8 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -4347,6 +4350,8 @@
     if(list.length === 0 && !(lastRenderSession && lastRenderSession.composed && BLOCK_SESSION_KEY[blockKey])) return '';
     var blockTheme = blockKey === 'principal' ? theme : 'equilibre';
     var displayTitle = rounds ? (title + ' · ' + rounds + ' tours') : title;
+    var bsec = BLOCK_SECS[title === 'Bloc cardio' ? 'Bloc cardio' : title];
+    if(bsec && list.length) displayTitle += '<span class="bt-dur">' + fmtTotal(bsec) + '</span>';
     var html = '<div class="block '+blockKey+'">';
     html += '<div class="block-title"><span class="swatch"></span>'+displayTitle+'</div>';
     list.forEach(function(ex, idx){
@@ -4653,7 +4658,33 @@
 
     var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, sport:(!silent && state.sport) || null};
     if(silent){ session.title = title; return session; }
+    calibrateSession(session);
     displaySession(session, title);
+  }
+  // Calage final : la durée réelle (celle du chrono) colle à la durée choisie,
+  // d'abord avec le nombre de tours (−1 à +2), puis en ajustant légèrement le temps d'effort du corps de séance.
+  function calibrateSession(S){
+    if(!S.main || !S.main.length || !S.durationMinutes) return;
+    var target = S.durationMinutes * 60, keepW = WORK_FACTOR, keepA = SESSION_ADJ;
+    SESSION_ADJ = null; WORK_FACTOR = 1;
+    function secs(r, f){ var kr = S.rounds; S.rounds = r; WORK_FACTOR = f; var v = sessionSeconds(S); S.rounds = kr; WORK_FACTOR = 1; return v; }
+    var best = S.rounds, bestD = Math.abs(secs(S.rounds, 1) - target);
+    [S.rounds - 1, S.rounds + 1, S.rounds + 2].forEach(function(r){
+      if(r < 2 || r > 6) return;
+      var d = Math.abs(secs(r, 1) - target);
+      if(d < bestD - 60) { best = r; bestD = d; }
+    });
+    S.rounds = best;
+    var s1 = secs(best, 1);
+    if(Math.abs(s1 - target) > 45){
+      var s2 = secs(best, 1.2), slope = (s2 - s1) / 0.2;
+      if(slope > 0){
+        var f = Math.max(0.75, Math.min(1.3, 1 + (target - s1) / slope));
+        f = Math.round(f * 20) / 20;
+        if(f !== 1) S.workFactor = f;
+      }
+    }
+    WORK_FACTOR = keepW; SESSION_ADJ = keepA;
   }
 
   function contentModified(session){
@@ -4663,16 +4694,21 @@
   }
   function sessionModified(session){ return !!session.adj || contentModified(session); }
   function sessionMinutes(session){
-    var tl = buildTimeline(session);
-    var sec = tl.reduce(function(sum, st){ return sum + st.duration; }, 0);
-    // Temps réglés sur une séance générée : on part de la durée annoncée et on ajoute l'écart réel
-    if(session.adj && !contentModified(session) && !session.programRef && (session.shownMinutes || session.durationMinutes)){
-      var keep = SESSION_ADJ; SESSION_ADJ = null;
-      var sec0 = buildTimeline(session).reduce(function(sum, st){ return sum + st.duration; }, 0);
-      SESSION_ADJ = keep;
-      return Math.max(1, (session.shownMinutes || session.durationMinutes) + Math.round((sec - sec0) / 60));
-    }
-    return Math.max(1, Math.round(sec/60));
+    return Math.max(1, Math.round(sessionSeconds(session)/60));
+  }
+  // Durée totale exacte de la séance, telle que le chrono la déroule (échauffement, efforts, récups, transitions)
+  function sessionSeconds(session){ return buildTimeline(session).reduce(function(sum, st){ return sum + st.duration; }, 0); }
+  function fmtTotal(sec){
+    sec = Math.round(sec); var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), r = sec % 60;
+    if(r >= 30 && sec >= 600){ m += 1; r = 0; if(m === 60){ h += 1; m = 0; } }
+    if(sec >= 600) r = 0;
+    return (h ? h + ' h ' + (m < 10 ? '0' : '') + m : m + ' min') + (r ? ' ' + (r < 10 ? '0' : '') + r + ' s' : '');
+  }
+  // Durée de chaque partie, affichée à côté de son titre
+  var BLOCK_SECS = {};
+  function computeBlockSecs(session){
+    BLOCK_SECS = {};
+    buildTimeline(session).forEach(function(st){ var k = st.blockLabel || ''; BLOCK_SECS[k] = (BLOCK_SECS[k] || 0) + st.duration; });
   }
 
   var editMode = false;
@@ -4702,7 +4738,7 @@
     }
     html += '<div class="session-head">';
     html += '<div><div class="session-title">'+title+'</div>';
-    html += '<div class="session-meta">'+LEVEL_LABEL[session.level]+' · '+(session.sport && SPORT_LABEL[session.sport] ? SPORT_LABEL[session.sport]+' ('+THEME_LABEL[session.theme].toLowerCase()+')' : THEME_LABEL[session.theme])+' · '+((sessionModified(session) || session.programRef) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes))+' minutes environ'+(session.rounds ? ' · '+session.rounds+' tours' : '')+(session.chair ? ' · sur chaise' : (session.noFloor ? ' · sans passage au sol' : ''))+'</div>'
+    html += '<div class="session-meta">'+LEVEL_LABEL[session.level]+' · '+(session.sport && SPORT_LABEL[session.sport] ? SPORT_LABEL[session.sport]+' ('+THEME_LABEL[session.theme].toLowerCase()+')' : THEME_LABEL[session.theme])+' · ⏱ Durée totale '+fmtTotal(sessionSeconds(session))+(session.rounds ? ' · '+session.rounds+' tours' : '')+(session.chair ? ' · sur chaise' : (session.noFloor ? ' · sans passage au sol' : ''))+'</div>'
       + ((session.removed && session.removed.length) ? '<div class="removed-note">'+session.removed.length+' exercice'+(session.removed.length>1?'s':'')+' retiré'+(session.removed.length>1?'s':'')+' · <button type="button" data-undo-all>Tout remettre</button></div>' : '')
       + (session.main && session.main.length ? '<button type="button" class="time-adj-btn'+(session.adj ? ' on' : '')+'" data-time-adj>⏱ '+(session.adj ? 'Temps réglés · modifier' : 'Régler les temps')+'</button>' : '')
       + '</div>';
@@ -4717,6 +4753,7 @@
     html += '</div>';
     html += '</div></div>';
 
+    computeBlockSecs(session);
     html += renderBlock('Échauffement', 'echauffement', session.warm, session.level, 'equilibre');
     html += renderBlock('Bloc cardio', 'cardio', session.cardio, session.level, 'equilibre');
     html += loadTipHtml(session);
@@ -5141,7 +5178,8 @@
       mm:contentModified(session) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes),
       no:notesOf(session) || undefined,
       ad:addedOf(session) || undefined,
-      aj:session.adj || undefined
+      aj:session.adj || undefined,
+      wf:(!session.programRef && session.workFactor && session.workFactor !== 1) ? session.workFactor : undefined
     };
     return b64urlEncode(JSON.stringify(payload));
   }
@@ -5171,7 +5209,7 @@
     if(window.__ecShareMode === 'ex' && window.ecExMessage) return window.ecExMessage(url);
     if(window.__ecShareMode === 'breath' && window.ecBreathMessage) return window.ecBreathMessage(url);
     var name = (document.getElementById('athleteName').value || '').trim();
-    var mins = sessionModified(session) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes);
+    var mins = sessionMinutes(session);
     return (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n')
       + 'Voici ta séance « ' + session.title + ' » (' + mins + ' min environ). '
       + 'Ouvre le lien et appuie sur « Démarrer la séance » : le chrono te guide exercice par exercice.\n'
@@ -5249,6 +5287,7 @@
     if(totalExercises(session) === 0){ showToast("Ce lien ne contient aucun exercice.", false); return false; }
     applyCoachData(session, data.no, data.ad);
     var aj = cleanAdj(data.aj); if(aj) session.adj = aj;
+    if(+data.wf >= 0.5 && +data.wf <= 1.5) session.workFactor = +data.wf;
     if(data.n) document.getElementById('athleteName').value = data.n;
     displaySession(session, data.t || 'Séance', false);
     return true;
@@ -5730,6 +5769,7 @@
       theme: lastSession.theme,
       rounds: lastSession.rounds,
       durationMinutes: lastSession.durationMinutes,
+      workFactor: lastSession.workFactor || undefined,
       warmIds: idsOf(lastSession.warm),
       cardioIds: idsOf(lastSession.cardio),
       mainIds: idsOf(lastSession.main),
@@ -5779,6 +5819,7 @@
       theme: rec.theme,
       rounds: rec.rounds,
       durationMinutes: rec.durationMinutes,
+      workFactor: (+rec.workFactor >= 0.5 && +rec.workFactor <= 1.5) ? +rec.workFactor : undefined,
       equip: rec.equip || null,
       zone: rec.zone || null,
       noFloor: !!rec.noFloor,
@@ -5978,7 +6019,7 @@
   // --- 2. Refaire la dernière séance ---
   var LAST_KEY = 'ec_last_v1';
   function recFromSession(sess, title){
-    return {title:title || sess.title, level:sess.level, theme:sess.theme, rounds:sess.rounds, durationMinutes:sess.durationMinutes,
+    return {title:title || sess.title, level:sess.level, theme:sess.theme, rounds:sess.rounds, durationMinutes:sess.durationMinutes, workFactor:sess.programRef ? undefined : (sess.workFactor || undefined),
       warmIds:idsOf(sess.warm), cardioIds:idsOf(sess.cardio), mainIds:idsOf(sess.main), coolIds:idsOf(sess.cool),
       equip:sess.equip || null, zone:sess.zone || null, noFloor:!!sess.noFloor, sport:sess.sport || null, chair:!!sess.chair,
       notes:notesOf(sess), added:addedOf(sess), adj:sess.adj || undefined};
@@ -6523,7 +6564,7 @@
 
   function renderBreathSession(sess){
     var html = '<div class="session-head"><div><div class="session-title">' + escapeHtml(BREATH_INTENTIONS[sess.intention].label) + '</div>'
-      + '<div class="session-meta">' + escapeHtml(PROFILE_LABEL[sess.profile]) + ' · ' + escapeHtml(POSITION_LABEL[sess.position]) + ' · ' + sess.minutes + ' min environ</div></div>'
+      + '<div class="session-meta">' + escapeHtml(PROFILE_LABEL[sess.profile]) + ' · ' + escapeHtml(POSITION_LABEL[sess.position]) + ' · ⏱ Durée totale ' + sess.minutes + ' min</div></div>'
       + '<div class="session-actions"><button class="btn-start" id="breathStartBtn">Démarrer la séance ▶</button>'
       + '<button class="btn-ghost" id="breathRegenBtn">Nouvelle séance</button></div></div>';
     html += '<p class="breath-install"><strong>Installation.</strong> ' + escapeHtml(POSITION_TEXT[sess.position]) + '</p>';
@@ -6845,7 +6886,7 @@
         var meta = head.querySelector('.session-meta');
         if(meta && meta.textContent.indexOf('·') > -1){
           var tags = document.createElement('div'); tags.className = 'sh-tags';
-          meta.textContent.split('·').forEach(function(p){ p = p.trim(); if(!p) return; var s = document.createElement('span'); s.textContent = p; tags.appendChild(s); });
+          meta.textContent.split('·').forEach(function(p){ p = p.trim(); if(!p) return; var s = document.createElement('span'); s.textContent = p; if(/Durée totale/.test(p)) s.className = 'sh-total'; tags.appendChild(s); });
           meta.parentNode.insertBefore(tags, meta.nextSibling);
           meta.classList.add('has-tags');
         }
