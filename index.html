@@ -2113,6 +2113,14 @@
   .compact-form #equipGroup .chip.tile:is([data-equip="tapis"],[data-equip="rameur"],[data-equip="velo"],[data-equip="elliptique"],[data-equip="corde"]) .t-lab{font-size:0.66rem;}
   .compact-form #equipGroup .chip.tile.active{background:var(--forest) !important; color:#fff !important; box-shadow:0 4px 12px rgba(31,64,48,0.25) !important;}
   .compact-form .tile .t-lab{display:block; width:100%; text-align:center;}
+  .compact-form .tile-grid.three{grid-template-columns:repeat(3, minmax(0,1fr)) !important;}
+  .compact-form .num-row{display:grid !important; grid-template-columns:repeat(auto-fit, minmax(0,1fr)); grid-auto-flow:column; gap:6px;}
+  .compact-form .num-row .chip{display:flex !important; flex-direction:column; align-items:center; justify-content:center; gap:0; width:auto !important; min-height:58px; padding:6px 2px !important; border-radius:16px !important; line-height:1.1;}
+  .compact-form .num-row .chip::before{display:none !important;}
+  .compact-form .num-row .chip b{font-family:'Bricolage Grotesque',sans-serif; font-size:1.35rem; font-weight:800;}
+  .compact-form .num-row .chip span{font-size:0.7rem; font-weight:600; opacity:0.8;}
+  .compact-form .prog-total{margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--sage-light); color:var(--ink); font-weight:600;}
+  .compact-form .prog-fields .field:last-child{margin-bottom:0;}
   .compact-form .tile-grid.two{grid-template-columns:repeat(2, minmax(0,1fr)) !important;}
   .compact-form .tile-grid.two .chip.tile{min-height:70px;}
   .compact-form #themeGroup .theme-sub{grid-column:1 / -1; margin:6px 0 -2px !important; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em;}
@@ -8507,7 +8515,10 @@
       course: '<circle cx="14" cy="4" r="1.9"/><path d="M13 7.5 10 12l3.5 2.5-1.5 6M10 12l-4 1.5M12.5 8.5l3.5 2.5 3-1M13.5 14.5l4 1"/>',
       velo_sp: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5.5L18 16M10 9l3 7h-7M9 6.5h3"/>',
       vtt: '<path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="16.5" cy="5" r="1.5"/>',
-      kayak: '<path d="M2 15c4 3 16 3 20 0"/><path d="M5 4l14 14"/><path d="M4 2.5l3 3M17 18.5l3 3" stroke-width="3"/>'
+      kayak: '<path d="M2 15c4 3 16 3 20 0"/><path d="M5 4l14 14"/><path d="M4 2.5l3 3M17 18.5l3 3" stroke-width="3"/>',
+      p_reprise: '<path d="M3 18h18M6 18a6 6 0 0 1 12 0M12 4v3M4.5 9.5l2 1.5M19.5 9.5l-2 1.5"/>',
+      p_posture: '<circle cx="12" cy="3.8" r="1.8"/><path d="M12 6.5v8.5M8.5 9h7M12 15l-2.5 5.5M12 15l2.5 5.5"/><path d="M6 3v18" stroke-dasharray="2 2.5"/>',
+      p_autonomie: '<circle cx="10" cy="4" r="1.8"/><path d="M10 6.5 9 13l-2.5 7M9 13l3 7M10 8l4 2.5M14 10.5V20.5M14 10.5c0-1.5 2.5-1.5 2.5 0"/>'
     };
     var SHORT = {nofloor:'Sans passage au sol', chair:'Sur chaise', full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage',
       equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité', course:'Course &amp; trail', velo_sp:'Vélo', vtt:'VTT', kayak:'Canoë-kayak',
@@ -8578,6 +8589,27 @@
       grid(tg); tg.classList.remove('stack');
       tg.querySelectorAll('[data-theme]').forEach(function(b){ var sp = b.getAttribute('data-sport'); tile(b, sp ? (sp === 'velo' ? 'velo_sp' : sp) : b.getAttribute('data-theme')); });
     }
+    // Programme : objectif, durée, séances par semaine
+    var PO = {reprise:['p_reprise','Remise en forme'], force:['force','Force'], endurance:['endurance_force','Endurance'], course:['course','Course &amp; trail'],
+      velo:['velo_sp','Vélo'], vtt:['vtt','VTT'], kayak:['kayak','Canoë-kayak'], posture:['p_posture','Gainage &amp; posture'], autonomie:['p_autonomie','Autonomie &amp; chutes']};
+    var pg = document.getElementById('progObjGroup');
+    if(pg){
+      grid(pg); pg.classList.remove('stack'); pg.classList.add('three');
+      pg.querySelectorAll('[data-obj]').forEach(function(b){ var o = PO[b.getAttribute('data-obj')] || ['p_reprise']; tile(b, o[0], o[1]); });
+    }
+    var pw = document.getElementById('progWeeksGroup'), ps = document.getElementById('progSpwGroup');
+    if(pw && ps){
+      pw.classList.add('num-row'); ps.classList.add('num-row');
+      pw.querySelectorAll('[data-weeks]').forEach(function(b){ b.innerHTML = '<b>' + b.getAttribute('data-weeks') + '</b> <span>semaines</span>'; });
+      ps.querySelectorAll('[data-spw]').forEach(function(b){ var n = +b.getAttribute('data-spw'); b.innerHTML = '<b>' + n + '</b> <span>séance' + (n > 1 ? 's' : '') + '</span>'; });
+      var tot = document.createElement('p'); tot.className = 'tile-note prog-total'; ps.parentNode.appendChild(tot);
+      function syncTot(){
+        var w = pw.querySelector('.active'), n = ps.querySelector('.active');
+        tot.textContent = (w && n) ? '📅 Au total : ' + (+w.getAttribute('data-weeks')) * (+n.getAttribute('data-spw')) + ' séances sur ' + w.getAttribute('data-weeks') + ' semaines, avec une semaine allégée toutes les 4 semaines.' : '';
+      }
+      [pw, ps].forEach(function(g){ new MutationObserver(syncTot).observe(g, {subtree:true, attributes:true, attributeFilter:['class']}); }); syncTot();
+    }
+    var pf = document.getElementById('progFields'); if(pf) pf.classList.add('compact-prog');
     // Rythme : courtes étiquettes, explication dessous (déjà présente)
     var rp = document.getElementById('breathSeniorGroup'); if(rp) rp.classList.add('seg-row');
     document.querySelectorAll('#renfoView .panel, #breathView .panel').forEach(function(p){ p.classList.add('compact-form'); });
