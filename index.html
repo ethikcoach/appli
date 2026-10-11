@@ -2077,6 +2077,8 @@
   .ct-tabs button.active{background:var(--forest); color:#fff;}
   .ct-pane[hidden]{display:none;}
   .coach-tools .ct-pub.ok{display:none;}
+  .ct-netok{font-size:0.88rem; line-height:1.45; color:var(--ink); box-shadow:var(--shadow-1), inset 0 0 0 1.5px var(--forest) !important;}
+  .ct-netok[hidden]{display:none;}
   .ct-x{flex:none; width:34px; height:34px; border:none; border-radius:50%; background:var(--chip); color:var(--ink); font-size:1.3rem; line-height:1; cursor:pointer;}
   .ct-count{margin:2px 0 8px; font-size:0.8rem; color:var(--stone);}
   .ct-go{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px;}
@@ -2467,7 +2469,8 @@
     </div>
 
     <div class="ct-pane" data-pane="set">
-    <details class="ct-card ct-net" id="ctNet" open>
+    <p class="ct-card ct-netok" id="ctNetOk" hidden>✓ <b>Cet appareil est relié à GitHub.</b> Rien à refaire, même après une mise à jour de l’appli : le lien est gardé sur cet appareil. Pour un autre appareil (iPhone, iPad…), fais la manip une fois dessus.</p>
+    <details class="ct-card ct-net" id="ctNet">
       <summary>Lien avec GitHub <span id="ctNetState"></span></summary>
       <p class="ct-note">À faire une seule fois par appareil. Ensuite, tout ce que tu changes ici s’applique tout seul, gratuitement et sans limite.</p>
       <ol class="ct-steps">
@@ -2515,7 +2518,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.6 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.7 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -7374,7 +7377,8 @@
       var m = $('#ctMini'); if(!m || !draft) return;
       var rows = allRows(), act = rows.filter(function(r){ return r.st.cls !== 'off'; }).length, soon = rows.filter(function(r){ return r.st.cls === 'soon'; }).length;
       var ng = Object.keys(draft.groups || {}).length, p = ($('#ctPubTxt') || {}).textContent || '';
-      var st = /^✓/.test(p) ? '✓ En ligne' : (/Enregistrement/.test(p) ? '⏳ Enregistrement…' : (EC_LOCK_ON ? '⚠ À relier' : ''));
+      var nt = lsGet(CT_NET, null), lk = !!(nt && nt.token);
+      var st = !EC_LOCK_ON ? '' : (/Enregistrement/.test(p) ? '⏳ Enregistrement…' : (lk ? (/^✓/.test(p) ? '✓ Relié · à jour' : '✓ Relié à GitHub') : '⚠ GitHub à relier'));
       m.innerHTML = '<span>' + act + ' athlète' + (act > 1 ? 's' : '') + ' actif' + (act > 1 ? 's' : '') + '</span>'
         + (soon ? '<span class="warn">' + soon + ' bientôt fini' + (soon > 1 ? 's' : '') + '</span>' : '')
         + '<span>' + ng + ' groupe' + (ng > 1 ? 's' : '') + '</span>' + (st ? '<span>' + st + '</span>' : '');
@@ -7383,7 +7387,10 @@
     function renderPub(msg){
       setTimeout(renderMini, 0);
       var t = $('#ctPubTxt'), b = $('#ctPubBtn'), box = $('#ctPub'), net = lsGet(CT_NET, null);
-      $('#ctNetState').textContent = net && net.token ? '✓ fait' : '';
+      var linked = !!(net && net.token);
+      $('#ctNetState').textContent = linked ? '✓ fait' : '';
+      $('#ctNetOk').hidden = !linked;
+      if(renderPub.linked !== linked){ renderPub.linked = linked; $('#ctNet').open = !linked; }
       if(!EC_LOCK_ON){ t.textContent = 'Aperçu de travail : les changements s\u2019enregistrent en ligne depuis l\u2019appli (appli.ethikcoach.fr).'; b.hidden = true; box.className = 'ct-pub'; return; }
       if(msg){ t.textContent = msg; b.hidden = true; box.className = 'ct-pub busy'; return; }
       if(!pending()){ t.textContent = '✓ À jour en ligne'; b.hidden = true; box.className = 'ct-pub ok'; return; }
