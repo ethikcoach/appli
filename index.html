@@ -2015,6 +2015,22 @@
   .ct-choices button span{flex:none; font-size:1.1rem;}
   html.ec-guest.ec-guest-ex #renfoView{display:none !important;}
   @media screen and (prefers-color-scheme: dark){ .ex-send{background:#3A8558;} .ex-shared{background:#1E3528;} .ex-shared strong{color:#A7D8B4;} }
+  .cal-btn{width:100%; min-height:46px; border:none; border-radius:999px; background:rgba(255,255,255,0.16); color:inherit; font-family:inherit; font-weight:700; font-size:0.92rem; cursor:pointer; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.45);}
+  html.ec-guest .cal-btn{display:block;}
+  .cal-row{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:10px;}
+  .cal-row .cp-lab{display:block;}
+  .cal-row input{display:block; width:100%; margin-top:6px; font-size:16px;}
+  .cal-acts{margin:4px 0 10px;}
+  .ct-gnew{flex:none; border:none; border-radius:999px; background:var(--forest); color:#fff; font-family:inherit; font-weight:700; font-size:0.8rem; padding:7px 12px; cursor:pointer;}
+  .ct-gpick{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .ct-gpick label{display:flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:var(--card); box-shadow:inset 0 0 0 1px var(--ring-line); font-size:0.86rem; font-weight:600; cursor:pointer;}
+  .ct-gpick label:has(input:checked){background:var(--sage-light); box-shadow:inset 0 0 0 1.5px var(--forest);}
+  .ct-gpick input{width:18px; height:18px; margin:0; accent-color:var(--forest);}
+  .ct-gpick em{font-style:normal; color:var(--stone); font-weight:500;}
+  #ctGrpForm label.cp-lab input{display:block;}
+  .ct-empty{color:var(--stone); font-size:0.88rem; margin:8px 0 0;}
+  @media print{ .cal-btn{display:none !important;} }
+  @media screen and (prefers-color-scheme: dark){ .ct-gnew{background:#3A8558;} .ct-gpick label:has(input:checked){background:#1E3528;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2368,6 +2384,13 @@
       <div id="ctList"></div>
     </div>
 
+    <div class="ct-card" id="ctGroupsCard">
+      <div class="ct-h3row"><h3>Mes groupes</h3><button type="button" class="ct-gnew" id="ctGrpNew">＋ Créer un groupe</button></div>
+      <p class="ct-note" style="margin-top:2px">Ex. « Trail du mardi » : envoie une séance à tout le groupe en un seul geste.</p>
+      <div id="ctGrpForm" hidden></div>
+      <div id="ctGroups"></div>
+    </div>
+
     <details class="ct-card ct-net" id="ctNet">
       <summary>Lien avec GitHub <span id="ctNetState"></span></summary>
       <p class="ct-note">À faire une seule fois par appareil. Ensuite, tout ce que tu changes ici s’applique tout seul, gratuitement et sans limite.</p>
@@ -2412,7 +2435,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.1 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.2 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -4942,7 +4965,7 @@
     if(window.__ecShareMode === 'breath' && window.ecBreathUrl) return window.ecBreathUrl();
     var base = SHARE_BASE_URL || ecCleanBase();
     // Coach : accès personnel de l'athlète choisi glissé dans le lien (ouverture directe, sans code)
-    if(window.__ecShareKey && window.__ecShareKey !== '__guest' && window.__ecShareKey.indexOf('h:') !== 0 && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', window.__ecShareKey); base = u.toString(); }catch(e){} }
+    if(window.__ecShareKey && window.__ecShareKey !== '__guest' && !/^[hg]:/.test(window.__ecShareKey) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', window.__ecShareKey); base = u.toString(); }catch(e){} }
     var p = encodeSession(session);
     return base + '#s=' + p + (window.__ecShareKey === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
   }
@@ -5339,7 +5362,7 @@
   }
   window.ecProgUrl = function(){
     var base = SHARE_BASE_URL || ecCleanBase(), k = window.__ecShareKey;
-    if(k && k !== '__guest' && k.indexOf('h:') !== 0 && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', k); base = u.toString(); }catch(e){} }
+    if(k && k !== '__guest' && !/^[hg]:/.test(k) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', k); base = u.toString(); }catch(e){} }
     var pl = programPayload(currentProgram), nm = (document.getElementById('athleteName').value || '').trim();
     if(nm) pl.n = nm;
     if(EC_IS_COACH) pl.by = 'Benoît';
@@ -6959,7 +6982,7 @@
       });
       return out;
     }
-    function sendSessTo(h, v, who, cmText){
+    function sendSessTo(h, v, who, cmText, label){
       var an = document.getElementById('athleteName'), cm = document.getElementById('shareCoachMsg');
       var keepN = an ? an.value : '', keepC = cm ? cm.value : '', keepMode = window.__ecShareMode, keepKey = window.__ecShareKey;
       if(v.indexOf('fav') === 0){
@@ -6972,7 +6995,7 @@
       var m = /#([spr])=([A-Za-z0-9_-]+)/.exec(url);
       var item = m ? {k:m[1], p:m[2], t:window.ecInboxTitle(m[1]), cm:cmText || undefined} : null;
       if(an) an.value = keepN; if(cm) cm.value = keepC; window.__ecShareMode = keepMode; window.__ecShareKey = keepKey;
-      if(item) window.ecInboxSend(h, item, who);
+      if(item) window.ecInboxSend(h, item, label || who);
     }
     function intlPhone(p){
       var d = String(p || '').replace(/[^0-9+]/g, '');
@@ -6983,8 +7006,9 @@
     }
     function setPhone(k, ph){ lsSet(CT_KEY, localKeys().map(function(x){ if(x.k === k) x.ph = ph || undefined; return x; })); }
     function usersStr(a){ var u = (a && a.users) || {}, o = {}; Object.keys(u).sort().forEach(function(k){ o[k] = u[k]; }); return JSON.stringify(o); }
+    function grpStr(a){ return JSON.stringify((a && a.groups) || {}); }
     function pending(){ var ib = JSON.stringify(lsGet('ec_coach_inbox', {}) || {}), pub = null; try{ pub = localStorage.getItem('ec_coach_inbox_pub'); }catch(e){}
-      return usersStr(draft) !== usersStr(remote) || (remoteMissing && draft && (Object.keys(draft.users).length > 0 || ib !== '{}')) || ib !== (pub || '{}'); }
+      return usersStr(draft) !== usersStr(remote) || (draft && grpStr(draft) !== grpStr(remote)) || (remoteMissing && draft && (Object.keys(draft.users).length > 0 || ib !== '{}')) || ib !== (pub || '{}'); }
     function saveDraft(){ lsSet(CT_DRAFT, draft); }
     function localKeys(){ return lsGet(CT_KEY, []); }
     function keyOf(h){ var l = localKeys(); for(var i = 0; i < l.length; i++) if(ecHash(l[i].k) === h) return l[i]; return null; }
@@ -7030,8 +7054,68 @@
       rows.sort(function(a, b){ return (ord[a.st.cls] - ord[b.st.cls]) || String(a.u.n).localeCompare(String(b.u.n), 'fr'); });
       return rows;
     }
+    // ----- Groupes
+    var openGrpSess = null, editGrp = null;
+    function grps(){ if(!draft.groups) draft.groups = {}; return draft.groups; }
+    function renderGroups(){
+      var G = grps(), ids = Object.keys(G), rows = allRows(), byH = {};
+      rows.forEach(function(r){ byH[r.h] = r; });
+      var fm = $('#ctGrpForm');
+      if(editGrp){
+        var g = editGrp === 'new' ? {n:'', m:[]} : (G[editGrp] || {n:'', m:[]});
+        var cand = rows.filter(function(r){ return (!r.stat || STATIC_LABEL[r.h].n) && (r.st.cls !== 'off' || g.m.indexOf(r.h) > -1); });
+        fm.hidden = false;
+        fm.innerHTML = '<div class="ct-ext"><label class="cp-lab" style="margin-top:0">Nom du groupe<input type="text" id="ctGrpName" class="ct-cm" maxlength="40" placeholder="ex. Trail du mardi" value="' + esc(g.n) + '"></label>'
+          + '<div class="cp-lab">Membres</div>'
+          + (cand.length ? '<div class="ct-gpick">' + cand.map(function(r){ return '<label><input type="checkbox" value="' + r.h + '"' + (g.m.indexOf(r.h) > -1 ? ' checked' : '') + '><span>' + esc(r.u.n) + (r.st.cls === 'off' ? ' <em>(' + esc(r.st.txt.toLowerCase()) + ')</em>' : '') + '</span></label>'; }).join('') + '</div>'
+            : '<p class="ct-note">Crée d\u2019abord des accès pour tes athlètes : ils apparaîtront ici.</p>')
+          + '<div class="ct-acts" style="margin-top:10px"><button type="button" data-g="save" class="send">Enregistrer</button><button type="button" data-g="cancel">Annuler</button></div></div>';
+      } else { fm.hidden = true; fm.innerHTML = ''; }
+      $('#ctGroups').innerHTML = ids.length ? ids.map(function(id){
+        var g = G[id], act = (window.ecGroupActive ? window.ecGroupActive(id) : g.m);
+        var names = g.m.filter(function(h){ return byH[h]; }).map(function(h){ return byH[h].u.n; });
+        var html = '<div class="ct-row" data-gid="' + id + '"><div class="ct-row-top"><div class="info"><b>👥 ' + esc(g.n) + '</b><span class="st on">' + act.length + ' membre' + (act.length > 1 ? 's' : '') + ' actif' + (act.length > 1 ? 's' : '') + (names.length ? ' · ' + esc(names.join(', ')) : '') + '</span></div></div>'
+          + '<div class="ct-row-acts"><button type="button" data-g="sess" class="send">📲 Séance au groupe</button><button type="button" data-g="edit">Modifier</button><button type="button" data-g="del" class="del">Supprimer</button></div>';
+        if(openGrpSess === id){
+          var ch = sessChoices();
+          html += '<div class="ct-ext ct-sess"><div class="ct-ext-q">Envoyer une séance dans l\u2019appli des ' + act.length + ' membre' + (act.length > 1 ? 's' : '') + ' de « ' + esc(g.n) + ' » :</div>'
+            + '<input type="text" class="ct-cm" maxlength="160" placeholder="Consigne (facultatif)">'
+            + (ch.length ? '<div class="ct-choices">' + ch.map(function(c){ return '<button type="button" data-g="sendsess" data-v="' + c.v + '"><span>' + c.ico + '</span>' + esc(c.t) + '</button>'; }).join('') + '</div>'
+              : '<p class="ct-note" style="margin-top:6px">Génère, compose ou mets en favori une séance d\u2019abord : elle apparaîtra ici.</p>')
+            + '<div class="ct-acts" style="margin-top:8px"><button type="button" data-compose>✍️ Composer une nouvelle séance</button></div></div>';
+        }
+        return html + '</div>';
+      }).join('') : (editGrp ? '' : '<p class="ct-empty">Aucun groupe pour l\u2019instant.</p>');
+    }
+    $('#ctGrpNew').addEventListener('click', function(){ editGrp = editGrp === 'new' ? null : 'new'; openGrpSess = null; renderGroups(); if(editGrp){ var n = $('#ctGrpName'); if(n) n.focus(); } });
+    $('#ctGroupsCard').addEventListener('click', function(e){
+      var b = e.target.closest('[data-g]'); if(!b) return;
+      var act = b.getAttribute('data-g'), row = b.closest('[data-gid]'), id = row && row.getAttribute('data-gid'), G = grps();
+      if(act === 'cancel'){ editGrp = null; renderGroups(); return; }
+      if(act === 'save'){
+        var n = ($('#ctGrpName').value || '').trim(), m = [].map.call(document.querySelectorAll('#ctGrpForm input[type=checkbox]:checked'), function(x){ return x.value; });
+        if(!n){ showToast('Donne un nom au groupe.', false); $('#ctGrpName').focus(); return; }
+        if(!m.length){ showToast('Coche au moins un membre.', false); return; }
+        var gid = editGrp === 'new' ? 'g' + Date.now().toString(36) : editGrp;
+        G[gid] = {n:n, m:m}; editGrp = null; saveDraft(); renderGroups(); autoSave();
+        showToast('Groupe « ' + n + ' » enregistré ✓', false); return;
+      }
+      if(!id || !G[id]) return;
+      if(act === 'sess'){ openGrpSess = openGrpSess === id ? null : id; editGrp = null; renderGroups(); return; }
+      if(act === 'edit'){ editGrp = id; openGrpSess = null; renderGroups(); $('#ctGrpForm').scrollIntoView({behavior:'smooth', block:'nearest'}); return; }
+      if(act === 'del'){
+        ecConfirm('Supprimer le groupe « ' + G[id].n + ' » ? Les accès de ses membres ne changent pas.', 'Supprimer', function(){ delete G[id]; saveDraft(); renderGroups(); autoSave(); }, true);
+        return;
+      }
+      if(act === 'sendsess'){
+        var hs = window.ecGroupActive(id), cmv = ((row.querySelector('.ct-cm') || {}).value || '').trim();
+        if(!hs.length){ showToast('Aucun membre actif dans ce groupe.', false); return; }
+        openGrpSess = null; sendSessTo(hs, b.getAttribute('data-v'), '', cmv, G[id].n); renderGroups();
+      }
+    });
     function renderCoach(){
       if(!draft) return;
+      renderGroups();
       var rows = allRows(), list = rows.filter(function(r){ return ctFilter === 'all' || r.st.cls === ctFilter || (ctFilter === 'off' && r.st.cls === 'off'); });
       $('#ctCount').textContent = rows.filter(function(r){ return r.st.cls !== 'off'; }).length + ' actif' + (rows.filter(function(r){ return r.st.cls !== 'off'; }).length > 1 ? 's' : '') + ' · ' + rows.length + ' au total';
       $('#ctList').innerHTML = list.length ? list.map(function(r){
@@ -7223,6 +7307,7 @@
     }
     function publish(net){
       var out = {v:1, updated:new Date().toISOString(), users:clone(draft.users)};
+      if(draft.groups && Object.keys(draft.groups).length) out.groups = clone(draft.groups);
       var files = inboxFiles(); files['acces.json'] = JSON.stringify(out, null, 1);
       var ibNow = inboxStr();
       publishing = true; renderPub('Enregistrement en ligne…');
@@ -7380,14 +7465,18 @@
             if(!extra.length && !keys.length) return '<option value="" disabled>Aucun athlète : crée d\u2019abord un accès dans l\u2019Espace coach</option>';
             return extra.length ? '<optgroup label="Envoi dans son appli (il a déjà son code) :">' + extra.map(function(h){ return '<option value="h:' + h + '"' + (cur === 'h:' + h ? ' selected' : '') + '>' + escapeHtml(dr[h].n) + '</option>'; }).join('') + '</optgroup>' : '';
           })()
+        + (function(){
+            var G = (lsGet('ec_coach_acl_draft', {}) || {}).groups || {}, ids = Object.keys(G);
+            return ids.length ? '<optgroup label="Groupe (envoi dans l\u2019appli de chacun) :">' + ids.map(function(id){ var n = window.ecGroupActive ? window.ecGroupActive(id).length : G[id].m.length; return '<option value="g:' + id + '"' + (cur === 'g:' + id ? ' selected' : '') + '>👥 ' + escapeHtml(G[id].n) + ' (' + n + ')</option>'; }).join('') + '</optgroup>' : '';
+          })()
         + (keys.length ? '<optgroup label="Ouvrir directement chez :">' + keys.map(function(r){ return '<option value="' + r.k + '"' + (r.k === cur ? ' selected' : '') + '>' + escapeHtml(r.n) + '</option>'; }).join('') + '</optgroup>' : '');
-      if(cur && cur !== '__guest' && cur.indexOf('h:') !== 0 && !keys.some(function(r){ return r.k === cur; })) window.__ecShareKey = '';
+      if(cur && cur !== '__guest' && !/^[hg]:/.test(cur) && !keys.some(function(r){ return r.k === cur; })) window.__ecShareKey = '';
       $('#shareAthleteWrap').hidden = false; updNote();
     }
     function updNote(){
       var n = document.getElementById('shareAthleteNote'), v = window.__ecShareKey;
       if(n) n.textContent = v === '__guest' ? 'La personne pourra faire uniquement cette séance, avec le chrono. Elle ne verra pas le reste de l\u2019appli et n\u2019aura aucun accès gardé.'
-        : (v && v.indexOf('h:') === 0 ? 'Appuie sur « Envoyer dans son appli » : la séance apparaîtra à sa prochaine ouverture. Le lien, lui, lui demandera son code.' : (v ? 'Son accès est glissé dans le lien. Le plus simple : « Envoyer dans son appli », la séance y apparaîtra à sa prochaine ouverture.' : 'L\u2019athlète tape son code s\u2019il ne l\u2019a pas encore sur ce téléphone.'));
+        : (v && v.indexOf('g:') === 0 ? 'Appuie sur « Envoyer au groupe » : la séance apparaîtra dans l\u2019appli de chaque membre à sa prochaine ouverture.' : v && v.indexOf('h:') === 0 ? 'Appuie sur « Envoyer dans son appli » : la séance apparaîtra à sa prochaine ouverture. Le lien, lui, lui demandera son code.' : (v ? 'Son accès est glissé dans le lien. Le plus simple : « Envoyer dans son appli », la séance y apparaîtra à sa prochaine ouverture.' : 'L\u2019athlète tape son code s\u2019il ne l\u2019a pas encore sur ce téléphone.'));
     }
     function rebuild(){
       if(!lastSession && window.__ecShareMode === 'renfo') return;
@@ -7402,6 +7491,7 @@
         var r = okKeys().filter(function(x){ return x.k === sel.value; })[0];
         var an = document.getElementById('athleteName');
         if(r && an) an.value = r.n;
+        if(!r && an && sel.value.indexOf('g:') === 0) an.value = '';
         if(!r && an && sel.value.indexOf('h:') === 0){ var u = ((lsGet('ec_coach_acl_draft', {}) || {}).users || {})[sel.value.slice(2)]; if(u && u.n) an.value = u.n; }
         rebuild();
       });
@@ -7589,7 +7679,7 @@
     }
     window.ecBreathUrl = function(){
       var base = SHARE_BASE_URL || ecCleanBase();
-      if(window.__ecShareKey && window.__ecShareKey !== '__guest' && window.__ecShareKey.indexOf('h:') !== 0 && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', window.__ecShareKey); base = u.toString(); }catch(e){} }
+      if(window.__ecShareKey && window.__ecShareKey !== '__guest' && !/^[hg]:/.test(window.__ecShareKey) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', window.__ecShareKey); base = u.toString(); }catch(e){} }
       var p = breathPayload();
       return base + '#r=' + p + (window.__ecShareKey === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
     };
@@ -7661,26 +7751,47 @@
     function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
     function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
     function txt(h){ var d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent; }
-    function targetHash(v){ return (!v || v === '__guest') ? null : (v.indexOf('h:') === 0 ? v.slice(2) : ecHash(v)); }
+    // Membres actifs d'un groupe (ni bloqués, ni supprimés, ni expirés)
+    window.ecGroupActive = function(id){
+      var d = lsGet('ec_coach_acl_draft', {}) || {}, g = (d.groups || {})[id], U = d.users || {}, t = new Date(); t.setHours(0,0,0,0);
+      if(!g) return [];
+      return (g.m || []).filter(function(h){
+        var u = U[h], st = EC_ACCESS.filter(function(e){ return e.h === h; })[0];
+        if(!u && !st) return false;
+        if(u && (u.b || u.d)) return false;
+        var exp = (u && u.exp) || (st && st.exp) || '';
+        if(exp){ var p = exp.split('-'); if(new Date(+p[0], +p[1] - 1, +p[2]) < t) return false; }
+        return true;
+      });
+    };
+    function targetHash(v){
+      if(!v || v === '__guest') return null;
+      if(v.indexOf('g:') === 0){ var a = window.ecGroupActive(v.slice(2)); return a.length ? a : null; }
+      return v.indexOf('h:') === 0 ? v.slice(2) : ecHash(v);
+    }
     function nameOf(v){
+      if(v && v.indexOf('g:') === 0){ var g = ((lsGet('ec_coach_acl_draft', {}) || {}).groups || {})[v.slice(2)]; return g ? g.n : ''; }
       var h = targetHash(v); if(!h) return '';
       var k = lsGet('ec_coach_keys', []).filter(function(r){ return ecHash(r.k) === h; })[0]; if(k) return k.n;
       var u = ((lsGet('ec_coach_acl_draft', {}) || {}).users || {})[h]; return u && u.n || '';
     }
     // ----- Côté coach : bouton « Envoyer dans son appli »
     var btn = $('#shareInbox'), sel = $('#shareAthlete');
-    function syncBtn(){ if(!btn) return; var h = targetHash(window.__ecShareKey); btn.hidden = !h; if(h) btn.textContent = '📲 Envoyer dans l’appli de ' + (nameOf(window.__ecShareKey) || 'l’athlète'); }
+    function syncBtn(){ if(!btn) return; var h = targetHash(window.__ecShareKey); btn.hidden = !h; if(h) btn.textContent = Array.isArray(h) ? '📲 Envoyer au groupe ' + nameOf(window.__ecShareKey) + ' (' + h.length + ')' : '📲 Envoyer dans l\u2019appli de ' + (nameOf(window.__ecShareKey) || 'l\u2019athlète'); }
     if(sel){ sel.addEventListener('change', syncBtn); new MutationObserver(syncBtn).observe($('#shareBackdrop'), {attributes:true, attributeFilter:['class']}); }
     window.ecInboxSend = function(h, item, who){
       var ib = lsGet('ec_coach_inbox', {}) || {};
       item.id = item.id || Date.now().toString(36); item.at = item.at || Date.now();
-      ib[h] = [item].concat(ib[h] || []).slice(0, 20); lsSet('ec_coach_inbox', ib);
+      var many = Array.isArray(h), n = many ? h.length : 1;
+      [].concat(h).forEach(function(x){ ib[x] = [Object.assign({}, item)].concat(ib[x] || []).slice(0, 20); });
+      lsSet('ec_coach_inbox', ib);
       who = who || 'l\u2019athlète';
       if(!EC_LOCK_ON){ showToast('Aperçu de travail : l\u2019envoi direct se fait depuis l\u2019appli en ligne.', false); return; }
       var net = lsGet('ec_coach_gh', null);
       if(!net || !net.token){ showToast('Relie d\u2019abord l\u2019appli à GitHub (Espace coach) : l\u2019envoi partira ensuite tout seul.', false); if(window.ecCoachOpen) window.ecCoachOpen(); return; }
       if(window.ecCoachSync) window.ecCoachSync();
-      showToast('Envoyé dans l\u2019appli de ' + who + ' ✓ Visible à sa prochaine ouverture (d\u2019ici 1 à 2 minutes).', false);
+      showToast(many ? 'Envoyé au groupe ' + who + ' ✓ ' + n + ' personne' + (n > 1 ? 's' : '') + '. Visible à leur prochaine ouverture (d\u2019ici 1 à 2 minutes).'
+        : 'Envoyé dans l\u2019appli de ' + who + ' ✓ Visible à sa prochaine ouverture (d\u2019ici 1 à 2 minutes).', false);
     };
     window.ecInboxTitle = function(k){
       if(k === 'r') return 'Respiration : ' + BREATH_INTENTIONS[lastBreathSession.intention].label.toLowerCase();
@@ -7761,7 +7872,7 @@
     }
     window.ecExUrl = function(){
       var base = SHARE_BASE_URL || ecCleanBase(), k = window.__ecShareKey;
-      if(k && k !== '__guest' && k.indexOf('h:') !== 0 && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', k); base = u.toString(); }catch(e){} }
+      if(k && k !== '__guest' && !/^[hg]:/.test(k) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', k); base = u.toString(); }catch(e){} }
       var p = exPayload();
       return base + '#e=' + p + (k === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
     };
@@ -7857,6 +7968,136 @@
     }
     window.ecComposeProg = openProgComposer;
     document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('[data-compose-prog]')){ e.preventDefault(); openProgComposer(); } }, true);
+  })();
+
+  // ---------- Programmer une séance dans son agenda (côté athlète) ----------
+  (function(){
+    function $(s){ return document.querySelector(s); }
+    function pad(n){ return ('0' + n).slice(-2); }
+    function stamp(d){ return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00'; }
+    function utcStamp(d){ return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + 'Z'; }
+    function icsText(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+    // Lignes de 75 octets au plus (règle du format agenda)
+    function fold(line){
+      var out = '', n = 0;
+      for(var i = 0; i < line.length; i++){
+        var ch = line[i], c = line.charCodeAt(i);
+        if(c >= 0xD800 && c <= 0xDBFF && i + 1 < line.length){ ch += line[++i]; }
+        var b = unescape(encodeURIComponent(ch)).length;
+        if(n + b > 73){ out += '\r\n '; n = 1; }
+        out += ch; n += b;
+      }
+      return out;
+    }
+    function txt(h){ var d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent; }
+    // Lien qui rouvre la séance (avec la clé de l'athlète pour qu'elle s'ouvre aussi hors de l'appli installée)
+    function sessionLink(kind){
+      var html = document.documentElement;
+      if(html.classList.contains('ec-guest')) return location.href;
+      var keepMode = window.__ecShareMode, keepKey = window.__ecShareKey, an = document.getElementById('athleteName'), cm = document.getElementById('shareCoachMsg');
+      var keepN = an ? an.value : '', keepC = cm ? cm.value : '', url = '';
+      try{
+        window.__ecShareKey = ''; if(cm) cm.value = '';
+        if(kind === 'breath'){ window.__ecShareMode = 'breath'; url = window.ecBreathUrl(); }
+        else if(lastSession && lastSession.programRef && currentProgram){ window.__ecShareMode = 'prog'; url = window.ecProgUrl(); }
+        else { window.__ecShareMode = 'renfo'; url = shareUrlFor(lastSession); }
+      }catch(e){ url = ecCleanBase(); }
+      window.__ecShareMode = keepMode; window.__ecShareKey = keepKey; if(an) an.value = keepN; if(cm) cm.value = keepC;
+      if(EC_KEY && !EC_IS_COACH){ try{ var u = new URL(url); u.searchParams.set('acces', EC_KEY); url = u.toString(); }catch(e){} }
+      return url;
+    }
+    function info(kind){
+      var box = kind === 'breath' ? $('#breathResults') : $('#results');
+      var t = box.querySelector('.session-title'), m = box.querySelector('.session-meta');
+      var title = (t ? t.textContent : 'Séance').trim(), mm = /(\d+)\s*min/.exec(m ? m.textContent : ''), mins = mm ? +mm[1] : 30;
+      if(kind !== 'breath' && lastSession && lastSession.programRef && currentProgram){
+        title = window.ecProgTitle() + ' · Semaine ' + (lastSession.programRef.week + 1) + ' · Séance ' + 'ABCDEFG'.charAt(lastSession.programRef.slot);
+      }
+      return {title:(kind === 'breath' ? '🌬️ ' : '💪 ') + title, mins:Math.max(5, mins), url:sessionLink(kind)};
+    }
+    function buildIcs(o, start, reps){
+      var end = new Date(start.getTime() + o.mins * 60000), now = new Date();
+      var desc = 'Ta séance Ethik\u2019Coach (' + o.mins + ' min environ).\nOuvre ce lien au moment de la faire :\n' + o.url;
+      var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ethik Coach//Appli//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+        'UID:' + now.getTime().toString(36) + Math.random().toString(36).slice(2, 8) + '@ethikcoach.fr', 'DTSTAMP:' + utcStamp(now),
+        'DTSTART:' + stamp(start), 'DTEND:' + stamp(end)];
+      if(reps > 1) L.push('RRULE:FREQ=WEEKLY;COUNT=' + reps);
+      L.push('SUMMARY:' + icsText(o.title), 'DESCRIPTION:' + icsText(desc), 'URL:' + o.url,
+        'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT30M', 'DESCRIPTION:' + icsText(o.title), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR');
+      return L.map(fold).join('\r\n') + '\r\n';
+    }
+    function googleUrl(o, start, reps){
+      var end = new Date(start.getTime() + o.mins * 60000), tz = '';
+      try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }catch(e){}
+      return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(o.title)
+        + '&dates=' + stamp(start) + '/' + stamp(end) + (tz ? '&ctz=' + encodeURIComponent(tz) : '')
+        + '&details=' + encodeURIComponent('Ta séance Ethik\u2019Coach (' + o.mins + ' min environ). Ouvre ce lien au moment de la faire :\n' + o.url)
+        + (reps > 1 ? '&recur=' + encodeURIComponent('RRULE:FREQ=WEEKLY;COUNT=' + reps) : '');
+    }
+    function isApple(){ return /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) && ('ontouchend' in document || /iPhone|iPad/.test(navigator.userAgent)); }
+    function openIcs(ics){
+      window.__ecLastIcs = ics;
+      if(isApple()){ location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics); return; }
+      var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'}), a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'seance-ethikcoach.ics';
+      document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }
+    function iso(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    var lastTime = '18:00';
+    try{ lastTime = localStorage.getItem('ec_cal_time') || '18:00'; }catch(e){}
+    function openDialog(kind){
+      var o = info(kind);
+      var old = document.getElementById('calDialog'); if(old) old.remove();
+      var tm = new Date(); tm.setDate(tm.getDate() + 1);
+      var wrap = document.createElement('div'); wrap.id = 'calDialog'; wrap.className = 'ec-dialog-backdrop';
+      wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Programmer dans mon agenda">'
+        + '<p class="ec-dialog-msg">📅 Programmer dans mon agenda</p>'
+        + '<p class="cp-note" style="margin-top:0">' + escapeHtml(o.title) + ' · ' + o.mins + ' min</p>'
+        + '<div class="cal-row"><label class="cp-lab">Jour<input type="date" id="calDate" class="ec-dialog-input" value="' + iso(tm) + '" min="' + iso(new Date()) + '"></label>'
+        + '<label class="cp-lab">Heure<input type="time" id="calTime" class="ec-dialog-input" value="' + lastTime + '" step="300"></label></div>'
+        + '<div class="cp-lab">Répéter chaque semaine</div><div class="cp-chips" id="calRep">'
+        + [[1, 'Non'], [4, '4 semaines'], [8, '8 semaines']].map(function(r, i){ return '<button type="button" class="chip' + (i === 0 ? ' active' : '') + '" data-v="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>'
+        + '<p class="cp-note">Un rappel te prévient 30 minutes avant. Dans l\u2019agenda, le lien rouvre directement ta séance.</p>'
+        + '<div class="cal-acts"><button type="button" class="ct-btn" id="calIcs">Ajouter à mon agenda</button>'
+        + '<button type="button" class="ct-btn ghost" id="calGoogle">Ajouter à Google Agenda</button></div>'
+        + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel">Fermer</button></div></div>';
+      document.body.appendChild(wrap);
+      var rep = wrap.querySelector('#calRep');
+      rep.addEventListener('click', function(e){ var c = e.target.closest('.chip'); if(!c) return; rep.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('active', x === c); }); });
+      function close(){ wrap.remove(); }
+      wrap.querySelector('.ec-dialog-cancel').addEventListener('click', close);
+      wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+      function when(){
+        var d = wrap.querySelector('#calDate').value, t = wrap.querySelector('#calTime').value || '18:00';
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){ showToast('Choisis un jour.', false); return null; }
+        var p = d.split('-'), h = t.split(':');
+        lastTime = t; try{ localStorage.setItem('ec_cal_time', t); }catch(e){}
+        var a = rep.querySelector('.chip.active');
+        return {start:new Date(+p[0], +p[1] - 1, +p[2], +h[0] || 0, +h[1] || 0), reps:a ? +a.getAttribute('data-v') : 1};
+      }
+      wrap.querySelector('#calIcs').addEventListener('click', function(){
+        var w = when(); if(!w) return;
+        close(); openIcs(buildIcs(o, w.start, w.reps));
+        showToast('Valide l\u2019ajout dans ton agenda ✓', false);
+      });
+      wrap.querySelector('#calGoogle').addEventListener('click', function(){
+        var w = when(); if(!w) return;
+        close(); window.open(googleUrl(o, w.start, w.reps), '_blank', 'noopener');
+      });
+    }
+    window.ecCalOpen = openDialog;
+    function addBtn(box, kind){
+      var acts = box.querySelector('.session-actions');
+      if(!acts || acts.querySelector('.cal-btn')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'cal-btn'; b.textContent = '📅 Programmer dans mon agenda';
+      b.addEventListener('click', function(){ openDialog(kind); });
+      acts.appendChild(b);
+    }
+    [['#results', 'renfo'], ['#breathResults', 'breath']].forEach(function(p){
+      var box = $(p[0]); if(!box) return;
+      new MutationObserver(function(){ addBtn(box, p[1]); }).observe(box, {childList:true, subtree:true});
+      addBtn(box, p[1]);
+    });
   })();
 
   // ---------- Bouton retour du téléphone ----------
