@@ -1879,6 +1879,8 @@
   html:not(.ec-coach) .session-info-bar{display:none !important;}
   html:not(.ec-coach) .coach-only{display:none !important;}
   .coach-tools{display:none;}
+  html:not(.ec-coach) [data-bn="espace"]{display:none !important;}
+  html.ec-coach .athlete-only{display:none !important;}
   html.ec-coach .coach-tools{display:block;}
   .ct-inner{max-width:860px; margin:0 auto; padding:8px 16px 24px;}
   .coach-tools h2{font-size:1.25rem;}
@@ -2061,6 +2063,27 @@
   .ex-adj .ta-step output{min-width:70px; font-size:0.95rem;}
   .ex-adj-mark{display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:#F0CF86; color:#17352A; font-size:0.68rem; font-weight:800; vertical-align:1px;}
   @media screen and (prefers-color-scheme: dark){ .ex-adj{background:#1E3528;} .ex-adj .ta-step button{background:#2A4535;} }
+  .coach-tools .ct-inner{padding-top:14px;}
+  .ct-hero{position:relative; overflow:hidden; padding:22px 20px 18px; margin-bottom:12px; border-radius:24px; background:var(--hero-renfo); color:#fff; box-shadow:var(--shadow-2);}
+  .ct-hero::after{content:''; position:absolute; right:-60px; top:-70px; width:220px; height:220px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 70%); pointer-events:none;}
+  .ct-hero h1{position:relative; color:#fff; font-size:1.65rem; font-weight:800; line-height:1.12; margin:0;}
+  .ct-hero p{position:relative; color:rgba(255,255,255,0.82); font-size:0.9rem; margin:6px 0 0;}
+  .ct-hero-stats{position:relative; display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .ct-hero-stats span{padding:6px 11px; border-radius:999px; background:rgba(255,255,255,0.14); font-size:0.78rem; font-weight:700;}
+  .ct-hero-stats span.warn{background:#F0CF86; color:#17352A;}
+  .ct-tabs{position:sticky; top:0; z-index:5; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px; padding:4px; margin:0 0 12px; border-radius:16px; background:var(--card); box-shadow:var(--shadow-1);}
+  .ct-tabs button{display:flex; flex-direction:column; align-items:center; gap:2px; min-height:52px; padding:6px 2px; border:none; border-radius:12px; background:transparent; color:var(--stone); font-family:inherit; font-size:0.78rem; font-weight:700; cursor:pointer;}
+  .ct-tabs button span{font-size:1.1rem; line-height:1;}
+  .ct-tabs button.active{background:var(--forest); color:#fff;}
+  .ct-pane[hidden]{display:none;}
+  .coach-tools .ct-pub.ok{display:none;}
+  .ct-x{flex:none; width:34px; height:34px; border:none; border-radius:50%; background:var(--chip); color:var(--ink); font-size:1.3rem; line-height:1; cursor:pointer;}
+  .ct-count{margin:2px 0 8px; font-size:0.8rem; color:var(--stone);}
+  .ct-go{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px;}
+  .ct-go .ct-btn{margin-top:8px; font-size:0.86rem; padding:0 6px;}
+  #ctCreateCard{box-shadow:var(--shadow-1), inset 0 0 0 2px var(--forest);}
+  .bnav [data-bn="espace"]{font-size:0.66rem; letter-spacing:-0.01em; white-space:nowrap;}
+  @media screen and (prefers-color-scheme: dark){ .ct-tabs button.active{background:#3A8558;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2374,26 +2397,30 @@
   </section>
 </main>
 
-<section class="coach-tools" id="coachTools">
+<section class="coach-tools" id="coachTools" style="display:none;">
   <div class="ct-inner">
-    <button type="button" class="ct-head" id="ctHead" aria-expanded="true" aria-controls="ctBody"><span class="ct-title">Espace coach</span><span class="ct-mini" id="ctMini"></span><span class="ct-chev" aria-hidden="true"></span></button>
-    <div id="ctBody">
-    <p class="ct-sub">Visible uniquement avec ta clé coach.</p>
+    <div class="ct-hero">
+      <h1>Espace coach</h1>
+      <p>Tes athlètes, tes groupes et tes envois. Visible uniquement avec ta clé coach.</p>
+      <div class="ct-hero-stats" id="ctMini"></div>
+    </div>
 
     <div class="ct-pub" id="ctPub">
       <div class="ct-pub-txt" id="ctPubTxt">Chargement des accès…</div>
       <button type="button" class="ct-pub-btn" id="ctPubBtn" hidden>Publier</button>
     </div>
 
-    <div class="ct-card ct-compose">
-      <h3>Composer une séance</h3>
-      <p class="ct-note" style="margin-top:0">Choisis toi-même chaque exercice, puis envoie la séance à un athlète.</p>
-      <button type="button" class="ct-btn" data-compose>✍️ Composer une séance</button>
-      <button type="button" class="ct-btn ghost" data-compose-prog>📅 Composer un programme</button>
+    <div class="ct-tabs" id="ctTabs" role="tablist">
+      <button type="button" role="tab" data-pane="ath"><span>👤</span>Athlètes</button>
+      <button type="button" role="tab" data-pane="grp"><span>👥</span>Groupes</button>
+      <button type="button" role="tab" data-pane="send"><span>✍️</span>Séances</button>
+      <button type="button" role="tab" data-pane="set"><span>⚙️</span>Réglages</button>
     </div>
 
-    <div class="ct-card">
-      <h3>Créer un accès pour un athlète</h3>
+    <div class="ct-pane" data-pane="ath">
+    <div class="ct-card" id="ctCreateCard" hidden>
+      <div class="ct-h3row"><h3>Nouvel athlète</h3><button type="button" class="ct-x" id="ctCreateClose" aria-label="Fermer">×</button></div>
+      <p class="ct-note" style="margin-top:2px">Crée sa clé d’accès personnelle, puis envoie-la-lui.</p>
       <div class="ct-form">
         <label>Prénom<input type="text" id="ctName" placeholder="ex. Marie" autocomplete="off"></label>
         <label>Accès jusqu'au<input type="date" id="ctExp"></label>
@@ -2404,7 +2431,8 @@
     </div>
 
     <div class="ct-card">
-      <div class="ct-h3row"><h3>Mes athlètes</h3><span class="ct-count" id="ctCount"></span></div>
+      <div class="ct-h3row"><h3>Mes athlètes</h3><button type="button" class="ct-gnew" id="ctCreateOpen">＋ Nouvel athlète</button></div>
+      <p class="ct-count" id="ctCount"></p>
       <div class="ct-filter" id="ctFilter">
         <button type="button" class="chip active" data-f="all">Tous</button>
         <button type="button" class="chip" data-f="on">Actifs</button>
@@ -2413,15 +2441,33 @@
       </div>
       <div id="ctList"></div>
     </div>
+    </div>
 
+    <div class="ct-pane" data-pane="grp">
     <div class="ct-card" id="ctGroupsCard">
       <div class="ct-h3row"><h3>Mes groupes</h3><button type="button" class="ct-gnew" id="ctGrpNew">＋ Créer un groupe</button></div>
       <p class="ct-note" style="margin-top:2px">Ex. « Trail du mardi » : envoie une séance à tout le groupe en un seul geste.</p>
       <div id="ctGrpForm" hidden></div>
       <div id="ctGroups"></div>
     </div>
+    </div>
 
-    <details class="ct-card ct-net" id="ctNet">
+    <div class="ct-pane" data-pane="send">
+    <div class="ct-card ct-compose">
+      <h3>Composer moi-même</h3>
+      <p class="ct-note" style="margin-top:0">Choisis chaque exercice, puis envoie le tout à un athlète ou à un groupe.</p>
+      <button type="button" class="ct-btn" data-compose>✍️ Composer une séance</button>
+      <button type="button" class="ct-btn ghost" data-compose-prog>📅 Composer un programme</button>
+    </div>
+    <div class="ct-card">
+      <h3>Envoyer une séance générée</h3>
+      <p class="ct-note" style="margin-top:0">Génère une séance, puis appuie sur « Envoyer » et choisis l’athlète ou le groupe dans « Pour qui ? ». Tu peux aussi l’envoyer depuis « 📲 Séance » dans Athlètes ou Groupes.</p>
+      <div class="ct-go"><button type="button" class="ct-btn ghost" data-ct-go="renfo">💪 Renfo</button><button type="button" class="ct-btn ghost" data-ct-go="breath">🌬️ Respiration</button><button type="button" class="ct-btn ghost" data-ct-go="lib">📚 Exercices</button></div>
+    </div>
+    </div>
+
+    <div class="ct-pane" data-pane="set">
+    <details class="ct-card ct-net" id="ctNet" open>
       <summary>Lien avec GitHub <span id="ctNetState"></span></summary>
       <p class="ct-note">À faire une seule fois par appareil. Ensuite, tout ce que tu changes ici s’applique tout seul, gratuitement et sans limite.</p>
       <ol class="ct-steps">
@@ -2437,6 +2483,10 @@
       </div>
       <div class="ct-acts"><button type="button" id="ctNetSave">Relier</button><button type="button" id="ctNetForget">Délier</button></div>
     </details>
+    <div class="ct-card">
+      <h3>Clé coach</h3>
+      <p class="ct-note" style="margin-top:0">Ta clé coach reste sur tes appareils : elle n’apparaît jamais dans les liens envoyés aux athlètes. Le code GitHub, lui, n’est enregistré que sur cet appareil et n’est jamais inclus dans les sauvegardes.</p>
+    </div>
     </div>
   </div>
 </section>
@@ -2465,14 +2515,15 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.5 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.6 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
   <button type="button" data-bn="breath"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Respiration</button>
   <button type="button" data-bn="lib"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>Exercices</button>
   <button type="button" data-bn="suivi"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Suivi</button>
-  <button type="button" data-bn="coach"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9.5h8M8 12.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Coach</button>
+  <button type="button" data-bn="espace" class="coach-only"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15.5 5.2a3 3 0 0 1 0 5.6M17.5 14.4c1.7.6 2.7 2.2 3 4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Espace coach</button>
+  <button type="button" data-bn="coach" class="athlete-only"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9.5h8M8 12.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Coach</button>
 </nav>
 <div class="ob-backdrop" id="obBackdrop" hidden>
   <div class="ob-box" role="dialog" aria-modal="true" aria-label="Bienvenue">
@@ -6871,7 +6922,7 @@
     function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 
     // ===== Navigation entre les pages =====
-    var EXTRA = {lib:'libView', suivi:'suiviView'};
+    var EXTRA = {lib:'libView', suivi:'suiviView', espace:'coachTools'};
     window.__ecView = 'renfo';
     function hideExtra(){ Object.keys(EXTRA).forEach(function(k){ var v = document.getElementById(EXTRA[k]); if(v) v.style.display = 'none'; }); }
     ['tabRenfoBtn', 'tabBreathBtn'].forEach(function(id){
@@ -6902,8 +6953,7 @@
       var b = e.target.closest('[data-bn]'); if(!b) return;
       var k = b.getAttribute('data-bn');
       if(k === 'coach'){
-        var isCoach = document.documentElement.classList.contains('ec-coach'), target = isCoach ? $('#coachTools') : $('#ethikBlock');
-        if(isCoach && window.ecCoachOpen) window.ecCoachOpen();
+        var target = $('#ethikBlock');
         window.scrollTo({top:target.getBoundingClientRect().top + window.pageYOffset - 8, behavior:'smooth'});
         return;
       }
@@ -7301,18 +7351,34 @@
       }).join('') : '<p class="sv-empty">' + (rows.length ? 'Personne dans cette catégorie.' : 'Aucun accès pour l’instant. Crée la première clé ci-dessus.') + '</p>';
       renderPub();
     }
-    var ctHead = $('#ctHead');
-    function setCtOpen(open){ if(!ctHead) return; ctHead.setAttribute('aria-expanded', open ? 'true' : 'false'); try{ localStorage.setItem('ec_coach_min', open ? '0' : '1'); }catch(e){} }
-    window.ecCoachOpen = function(){ setCtOpen(true); };
-    if(ctHead){
-      var wasMin = false; try{ wasMin = localStorage.getItem('ec_coach_min') === '1'; }catch(e){}
-      setCtOpen(!wasMin);
-      ctHead.addEventListener('click', function(){ setCtOpen(ctHead.getAttribute('aria-expanded') !== 'true'); });
+    // Sous-onglets de l'Espace coach
+    var ctPane = 'ath';
+    try{ ctPane = localStorage.getItem('ec_coach_pane') || 'ath'; }catch(e){}
+    function setPane(p){
+      ctPane = p;
+      document.querySelectorAll('#ctTabs [data-pane]').forEach(function(b){ var on = b.getAttribute('data-pane') === p; b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      document.querySelectorAll('#coachTools .ct-pane').forEach(function(x){ x.hidden = x.getAttribute('data-pane') !== p; });
+      try{ localStorage.setItem('ec_coach_pane', p); }catch(e){}
     }
+    setPane(ctPane);
+    $('#ctTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-pane]'); if(b){ setPane(b.getAttribute('data-pane')); } });
+    window.ecCoachOpen = function(p){ if(window.ecShowView) window.ecShowView('espace'); if(p) setPane(p); window.scrollTo(0, 0); };
+    $('#coachTools').addEventListener('click', function(e){
+      var g = e.target.closest('[data-ct-go]'); if(!g) return;
+      if(window.ecShowView) window.ecShowView(g.getAttribute('data-ct-go')); window.scrollTo(0, 0);
+    });
+    function showCreate(on){ $('#ctCreateCard').hidden = !on; if(on){ $('#ctName').focus(); } }
+    $('#ctCreateOpen').addEventListener('click', function(){ showCreate($('#ctCreateCard').hidden); });
+    $('#ctCreateClose').addEventListener('click', function(){ showCreate(false); $('#ctOut').hidden = true; });
     function renderMini(){
-      var m = $('#ctMini'); if(!m) return;
-      var c = ($('#ctCount') || {}).textContent || '', p = ($('#ctPubTxt') || {}).textContent || '';
-      m.textContent = (c.split(' · ')[0] || '') + (p ? (/^✓/.test(p) ? ' · ✓ à jour' : (/Enregistrement/.test(p) ? ' · enregistrement…' : (EC_LOCK_ON ? ' · ⚠ à faire' : ''))) : '');
+      var m = $('#ctMini'); if(!m || !draft) return;
+      var rows = allRows(), act = rows.filter(function(r){ return r.st.cls !== 'off'; }).length, soon = rows.filter(function(r){ return r.st.cls === 'soon'; }).length;
+      var ng = Object.keys(draft.groups || {}).length, p = ($('#ctPubTxt') || {}).textContent || '';
+      var st = /^✓/.test(p) ? '✓ En ligne' : (/Enregistrement/.test(p) ? '⏳ Enregistrement…' : (EC_LOCK_ON ? '⚠ À relier' : ''));
+      m.innerHTML = '<span>' + act + ' athlète' + (act > 1 ? 's' : '') + ' actif' + (act > 1 ? 's' : '') + '</span>'
+        + (soon ? '<span class="warn">' + soon + ' bientôt fini' + (soon > 1 ? 's' : '') + '</span>' : '')
+        + '<span>' + ng + ' groupe' + (ng > 1 ? 's' : '') + '</span>' + (st ? '<span>' + st + '</span>' : '');
+      if(!rows.filter(function(r){ return !r.stat; }).length && $('#ctCreateCard').hidden && !$('#ctCreateCard').dataset.seen){ $('#ctCreateCard').dataset.seen = 1; showCreate(true); }
     }
     function renderPub(msg){
       setTimeout(renderMini, 0);
@@ -7395,7 +7461,7 @@
       });
       $('#ctPubBtn').addEventListener('click', function(){
         var net = lsGet(CT_NET, null);
-        if(!net || !net.token){ $('#ctNet').open = true; $('#ctNet').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+        if(!net || !net.token){ window.ecCoachOpen('set'); $('#ctNet').open = true; return; }
         publish(net);
       });
       $('#ctNetSave').addEventListener('click', function(){
@@ -7935,7 +8001,7 @@
       who = who || 'l\u2019athlète';
       if(!EC_LOCK_ON){ showToast('Aperçu de travail : l\u2019envoi direct se fait depuis l\u2019appli en ligne.', false); return; }
       var net = lsGet('ec_coach_gh', null);
-      if(!net || !net.token){ showToast('Relie d\u2019abord l\u2019appli à GitHub (Espace coach) : l\u2019envoi partira ensuite tout seul.', false); if(window.ecCoachOpen) window.ecCoachOpen(); return; }
+      if(!net || !net.token){ showToast('Relie d\u2019abord l\u2019appli à GitHub (Espace coach) : l\u2019envoi partira ensuite tout seul.', false); if(window.ecCoachOpen) window.ecCoachOpen('set'); return; }
       if(window.ecCoachSync) window.ecCoachSync();
       showToast(many ? 'Envoyé au groupe ' + who + ' ✓ ' + n + ' personne' + (n > 1 ? 's' : '') + '. Visible à leur prochaine ouverture (d\u2019ici 1 à 2 minutes).'
         : 'Envoyé dans l\u2019appli de ' + who + ' ✓ Visible à sa prochaine ouverture (d\u2019ici 1 à 2 minutes).', false);
@@ -7955,7 +8021,7 @@
       return;
       if(!EC_LOCK_ON){ showToast('Aperçu de travail : l’envoi direct se fait depuis l’appli en ligne.', false); return; }
       var net = lsGet('ec_coach_gh', null);
-      if(!net || !net.token){ showToast('Relie d’abord l’appli à GitHub (Espace coach).', false); if(window.ecCoachOpen) window.ecCoachOpen(); return; }
+      if(!net || !net.token){ showToast('Relie d’abord l’appli à GitHub (Espace coach).', false); if(window.ecCoachOpen) window.ecCoachOpen('set'); return; }
       if(window.ecCoachSync) window.ecCoachSync();
       showToast('Envoyé dans l’appli de ' + who + ' ✓ Elle s’affichera à sa prochaine ouverture.', false);
     });
@@ -8322,7 +8388,7 @@
     var LAYERS = [
       {k:'renfoRes', open:function(){ var v = q('#renfoView'); return !!(v && v.classList.contains('collapsed')); },
         close:function(){ var b = q('#renfoView .ps-edit'); if(b) b.click(); }},
-      {k:'xview', open:function(){ return window.__ecView === 'lib' || window.__ecView === 'suivi'; },
+      {k:'xview', open:function(){ return window.__ecView === 'lib' || window.__ecView === 'suivi' || window.__ecView === 'espace'; },
         close:function(){ window.ecShowView('renfo'); window.scrollTo(0, 0); }},
       {k:'ob', open:function(){ var o = document.getElementById('obBackdrop'); return !!(o && !o.hidden); },
         close:function(){ var b = document.getElementById('obSkip'); if(b) b.click(); }},
