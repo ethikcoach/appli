@@ -2089,6 +2089,48 @@
   #ctCreateCard{box-shadow:var(--shadow-1), inset 0 0 0 2px var(--forest);}
   .bnav [data-bn="espace"]{font-size:0.66rem; letter-spacing:-0.01em; white-space:nowrap;}
   @media screen and (prefers-color-scheme: dark){ .ct-tabs button.active{background:#3A8558;} }
+  /* ---------- Formulaires en tuiles avec pictogrammes ---------- */
+  .compact-form > .field{padding:14px 14px 14px !important; margin-bottom:10px !important;}
+  .compact-form .field-label{margin-bottom:10px;}
+  .compact-form .tile-grid{display:grid !important; grid-template-columns:repeat(4, minmax(0,1fr)) !important; gap:8px !important; flex-direction:initial;}
+  .compact-form .tile-grid .equip-sub{grid-column:1 / -1; margin:2px 0 -2px !important;}
+  .compact-form .tile-grid .chip.tile{position:relative; display:flex !important; flex-direction:column; align-items:center; justify-content:flex-start; gap:5px;
+    width:auto !important; min-width:0; min-height:76px; padding:10px 3px 8px !important; border-radius:16px !important; text-align:center;
+    background:var(--chip) !important; color:var(--ink); box-shadow:inset 0 0 0 1px var(--ring-line); font-weight:700;}
+  .compact-form .tile-grid .chip.tile::before{display:none !important;}
+  .compact-form .tile-grid .chip.tile .toggle-box{display:none;}
+  .compact-form .tile-grid .chip.tile small{display:none;}
+  .compact-form .tile .t-ico{display:flex; align-items:center; justify-content:center; width:40px; height:34px; border-radius:12px; color:var(--forest);}
+  .compact-form .tile .t-ico svg{width:28px; height:28px;}
+  .compact-form .tile .t-lab{font-size:0.72rem; line-height:1.15; hyphens:auto; -webkit-hyphens:auto; overflow-wrap:anywhere;}
+  .compact-form .tile-grid .chip.tile.active{background:var(--forest) !important; color:#fff !important; box-shadow:0 4px 12px rgba(31,64,48,0.25) !important;}
+  .compact-form .tile-grid .chip.tile.active .t-ico{color:#fff;}
+  .compact-form .tile-grid .chip.tile.active::after{content:''; position:absolute; top:6px; right:6px; width:16px; height:16px; border-radius:50%; background:#fff;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8.2l2.3 2.3 4.7-4.9' fill='none' stroke='%231F4030' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
+  .compact-form #equipGroup.tile-grid{grid-template-columns:repeat(15, minmax(0,1fr)) !important;}
+  .compact-form #equipGroup .chip.tile{grid-column:span 5;}
+  .compact-form #equipGroup .chip.tile:is([data-equip="tapis"],[data-equip="rameur"],[data-equip="velo"],[data-equip="elliptique"],[data-equip="corde"]){grid-column:span 3; min-height:68px; padding-left:1px !important; padding-right:1px !important;}
+  .compact-form #equipGroup .chip.tile:is([data-equip="tapis"],[data-equip="rameur"],[data-equip="velo"],[data-equip="elliptique"],[data-equip="corde"]) .t-lab{font-size:0.66rem;}
+  .compact-form #equipGroup .chip.tile.active{background:var(--forest) !important; color:#fff !important; box-shadow:0 4px 12px rgba(31,64,48,0.25) !important;}
+  .compact-form .tile .t-lab{display:block; width:100%; text-align:center;}
+  .compact-form .tile-grid.two{grid-template-columns:repeat(2, minmax(0,1fr)) !important;}
+  .compact-form .tile-grid.two .chip.tile{min-height:70px;}
+  .compact-form #themeGroup .theme-sub{grid-column:1 / -1; margin:6px 0 -2px !important; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em;}
+  .compact-form .tile-grid .chip.tile:has(small){border-radius:16px !important;}
+  .compact-form .tile-note{margin:8px 2px 0; font-size:0.8rem; color:var(--stone); line-height:1.35;}
+  .compact-form .tile-note:empty{display:none;}
+  .compact-form .seg-row{display:grid !important; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px;}
+  .compact-form .seg-row .chip{width:auto !important; padding:10px 4px !important; text-align:center; justify-content:center;}
+  .compact-form .seg-row .chip small{display:none;}
+  .compact-form .seg-row .chip.active::before{display:none !important;}
+  .compact-form #breathGuideGroup{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px;}
+  .compact-form #breathGuideGroup .chip{justify-content:center; text-align:center; padding:10px 4px;}
+  @media (min-width:1100px){ .compact-form .tile .t-lab{font-size:0.7rem;} }
+  @media (min-width:900px){ .compact-form #equipGroup .chip.tile:is([data-equip="tapis"],[data-equip="rameur"],[data-equip="velo"],[data-equip="elliptique"],[data-equip="corde"]) .t-lab{font-size:0.58rem; letter-spacing:-0.02em;} }
+  @media screen and (prefers-color-scheme: dark){
+    .compact-form .tile .t-ico{color:#A7D8B4;}
+    .compact-form .tile-grid .chip.tile.active{background:#3A8558 !important;}
+  }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2521,7 +2563,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.9 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.0 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -8423,6 +8465,122 @@
     document.addEventListener('click', function(e){
       if(e.target.closest && e.target.closest('[data-time-adj]')){ e.preventDefault(); openAdj(); }
     });
+  })();
+
+  // ---------- Formulaires plus synthétiques : tuiles avec pictogrammes ----------
+  (function(){
+    function svg(d){ return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; }
+    var I = {
+      poids_du_corps: '<circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6.5M12 9l-5.5-4M12 9l5.5-4M12 14l-4 6.5M12 14l4 6.5"/>',
+      trx: '<path d="M12 2v3M12 5 7 15.5M12 5l5 10.5"/><rect x="4.5" y="15.5" width="5" height="3.5" rx="1.5"/><rect x="14.5" y="15.5" width="5" height="3.5" rx="1.5"/>',
+      kettlebell: '<path d="M8.5 10.5V9a3.5 3.5 0 0 1 7 0v1.5"/><circle cx="12" cy="15" r="5.5"/>',
+      halteres: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>',
+      elastiques: '<path d="M3 9v6M21 9v6M3 12c3-5 6 5 9 0s6 5 9 0"/>',
+      barre_traction: '<path d="M2.5 4.5h19M5 4.5V21M19 4.5V21"/><circle cx="12" cy="10.5" r="1.8"/><path d="M10 4.5l1 4M14 4.5l-1 4M12 12.5v5"/>',
+      tapis: '<path d="M2.5 18.5h15.5a2.5 2.5 0 0 0 2.5-2.5M17.5 16l2.5-10M17.5 6h4.5"/><circle cx="11" cy="4.5" r="1.6"/><path d="M11 6.5 10 11l3 2.5M10 11l-3.5 3M10.5 8.5l3-.5"/>',
+      rameur: '<path d="M2 19h20"/><rect x="5" y="14.5" width="5" height="2.5" rx="1"/><circle cx="18" cy="13" r="3.5"/><path d="M10 14.5l4.5-3"/>',
+      velo: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5.5L18 16M10 9l3 7h-7M9 6.5h3"/>',
+      elliptique: '<path d="M12 4v7M9 4h6M6.5 20 12 11l5.5 9"/><ellipse cx="12" cy="17.5" rx="6" ry="2"/>',
+      corde: '<path d="M6.5 17C6.5 3 17.5 3 17.5 17"/><path d="M6.5 17v4M17.5 17v4"/>',
+      debutant: '<rect x="4" y="15" width="4" height="5" rx="1" fill="currentColor"/><rect x="10" y="10" width="4" height="10" rx="1"/><rect x="16" y="5" width="4" height="15" rx="1"/>',
+      intermediaire: '<rect x="4" y="15" width="4" height="5" rx="1" fill="currentColor"/><rect x="10" y="10" width="4" height="10" rx="1" fill="currentColor"/><rect x="16" y="5" width="4" height="15" rx="1"/>',
+      avance: '<rect x="4" y="15" width="4" height="5" rx="1" fill="currentColor"/><rect x="10" y="10" width="4" height="10" rx="1" fill="currentColor"/><rect x="16" y="5" width="4" height="15" rx="1" fill="currentColor"/>',
+      senior: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
+      recup: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4h-4"/>',
+      calme: '<path d="M3 9.5c2.5-3 5.5-3 9 0s6.5 3 9 0M3 15c2.5-3 5.5-3 9 0s6.5 3 9 0"/>',
+      sommeil: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/>',
+      recentrer: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+      allonge: '<circle cx="4.5" cy="13" r="2"/><path d="M7.5 14h13M2 18h20"/>',
+      sol: '<circle cx="8" cy="5" r="2"/><path d="M8 8v7h9M8 10.5l4.5 2.5M3 18.5h18"/>',
+      assis: '<circle cx="9" cy="4.5" r="2"/><path d="M9 7.5v6h5.5v6M9 9.5l4 2.5M16.5 3.5v16M16.5 12h3.5v7.5"/>',
+      debout: '<circle cx="12" cy="4" r="2"/><path d="M12 7v7.5M12 9.5l-4 3M12 9.5l4 3M12 14.5l-3 6M12 14.5l3 6"/>',
+      nofloor: '<path d="M3 19h18"/><circle cx="12" cy="4" r="1.8"/><path d="M12 6.5v6M12 8.5l-3.5 2.5M12 8.5l3.5 2.5M12 12.5l-2.5 4.5M12 12.5l2.5 4.5"/><path d="M4 22 20 16" stroke-width="1.6"/>',
+      chair: '<path d="M7.5 3v17M7.5 13h10v7M7.5 6.5h3.5M7.5 9.5h3.5M11 3.5v6.5"/>',
+      full: '<circle cx="12" cy="3.8" r="1.8"/><path d="M12 6.5v8M12 8.5H6.5M12 8.5h5.5M12 14.5l-3 6M12 14.5l3 6"/>',
+      haut: '<circle cx="12" cy="4.5" r="2"/><path d="M5.5 9.5h13M5.5 9.5 4.5 5.5M18.5 9.5l1-4M9 9.5l1 9h4l1-9" stroke-width="2.3"/>',
+      bas: '<path d="M8 4h8M8.5 4l-.5 7.5L7 20.5M15.5 4l.5 7.5 1 9M12 4v5" stroke-width="2.3"/><path d="M5 20.5h4M15 20.5h4"/>',
+      gainage: '<circle cx="4.5" cy="9" r="1.8"/><path d="M7 10.5l13 4.5M8 11v6M3 18h18"/>',
+      equilibre: '<path d="M12 4v16M8 20h8M4 7h16M6.5 7 4 13h5L6.5 7zM17.5 7 15 13h5l-2.5-6z"/>',
+      force: '<path d="M13 2.5 5 13.5h6l-1 8 8-11h-6l1-8z"/>',
+      endurance_force: '<path d="M7.5 8.5a3.5 3.5 0 1 0 0 7c3.5 0 5.5-7 9-7a3.5 3.5 0 1 1 0 7c-3.5 0-5.5-7-9-7z"/>',
+      stabilite: '<path d="M3 17h18"/><path d="M12 17V9"/><circle cx="12" cy="6.5" r="2.5"/><path d="M7 21h10"/>',
+      course: '<circle cx="14" cy="4" r="1.9"/><path d="M13 7.5 10 12l3.5 2.5-1.5 6M10 12l-4 1.5M12.5 8.5l3.5 2.5 3-1M13.5 14.5l4 1"/>',
+      velo_sp: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5.5L18 16M10 9l3 7h-7M9 6.5h3"/>',
+      vtt: '<path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="16.5" cy="5" r="1.5"/>',
+      kayak: '<path d="M2 15c4 3 16 3 20 0"/><path d="M5 4l14 14"/><path d="M4 2.5l3 3M17 18.5l3 3" stroke-width="3"/>'
+    };
+    var SHORT = {nofloor:'Sans passage au sol', chair:'Sur chaise', full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage',
+      equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité', course:'Course &amp; trail', velo_sp:'Vélo', vtt:'VTT', kayak:'Canoë-kayak',
+      poids_du_corps:'Poids du corps', barre_traction:'Barre traction', tapis:'Tapis', elliptique:'Elliptique', corde:'Corde',
+      intermediaire:'Inter&shy;médiaire', senior:'Senior APA',
+      recup:'Récupérer', calme:'Me calmer', sommeil:'Sommeil', recentrer:'Me recentrer',
+      allonge:'Allongé', sol:'Assis au sol', assis:'Chaise', debout:'Debout'};
+    function tile(btn, key, label){
+      if(!btn || btn.querySelector('.t-ico')) return;
+      var full = btn.textContent.replace(/\s+/g, ' ').trim();
+      btn.setAttribute('title', full); btn.setAttribute('aria-label', full);
+      var lab = label || SHORT[key] || (btn.querySelector('span:not(.toggle-box)') || btn).childNodes[0].textContent;
+      var small = btn.querySelector('small');
+      if(small) btn.dataset.desc = small.textContent;
+      btn.classList.add('tile');
+      btn.innerHTML = (btn.querySelector('.toggle-box') ? '<span class="toggle-box" aria-hidden="true"></span>' : '') + '<span class="t-ico">' + svg(I[key] || '') + '</span><span class="t-lab">' + lab + '</span>' + (small ? '<small>' + small.innerHTML + '</small>' : '');
+    }
+    function grid(el){ if(el){ el.classList.add('tile-grid'); } }
+    // Matériel
+    var eq = document.getElementById('equipGroup');
+    if(eq){
+      grid(eq);
+      eq.querySelectorAll('[data-equip]').forEach(function(b){ tile(b, b.getAttribute('data-equip')); });
+      var hint = eq.closest('.field').querySelector('.field-label-hint'); if(hint) hint.textContent = '(plusieurs choix)';
+    }
+    // Niveau
+    var lv = document.getElementById('levelGroup');
+    if(lv){
+      grid(lv); lv.classList.remove('stack');
+      lv.querySelectorAll('[data-level]').forEach(function(b){ tile(b, b.getAttribute('data-level')); });
+      var note = document.createElement('p'); note.className = 'tile-note'; lv.parentNode.insertBefore(note, lv.nextSibling);
+      var LVN = {debutant:'Mouvements simples, temps d’effort courts.', intermediaire:'Pratique régulière : un peu plus de temps et de tours.', avance:'Habitué au renfo : plus de séries et de tours.', senior:'Faible impact, appuis possibles (APA).'};
+      function syncLv(){ var a = lv.querySelector('.active[data-level]'); note.textContent = a ? LVN[a.getAttribute('data-level')] || '' : ''; }
+      new MutationObserver(syncLv).observe(lv, {subtree:true, attributes:true, attributeFilter:['class']}); syncLv();
+    }
+    // Respiration : intention et position
+    var it = document.getElementById('breathIntentGroup');
+    if(it){
+      grid(it); it.classList.remove('stack');
+      it.querySelectorAll('[data-intent]').forEach(function(b){ tile(b, b.getAttribute('data-intent')); });
+      var note2 = document.createElement('p'); note2.className = 'tile-note'; it.parentNode.insertBefore(note2, it.nextSibling);
+      function syncIt(){ var a = it.querySelector('.active[data-intent]'); note2.textContent = a ? (BREATH_INTENTIONS[a.getAttribute('data-intent')] || {}).label || '' : ''; }
+      new MutationObserver(syncIt).observe(it, {subtree:true, attributes:true, attributeFilter:['class']}); syncIt();
+    }
+    var po = document.getElementById('breathPosGroup');
+    if(po){ grid(po); po.querySelectorAll('[data-pos]').forEach(function(b){ tile(b, b.getAttribute('data-pos')); }); }
+    // Note sous un groupe : description de la ou des tuiles choisies
+    function addNote(group, empty, fmt){
+      var n = document.createElement('p'); n.className = 'tile-note'; group.parentNode.insertBefore(n, group.nextSibling);
+      function sync(){
+        var act = [].filter.call(group.querySelectorAll('.tile'), function(b){ return b.classList.contains('active'); });
+        n.textContent = act.length ? act.map(fmt || function(b){ return b.dataset.desc || ''; }).filter(Boolean).join(' · ') : (empty || '');
+      }
+      new MutationObserver(sync).observe(group, {subtree:true, attributes:true, attributeFilter:['class']}); sync();
+    }
+    // Contrainte
+    var nf = document.getElementById('noFloorChip'), ch = document.getElementById('chairChip');
+    if(nf && ch){
+      var cg = nf.parentNode; grid(cg); cg.classList.remove('stack'); cg.classList.add('two');
+      tile(nf, 'nofloor'); tile(ch, 'chair');
+    }
+    // Zone de travail
+    var zg = document.getElementById('zoneGroup');
+    if(zg){ grid(zg); zg.querySelectorAll('[data-zone]').forEach(function(b){ tile(b, b.getAttribute('data-zone')); }); }
+    // Objectif du renforcement (et préparation pour ton sport)
+    var tg = document.getElementById('themeGroup');
+    if(tg){
+      grid(tg); tg.classList.remove('stack');
+      tg.querySelectorAll('[data-theme]').forEach(function(b){ var sp = b.getAttribute('data-sport'); tile(b, sp ? (sp === 'velo' ? 'velo_sp' : sp) : b.getAttribute('data-theme')); });
+    }
+    // Rythme : courtes étiquettes, explication dessous (déjà présente)
+    var rp = document.getElementById('breathSeniorGroup'); if(rp) rp.classList.add('seg-row');
+    document.querySelectorAll('#renfoView .panel, #breathView .panel').forEach(function(p){ p.classList.add('compact-form'); });
   })();
 
   // ---------- Bouton retour du téléphone ----------
