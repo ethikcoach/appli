@@ -2052,6 +2052,15 @@
   .ex-load-tip[hidden]{display:none;}
   @media screen and (prefers-color-scheme: dark){ .load-tip, .ex-load-tip{background:#3A3220; box-shadow:inset 0 0 0 1.5px #7A6330;} .load-tip strong{color:#F0CF86;} }
   @media print{ .load-tip{background:none; box-shadow:none; border:1px solid #999;} }
+  .ex-adj{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 0; padding:10px 12px; border-radius:14px; background:var(--sage-light);}
+  .ex-adj[hidden]{display:none;}
+  .ex-adj-lab b{display:block; font-size:0.9rem;}
+  .ex-adj-lab span{display:block; font-size:0.76rem; color:var(--stone); margin-top:2px; line-height:1.35;}
+  .ex-adj .ta-step button{background:var(--card);}
+  .ex-adj .ta-step button:disabled{opacity:0.35; cursor:default;}
+  .ex-adj .ta-step output{min-width:70px; font-size:0.95rem;}
+  .ex-adj-mark{display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:#F0CF86; color:#17352A; font-size:0.68rem; font-weight:800; vertical-align:1px;}
+  @media screen and (prefers-color-scheme: dark){ .ex-adj{background:#1E3528;} .ex-adj .ta-step button{background:#2A4535;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2456,7 +2465,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 7.4 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 7.5 · mise à jour du 11 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -2548,6 +2557,10 @@
     <div class="ex-modal-icon-wrap" id="exModalIconWrap"></div>
     <div class="ex-modal-title" id="exModalTitle"></div>
     <div class="ex-modal-dose" id="exModalDose"></div>
+    <div class="ex-adj" id="exModalAdj" hidden>
+      <div class="ex-adj-lab"><b>Ajuster le temps de cet exercice</b><span id="exAdjNote"></span></div>
+      <div class="ta-step"><button type="button" data-xd="-1" aria-label="Moins">−</button><output id="exAdjVal"></output><button type="button" data-xd="1" aria-label="Plus">＋</button></div>
+    </div>
     <p class="ex-load-tip" id="exModalLoad" hidden></p>
     <div class="ex-modal-section">
       <h4>Position de départ</h4>
@@ -2871,13 +2884,25 @@
   // Temps réglés à la main sur une séance : w = secondes ajoutées à l'effort du corps de séance,
   // t = transition / récup entre deux exercices, r = récup entre deux tours
   var SESSION_ADJ = null;
-  function adjFor(s){ return (s && s.adj) ? {w:+s.adj.w || 0, t:s.adj.t, r:s.adj.r, main:s.main || []} : null; }
+  // x = réglage exercice par exercice (clé « m:id » corps de séance, « w:id » échauffement, « k:id » retour au calme)
+  function adjFor(s){ return (s && s.adj) ? {w:+s.adj.w || 0, t:s.adj.t, r:s.adj.r, x:s.adj.x || null, main:s.main || [], warm:s.warm || [], cool:s.cool || []} : null; }
+  function exAdjKey(ex){
+    var A = SESSION_ADJ; if(!A || !ex) return null;
+    return A.main.indexOf(ex) > -1 ? 'm:' + ex.id : (A.warm.indexOf(ex) > -1 ? 'w:' + ex.id : (A.cool.indexOf(ex) > -1 ? 'k:' + ex.id : null));
+  }
+  // Écart permis sur un exercice : environ un tiers de son temps, pour garder l'équilibre de la séance
+  function exAdjCap(base){ return Math.max(5, Math.round(base / 3 / 5) * 5); }
   function cleanAdj(a){
     if(!a || typeof a !== 'object') return null;
     var o = {}, n;
     n = Math.round(+a.w); if(n && n >= -60 && n <= 120) o.w = n;
     n = Math.round(+a.t); if(a.t != null && n >= 5 && n <= 300) o.t = n;
     n = Math.round(+a.r); if(a.r != null && n >= 5 && n <= 600) o.r = n;
+    if(a.x && typeof a.x === 'object'){
+      var x = {};
+      Object.keys(a.x).forEach(function(k){ var d = Math.round(+a.x[k]); if(/^[mwk]:[A-Za-z0-9_-]{1,20}$/.test(k) && d && d >= -60 && d <= 60) x[k] = d; });
+      if(Object.keys(x).length) o.x = x;
+    }
     return Object.keys(o).length ? o : null;
   }
 
@@ -3124,6 +3149,10 @@
     // Progression d'un programme : le temps d'effort du corps de séance évolue d'une semaine à l'autre.
     if(ex.block === 'principal' && WORK_FACTOR !== 1) secs = Math.max(12, Math.round(secs * WORK_FACTOR));
     if(SESSION_ADJ && SESSION_ADJ.w && SESSION_ADJ.main.indexOf(ex) > -1 && !(ex.breath && ex.breath.length)) secs = Math.max(10, secs + SESSION_ADJ.w);
+    if(SESSION_ADJ && SESSION_ADJ.x && !(ex.breath && ex.breath.length)){
+      var xk = exAdjKey(ex), xd = xk && SESSION_ADJ.x[xk];
+      if(xd){ var xc = exAdjCap(secs); secs = Math.max(10, secs + Math.max(-xc, Math.min(xc, xd))); }
+    }
     // Respiration guidée : uniquement des cycles complets, pour finir sur une expiration
     if(ex.breath && ex.breath.length){
       var cyc = ex.breath.reduce(function(a, ph){ return a + ph.seconds; }, 0);
@@ -4277,7 +4306,8 @@
       html += '<div><div class="ex-name">'+ex.name+'</div><div class="ex-note">'+noteFor(ex, level)+'</div>'
         + (ex.coachNote ? '<div class="coach-note"><b>Conseil du coach :</b> '+escapeHtml(ex.coachNote)+'</div>' : '')
         + '<div class="zoom-hint">Toucher pour agrandir</div></div>';
-      html += '<div class="ex-dose">'+(rounds ? circuitDoseFor(ex, level, blockTheme) : doseFor(ex, level, blockTheme))+'</div>';
+      var xkey = exAdjKey(ex);
+      html += '<div class="ex-dose">'+(rounds ? circuitDoseFor(ex, level, blockTheme) : doseFor(ex, level, blockTheme))+(xkey && SESSION_ADJ.x && SESSION_ADJ.x[xkey] ? '<span class="ex-adj-mark">ajusté</span>' : '')+'</div>';
       if(editable){
         var aName = ex.name.replace(/"/g,'&quot;');
         var dk = ' data-block="'+BLOCK_SESSION_KEY[blockKey]+'" data-idx="'+idx+'"';
@@ -4304,14 +4334,18 @@
     return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
   }
 
-  function openExerciseModal(ex, level, theme, rounds){
+  function openExerciseModal(ex, level, theme, rounds, fromSession){
     var exTheme = ex.block === 'principal' ? theme : 'equilibre';
+    if(lastSession && lastSession.main && lastSession.main.indexOf(ex) < 0) exTheme = 'equilibre';
+    if(lastSession && lastSession.main && lastSession.main.indexOf(ex) > -1) exTheme = theme;
     var photo = getExercisePhoto(ex);
     document.getElementById('exModalIconWrap').innerHTML = photo
       ? '<img class="ex-photo-modal" src="'+photo+'" alt="">'
       : '';
     document.getElementById('exModalTitle').textContent = ex.name;
     document.getElementById('exModalDose').textContent = rounds ? (circuitDoseFor(ex, level, exTheme) + ' — répété sur ' + rounds + ' tours') : doseFor(ex, level, exTheme);
+    exAdjCtx = fromSession ? {ex:ex, level:level, theme:exTheme, rounds:rounds} : null;
+    exAdjRender();
     var lt = document.getElementById('exModalLoad'), lk = loadTipKinds([ex]);
     if(lt){ lt.hidden = !(lk.w || lk.t); lt.innerHTML = lk.t ? '<strong>Inclinaison :</strong> ' + LOAD_TIP_T : (lk.w ? '<strong>Charge :</strong> ' + LOAD_TIP_W : ''); }
     if(ex.detail){
@@ -4367,7 +4401,47 @@
     var ex = (row.dataset.block && lastSession && lastSession[row.dataset.block]) ? lastSession[row.dataset.block][parseInt(row.dataset.idx,10)] : null;
     if(!ex) ex = EX.filter(function(x){ return x.id === row.dataset.exId; })[0];
     var rounds = row.dataset.exRounds ? parseInt(row.dataset.exRounds, 10) : null;
-    if(ex && lastSession) openExerciseModal(ex, lastSession.level, lastSession.theme, rounds);
+    if(ex && lastSession) openExerciseModal(ex, lastSession.level, lastSession.theme, rounds, true);
+  });
+  // Réglage du temps d'un exercice depuis sa fiche
+  var exAdjCtx = null;
+  function exAdjInfo(ex, level, theme){
+    var S = lastSession; if(!S || !S.main) return null;
+    if(ex.type !== 'temps' || (ex.breath && ex.breath.length) || document.documentElement.classList.contains('ec-guest')) return null;
+    var pre = S.main.indexOf(ex) > -1 ? 'm:' : ((S.warm || []).indexOf(ex) > -1 ? 'w:' : ((S.cool || []).indexOf(ex) > -1 ? 'k:' : null));
+    if(!pre) return null;
+    var key = pre + ex.id, a = S.adj ? JSON.parse(JSON.stringify(S.adj)) : {}, d = (a.x && a.x[key]) || 0;
+    if(a.x) delete a.x[key];
+    var keep = SESSION_ADJ; SESSION_ADJ = adjFor({adj:a, main:S.main, warm:S.warm, cool:S.cool});
+    var base = scaleTempsRaw(ex, level, theme).secs; SESSION_ADJ = keep;
+    var cap = exAdjCap(base);
+    return {key:key, base:base, cap:cap, delta:Math.max(-cap, Math.min(cap, d))};
+  }
+  function exAdjRender(){
+    var c = exAdjCtx, box = document.getElementById('exModalAdj');
+    var inf = c && exAdjInfo(c.ex, c.level, c.theme);
+    box.hidden = !inf; if(!inf) return;
+    var cur = Math.max(10, inf.base + inf.delta);
+    document.getElementById('exAdjVal').textContent = fmtDose(cur) + (c.ex.perSide ? ' / côté' : '');
+    document.getElementById('exAdjNote').textContent = (inf.delta ? 'Prévu ' + fmtDose(inf.base) + ' · ' + (inf.delta > 0 ? '+' : '−') + Math.abs(inf.delta) + ' s. ' : '')
+      + 'De ' + fmtDose(Math.max(10, inf.base - inf.cap)) + ' à ' + fmtDose(inf.base + inf.cap) + ', pour garder l\u2019équilibre de la séance.';
+    box.querySelector('[data-xd="-1"]').disabled = inf.delta <= -inf.cap || inf.base + inf.delta <= 10;
+    box.querySelector('[data-xd="1"]').disabled = inf.delta >= inf.cap;
+    document.getElementById('exModalDose').textContent = c.rounds ? (circuitDoseFor(c.ex, c.level, c.theme) + ' — répété sur ' + c.rounds + ' tours') : doseFor(c.ex, c.level, c.theme);
+  }
+  document.getElementById('exModalAdj').addEventListener('click', function(e){
+    var b = e.target.closest('[data-xd]'); if(!b || !exAdjCtx) return;
+    var S = lastSession, inf = exAdjInfo(exAdjCtx.ex, exAdjCtx.level, exAdjCtx.theme); if(!inf) return;
+    var d = Math.max(-inf.cap, Math.min(inf.cap, inf.delta + 5 * (+b.getAttribute('data-xd'))));
+    if(inf.base + d < 10) return;
+    var a = S.adj ? JSON.parse(JSON.stringify(S.adj)) : {};
+    a.x = a.x || {}; if(d) a.x[inf.key] = d; else delete a.x[inf.key];
+    var c = cleanAdj(a);
+    if(c) S.adj = c; else delete S.adj;
+    if(S.programRef && currentProgram){ var tpl = templateFor(S.programRef.week, S.programRef.slot); if(c) tpl.adj = c; else delete tpl.adj; }
+    displaySession(S, S.title, true);
+    if(S.programRef && currentProgram) saveProgram();
+    exAdjRender();
   });
   document.getElementById('exModalClose').addEventListener('click', closeExerciseModal);
   document.getElementById('exModalBackdrop').addEventListener('click', function(e){
@@ -4528,14 +4602,22 @@
     displaySession(session, title);
   }
 
-  function sessionModified(session){
-    if(session.composed || session.adj) return true;
+  function contentModified(session){
+    if(session.composed) return true;
     if(session.removed && session.removed.length) return true;
     return ['warm','cardio','main','cool'].some(function(k){ return session[k].some(function(x){ return x.coachAdded; }); });
   }
+  function sessionModified(session){ return !!session.adj || contentModified(session); }
   function sessionMinutes(session){
     var tl = buildTimeline(session);
     var sec = tl.reduce(function(sum, st){ return sum + st.duration; }, 0);
+    // Temps réglés sur une séance générée : on part de la durée annoncée et on ajoute l'écart réel
+    if(session.adj && !contentModified(session) && !session.programRef && (session.shownMinutes || session.durationMinutes)){
+      var keep = SESSION_ADJ; SESSION_ADJ = null;
+      var sec0 = buildTimeline(session).reduce(function(sum, st){ return sum + st.duration; }, 0);
+      SESSION_ADJ = keep;
+      return Math.max(1, (session.shownMinutes || session.durationMinutes) + Math.round((sec - sec0) / 60));
+    }
     return Math.max(1, Math.round(sec/60));
   }
 
@@ -5002,7 +5084,7 @@
       n:name || undefined,
       by:EC_IS_COACH ? 'Benoît' : undefined,
       cm:((document.getElementById('shareCoachMsg') || {}).value || '').trim() || undefined,
-      mm:sessionModified(session) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes),
+      mm:contentModified(session) ? sessionMinutes(session) : (session.shownMinutes || session.durationMinutes),
       no:notesOf(session) || undefined,
       ad:addedOf(session) || undefined,
       aj:session.adj || undefined
@@ -7612,7 +7694,7 @@
           if(!ex) ex = exById(r.dataset.exId) || {};
           var img = r.querySelector('.ex-photo');
           var dn = r.querySelector('.ex-dose'), rh = dn && dn.querySelector('.ex-rhythm'), dose = '';
-          if(dn){ var cl = dn.cloneNode(true), cr = cl.querySelector('.ex-rhythm'); if(cr) cr.remove(); dose = clean(cl.textContent) + (rh ? ' · ' + clean(rh.textContent).replace(/^(\d)/, 'rythme $1') : ''); }
+          if(dn){ var cl = dn.cloneNode(true), cr = cl.querySelector('.ex-rhythm'); if(cr) cr.remove(); var am = cl.querySelector('.ex-adj-mark'); if(am) am.remove(); dose = clean(cl.textContent) + (rh ? ' · ' + clean(rh.textContent).replace(/^(\d)/, 'rythme $1') : ''); }
           rows.push({name: clean((r.querySelector('.ex-name') || {}).textContent), dose: dose,
             start: clean(ex.detail ? ex.detail.start : ''), exec: clean(ex.detail ? ex.detail.exec : (r.querySelector('.ex-note') || {}).textContent),
             coach: clean(ex.coachNote || ''), img: img ? img.src : null});
@@ -8176,7 +8258,7 @@
       var defT = circuitRestSec(th, lv), defR = REST_SECONDS_BY_THEME[th][lv];
       var ex = S.main.filter(function(x){ return x.type === 'temps'; })[0], baseW = ex ? scaleTempsRaw(ex, lv, th).secs : 0;
       SESSION_ADJ = adjFor(S);
-      var v = {w:(keepAdj && keepAdj.w) || 0, t:(keepAdj && keepAdj.t) || defT, r:(keepAdj && keepAdj.r) || defR};
+      var v = {w:(keepAdj && keepAdj.w) || 0, t:(keepAdj && keepAdj.t) || defT, r:(keepAdj && keepAdj.r) || defR}, keepX = (keepAdj && keepAdj.x) || null;
       var old = document.getElementById('timeAdjDialog'); if(old) old.remove();
       var wrap = document.createElement('div'); wrap.id = 'timeAdjDialog'; wrap.className = 'ec-dialog-backdrop';
       function row(k, lab, sub){ return '<div class="ta-row"><div class="ta-lab"><b>' + lab + '</b><span>' + sub + '</span></div>'
@@ -8187,9 +8269,10 @@
         + row('t', 'Transition', 'entre deux exercices')
         + (S.rounds > 1 ? row('r', 'Récup entre tours', 'après chaque tour complet') : '')
         + '<p class="ta-total" id="ta_total"></p>'
+        + (keepAdj && keepAdj.x ? '<p class="cp-note" style="margin:-4px 0 10px">Tu as aussi ajusté ' + Object.keys(keepAdj.x).length + ' exercice' + (Object.keys(keepAdj.x).length > 1 ? 's' : '') + ' un par un : « Par défaut » les remet aussi.</p>' : '')
         + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-reset>Par défaut</button><button type="button" class="ec-dialog-ok">Appliquer</button></div></div>';
       document.body.appendChild(wrap);
-      function cand(){ return cleanAdj({w:v.w, t:v.t !== defT ? v.t : null, r:v.r !== defR ? v.r : null}); }
+      function cand(){ return cleanAdj({w:v.w, t:v.t !== defT ? v.t : null, r:v.r !== defR ? v.r : null, x:keepX}); }
       function upd(){
         wrap.querySelector('#ta_w').textContent = sgn(v.w);
         wrap.querySelector('#ta_t').textContent = v.t + ' s';
@@ -8210,7 +8293,7 @@
           if(k === 'r') v.r = lim(v.r + (v.r >= 60 ? 15 : 5) * d, 10, 300);
           upd(); return;
         }
-        if(e.target.closest('[data-reset]')){ v = {w:0, t:defT, r:defR}; upd(); return; }
+        if(e.target.closest('[data-reset]')){ v = {w:0, t:defT, r:defR}; keepX = null; upd(); return; }
         if(e.target.closest('.ec-dialog-ok')){
           var c = cand();
           if(c) S.adj = c; else delete S.adj;
