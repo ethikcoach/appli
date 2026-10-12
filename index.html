@@ -1589,7 +1589,7 @@
   .hero-stat{display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,0.14);
     font-size:0.8rem; font-weight:600; color:#fff; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);}
   .hero-stat[hidden]{display:none;}
-  .hero-row:not(:has(.hero-stat:not([hidden]))){display:none;}
+  .hero-row:not(:has(.hero-stat:not([hidden]), .hero-cta:not([hidden])))){display:none;}
   .hero-cta{display:inline-flex; align-items:center; gap:8px; min-height:42px; padding:9px 16px; border:none; border-radius:999px;
     background:#fff; color:#1F4030; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:0.92rem; cursor:pointer;
     box-shadow:0 6px 16px rgba(0,0,0,0.18);}
@@ -2132,6 +2132,50 @@
     .compact-form .tile .t-ico{color:#A7D8B4;}
     .compact-form .tile-grid .chip.tile.active{background:#3A8558 !important;}
   }
+  /* ---------- Ergonomie v8.5 ---------- */
+  .sess-strip{margin:14px 2px 6px;}
+  .ss-bar{display:flex; gap:3px; height:10px; border-radius:999px; overflow:hidden;}
+  .ss-bar span{display:block; min-width:6px;}
+  .ss-w, .ss-leg i.ss-w{background:#E8C77A;} .ss-c, .ss-leg i.ss-c{background:#E0533B;} .ss-m, .ss-leg i.ss-m{background:var(--forest);} .ss-k, .ss-leg i.ss-k{background:#7FB2C9;}
+  .ss-leg{display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:7px; font-size:0.76rem; color:var(--stone); font-weight:600;}
+  .ss-leg i{display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
+  .block.foldable > .block-title{cursor:pointer;}
+  .fold-sum{display:block; width:100%; margin:-4px 0 6px; padding:10px 14px; border:none; border-radius:14px; background:var(--card); box-shadow:var(--shadow-1); color:var(--forest); font-family:inherit; font-weight:700; font-size:0.86rem; text-align:left; cursor:pointer;}
+  .block.foldable:not(.folded) .fold-sum{background:transparent; box-shadow:none; padding:4px 2px; font-size:0.78rem; color:var(--stone);}
+  @media screen{ .results:not(.editing) .block.folded > .exercise{display:none !important;} }
+  @media print{ .fold-sum, .sess-strip, .timer-tip{display:none !important;} }
+  .app.quick .panel > :not(.panel-summary):not(.generate-btn):not(.form-msg):not(.quick-start):not(.current-program){display:none !important;}
+  .app.quick .panel > .panel-summary{display:flex !important; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; margin-bottom:10px;}
+  .app.quick .panel > .panel-summary .ps-tags{flex:1; min-width:0;}
+  .app.quick .panel > .generate-btn{position:static !important;}
+  @keyframes ecViewIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .view-in{animation:ecViewIn .28s ease both;}
+  .hero-row .hero-cta[hidden]{display:none;}
+  .timer-gesture{position:absolute; left:50%; top:45%; transform:translate(-50%,-50%); padding:10px 18px; border-radius:999px; background:rgba(0,0,0,0.55); color:#fff; font-weight:800; opacity:0; pointer-events:none;}
+  .timer-gesture.show{animation:ecFlash .7s ease;}
+  @keyframes ecFlash{0%{opacity:0;} 20%{opacity:1;} 100%{opacity:0;}}
+  .timer-tip{margin:10px 0 0; font-size:0.72rem; color:rgba(255,255,255,0.55); text-align:center;}
+  .timer-backdrop.feedback .timer-tip{display:none;}
+  @media (orientation:landscape) and (max-height:540px){
+    .timer-backdrop:not(.feedback) .timer-center{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:28px; align-items:center; justify-items:center; width:min(100%, 960px); margin:0 auto;}
+    .timer-backdrop:not(.feedback) .timer-center > *{grid-column:2;}
+    .timer-backdrop:not(.feedback) .timer-center > #timerIconWrap, .timer-backdrop:not(.feedback) .timer-center > #breathCircle{grid-column:1; grid-row:1 / span 9; width:100%; max-width:none; margin:0;}
+    .timer-backdrop:not(.feedback) .timer-next-card{display:none !important;}
+    .timer-backdrop .timer-remaining-session{margin-bottom:2px;}
+    .timer-backdrop .timer-tip{display:none;}
+  }
+  .share-quick{margin:4px 0 10px;}
+  .sq-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;}
+  .sq-chip{display:flex; align-items:center; gap:8px; min-height:46px; padding:5px 14px 5px 5px; border:none; border-radius:999px; background:var(--chip); box-shadow:inset 0 0 0 1px var(--ring-line); font-family:inherit; font-weight:700; font-size:0.9rem; color:var(--ink); cursor:pointer;}
+  .sq-chip:active{transform:scale(0.96);}
+  .sq-av{display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:var(--forest); color:#fff; font-family:'Bricolage Grotesque',sans-serif; font-size:1rem;}
+  .sq-chip.grp .sq-av{background:#E8C77A; color:#17352A;}
+  .share-more{margin-top:6px; border-top:1px solid var(--ring-line); padding-top:8px;}
+  .share-more > summary{cursor:pointer; font-weight:700; color:var(--forest); padding:8px 0; list-style:none;}
+  .share-more > summary::-webkit-details-marker{display:none;}
+  .share-more > summary::before{content:'▸ ';} .share-more[open] > summary::before{content:'▾ ';}
+  .share-more.plain{border-top:none; padding-top:0;} .share-more.plain > summary{display:none;}
+  @media screen and (prefers-color-scheme: dark){ .sq-av{background:#3A8558;} .fold-sum{color:#A7D8B4;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2564,7 +2608,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.4 · mise à jour du 12 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.6 · mise à jour du 12 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -3886,7 +3930,8 @@
         iconWrap.style.display = 'flex';
         iconWrap.classList.add('has-photo');
         iconWrap.innerHTML = '<img src="'+upPhoto+'" alt="">';
-        document.getElementById('timerExSublabel').textContent = 'À suivre : ' + nextEx.name;
+        document.getElementById('timerExName').textContent = nextEx.name;
+        document.getElementById('timerExSublabel').textContent = 'À suivre · ' + (step.label || 'Récupération');
         nextCard.classList.remove('show');
         nextEx = null;
       }
@@ -4429,8 +4474,11 @@
     var displayTitle = rounds ? (title + ' · ' + rounds + ' tour' + (rounds > 1 ? 's' : '')) : title;
     var bsec = BLOCK_SECS[title === 'Bloc cardio' ? 'Bloc cardio' : title];
     if(bsec && list.length) displayTitle += '<span class="bt-dur">' + fmtTotal(bsec) + '</span>';
-    var html = '<div class="block '+blockKey+'">';
-    html += '<div class="block-title"><span class="swatch"></span>'+displayTitle+'</div>';
+    var foldable = (blockKey === 'echauffement' || blockKey === 'retour_calme') && list.length > 1 && !(lastRenderSession && lastRenderSession.composed);
+    var folded = foldable && FOLD[blockKey] !== false;
+    var html = '<div class="block '+blockKey+(foldable ? ' foldable' : '')+(folded ? ' folded' : '')+'">';
+    html += '<div class="block-title"'+(foldable ? ' role="button" tabindex="0" data-fold="'+blockKey+'"' : '')+'><span class="swatch"></span>'+displayTitle+'</div>';
+    if(foldable) html += '<button type="button" class="fold-sum" data-fold="'+blockKey+'">'+(folded ? '▸ Voir les '+list.length+' exercices' : '▾ Replier')+'</button>';
     list.forEach(function(ex, idx){
       var editable = BLOCK_SESSION_KEY[blockKey] && list === (lastRenderSession && lastRenderSession[BLOCK_SESSION_KEY[blockKey]]);
       html += '<div class="exercise'+(ex.coachAdded ? ' coach-added' : '')+'" data-ex-id="'+ex.id+'"'+(rounds ? ' data-ex-rounds="'+rounds+'"' : '')
@@ -4512,6 +4560,9 @@
   }
 
   document.getElementById('results').addEventListener('click', function(e){
+    var fd = e.target.closest('[data-fold]');
+    if(fd){ var bk = fd.getAttribute('data-fold'), blk = fd.closest('.block'); FOLD[bk] = !blk.classList.contains('folded') ? true : false;
+      blk.classList.toggle('folded', FOLD[bk]); var sm = blk.querySelector('.fold-sum'); if(sm) sm.textContent = FOLD[bk] ? '▸ Voir les ' + blk.querySelectorAll('.exercise').length + ' exercices' : '▾ Replier'; return; }
     if(e.target.closest('[data-prog-back]')){ showProgram(true); return; }
     if(e.target.closest('[data-prog-done]')){ if(lastSession && lastSession.programRef){ toggleProgDone(lastSession.programRef.week, lastSession.programRef.slot); displaySession(lastSession, lastSession.title, true); } return; }
     var po = e.target.closest('[data-prog-open]');
@@ -4841,6 +4892,14 @@
   }
   // Durée de chaque partie, affichée à côté de son titre
   var BLOCK_SECS = {};
+  var FOLD = {echauffement:true, retour_calme:true};
+  function stripHtml(session){
+    var parts = [['Échauffement', 'Échauff.', 'w'], ['Bloc cardio', 'Cardio', 'c'], ['Corps de séance', 'Corps de séance', 'm'], ['Retour au calme', 'Calme', 'k']]
+      .filter(function(p){ return BLOCK_SECS[p[0]] > 0; });
+    if(parts.length < 2) return '';
+    return '<div class="sess-strip" aria-hidden="true"><div class="ss-bar">' + parts.map(function(p){ return '<span class="ss-' + p[2] + '" style="flex-grow:' + Math.round(BLOCK_SECS[p[0]]) + '"></span>'; }).join('') + '</div>'
+      + '<div class="ss-leg">' + parts.map(function(p){ return '<span><i class="ss-' + p[2] + '"></i>' + p[1] + ' ' + fmtTotal(BLOCK_SECS[p[0]]).replace(/ \d+ s$/, '').replace(/^0 min$/, '< 1 min') + '</span>'; }).join('') + '</div></div>';
+  }
   function computeBlockSecs(session){
     BLOCK_SECS = {};
     buildTimeline(session).forEach(function(st){ var k = st.blockLabel || ''; BLOCK_SECS[k] = (BLOCK_SECS[k] || 0) + st.duration; });
@@ -4889,6 +4948,8 @@
     html += '</div></div>';
 
     computeBlockSecs(session);
+    if(!keepScroll) FOLD = {echauffement:true, retour_calme:true};
+    html += stripHtml(session);
     html += renderBlock('Échauffement', 'echauffement', session.warm, session.level, 'equilibre');
     html += renderBlock('Bloc cardio', 'cardio', session.cardio, session.level, 'equilibre');
     html += loadTipHtml(session);
@@ -5713,6 +5774,14 @@
       return programFromPayload(o.p, o.done);
     }catch(e){ return null; }
   }
+  // Prochaine séance du programme en cours (pour l'accueil)
+  window.ecProgNext = function(){
+    if(!currentProgram) return null;
+    var P = currentProgram;
+    for(var w = 0; w < P.weeks; w++) for(var sl = 0; sl < P.spw; sl++){ if(!P.done[w + '-' + sl]) return {week:w, slot:sl, label:'Semaine ' + (w + 1) + ' · Séance ' + SLOT_LETTERS[sl]}; }
+    return null;
+  };
+  window.ecOpenProgNext = function(){ var n = window.ecProgNext(); if(n){ if(window.ecShowView) window.ecShowView('renfo'); openProgramSession(n.week, n.slot); window.scrollTo(0, 0); } };
   function renderCurrentProgramLink(){
     var box = document.getElementById('currentProgram');
     if(!currentProgram){ box.hidden = true; return; }
@@ -6996,9 +7065,9 @@
       var h1 = intro.querySelector('h1'); if(h1) h1.textContent = title;
       var hi = document.createElement('div'); hi.className = 'hero-hello'; intro.insertBefore(hi, intro.firstChild);
       var row = document.createElement('div'); row.className = 'hero-row';
-      row.innerHTML = '<span class="hero-stat" hidden></span>';
+      row.innerHTML = '<span class="hero-stat" hidden></span>' + (viewId === 'renfoView' ? '<button type="button" class="hero-cta" data-prog-next hidden></button>' : '');
       intro.appendChild(row);
-      return {hi:hi, stat:row.querySelector('.hero-stat')};
+      return {hi:hi, stat:row.querySelector('.hero-stat'), cta:row.querySelector('[data-prog-next]')};
     }
     var heroR = buildHero('renfoView', 'Prêt pour ta séance ?', '⚡ Générer ma séance', '#generateBtn');
     var heroB = buildHero('breathView', 'Respire, relâche', '🌬️ Lancer ma respiration', '#breathGenerateBtn');
@@ -7013,9 +7082,15 @@
           if(st.streak >= 2) s += ' · ' + st.streak + ' sem. d’affilée';
           heroR.stat.textContent = s; heroR.stat.hidden = false;
         } else heroR.stat.hidden = true;
+        var nx = window.ecProgNext ? window.ecProgNext() : null;
+        if(heroR.cta){ heroR.cta.hidden = !nx; if(nx) heroR.cta.textContent = '▶ Programme : ' + nx.label; }
+        var h1 = document.querySelector('#renfoView > .intro h1');
+        if(h1) h1.textContent = nx ? 'Ta séance du jour t\u2019attend' : (st && st.count >= 2 ? 'On continue sur ta lancée ?' : 'Prêt pour ta séance ?');
       }
     }
     refreshHero();
+    document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('[data-prog-next]')){ e.preventDefault(); if(window.ecOpenProgNext) window.ecOpenProgNext(); } });
+    new MutationObserver(function(){ refreshHero(); }).observe(document.getElementById('currentProgram'), {childList:true, attributes:true});
     var an = $('#athleteName'); if(an) an.addEventListener('input', refreshHero);
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) refreshHero(); });
 
@@ -7110,7 +7185,7 @@
     window.__ecView = 'renfo';
     function hideExtra(){ Object.keys(EXTRA).forEach(function(k){ var v = document.getElementById(EXTRA[k]); if(v) v.style.display = 'none'; }); }
     ['tabRenfoBtn', 'tabBreathBtn'].forEach(function(id){
-      document.getElementById(id).addEventListener('click', function(){ hideExtra(); window.__ecView = id === 'tabRenfoBtn' ? 'renfo' : 'breath'; syncNav(); });
+      document.getElementById(id).addEventListener('click', function(){ var was = window.__ecView; hideExtra(); window.__ecView = id === 'tabRenfoBtn' ? 'renfo' : 'breath'; syncNav(); if(was !== window.__ecView && window.ecViewIn) window.ecViewIn(document.getElementById(id === 'tabRenfoBtn' ? 'renfoView' : 'breathView')); });
     });
     function showView(k){
       if(k === 'renfo' || k === 'breath'){
@@ -7121,6 +7196,7 @@
         document.getElementById('breathView').style.display = 'none';
         document.getElementById(EXTRA[k]).style.display = '';
         window.__ecView = k;
+        if(window.ecViewIn) window.ecViewIn(document.getElementById(EXTRA[k]));
         if(k === 'lib') renderLib();
         if(k === 'suivi') renderSuivi();
       }
@@ -7352,7 +7428,7 @@
     function today0(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
     function clone(o){ return JSON.parse(JSON.stringify(o)); }
     function emptyAcl(){ return {v:1, users:{}}; }
-    var remote = lsGet(CT_REMOTE, null), draft = lsGet(CT_DRAFT, null), remoteMissing = false, ctFilter = 'all', openEdit = null, openSend = null, openSess = null;
+    var remote = lsGet(CT_REMOTE, null), draft = lsGet(CT_DRAFT, null), remoteMissing = false, ctFilter = 'all', openEdit = null, openSend = null, openSess = null, openFb = null;
     function sessChoices(){
       var out = [];
       if(lastSession && totalExercises(lastSession) > 0) out.push({v:'last', ico:'💪', t:'Dernière séance : ' + (function(){ var d = document.createElement('div'); d.innerHTML = lastSession.title || ''; return d.textContent; })()});
@@ -7501,7 +7577,7 @@
       $('#ctCount').textContent = rows.filter(function(r){ return r.st.cls !== 'off'; }).length + ' actif' + (rows.filter(function(r){ return r.st.cls !== 'off'; }).length > 1 ? 's' : '') + ' · ' + rows.length + ' au total';
       $('#ctList').innerHTML = list.length ? list.map(function(r){
         var k = keyOf(r.h), u = r.u;
-        var html = '<div class="ct-row" data-h="' + r.h + '"><div class="ct-row-top"><div class="info"><b>' + esc(u.n) + (r.stat && STATIC_LABEL[r.h].n ? ' <em>' + esc(r.label) + '</em>' : '') + '</b><span class="st ' + r.st.cls + '">' + esc(r.st.txt) + '</span></div></div>'
+        var html = '<div class="ct-row" data-h="' + r.h + '"><div class="ct-row-top"><div class="info"><b>' + esc(u.n) + (r.stat && STATIC_LABEL[r.h].n ? ' <em>' + esc(r.label) + '</em>' : '') + '</b><span class="st ' + r.st.cls + '">' + esc(r.st.txt) + '</span>' + '</div></div>'
           + '<div class="ct-row-acts"><button type="button" data-ct="sess" class="send">📲 Séance</button><button type="button" data-ct="ext">Prolonger</button><button type="button" data-ct="blk">' + (u.b ? 'Débloquer' : 'Bloquer') + '</button>'
           + (k ? '<button type="button" data-ct="send" class="send">📨 Envoyer l\u2019accès</button>' : '') + '<button type="button" data-ct="del" class="del">Supprimer</button></div>';
         if(openSess === r.h){
@@ -7546,6 +7622,7 @@
     }
     setPane(ctPane);
     $('#ctTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-pane]'); if(b){ setPane(b.getAttribute('data-pane')); } });
+    window.ecCoachRender = function(){ renderCoach(); };
     window.ecCoachOpen = function(p){ if(window.ecShowView) window.ecShowView('espace'); if(p) setPane(p); window.scrollTo(0, 0); };
     $('#coachTools').addEventListener('click', function(e){
       var g = e.target.closest('[data-ct-go]'); if(!g) return;
@@ -7623,7 +7700,7 @@
         function put(u){ draft.users[h] = u; saveDraft(); renderCoach(); autoSave(); }
         if(act === 'ext'){ openEdit = openEdit === h ? null : h; openSend = null; renderCoach(); return; }
         if(act === 'send'){ openSend = openSend === h ? null : h; openEdit = null; openSess = null; renderCoach(); return; }
-        if(act === 'sess'){ openSess = openSess === h ? null : h; openEdit = null; openSend = null; renderCoach(); return; }
+        if(act === 'sess'){ openSess = openSess === h ? null : h; openEdit = null; openSend = null; openFb = null; renderCoach(); return; }
         if(act === 'sendsess'){ var cmv = (row.querySelector('.ct-cm') || {}).value || ''; openSess = null; sendSessTo(h, b.getAttribute('data-v'), cur.n, cmv.trim()); renderCoach(); return; }
         if(act === 'ph'){ var kk = keyOf(h); if(kk){ setPhone(kk.k, row.querySelector('.ct-ph').value.trim()); renderCoach(); showToast('Numéro enregistré sur cet appareil', false); } return; }
         if(act === 'native'){ var kn = keyOf(h); if(kn) navigator.share({text:waMsg(kn)}).catch(function(){}); return; }
@@ -8713,6 +8790,75 @@
     document.querySelectorAll('#renfoView .panel, #breathView .panel').forEach(function(p){ p.classList.add('compact-form'); });
   })();
 
+  // ---------- Ergonomie : transitions de pages, gestes du chrono, envoi rapide ----------
+  (function(){
+    function $(s){ return document.querySelector(s); }
+    function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+    function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Transition douce entre les pages
+    window.ecViewIn = function(el){
+      if(!el || reduce) return;
+      el.classList.remove('view-in'); void el.offsetWidth; el.classList.add('view-in');
+    };
+
+    // Chrono : glisser vers la gauche = passer (toucher l'écran met déjà en pause)
+    var bd = $('#timerBackdrop');
+    if(bd){
+      var sx = 0, sy = 0, st = 0, track = false;
+      bd.addEventListener('touchstart', function(e){
+        if(bd.classList.contains('feedback') || e.target.closest('button, a, input, textarea, .fb')) { track = false; return; }
+        var t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); track = true;
+      }, {passive:true});
+      bd.addEventListener('touchend', function(e){
+        if(!track) return; track = false;
+        var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+        if(dx < -70 && Math.abs(dy) < 60){ var sk = $('#timerSkip'); if(sk) sk.click(); flash('Passé ▶'); return; }
+      }, {passive:true});
+      var hint = document.createElement('div'); hint.className = 'timer-gesture'; bd.appendChild(hint);
+      function flash(t){ hint.textContent = t; hint.classList.remove('show'); void hint.offsetWidth; hint.classList.add('show'); }
+      var tip = document.createElement('p'); tip.className = 'timer-tip'; tip.textContent = 'Touche l’écran pour mettre en pause · glisse vers la gauche pour passer';
+      var ctr = bd.querySelector('.timer-center'); if(ctr) ctr.appendChild(tip);
+    }
+
+    // Envoi rapide (coach) : un nom = la séance part dans son appli
+    var sheet = $('#shareBackdrop .share-sheet'), sel = $('#shareAthlete');
+    if(sheet && sel){
+      var sub = sheet.querySelector('.share-sub');
+      var quick = document.createElement('div'); quick.className = 'share-quick coach-only'; quick.id = 'shareQuick';
+      var cmL = sheet.querySelector('label[for="shareCoachMsg"]'), cm = $('#shareCoachMsg');
+      sub.parentNode.insertBefore(quick, sub.nextSibling);
+      if(cmL && cm){ sub.parentNode.insertBefore(cmL, quick); sub.parentNode.insertBefore(cm, quick); }
+      var more = document.createElement('details'); more.className = 'share-more'; more.id = 'shareMore';
+      more.innerHTML = '<summary>Autres options : WhatsApp, PDF, lien…</summary>';
+      var moveFrom = quick.nextSibling, nodes = [];
+      while(moveFrom){ nodes.push(moveFrom); moveFrom = moveFrom.nextSibling; }
+      sheet.appendChild(more);
+      nodes.forEach(function(n){ more.appendChild(n); });
+      function initials(n){ return String(n || '?').trim().charAt(0).toUpperCase(); }
+      function buildQuick(){
+        var isCoach = document.documentElement.classList.contains('ec-coach');
+        more.open = !isCoach;
+        more.classList.toggle('plain', !isCoach);
+        if(!isCoach){ quick.innerHTML = ''; return; }
+        var opts = [].filter.call(sel.options, function(o){ return o.value && o.value !== '__guest' && !o.disabled; });
+        if(!opts.length){ quick.innerHTML = '<p class="share-note">Crée d’abord un accès dans l’Espace coach pour envoyer en un geste.</p>'; more.open = true; return; }
+        quick.innerHTML = '<div class="share-field-label">Envoyer dans l’appli de :</div><div class="sq-list">'
+          + opts.map(function(o){ var g = o.value.indexOf('g:') === 0, n = o.textContent.replace(/^👥\s*/, '');
+              return '<button type="button" class="sq-chip' + (g ? ' grp' : '') + '" data-v="' + o.value.replace(/"/g, '&quot;') + '"><span class="sq-av">' + (g ? '👥' : initials(n)) + '</span><span class="sq-n">' + n.replace(/</g, '&lt;') + '</span></button>'; }).join('')
+          + '</div>';
+      }
+      new MutationObserver(function(){ if($('#shareBackdrop').classList.contains('open')) setTimeout(buildQuick, 0); }).observe($('#shareBackdrop'), {attributes:true, attributeFilter:['class']});
+      quick.addEventListener('click', function(e){
+        var b = e.target.closest('[data-v]'); if(!b) return;
+        sel.value = b.getAttribute('data-v'); sel.dispatchEvent(new Event('change'));
+        setTimeout(function(){ var ib = $('#shareInbox'); if(ib && !ib.hidden) ib.click(); else { more.open = true; } }, 30);
+      });
+    }
+
+  })();
+
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
   // ajoute une entrée d'historique : le bouton retour la referme au lieu de
@@ -8830,12 +8976,19 @@
         if(!has) view.classList.remove('collapsed');
       }
       new MutationObserver(update).observe(results, {childList:true});
+      // Retour sur l'appli : réglages déjà faits, on montre un résumé et le bouton Générer
+      var hasSettings = false; try{ hasSettings = !!localStorage.getItem('ec_settings_v1') && !!localStorage.getItem('ec_history_v1'); }catch(e){}
+      var prog = document.getElementById('modeProgram');
+      if(hasSettings && !/^#[a-z]+=/.test(location.hash || '') && !(prog && prog.classList.contains('active') && viewId === 'renfoView')){
+        summary(view); view.classList.add('quick');
+      }
       view.querySelector('.ps-edit').addEventListener('click', function(){
+        view.classList.remove('quick');
         expanded = true; view.classList.remove('collapsed');
         view.scrollIntoView({behavior:'smooth', block:'start'});
       });
       view.querySelector('.panel').addEventListener('click', function(e){
-        if(e.target.closest('.generate-btn, .saved-load, .qs-btn')) expanded = false;
+        if(e.target.closest('.generate-btn, .saved-load, .qs-btn')){ expanded = false; view.classList.remove('quick'); }
       }, true);
       update();
     }
