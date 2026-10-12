@@ -2571,7 +2571,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.0 · mise à jour du 11 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.1 · mise à jour du 12 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -3002,12 +3002,12 @@
   function cleanAdj(a){
     if(!a || typeof a !== 'object') return null;
     var o = {}, n;
-    n = Math.round(+a.w); if(n && n >= -60 && n <= 120) o.w = n;
+    n = Math.round(+a.w); if(Math.abs(n) > 2) n = (n > 0 ? 1 : -1) * Math.min(2, Math.max(1, Math.round(Math.abs(n) / 15))); if(n) o.w = n;
     n = Math.round(+a.t); if(a.t != null && n >= 5 && n <= 300) o.t = n;
     n = Math.round(+a.r); if(a.r != null && n >= 5 && n <= 600) o.r = n;
     if(a.x && typeof a.x === 'object'){
       var x = {};
-      Object.keys(a.x).forEach(function(k){ var d = Math.round(+a.x[k]); if(/^[mwk]:[A-Za-z0-9_-]{1,20}$/.test(k) && d && d >= -60 && d <= 60) x[k] = d; });
+      Object.keys(a.x).forEach(function(k){ var d = Math.round(+a.x[k]); if(d) d = d > 0 ? 1 : -1; if(/^[mwk]:[A-Za-z0-9_-]{1,20}$/.test(k) && d) x[k] = d; });
       if(Object.keys(x).length) o.x = x;
     }
     return Object.keys(o).length ? o : null;
@@ -3066,7 +3066,8 @@
   };
   var THEME_TIME_MULT = {equilibre:1, force:0.65, endurance_force:1.6, stabilite:1.15};
   var THEME_LABEL = {equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité & gainage'};
-  var TRANSITION_SECONDS = {debutant:20, intermediaire:20, avance:15, senior:30};
+  // Transition entre deux exercices (hors circuit) : 5 s, pas plus
+  var TRANSITION_SECONDS = {debutant:5, intermediaire:5, avance:5, senior:5};
   // Récupération entre deux exercices du circuit (corps de séance), selon l'objectif et le niveau
   var CIRCUIT_REST_SECONDS = {
     equilibre:        {debutant:30, intermediaire:25, avance:20, senior:40},
@@ -3246,6 +3247,9 @@
     var m = Math.floor(secs / 60), r = secs % 60;
     return m + ' min' + (r ? ' ' + (r < 10 ? '0' : '') + r : '');
   }
+  var TIME_STEPS = [20, 30, 45, 60];
+  function snapIdx(v){ var b = 0, d = 1e9; TIME_STEPS.forEach(function(t, i){ var dd = Math.abs(t - v); if(dd < d){ d = dd; b = i; } }); return b; }
+  function stepAt(i){ return TIME_STEPS[Math.max(0, Math.min(TIME_STEPS.length - 1, i))]; }
   function scaleTempsRaw(ex, level, theme){
     theme = theme || 'equilibre';
     var sets = ex.baseSets || 1, secs = ex.baseSeconds;
@@ -3255,10 +3259,15 @@
     secs = Math.max(12, Math.round(secs * THEME_TIME_MULT[theme]));
     // Progression d'un programme : le temps d'effort du corps de séance évolue d'une semaine à l'autre.
     if(ex.block === 'principal' && WORK_FACTOR !== 1) secs = Math.max(12, Math.round(secs * WORK_FACTOR));
-    if(SESSION_ADJ && SESSION_ADJ.w && SESSION_ADJ.main.indexOf(ex) > -1 && !(ex.breath && ex.breath.length)) secs = Math.max(10, secs + SESSION_ADJ.w);
-    if(SESSION_ADJ && SESSION_ADJ.x && !(ex.breath && ex.breath.length)){
-      var xk = exAdjKey(ex), xd = xk && SESSION_ADJ.x[xk];
-      if(xd){ var xc = exAdjCap(secs); secs = Math.max(10, secs + Math.max(-xc, Math.min(xc, xd))); }
+    // Renfo : temps arrondis aux paliers 20 s, 30 s, 45 s, 1 min ; les réglages font monter ou descendre d'un palier
+    if(!(ex.breath && ex.breath.length)){
+      var si = snapIdx(secs);
+      if(SESSION_ADJ){
+        if(SESSION_ADJ.w && SESSION_ADJ.main.indexOf(ex) > -1) si += SESSION_ADJ.w;
+        var xk = SESSION_ADJ.x && exAdjKey(ex), xd = xk && SESSION_ADJ.x[xk];
+        if(xd) si += Math.max(-1, Math.min(1, xd));
+      }
+      secs = stepAt(si);
     }
     // Respiration guidée : uniquement des cycles complets, pour finir sur une expiration
     if(ex.breath && ex.breath.length){
@@ -3444,7 +3453,7 @@
   }
 
   function roundRestSec(theme, level){ return (SESSION_ADJ && SESSION_ADJ.r) || REST_SECONDS_BY_THEME[theme][level]; }
-  function transSec(level){ return (SESSION_ADJ && SESSION_ADJ.t) || TRANSITION_SECONDS[level]; }
+  function transSec(level){ return TRANSITION_SECONDS[level] || 5; }
   // Conseil sur le choix de la charge (haltères, kettlebell) et de l'inclinaison (TRX)
   function eqHas(ex, k){ var e = ex && ex.equipment; return Array.isArray(e) ? e.indexOf(k) > -1 : e === k; }
   var LOAD_TIP_W = 'Prends une charge avec laquelle tu pourrais tenir <b>5 secondes de plus</b> que le temps indiqué, sans perdre la technique. Trop facile ? Prends plus lourd. Impossible de finir proprement ? Allège.';
@@ -4512,7 +4521,7 @@
     var rounds = row.dataset.exRounds ? parseInt(row.dataset.exRounds, 10) : null;
     if(ex && lastSession) openExerciseModal(ex, lastSession.level, lastSession.theme, rounds, true);
   });
-  // Réglage du temps d'un exercice depuis sa fiche
+  // Réglage du temps d'un exercice depuis sa fiche (un palier de plus ou de moins)
   var exAdjCtx = null;
   function exAdjInfo(ex, level, theme){
     var S = lastSession; if(!S || !S.main) return null;
@@ -4523,34 +4532,35 @@
     if(a.x) delete a.x[key];
     var keep = SESSION_ADJ; SESSION_ADJ = adjFor({adj:a, main:S.main, warm:S.warm, cool:S.cool});
     var base = scaleTempsRaw(ex, level, theme).secs; SESSION_ADJ = keep;
-    var cap = exAdjCap(base);
-    return {key:key, base:base, cap:cap, delta:Math.max(-cap, Math.min(cap, d))};
+    var bi = TIME_STEPS.indexOf(base);
+    return {key:key, base:base, bi:bi, delta:Math.max(-1, Math.min(1, d))};
   }
   function exAdjRender(){
     var c = exAdjCtx, box = document.getElementById('exModalAdj');
     var inf = c && exAdjInfo(c.ex, c.level, c.theme);
     box.hidden = !inf; if(!inf) return;
-    var cur = Math.max(10, inf.base + inf.delta);
+    var cur = stepAt(inf.bi + inf.delta);
     document.getElementById('exAdjVal').textContent = fmtDose(cur) + (c.ex.perSide ? ' / côté' : '');
-    document.getElementById('exAdjNote').textContent = (inf.delta ? 'Prévu ' + fmtDose(inf.base) + ' · ' + (inf.delta > 0 ? '+' : '−') + Math.abs(inf.delta) + ' s. ' : '')
-      + 'De ' + fmtDose(Math.max(10, inf.base - inf.cap)) + ' à ' + fmtDose(inf.base + inf.cap) + ', pour garder l\u2019équilibre de la séance.';
-    box.querySelector('[data-xd="-1"]').disabled = inf.delta <= -inf.cap || inf.base + inf.delta <= 10;
-    box.querySelector('[data-xd="1"]').disabled = inf.delta >= inf.cap;
-    document.getElementById('exModalDose').textContent = c.rounds ? (circuitDoseFor(c.ex, c.level, c.theme) + ' — répété sur ' + c.rounds + ' tours') : doseFor(c.ex, c.level, c.theme);
+    document.getElementById('exAdjNote').textContent = (inf.delta ? 'Prévu ' + fmtDose(inf.base) + '. ' : '')
+      + 'Entre ' + fmtDose(stepAt(inf.bi - 1)) + ' et ' + fmtDose(stepAt(inf.bi + 1)) + '. La séance se remanie pour garder sa durée.';
+    box.querySelector('[data-xd="-1"]').disabled = inf.delta <= -1 || inf.bi + inf.delta <= 0;
+    box.querySelector('[data-xd="1"]').disabled = inf.delta >= 1 || inf.bi + inf.delta >= TIME_STEPS.length - 1;
+    document.getElementById('exModalDose').textContent = c.rounds ? (circuitDoseFor(c.ex, c.level, c.theme) + ' — répété sur ' + lastSession.rounds + ' tours') : doseFor(c.ex, c.level, c.theme);
   }
   document.getElementById('exModalAdj').addEventListener('click', function(e){
-    var b = e.target.closest('[data-xd]'); if(!b || !exAdjCtx) return;
+    var b = e.target.closest('[data-xd]'); if(!b || !exAdjCtx || b.disabled) return;
     var S = lastSession, inf = exAdjInfo(exAdjCtx.ex, exAdjCtx.level, exAdjCtx.theme); if(!inf) return;
-    var d = Math.max(-inf.cap, Math.min(inf.cap, inf.delta + 5 * (+b.getAttribute('data-xd'))));
-    if(inf.base + d < 10) return;
+    var d = Math.max(-1, Math.min(1, inf.delta + (+b.getAttribute('data-xd'))));
     var a = S.adj ? JSON.parse(JSON.stringify(S.adj)) : {};
     a.x = a.x || {}; if(d) a.x[inf.key] = d; else delete a.x[inf.key];
     var c = cleanAdj(a);
     if(c) S.adj = c; else delete S.adj;
     if(S.programRef && currentProgram){ var tpl = templateFor(S.programRef.week, S.programRef.slot); if(c) tpl.adj = c; else delete tpl.adj; }
+    var fit = fitSession(S);
     displaySession(S, S.title, true);
     if(S.programRef && currentProgram) saveProgram();
     exAdjRender();
+    if(fit) showToast(fit, false);
   });
   document.getElementById('exModalClose').addEventListener('click', closeExerciseModal);
   document.getElementById('exModalBackdrop').addEventListener('click', function(e){
@@ -4708,6 +4718,7 @@
 
     var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, sport:(!silent && state.sport) || null};
     if(silent){ session.title = title; return session; }
+    fitSession(session);
     displaySession(session, title);
   }
   // Calage final : la durée réelle (celle du chrono) colle à la durée choisie,
@@ -4744,6 +4755,46 @@
   function sessionModified(session){ return !!session.adj || contentModified(session); }
   function sessionMinutes(session){
     return Math.max(1, Math.round(sessionSeconds(session)/60));
+  }
+  // Remanie une séance générée (nombre de tours, puis nombre d'exercices du circuit)
+  // pour que sa durée réelle colle au plus près de la durée choisie au départ.
+  function fitSession(S, dry){
+    if(!S || S.composed || S.programRef || S.shared || !S.main || !S.main.length || !S.rounds || !S.durationMinutes) return dry ? null : '';
+    var target = S.durationMinutes * 60, keepA = SESSION_ADJ, keepW = WORK_FACTOR;
+    WORK_FACTOR = S.workFactor || 1;
+    var r0 = S.rounds, main0 = S.main.slice(), n0 = main0.length;
+    if(!S._fitExtra){
+      var ex0 = main0[main0.length - 1], extra = [], tmp = {warm:S.warm, cardio:S.cardio, main:main0.slice(), cool:S.cool, equip:S.equip, zone:S.zone, level:S.level, noFloor:S.noFloor, chair:S.chair};
+      for(var i = 0; i < 2; i++){
+        var cands = replacementCandidates(tmp, ex0).filter(function(x){ return x.type === 'temps'; });
+        if(!cands.length) break;
+        var pick = cands[Math.floor(Math.random() * cands.length)]; extra.push(pick); tmp.main.push(pick);
+      }
+      S._fitExtra = extra;
+    }
+    var extraNow = S._fitExtra.filter(function(x){ return main0.indexOf(x) < 0; });
+    function secsFor(r, list){ S.rounds = r; S.main = list; SESSION_ADJ = adjFor(S); return sessionSeconds(S); }
+    var best = null;
+    for(var k = -2; k <= 2; k++){
+      var list = k < 0 ? (n0 + k >= 3 ? main0.slice(0, n0 + k) : null) : (k > 0 ? (extraNow.length >= k ? main0.concat(extraNow.slice(0, k)) : null) : main0);
+      if(!list) continue;
+      for(var r = Math.max(2, r0 - 2); r <= Math.min(6, r0 + 2); r++){
+        var sec = secsFor(r, list), score = Math.abs(sec - target) + 25 * Math.abs(r - r0) + 45 * Math.abs(k);
+        if(!best || score < best.score) best = {score:score, r:r, list:list, k:k, sec:sec};
+      }
+    }
+    S.rounds = r0; S.main = main0;
+    var res = null;
+    if(best && (best.r !== r0 || best.k !== 0)) res = best;
+    if(!dry && res){ S.rounds = res.r; S.main = res.list; }
+    WORK_FACTOR = keepW; SESSION_ADJ = dry ? keepA : adjFor(S);
+    if(dry) return res;
+    if(!res) return '';
+    var parts = [];
+    if(res.r !== r0) parts.push(res.r + ' tours au lieu de ' + r0);
+    if(res.k > 0) parts.push(res.k + ' exercice' + (res.k > 1 ? 's' : '') + ' en plus');
+    if(res.k < 0) parts.push(-res.k + ' exercice' + (res.k < -1 ? 's' : '') + ' en moins');
+    return 'Séance remaniée pour rester proche de ' + S.durationMinutes + ' min : ' + parts.join(', ') + '.';
   }
   // Durée totale exacte de la séance, telle que le chrono la déroule (échauffement, efforts, récups, transitions)
   function sessionSeconds(session){ return buildTimeline(session).reduce(function(sum, st){ return sum + st.duration; }, 0); }
@@ -8413,7 +8464,7 @@
   // ---------- Régler les temps d'une séance générée ----------
   (function(){
     function lim(v, a, b){ return Math.max(a, Math.min(b, v)); }
-    function sgn(n){ return n > 0 ? '+' + n + ' s' : (n < 0 ? '−' + (-n) + ' s' : 'Standard'); }
+    function sgn(n){ return n > 0 ? '+' + n + ' palier' + (n > 1 ? 's' : '') : (n < 0 ? '−' + (-n) + ' palier' + (n < -1 ? 's' : '') : 'Standard'); }
     function openAdj(){
       var S = lastSession; if(!S || !S.main || !S.main.length) return;
       var keepAdj = S.adj, lv = S.level, th = S.theme;
@@ -8428,8 +8479,8 @@
         + '<div class="ta-step"><button type="button" data-k="' + k + '" data-d="-1" aria-label="Moins">−</button><output id="ta_' + k + '"></output><button type="button" data-k="' + k + '" data-d="1" aria-label="Plus">＋</button></div></div>'; }
       wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Régler les temps">'
         + '<p class="ec-dialog-msg">⏱ Régler les temps</p>'
-        + row('w', 'Temps d’effort', 'chaque exercice du corps de séance<span id="ta_ex"></span>')
-        + row('t', 'Transition', 'entre deux exercices')
+        + row('w', 'Temps d’effort', 'paliers 20 s, 30 s, 45 s, 1 min<span id="ta_ex"></span>')
+        + row('t', 'Récup entre exercices', 'dans le circuit (les transitions restent à 5 s)')
         + (S.rounds > 1 ? row('r', 'Récup entre tours', 'après chaque tour complet') : '')
         + '<p class="ta-total" id="ta_total"></p>'
         + (keepAdj && keepAdj.x ? '<p class="cp-note" style="margin:-4px 0 10px">Tu as aussi ajusté ' + Object.keys(keepAdj.x).length + ' exercice' + (Object.keys(keepAdj.x).length > 1 ? 's' : '') + ' un par un : « Par défaut » les remet aussi.</p>' : '')
@@ -8440,18 +8491,20 @@
         wrap.querySelector('#ta_w').textContent = sgn(v.w);
         wrap.querySelector('#ta_t').textContent = v.t + ' s';
         var r = wrap.querySelector('#ta_r'); if(r) r.textContent = v.r + ' s';
-        wrap.querySelector('#ta_ex').textContent = ex ? ' (ex. ' + ex.name + ' : ' + fmtDose(Math.max(10, baseW + v.w)) + ')' : '';
+        wrap.querySelector('#ta_ex').textContent = ex ? ' (ex. ' + ex.name + ' : ' + fmtDose(stepAt(TIME_STEPS.indexOf(baseW) + v.w)) + ')' : '';
         var keep = S.adj, c = cand(); if(c) S.adj = c; else delete S.adj;
-        SESSION_ADJ = adjFor(S); var m = sessionMinutes(S);
+        SESSION_ADJ = adjFor(S); var m = sessionMinutes(S), fit = fitSession(S, true);
         if(keep) S.adj = keep; else delete S.adj; SESSION_ADJ = adjFor(S);
-        wrap.querySelector('#ta_total').textContent = 'Durée de la séance : ' + m + ' min environ';
+        wrap.querySelector('#ta_total').textContent = fit
+          ? 'Avec ces temps : ' + m + ' min. La séance sera remaniée (' + fit.r + ' tours' + (fit.k ? ', ' + (fit.k > 0 ? '+' : '−') + Math.abs(fit.k) + ' exercice' + (Math.abs(fit.k) > 1 ? 's' : '') : '') + ') pour faire ' + fmtTotal(fit.sec) + ' (objectif ' + S.durationMinutes + ' min).'
+          : 'Durée de la séance : ' + m + ' min' + (S.durationMinutes && !S.programRef && !S.composed ? ' (objectif ' + S.durationMinutes + ' min)' : '');
       }
       wrap.addEventListener('click', function(e){
         if(e.target === wrap){ wrap.remove(); return; }
         var b = e.target.closest('[data-k]');
         if(b){
           var k = b.getAttribute('data-k'), d = +b.getAttribute('data-d');
-          if(k === 'w') v.w = lim(v.w + 5 * d, -30, 90);
+          if(k === 'w') v.w = lim(v.w + d, -2, 2);
           if(k === 't') v.t = lim(v.t + 5 * d, 5, 120);
           if(k === 'r') v.r = lim(v.r + (v.r >= 60 ? 15 : 5) * d, 10, 300);
           upd(); return;
@@ -8462,9 +8515,10 @@
           if(c) S.adj = c; else delete S.adj;
           if(S.programRef && currentProgram){ var tpl = templateFor(S.programRef.week, S.programRef.slot); if(c) tpl.adj = c; else delete tpl.adj; }
           wrap.remove();
+          var fitMsg = fitSession(S);
           displaySession(S, S.title, true);
           if(S.programRef && currentProgram) saveProgram();
-          showToast(c ? 'Temps mis à jour ✓ Le chrono suivra ces réglages.' : 'Temps d’origine remis.', false);
+          showToast(fitMsg || (c ? 'Temps mis à jour ✓ Le chrono suivra ces réglages.' : 'Temps d’origine remis.'), false);
         }
       });
       upd();
