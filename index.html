@@ -2176,6 +2176,33 @@
   .share-more > summary::before{content:'▸ ';} .share-more[open] > summary::before{content:'▾ ';}
   .share-more.plain{border-top:none; padding-top:0;} .share-more.plain > summary{display:none;}
   @media screen and (prefers-color-scheme: dark){ .sq-av{background:#3A8558;} .fold-sum{color:#A7D8B4;} }
+  /* ---------- Badges et défis ---------- */
+  .ch-card{background:linear-gradient(135deg, #FBF3DF, var(--card)) !important; box-shadow:var(--shadow-1), inset 0 0 0 1.5px #E8C77A !important;}
+  .ch-card[hidden]{display:none;}
+  .ch-head{display:flex; gap:12px; align-items:flex-start;}
+  .ch-ico{font-size:1.8rem; line-height:1;}
+  .ch-head h2{margin:0 0 2px;}
+  .ch-head p{margin:0; font-size:0.86rem; color:var(--stone); line-height:1.4;}
+  .ch-head em{font-style:normal; color:#8A5A00; font-weight:600;}
+  .ch-bar{height:12px; margin:12px 0 8px; border-radius:999px; background:rgba(31,64,48,0.1); overflow:hidden;}
+  .ch-bar span{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, #E8C77A, var(--forest)); transition:width .6s ease;}
+  .ch-foot{display:flex; justify-content:space-between; gap:10px; font-size:0.84rem;}
+  .ch-foot span{color:var(--stone);}
+  .ch-card.done .ch-foot span{color:var(--forest); font-weight:700;}
+  .bd-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:8px; margin-top:10px;}
+  .bd{display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px 8px; border-radius:14px; background:var(--chip); text-align:center; opacity:0.55; filter:grayscale(1);}
+  .bd.on{opacity:1; filter:none; background:var(--sage-light); box-shadow:inset 0 0 0 1.5px var(--forest);}
+  .bd-ico{font-size:1.6rem; line-height:1.1;}
+  .bd-n{font-size:0.7rem; font-weight:700; line-height:1.2;}
+  .bd-p{font-size:0.66rem; color:var(--stone); font-weight:600;}
+  .fb-badges{margin:0 0 12px;}
+  .fb-badges[hidden]{display:none;}
+  .fbb{padding:10px 12px; margin-bottom:6px; border-radius:12px; background:rgba(232,199,122,0.18); color:#fff; font-size:0.9rem; animation:ecViewIn .4s ease both;}
+  .fbb.chal{background:rgba(232,199,122,0.35);}
+  .fbb.soft{background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.8);}
+  .ct-chal-now{margin:0 0 8px; padding:8px 10px; border-radius:10px; background:var(--sage-light); font-size:0.86rem;}
+  #ctChalCard select{width:100%; min-height:42px; border-radius:10px; border:1px solid var(--ring-line); background:var(--card); color:var(--ink); font:inherit; font-size:16px; padding:0 8px;}
+  @media screen and (prefers-color-scheme: dark){ .ch-card{background:linear-gradient(135deg, #3A3220, var(--card)) !important; box-shadow:var(--shadow-1), inset 0 0 0 1.5px #7A6330 !important;} .ch-head em{color:#F0CF86;} .bd.on{background:#1E3528; box-shadow:inset 0 0 0 1.5px #8FC49E;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2464,6 +2491,8 @@
     <p>Tes séances, ta régularité et ton ressenti.</p>
   </div>
   <div class="sv-stats" id="svStats"></div>
+  <section class="sv-card ch-card" id="svChalCard" hidden></section>
+  <section class="sv-card" id="svBadgeCard"></section>
   <section class="sv-card">
     <div class="sv-cal-head"><button type="button" class="sv-nav" id="svPrev" aria-label="Mois précédent">‹</button><h2 id="svMonth"></h2><button type="button" class="sv-nav" id="svNext" aria-label="Mois suivant">›</button></div>
     <div class="sv-cal" id="svCal"></div>
@@ -2545,6 +2574,20 @@
     </div>
 
     <div class="ct-pane" data-pane="send">
+    <div class="ct-card" id="ctChalCard">
+      <h3>🎯 Défi pour tes athlètes</h3>
+      <p class="ct-note" style="margin-top:0">Il s’affiche dans l’onglet Suivi de chaque athlète, avec sa progression. Sans défi de ta part, l’appli propose « 8 séances dans le mois ».</p>
+      <div id="ctChalNow"></div>
+      <div class="ct-form">
+        <label class="ct-wide">Nom du défi<input type="text" id="chT" maxlength="40" placeholder="ex. Défi de novembre"></label>
+        <label>Objectif<select id="chK"><option value="sessions">Séances</option><option value="days">Jours actifs</option><option value="minutes">Minutes</option><option value="breath">Séances de respiration</option></select></label>
+        <label>Nombre<input type="number" id="chN" min="1" max="999" value="10" inputmode="numeric"></label>
+        <label>Du<input type="date" id="chFrom"></label>
+        <label>Au<input type="date" id="chTo"></label>
+        <label class="ct-wide">Message (facultatif)<input type="text" id="chTxt" maxlength="90" placeholder="ex. 10 séances en novembre, on lâche rien !"></label>
+      </div>
+      <div class="ct-acts" style="margin-top:10px"><button type="button" class="send" id="chSave">Publier le défi</button><button type="button" id="chDel">Retirer</button></div>
+    </div>
     <div class="ct-card ct-compose">
       <h3>Composer moi-même</h3>
       <p class="ct-note" style="margin-top:0">Choisis chaque exercice, puis envoie le tout à un athlète ou à un groupe.</p>
@@ -2608,7 +2651,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.6 · mise à jour du 12 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.7 · mise à jour du 12 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -7080,6 +7123,7 @@
         if(st && st.total > 0){
           var s = st.count === 0 ? 'Pas encore de séance cette semaine' : ('🔥 ' + st.count + ' séance' + (st.count > 1 ? 's' : '') + ' cette semaine');
           if(st.streak >= 2) s += ' · ' + st.streak + ' sem. d’affilée';
+          if(window.ecChalText) s += ' · ' + window.ecChalText();
           heroR.stat.textContent = s; heroR.stat.hidden = false;
         } else heroR.stat.hidden = true;
         var nx = window.ecProgNext ? window.ecProgNext() : null;
@@ -7310,6 +7354,7 @@
         + '<div class="sv-stat"><b>' + st.streak + '</b><span>semaine' + (st.streak > 1 ? 's' : '') + ' d’affilée</span></div>'
         + '<div class="sv-stat"><b>' + st.total + '</b><span>séance' + (st.total > 1 ? 's' : '') + ' au total · ' + fmtMins(st.mins) + '</span></div>';
       renderCal(h); renderRpe(h); renderHist(h); renderFav();
+      if(window.ecRenderGamif) window.ecRenderGamif(h);
     }
     function renderCal(h){
       var y = calRef.getFullYear(), m = calRef.getMonth();
@@ -7465,7 +7510,7 @@
     function usersStr(a){ var u = (a && a.users) || {}, o = {}; Object.keys(u).sort().forEach(function(k){ o[k] = u[k]; }); return JSON.stringify(o); }
     function grpStr(a){ return JSON.stringify((a && a.groups) || {}); }
     function pending(){ var ib = JSON.stringify(lsGet('ec_coach_inbox', {}) || {}), pub = null; try{ pub = localStorage.getItem('ec_coach_inbox_pub'); }catch(e){}
-      return usersStr(draft) !== usersStr(remote) || (draft && grpStr(draft) !== grpStr(remote)) || (remoteMissing && draft && (Object.keys(draft.users).length > 0 || ib !== '{}')) || ib !== (pub || '{}'); }
+      return usersStr(draft) !== usersStr(remote) || (draft && grpStr(draft) !== grpStr(remote)) || (draft && JSON.stringify(draft.challenge || null) !== JSON.stringify((remote && remote.challenge) || null)) || (remoteMissing && draft && (Object.keys(draft.users).length > 0 || ib !== '{}')) || ib !== (pub || '{}'); }
     function saveDraft(){ lsSet(CT_DRAFT, draft); }
     function localKeys(){ return lsGet(CT_KEY, []); }
     function keyOf(h){ var l = localKeys(); for(var i = 0; i < l.length; i++) if(ecHash(l[i].k) === h) return l[i]; return null; }
@@ -7511,6 +7556,28 @@
       rows.sort(function(a, b){ return (ord[a.st.cls] - ord[b.st.cls]) || String(a.u.n).localeCompare(String(b.u.n), 'fr'); });
       return rows;
     }
+    // ----- Défi
+    function renderChal(){
+      var c = draft && draft.challenge, box = $('#ctChalNow'); if(!box) return;
+      var K = {sessions:'séances', days:'jours actifs', minutes:'minutes', breath:'séances de respiration'};
+      box.innerHTML = c ? '<p class="ct-chal-now">En cours : <b>' + esc(c.t) + '</b> · ' + c.n + ' ' + (K[c.k] || '') + ' du ' + frDate(c.from) + ' au ' + frDate(c.to) + '</p>' : '';
+      $('#chDel').hidden = !c;
+      if(c && !$('#chT').value){ $('#chT').value = c.t; $('#chK').value = c.k; $('#chN').value = c.n; $('#chFrom').value = c.from; $('#chTo').value = c.to; $('#chTxt').value = c.txt || ''; }
+      if(!$('#chFrom').value){ var t = today0(), e = new Date(t.getFullYear(), t.getMonth() + 1, 0); $('#chFrom').value = iso(t); $('#chTo').value = iso(e); }
+    }
+    $('#chSave').addEventListener('click', function(){
+      var t = $('#chT').value.trim() || 'Défi du moment', n = Math.round(+$('#chN').value), a = $('#chFrom').value, b = $('#chTo').value;
+      if(!(n > 0)){ showToast('Indique un objectif (nombre).', false); return; }
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(a) || !/^\d{4}-\d{2}-\d{2}$/.test(b) || b < a){ showToast('Vérifie les dates du défi.', false); return; }
+      draft.challenge = {id:'c' + Date.now().toString(36), t:t, k:$('#chK').value, n:n, from:a, to:b, txt:$('#chTxt').value.trim() || undefined};
+      saveDraft(); renderChal(); autoSave();
+      showToast('Défi « ' + t + ' » publié ✓ Visible chez tes athlètes à leur prochaine ouverture.', false);
+    });
+    $('#chDel').addEventListener('click', function(){
+      ecConfirm('Retirer le défi en cours ? Tes athlètes retrouveront le défi du mois proposé par l’appli.', 'Retirer', function(){
+        delete draft.challenge; saveDraft(); $('#chT').value = ''; renderChal(); autoSave();
+      }, true);
+    });
     // ----- Groupes
     var openGrpSess = null, editGrp = null;
     function grps(){ if(!draft.groups) draft.groups = {}; return draft.groups; }
@@ -7572,7 +7639,7 @@
     });
     function renderCoach(){
       if(!draft) return;
-      renderGroups();
+      renderGroups(); renderChal();
       var rows = allRows(), list = rows.filter(function(r){ return ctFilter === 'all' || r.st.cls === ctFilter || (ctFilter === 'off' && r.st.cls === 'off'); });
       $('#ctCount').textContent = rows.filter(function(r){ return r.st.cls !== 'off'; }).length + ' actif' + (rows.filter(function(r){ return r.st.cls !== 'off'; }).length > 1 ? 's' : '') + ' · ' + rows.length + ' au total';
       $('#ctList').innerHTML = list.length ? list.map(function(r){
@@ -7786,6 +7853,7 @@
     function publish(net){
       var out = {v:1, updated:new Date().toISOString(), users:clone(draft.users)};
       if(draft.groups && Object.keys(draft.groups).length) out.groups = clone(draft.groups);
+      if(draft.challenge) out.challenge = clone(draft.challenge);
       var files = inboxFiles(); files['acces.json'] = JSON.stringify(out, null, 1);
       var ibNow = inboxStr();
       publishing = true; renderPub('Enregistrement en ligne…');
@@ -8857,6 +8925,129 @@
       });
     }
 
+  })();
+
+  // ---------- Badges et défis ----------
+  (function(){
+    function $(s){ return document.querySelector(s); }
+    function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+    function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+    function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function hist(){ var h = lsGet('ec_history_v1', []); return Array.isArray(h) ? h : []; }
+    function weekStart(t){ var d = new Date(t); d.setHours(0,0,0,0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.getTime(); }
+    function dayKey(t){ var d = new Date(t); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    function iso(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    function parseIso(s){ var p = String(s || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+
+    function facts(h){
+      var f = {total:h.length, breath:0, renfo:0, mins:0, early:0, late:0, full:0, bestWeek:0, bestStreak:0, chal:Object.keys(lsGet('ec_chal_done', {}) || {}).length};
+      var perWeek = {};
+      h.forEach(function(e){
+        if(e.breath) f.breath++; else f.renfo++;
+        f.mins += +e.minutes || 0;
+        var hr = new Date(e.at).getHours(); if(hr < 8) f.early++; if(hr >= 21) f.late++;
+        if(!e.stopped && e.total && e.done >= e.total) f.full++;
+        var w = weekStart(e.at); perWeek[w] = (perWeek[w] || 0) + 1;
+      });
+      var ws = Object.keys(perWeek).map(Number).sort(function(a, b){ return a - b; }), run = 0, prev = null;
+      ws.forEach(function(w){ f.bestWeek = Math.max(f.bestWeek, perWeek[w]); run = (prev !== null && Math.abs(w - prev - 7 * 86400000) < 7200000) ? run + 1 : 1; prev = w; f.bestStreak = Math.max(f.bestStreak, run); });
+      return f;
+    }
+    var BADGES = [
+      {id:'s1', ico:'🎬', n:'Première séance', v:function(f){ return f.total; }, goal:1},
+      {id:'s10', ico:'🔟', n:'10 séances', v:function(f){ return f.total; }, goal:10},
+      {id:'s25', ico:'🥉', n:'25 séances', v:function(f){ return f.total; }, goal:25},
+      {id:'s50', ico:'🥈', n:'50 séances', v:function(f){ return f.total; }, goal:50},
+      {id:'s100', ico:'🥇', n:'100 séances', v:function(f){ return f.total; }, goal:100},
+      {id:'w2', ico:'🔥', n:'2 semaines d’affilée', v:function(f){ return f.bestStreak; }, goal:2},
+      {id:'w4', ico:'🔥', n:'1 mois sans lâcher', v:function(f){ return f.bestStreak; }, goal:4},
+      {id:'w12', ico:'☄️', n:'3 mois sans lâcher', v:function(f){ return f.bestStreak; }, goal:12},
+      {id:'wk3', ico:'📅', n:'Semaine à 3 séances', v:function(f){ return f.bestWeek; }, goal:3},
+      {id:'h5', ico:'⏱️', n:'5 heures d’entraînement', v:function(f){ return Math.floor(f.mins / 60); }, goal:5, u:'h'},
+      {id:'h20', ico:'⌛', n:'20 heures d’entraînement', v:function(f){ return Math.floor(f.mins / 60); }, goal:20, u:'h'},
+      {id:'full10', ico:'💪', n:'10 séances complètes', d:'sans passer d’exercice', v:function(f){ return f.full; }, goal:10},
+      {id:'b10', ico:'🌬️', n:'Zen : 10 respirations', v:function(f){ return f.breath; }, goal:10},
+      {id:'early', ico:'🌅', n:'Lève-tôt', d:'une séance avant 8 h', v:function(f){ return f.early; }, goal:1},
+      {id:'late', ico:'🌙', n:'Oiseau de nuit', d:'une séance après 21 h', v:function(f){ return f.late; }, goal:1},
+      {id:'c1', ico:'🎯', n:'Premier défi réussi', v:function(f){ return f.chal; }, goal:1},
+      {id:'c3', ico:'🏆', n:'3 défis réussis', v:function(f){ return f.chal; }, goal:3}
+    ];
+    function badges(h){
+      var f = facts(h);
+      return BADGES.map(function(b){ var v = b.v(f); return {id:b.id, ico:b.ico, n:b.n, d:b.d, earned:v >= b.goal, v:Math.min(v, b.goal), goal:b.goal, u:b.u}; });
+    }
+
+    // Défi : celui publié par le coach, sinon le défi du mois
+    function challenge(){
+      var acl = lsGet('ec_acl', null), c = acl && acl.challenge;
+      var today = new Date(); today.setHours(0,0,0,0);
+      if(c && c.n > 0 && c.from && c.to && parseIso(c.to) >= today && parseIso(c.from) <= today) return c;
+      var first = new Date(today.getFullYear(), today.getMonth(), 1), last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      var month = today.toLocaleDateString('fr-FR', {month:'long'});
+      return {id:'m-' + iso(first).slice(0, 7), t:'Défi du mois', k:'sessions', n:8, from:iso(first), to:iso(last), txt:'8 séances en ' + month + ', renfo ou respiration.', auto:true};
+    }
+    var KIND = {sessions:['séance', 'séances'], minutes:['minute', 'minutes'], days:['jour actif', 'jours actifs'], breath:['respiration', 'respirations']};
+    function progress(c, h){
+      var a = parseIso(c.from).getTime(), b = parseIso(c.to).getTime() + 86400000;
+      var list = h.filter(function(e){ return e.at >= a && e.at < b; });
+      if(c.k === 'minutes') return list.reduce(function(s, e){ return s + (+e.minutes || 0); }, 0);
+      if(c.k === 'days'){ var d = {}; list.forEach(function(e){ d[dayKey(e.at)] = 1; }); return Object.keys(d).length; }
+      if(c.k === 'breath') return list.filter(function(e){ return e.breath; }).length;
+      return list.length;
+    }
+    function checkChallenge(h){
+      var c = challenge(), p = progress(c, h), done = lsGet('ec_chal_done', {}) || {}, fresh = false;
+      if(p >= c.n && !done[c.id]){ done[c.id] = {t:c.t, at:Date.now()}; lsSet('ec_chal_done', done); fresh = true; }
+      return {c:c, p:p, fresh:fresh, done:!!done[c.id]};
+    }
+
+    function renderChal(h){
+      var card = $('#svChalCard'); if(!card) return;
+      var r = checkChallenge(h), c = r.c, pct = Math.min(100, Math.round(r.p / c.n * 100));
+      var left = Math.max(0, Math.round((parseIso(c.to) - new Date().setHours(0,0,0,0)) / 86400000));
+      var lab = KIND[c.k] || KIND.sessions;
+      card.hidden = false;
+      card.innerHTML = '<div class="ch-head"><span class="ch-ico">🎯</span><div><h2>' + esc(c.t) + '</h2><p>' + esc(c.txt || (c.n + ' ' + lab[1])) + (c.auto ? '' : ' <em>· proposé par ton coach</em>') + '</p></div></div>'
+        + '<div class="ch-bar"><span style="width:' + pct + '%"></span></div>'
+        + '<div class="ch-foot"><b>' + Math.min(r.p, c.n) + ' / ' + c.n + ' ' + (c.n > 1 ? lab[1] : lab[0]) + '</b><span>' + (r.done ? '✅ Défi réussi, bravo !' : (left === 0 ? 'Dernier jour !' : 'encore ' + left + ' jour' + (left > 1 ? 's' : ''))) + '</span></div>';
+      card.classList.toggle('done', r.done);
+    }
+    function renderBadges(h){
+      var card = $('#svBadgeCard'); if(!card) return;
+      var list = badges(h), got = list.filter(function(b){ return b.earned; }).length;
+      card.innerHTML = '<div class="sv-h2row"><h2>Mes badges</h2><span class="sv-hint" style="margin:0">' + got + ' / ' + list.length + '</span></div><div class="bd-grid">'
+        + list.map(function(b){ return '<div class="bd' + (b.earned ? ' on' : '') + '" title="' + esc(b.n + (b.d ? ' : ' + b.d : '')) + '"><span class="bd-ico">' + b.ico + '</span><span class="bd-n">' + esc(b.n) + '</span>'
+          + (b.earned ? '' : '<span class="bd-p">' + b.v + '/' + b.goal + (b.u ? ' ' + b.u : '') + '</span>') + '</div>'; }).join('') + '</div>';
+    }
+    window.ecChalText = function(){ var r = checkChallenge(hist()); return r.done ? '🎯 Défi réussi ✓' : '🎯 ' + Math.min(r.p, r.c.n) + '/' + r.c.n; };
+    window.ecRenderGamif = function(h){ h = h || hist(); renderChal(h); renderBadges(h); };
+
+    // Fin de séance : nouveaux badges et défi réussi
+    var bd = $('#timerBackdrop'), was = false;
+    if(bd) new MutationObserver(function(){
+      var isFb = bd.classList.contains('feedback');
+      if(isFb && !was){
+        setTimeout(function(){
+          var h = hist(), seen = lsGet('ec_badges_seen', null), earned = badges(h).filter(function(b){ return b.earned; });
+          var r = checkChallenge(h);
+          if(r.fresh) earned = badges(hist()).filter(function(b){ return b.earned; });
+          var news = seen ? earned.filter(function(b){ return seen.indexOf(b.id) < 0; }) : [];
+          lsSet('ec_badges_seen', earned.map(function(b){ return b.id; }));
+          var fbBox = $('#timerFeedback'), box = $('#fbBadges');
+          if(!box && fbBox){ box = document.createElement('div'); box.id = 'fbBadges'; box.className = 'fb-badges'; fbBox.insertBefore(box, fbBox.firstChild); }
+          if(!box) return;
+          var html = '';
+          if(r.fresh) html += '<div class="fbb chal">🎯 <b>' + esc(r.c.t) + ' réussi !</b></div>';
+          news.forEach(function(b){ html += '<div class="fbb">' + b.ico + ' Nouveau badge : <b>' + esc(b.n) + '</b></div>'; });
+          if(!html && !r.done){ html = '<div class="fbb soft">🎯 ' + esc(r.c.t) + ' : ' + Math.min(r.p, r.c.n) + ' / ' + r.c.n + '</div>'; }
+          box.innerHTML = html; box.hidden = !html;
+        }, 150);
+      }
+      was = isFb;
+    }).observe(bd, {attributes:true, attributeFilter:['class']});
+    // Première ouverture : les badges déjà mérités ne sont pas annoncés comme nouveaux
+    if(!lsGet('ec_badges_seen', null)) lsSet('ec_badges_seen', badges(hist()).filter(function(b){ return b.earned; }).map(function(b){ return b.id; }));
+    window.ecRenderGamif();
   })();
 
   // ---------- Bouton retour du téléphone ----------
