@@ -2564,7 +2564,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.3 · mise à jour du 12 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.4 · mise à jour du 12 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -3068,13 +3068,16 @@
     // Endurance de force : pas de récupération, on enchaîne (simple transition de 5 s)
     equilibre:        {debutant:60,  intermediaire:45,  avance:40,  senior:60},
     force:            {debutant:150, intermediaire:180, avance:180, senior:180},
-    endurance_force:  {debutant:0,   intermediaire:0,   avance:0,   senior:0},
+    endurance_force:  {debutant:0,   intermediaire:0,   avance:0,   senior:20},
     stabilite:        {debutant:40,  intermediaire:30,  avance:30,  senior:45}
   };
+  // Séance courte (10 min) : récupérations plafonnées pour garder du temps d'effort
+  var SHORT_SESSION = false;
   function circuitRestSec(theme, level){
     if(SESSION_ADJ && SESSION_ADJ.t != null) return SESSION_ADJ.t;
     var t = CIRCUIT_REST_SECONDS[theme] || CIRCUIT_REST_SECONDS.equilibre;
-    return t[level] != null ? t[level] : 30;
+    var v = t[level] != null ? t[level] : 30;
+    return SHORT_SESSION ? Math.min(v, theme === 'force' ? 90 : 30) : v;
   }
 
   var ROUNDS_BY_LEVEL = {debutant:2, intermediaire:3, avance:4, senior:2};
@@ -3450,7 +3453,11 @@
     return ex.note || '';
   }
 
-  function roundRestSec(theme, level){ return (SESSION_ADJ && SESSION_ADJ.r) || REST_SECONDS_BY_THEME[theme][level]; }
+  function roundRestSec(theme, level){
+    if(SESSION_ADJ && SESSION_ADJ.r) return SESSION_ADJ.r;
+    var v = REST_SECONDS_BY_THEME[theme][level];
+    return SHORT_SESSION ? Math.min(v, theme === 'force' ? 90 : 45) : v;
+  }
   function transSec(level){ return TRANSITION_SECONDS[level] || 5; }
   // Conseil sur le choix de la charge (haltères, kettlebell) et de l'inclinaison (TRX)
   function eqHas(ex, k){ var e = ex && ex.equipment; return Array.isArray(e) ? e.indexOf(k) > -1 : e === k; }
@@ -3468,12 +3475,16 @@
       + (k.w ? '<p><strong>🏋️ Choix de la charge' + (k.t ? '' : '') + '</strong>' + LOAD_TIP_W + '</p>' : '')
       + (k.t ? '<p><strong>🔗 Inclinaison TRX</strong>' + LOAD_TIP_T + '</p>' : '') + '</div>';
   }
-  function restNoteFor(level, theme, rounds){
+  function restNoteFor(level, theme, rounds, minutes){
+    var keepShort = SHORT_SESSION; SHORT_SESSION = !!(minutes && minutes <= 10);
+    try{ return restNoteText(level, theme, rounds); } finally { SHORT_SESSION = keepShort; }
+  }
+  function restNoteText(level, theme, rounds){
     var secs = roundRestSec(theme, level);
     var themeText = {
       equilibre:"Récupération standard : de quoi bien repartir sur chaque exercice.",
       force:"Récupération longue : l'objectif est la qualité de chaque effort, pas la fatigue.",
-      endurance_force:"Pas de récupération entre les exercices : l'objectif est de maintenir l'effort malgré la fatigue.",
+      endurance_force:"Récupération réduite au minimum : l'objectif est de maintenir l'effort malgré la fatigue.",
       stabilite:"Récupération modérée : privilégie un tempo lent et un contrôle parfait du mouvement plutôt que la vitesse."
     };
     var cr = circuitRestSec(theme, level), tours = rounds + ' tour' + (rounds > 1 ? 's' : '');
@@ -3527,6 +3538,10 @@
   function buildTimeline(session){
     session = session || lastSession;
     if(!session) return [];
+    var keepShort = SHORT_SESSION; SHORT_SESSION = !!(session.durationMinutes && session.durationMinutes <= 10 && !session.composed);
+    try{ return buildTimelineInner(session); } finally { SHORT_SESSION = keepShort; }
+  }
+  function buildTimelineInner(session){
     var level = session.level, theme = session.theme, rounds = session.rounds;
     var blocks = [
       {key:'echauffement', label:'Échauffement', list: session.warm, themed:false},
@@ -4528,7 +4543,7 @@
   var exAdjCtx = null;
   function exAdjInfo(ex, level, theme){
     var S = lastSession; if(!S || !S.main) return null;
-    if(ex.type !== 'temps' || (ex.breath && ex.breath.length) || document.documentElement.classList.contains('ec-guest')) return null;
+    if(ex.type !== 'temps' || (ex.breath && ex.breath.length) || document.documentElement.classList.contains('ec-guest') || coachLocked(S)) return null;
     var pre = S.main.indexOf(ex) > -1 ? 'm:' : ((S.warm || []).indexOf(ex) > -1 ? 'w:' : ((S.cool || []).indexOf(ex) > -1 ? 'k:' : null));
     if(!pre) return null;
     var key = pre + ex.id, a = S.adj ? JSON.parse(JSON.stringify(S.adj)) : {}, d = (a.x && a.x[key]) || 0;
@@ -4721,9 +4736,29 @@
 
     var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, sport:(!silent && state.sport) || null};
     ensureWarmup(session);
+    ensureCooldown(session);
     if(silent){ session.title = title; return session; }
     fitSession(session);
     displaySession(session, title);
+  }
+  // Retour au calme suffisant : 2 min (jusqu'à 30 min), 3 min au-delà ; on ajoute des étirements avant la respiration
+  function coolSeconds(S){ return buildTimeline(S).reduce(function(a, st){ return a + (st.blockLabel === 'Retour au calme' ? st.duration : 0); }, 0); }
+  function ensureCooldown(S){
+    if(!S || !S.cool || !S.durationMinutes || !S.main || !S.main.length) return;
+    var target = S.durationMinutes <= 30 ? 120 : 180;
+    var keepA = SESSION_ADJ; SESSION_ADJ = null;
+    var ref = S.cool.filter(function(x){ return x.block === 'retour_calme' && !(x.breath && x.breath.length); })[0] || S.cool[0] || {block:'retour_calme', zone:'full', equipment:'poids_du_corps'};
+    for(var i = 0; i < 5 && coolSeconds(S) < target - 10; i++){
+      var all = replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && x.id !== 'r4' && x.id !== 'r5'; });
+      var stretch = all.filter(function(x){ return !(x.breath && x.breath.length); });
+      var cands = stretch.length ? stretch : all;
+      if(!cands.length) break;
+      var pick = cands[Math.floor(Math.random() * cands.length)], at;
+      if(pick.breath && pick.breath.length){ at = S.cool.length; for(var j = 0; j < S.cool.length; j++){ if(S.cool[j].id === 'r5'){ at = j; break; } } }
+      else { at = 0; while(at < S.cool.length && !(S.cool[at].breath && S.cool[at].breath.length)) at++; }
+      S.cool.splice(at, 0, pick);
+    }
+    SESSION_ADJ = keepA;
   }
   // Échauffement suffisant : environ 2 min 30 (10 min), 4 min (20-30 min), 6 min (45-60 min)
   function warmSeconds(S){ return buildTimeline(S).reduce(function(a, st){ return a + (st.blockLabel === 'Échauffement' ? st.duration : 0); }, 0); }
@@ -4748,6 +4783,11 @@
     return ['warm','cardio','main','cool'].some(function(k){ return session[k].some(function(x){ return x.coachAdded; }); });
   }
   function sessionModified(session){ return !!session.adj || contentModified(session); }
+  function coachLocked(S){
+    if(!S || EC_IS_COACH) return false;
+    if(S.shared && S.sharedBy) return true;
+    return !!(S.programRef && currentProgram && currentProgram.by);
+  }
   function sessionMinutes(session){
     return Math.max(1, Math.round(sessionSeconds(session)/60));
   }
@@ -4835,7 +4875,7 @@
     html += '<div><div class="session-title">'+title+'</div>';
     html += '<div class="session-meta">'+LEVEL_LABEL[session.level]+' · '+(session.sport && SPORT_LABEL[session.sport] ? SPORT_LABEL[session.sport]+' ('+THEME_LABEL[session.theme].toLowerCase()+')' : THEME_LABEL[session.theme])+' · ⏱ Durée totale '+fmtTotal(sessionSeconds(session))+(session.rounds ? ' · '+session.rounds+' tour'+(session.rounds > 1 ? 's' : '') : '')+(session.chair ? ' · sur chaise' : (session.noFloor ? ' · sans passage au sol' : ''))+'</div>'
       + ((session.removed && session.removed.length) ? '<div class="removed-note">'+session.removed.length+' exercice'+(session.removed.length>1?'s':'')+' retiré'+(session.removed.length>1?'s':'')+' · <button type="button" data-undo-all>Tout remettre</button></div>' : '')
-      + (session.main && session.main.length ? '<button type="button" class="time-adj-btn'+(session.adj ? ' on' : '')+'" data-time-adj>⏱ '+(session.adj ? 'Temps réglés · modifier' : 'Régler les temps')+'</button>' : '')
+      + (session.main && session.main.length && !coachLocked(session) ? '<button type="button" class="time-adj-btn'+(session.adj ? ' on' : '')+'" data-time-adj>⏱ '+(session.adj ? 'Temps réglés · modifier' : 'Régler les temps')+'</button>' : '')
       + '</div>';
     html += '<div class="session-actions">';
     html += '<button class="btn-start" id="startBtn">Démarrer la séance ▶</button>';
@@ -4855,7 +4895,7 @@
     html += renderBlock('Corps de séance', 'principal', session.main, session.level, session.theme, session.rounds);
     html += renderBlock('Retour au calme', 'retour_calme', session.cool, session.level, 'equilibre');
 
-    html += '<div class="rest-note">'+restNoteFor(session.level, session.theme, session.rounds)+'</div>';
+    html += '<div class="rest-note">'+restNoteFor(session.level, session.theme, session.rounds, session.composed ? 0 : session.durationMinutes)+'</div>';
 
     var results = document.getElementById('results');
     results.innerHTML = html;
@@ -5546,7 +5586,10 @@
     // Cycle suivant (semaines 5-6) : un tour de plus ; semaine 3 du cycle : un palier de plus (sans tour en plus) ;
     // semaine allégée : un palier et un tour de moins.
     if(Math.floor(week / 4) >= 1 && week % 4 < 2 && ses.rounds) ses.rounds = Math.min(6, ses.rounds + 1);
-    if(PHASES[phaseOf(week)].deload && ses.rounds > 2) ses.rounds = ses.rounds - 1;
+    if(PHASES[phaseOf(week)].deload){
+      if(ses.rounds > 2) ses.rounds = ses.rounds - 1;
+      else if(ses.main && ses.main.length > 3) ses.main = ses.main.slice(0, -1);
+    }
     return ses;
   }
 
