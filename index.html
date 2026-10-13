@@ -2670,7 +2670,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.8 · mise à jour du 13 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.9 · mise à jour du 13 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -3085,7 +3085,10 @@
   };
 
   var LEVEL_LABEL = {debutant:'Débutant',intermediaire:'Intermédiaire',avance:'Avancé',senior:'Senior · adapté APA'};
-  var ZONE_LABEL = {full:'Corps complet',haut:'Haut du corps',bas:'Bas du corps',gainage:'Gainage'};
+  var ZONE_LABEL = {full:'Corps complet',haut:'Haut du corps',bas:'Bas du corps',gainage:'Gainage',haut_g:'Haut du corps + gainage',bas_g:'Bas du corps + gainage'};
+  // Zone choisie / zone de l'exercice (les combinaisons « + gainage » acceptent les deux)
+  var ZONE_PARTS = {haut_g:['haut','gainage'], bas_g:['bas','gainage']};
+  function zoneMatch(zone, exZone){ if(zone === 'full' || exZone === 'full' || zone === exZone) return true; var p = ZONE_PARTS[zone]; return !!(p && p.indexOf(exZone) > -1); }
   var WORK_FACTOR = 1;
   // Temps réglés à la main sur une séance : w = secondes ajoutées à l'effort du corps de séance,
   // t = transition / récup entre deux exercices, r = récup entre deux tours
@@ -3216,10 +3219,24 @@
     if(btn.dataset.level === state.level) btn.classList.add('active');
     btn.addEventListener('click', function(){ toggleChip(btn,'levelGroup','level',false); });
   });
+  // Zone : un seul choix, sauf Gainage qui se coche en plus de Haut du corps ou Bas du corps
+  function syncZoneChips(){
+    var parts = ZONE_PARTS[state.zone] || [state.zone];
+    document.querySelectorAll('#zoneGroup .chip').forEach(function(c){ c.classList.toggle('active', parts.indexOf(c.dataset.zone) > -1); });
+  }
+  function pickZone(z){
+    var cur = state.zone, g = cur === 'gainage' || cur === 'haut_g' || cur === 'bas_g';
+    var base = cur === 'haut' || cur === 'haut_g' ? 'haut' : (cur === 'bas' || cur === 'bas_g' ? 'bas' : null);
+    if(z === 'full') state.zone = 'full';
+    else if(z === 'gainage') state.zone = g ? (base || 'full') : (base ? base + '_g' : 'gainage');
+    else if(z === base) state.zone = g ? 'gainage' : 'full';
+    else state.zone = g ? z + '_g' : z;
+    syncZoneChips();
+  }
   document.getElementById('zoneGroup').querySelectorAll('.chip').forEach(function(btn){
-    if(btn.dataset.zone === state.zone) btn.classList.add('active');
-    btn.addEventListener('click', function(){ toggleChip(btn,'zoneGroup','zone',false); });
+    btn.addEventListener('click', function(){ pickZone(btn.dataset.zone); });
   });
+  syncZoneChips();
   document.getElementById('themeGroup').querySelectorAll('.chip').forEach(function(btn){
     if(btn.dataset.theme === state.theme) btn.classList.add('active');
     btn.addEventListener('click', function(){ toggleChip(btn,'themeGroup','theme',false); state.sport = btn.dataset.sport || null; });
@@ -4852,7 +4869,7 @@
         && ex.levels.indexOf(state.level)!==-1
         && floorOk(ex, state.noFloor)
         && chairOk(ex, state.chair)
-        && (state.zone==='full' || ex.zone===state.zone || ex.zone==='full');
+        && zoneMatch(state.zone, ex.zone);
     });
     var coolPool = EX.filter(function(ex){
       return ex.block==='retour_calme'
@@ -4868,7 +4885,7 @@
         && equipMatches(ex)
         && floorOk(ex, state.noFloor)
         && chairOk(ex, state.chair)
-        && (state.zone==='full' || ex.zone===state.zone || ex.zone==='full');
+        && zoneMatch(state.zone, ex.zone);
     });
     var hasCardioEquip = !state.chair && state.equip.some(function(e){ return CARDIO_EQUIP.indexOf(e)!==-1; });
     var hasRenfoEquip = state.equip.some(function(e){ return RENFO_EQUIP.indexOf(e)!==-1; });
@@ -5263,7 +5280,7 @@
     var level = session.level;
     var used = {};
     ['warm','cardio','main','cool'].forEach(function(k){ session[k].forEach(function(x){ used[x.id] = true; }); });
-    var zoneOk = function(x){ return zone==='full' || x.zone===zone || x.zone==='full'; };
+    var zoneOk = function(x){ return zoneMatch(zone, x.zone); };
     var pool = EX.filter(function(x){
       if(used[x.id] || x.levels.indexOf(level)===-1 || x.block !== ex.block) return false;
       if(!floorOk(x, !!session.noFloor)) return false;
@@ -5385,7 +5402,7 @@
   var pickerKey = null;
   var BLOCK_OF_KEY = {warm:'echauffement', cardio:'cardio', main:'principal', cool:'retour_calme'};
   var BLOCK_LABEL_OF_KEY = {warm:"de l'échauffement", cardio:'du bloc cardio', main:'du corps de séance', cool:'du retour au calme'};
-  var ZONE_WORD = {full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage'};
+  var ZONE_WORD = {full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage', haut_g:'Haut du corps + gainage', bas_g:'Bas du corps + gainage'};
 
   function pickerCandidates(key, showAll){
     var session = lastSession;
@@ -5400,8 +5417,8 @@
       if(!floorOk(x, !!session.noFloor)) return false;
       if(!chairOk(x, !!session.chair)) return false;
       if(showAll) return true;
-      if(block === 'principal') return equipFits(x, equip) && (zone==='full' || x.zone===zone || x.zone==='full');
-      if(block === 'echauffement') return (zone==='full' || x.zone===zone || x.zone==='full');
+      if(block === 'principal') return equipFits(x, equip) && zoneMatch(zone, x.zone);
+      if(block === 'echauffement') return zoneMatch(zone, x.zone);
       if(block === 'cardio') return equip.indexOf(x.equipment) !== -1;
       return equipFits(x, equip);
     });
@@ -6389,7 +6406,7 @@
   function syncSettingsUI(){
     document.querySelectorAll('#equipGroup .chip').forEach(function(c){ c.classList.toggle('active', state.equip.indexOf(c.dataset.equip) !== -1); });
     document.querySelectorAll('#levelGroup .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.level === state.level); });
-    document.querySelectorAll('#zoneGroup .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.zone === state.zone); });
+    syncZoneChips();
     document.querySelectorAll('#themeGroup .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.theme === state.theme && (c.dataset.sport || null) === (state.sport || null)); });
     [['noFloorChip','noFloor'],['chairChip','chair']].forEach(function(p){ var c = $id(p[0]); c.classList.toggle('active', !!state[p[1]]); c.setAttribute('aria-pressed', state[p[1]] ? 'true' : 'false'); });
     $id('durationSelect').value = String(state.duration);
@@ -6405,7 +6422,7 @@
       if(eq.length) state.equip = eq;
     }
     if(document.querySelector('#levelGroup [data-level="'+r.level+'"]')) state.level = r.level;
-    if(document.querySelector('#zoneGroup [data-zone="'+r.zone+'"]')) state.zone = r.zone;
+    if(ZONE_LABEL[r.zone]) state.zone = r.zone;
     if(document.querySelector('#themeGroup [data-theme="'+r.theme+'"]')){ state.theme = r.theme; state.sport = r.sport || null; }
     if([10,20,30,45,60].indexOf(r.duration) !== -1) state.duration = r.duration;
     state.noFloor = !!r.noFloor; state.chair = !!r.chair;
@@ -7189,7 +7206,7 @@
     renfoPanel.classList.add('opts-closed');
     function txt(sel){ var c = document.querySelector(sel + ' .chip.active'); if(!c) return ''; var k = c.cloneNode(true); var sm = k.querySelector('small'); if(sm) sm.remove(); return k.textContent.trim(); }
     function update(){
-      tg.querySelector('.mo-sum').textContent = [txt('#zoneGroup'), txt('#themeGroup')].filter(Boolean).join(', ');
+      tg.querySelector('.mo-sum').textContent = [ZONE_LABEL[state.zone] || txt('#zoneGroup'), txt('#themeGroup')].filter(Boolean).join(', ');
       tg.hidden = zf.style.display === 'none' && tf.style.display === 'none';
     }
     tg.addEventListener('click', function(){
@@ -8890,6 +8907,8 @@
       haut: '<circle cx="12" cy="4.5" r="2"/><path d="M5.5 9.5h13M5.5 9.5 4.5 5.5M18.5 9.5l1-4M9 9.5l1 9h4l1-9" stroke-width="2.3"/>',
       bas: '<path d="M8 4h8M8.5 4l-.5 7.5L7 20.5M15.5 4l.5 7.5 1 9M12 4v5" stroke-width="2.3"/><path d="M5 20.5h4M15 20.5h4"/>',
       gainage: '<circle cx="4.5" cy="9" r="1.8"/><path d="M7 10.5l13 4.5M8 11v6M3 18h18"/>',
+      haut_g: '<circle cx="8" cy="3.5" r="1.6"/><path d="M3.5 7.5h9M3.5 7.5 3 4.5M12.5 7.5l.5-3M6 7.5l.7 5h2.6l.7-5" stroke-width="2"/><circle cx="13" cy="15" r="1.4"/><path d="M15 16.2l7 2.4M15.6 16.5v3.3M11 21h11"/>',
+      bas_g: '<path d="M4 3h7M4.5 3 4 8.5 3.5 13M10.5 3l.5 5.5.5 4.5M7.5 3v3.5" stroke-width="2"/><circle cx="13" cy="15" r="1.4"/><path d="M15 16.2l7 2.4M15.6 16.5v3.3M11 21h11"/>',
       equilibre: '<path d="M12 4v16M8 20h8M4 7h16M6.5 7 4 13h5L6.5 7zM17.5 7 15 13h5l-2.5-6z"/>',
       force: '<path d="M13 2.5 5 13.5h6l-1 8 8-11h-6l1-8z"/>',
       endurance_force: '<path d="M7.5 8.5a3.5 3.5 0 1 0 0 7c3.5 0 5.5-7 9-7a3.5 3.5 0 1 1 0 7c-3.5 0-5.5-7-9-7z"/>',
@@ -8902,7 +8921,7 @@
       p_posture: '<circle cx="12" cy="3.8" r="1.8"/><path d="M12 6.5v8.5M8.5 9h7M12 15l-2.5 5.5M12 15l2.5 5.5"/><path d="M6 3v18" stroke-dasharray="2 2.5"/>',
       p_autonomie: '<circle cx="10" cy="4" r="1.8"/><path d="M10 6.5 9 13l-2.5 7M9 13l3 7M10 8l4 2.5M14 10.5V20.5M14 10.5c0-1.5 2.5-1.5 2.5 0"/>'
     };
-    var SHORT = {nofloor:'Sans passage au sol', chair:'Sur chaise', full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage',
+    var SHORT = {nofloor:'Sans passage au sol', chair:'Sur chaise', full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage', haut_g:'Haut + gainage', bas_g:'Bas + gainage',
       equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité', course:'Course &amp; trail', velo_sp:'Vélo', vtt:'VTT', kayak:'Canoë-kayak',
       poids_du_corps:'Poids du corps', barre_traction:'Barre traction', tapis:'Tapis', elliptique:'Elliptique', corde:'Corde',
       intermediaire:'Inter&shy;médiaire', senior:'Senior APA',
@@ -8964,6 +8983,7 @@
     }
     // Zone de travail
     var zg = document.getElementById('zoneGroup');
+    if(zg){ var zf = zg.closest('.field'), zl = zf && zf.querySelector('.field-label'); if(zl && !zl.querySelector('.field-label-hint')) zl.insertAdjacentHTML('beforeend', ' <span class="field-label-hint">(Gainage se cumule avec Haut ou Bas)</span>'); }
     if(zg){ grid(zg); zg.querySelectorAll('[data-zone]').forEach(function(b){ tile(b, b.getAttribute('data-zone')); }); }
     // Objectif du renforcement (et préparation pour ton sport)
     var tg = document.getElementById('themeGroup');
@@ -9296,7 +9316,10 @@
         panel.querySelectorAll('#equipGroup .chip.active').forEach(function(c){ tags.push(textOf(c)); });
         ['#levelGroup','#zoneGroup','#themeGroup'].forEach(function(sel){
           var c = panel.querySelector(sel+' .chip.active'); var f = c && c.closest('.field');
-          if(c && !(f && f.offsetParent === null && !view.classList.contains('collapsed'))) tags.push(textOf(c));
+          if(c && !(f && f.offsetParent === null && !view.classList.contains('collapsed'))){
+            var zs = sel === '#zoneGroup' ? [].map.call(panel.querySelectorAll('#zoneGroup .chip.active'), textOf).join(' + ') : '';
+            tags.push(zs || textOf(c));
+          }
         });
         panel.querySelectorAll('.chip-toggle[aria-pressed="true"]').forEach(function(c){ tags.push(textOf(c)); });
         var d = document.getElementById('durationSelect'); if(d && !(prog && prog.classList.contains('active'))) tags.push(d.options[d.selectedIndex].text.replace(' minutes',' min'));
