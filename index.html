@@ -2203,6 +2203,25 @@
   .ct-chal-now{margin:0 0 8px; padding:8px 10px; border-radius:10px; background:var(--sage-light); font-size:0.86rem;}
   #ctChalCard select{width:100%; min-height:42px; border-radius:10px; border:1px solid var(--ring-line); background:var(--card); color:var(--ink); font:inherit; font-size:16px; padding:0 8px;}
   @media screen and (prefers-color-scheme: dark){ .ch-card{background:linear-gradient(135deg, #3A3220, var(--card)) !important; box-shadow:var(--shadow-1), inset 0 0 0 1.5px #7A6330 !important;} .ch-head em{color:#F0CF86;} .bd.on{background:#1E3528; box-shadow:inset 0 0 0 1.5px #8FC49E;} }
+  /* ---------- Réglage direct dans la séance ---------- */
+  .gap-row{display:flex; align-items:center; gap:8px; width:auto; margin:-2px auto 8px; padding:5px 12px; border:none; border-radius:999px; background:transparent; color:var(--stone); font-family:inherit; font-size:0.76rem; font-weight:600; box-shadow:inset 0 0 0 1px var(--ring-line); cursor:pointer;}
+  button.gap-row:active{transform:scale(0.97);}
+  .gap-row.tuned{color:#8A5A00; box-shadow:inset 0 0 0 1.5px #E8C77A; background:#FBF3DF;}
+  .gap-row.ro{cursor:default;}
+  .gap-ico{font-size:0.7rem; opacity:0.7;}
+  .gap-row.round{margin-top:4px; font-weight:700; color:var(--forest); box-shadow:inset 0 0 0 1.5px var(--forest);}
+  @media screen and (prefers-color-scheme: dark){ .gap-row.round{color:#A7D8B4; box-shadow:inset 0 0 0 1.5px #8FC49E;} }
+  .gap-edit, .dose-edit{font-size:0.75rem; opacity:0.6; margin-left:2px;}
+  .ex-dose.tunable{cursor:pointer;}
+  @media screen{ .results:not(.editing) .block.folded > .gap-row{display:none !important;} }
+  @media print{ .gap-edit, .dose-edit{display:none !important;} }
+  .tune-box{text-align:center;}
+  .tune-sub{margin:-4px 0 12px; font-size:0.84rem; color:var(--stone);}
+  .tune-step{justify-content:center; margin:6px 0;}
+  .tune-step button:disabled{opacity:0.35; cursor:default;}
+  .tune-step output{min-width:110px; font-size:1.3rem;}
+  .tune-note{min-height:1.2em; margin:6px 0 12px; font-size:0.8rem; color:var(--stone);}
+  @media screen and (prefers-color-scheme: dark){ .gap-row.tuned{background:#3A3220; color:#F0CF86; box-shadow:inset 0 0 0 1.5px #7A6330;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2651,7 +2670,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.7 · mise à jour du 12 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 8.8 · mise à jour du 13 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -3072,7 +3091,7 @@
   // t = transition / récup entre deux exercices, r = récup entre deux tours
   var SESSION_ADJ = null;
   // x = réglage exercice par exercice (clé « m:id » corps de séance, « w:id » échauffement, « k:id » retour au calme)
-  function adjFor(s){ return (s && s.adj) ? {w:+s.adj.w || 0, t:s.adj.t, r:s.adj.r, x:s.adj.x || null, main:s.main || [], warm:s.warm || [], cool:s.cool || []} : null; }
+  function adjFor(s){ return (s && s.adj) ? {w:+s.adj.w || 0, t:s.adj.t, r:s.adj.r, x:s.adj.x || null, g:s.adj.g || null, main:s.main || [], warm:s.warm || [], cool:s.cool || []} : null; }
   function exAdjKey(ex){
     var A = SESSION_ADJ; if(!A || !ex) return null;
     return A.main.indexOf(ex) > -1 ? 'm:' + ex.id : (A.warm.indexOf(ex) > -1 ? 'w:' + ex.id : (A.cool.indexOf(ex) > -1 ? 'k:' + ex.id : null));
@@ -3088,6 +3107,11 @@
       var x = {};
       Object.keys(a.x).forEach(function(k){ var d = Math.round(+a.x[k]); if(d) d = d > 0 ? 1 : -1; if(/^[mwk]:[A-Za-z0-9_-]{1,20}$/.test(k) && d) x[k] = d; });
       if(Object.keys(x).length) o.x = x;
+    }
+    if(a.g && typeof a.g === 'object'){
+      var g = {};
+      Object.keys(a.g).forEach(function(k){ var v = Math.round(+a.g[k]); if(/^[wcmk]:[A-Za-z0-9_-]{1,20}$/.test(k) && v >= 5 && v <= 300) g[k] = v; });
+      if(Object.keys(g).length) o.g = g;
     }
     return Object.keys(o).length ? o : null;
   }
@@ -3149,22 +3173,15 @@
   var THEME_TIME_MULT = {equilibre:1, force:0.65, endurance_force:1.6, stabilite:1.15};
   var THEME_LABEL = {equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité & gainage'};
   // Transition entre deux exercices (hors circuit) : 5 s, pas plus
-  var TRANSITION_SECONDS = {debutant:5, intermediaire:5, avance:5, senior:5};
+  var TRANSITION_SECONDS = {debutant:5, intermediaire:5, avance:5, senior:15};
   // Récupération entre deux exercices du circuit (corps de séance), selon l'objectif et le niveau
-  var CIRCUIT_REST_SECONDS = {
-    // Endurance de force : pas de récupération, on enchaîne (simple transition de 5 s)
-    equilibre:        {debutant:60,  intermediaire:45,  avance:40,  senior:60},
-    force:            {debutant:150, intermediaire:180, avance:180, senior:180},
-    endurance_force:  {debutant:0,   intermediaire:0,   avance:0,   senior:20},
-    stabilite:        {debutant:40,  intermediaire:30,  avance:30,  senior:45}
-  };
-  // Séance courte (10 min) : récupérations plafonnées pour garder du temps d'effort
+  // Entre deux exercices du circuit : simple transition (5 s, 15 s en senior), pas de récupération.
+  // La récupération se fait entre deux tours (REST_SECONDS_BY_THEME).
   var SHORT_SESSION = false;
   function circuitRestSec(theme, level){
-    if(SESSION_ADJ && SESSION_ADJ.t != null) return SESSION_ADJ.t;
-    var t = CIRCUIT_REST_SECONDS[theme] || CIRCUIT_REST_SECONDS.equilibre;
-    var v = t[level] != null ? t[level] : 30;
-    return SHORT_SESSION ? Math.min(v, theme === 'force' ? 90 : 30) : v;
+    var base = transSec(level);
+    if(SESSION_ADJ && SESSION_ADJ.t != null) return Math.max(base, SESSION_ADJ.t);
+    return base;
   }
 
   var ROUNDS_BY_LEVEL = {debutant:2, intermediaire:3, avance:4, senior:2};
@@ -3569,15 +3586,14 @@
   function restNoteText(level, theme, rounds){
     var secs = roundRestSec(theme, level);
     var themeText = {
-      equilibre:"Récupération standard : de quoi bien repartir sur chaque exercice.",
-      force:"Récupération longue : l'objectif est la qualité de chaque effort, pas la fatigue.",
-      endurance_force:"Récupération réduite au minimum : l'objectif est de maintenir l'effort malgré la fatigue.",
-      stabilite:"Récupération modérée : privilégie un tempo lent et un contrôle parfait du mouvement plutôt que la vitesse."
+      equilibre:"Récupération standard entre les tours : de quoi bien repartir.",
+      force:"Récupération longue entre les tours : l'objectif est la qualité de chaque effort, pas la fatigue.",
+      endurance_force:"Récupération courte entre les tours : l'objectif est de maintenir l'effort malgré la fatigue.",
+      stabilite:"Récupération modérée entre les tours : privilégie un tempo lent et un contrôle parfait du mouvement."
     };
     var cr = circuitRestSec(theme, level), tours = rounds + ' tour' + (rounds > 1 ? 's' : '');
-    return themeText[theme] + ' Le corps de séance se fait en ' + tours + ' : '
-      + (cr > 0 ? fmtDose(cr) + ' de récupération entre deux exercices' : 'les exercices s\u2019enchaînent (5 s pour changer)')
-      + (rounds > 1 ? ', et ' + fmtDose(secs) + ' entre chaque tour complet.' : '.');
+    return themeText[theme] + ' Le corps de séance se fait en ' + tours + ' : les exercices s\u2019enchaînent avec ' + fmtDose(cr) + ' de transition'
+      + (rounds > 1 ? ', puis ' + fmtDose(secs) + ' de récupération après chaque tour complet.' : '.');
   }
 
   // ---------- Timer engine ----------
@@ -3610,9 +3626,7 @@
         var r = scaleTempsRaw(ex, level, theme);
         timeline.push({type:'work', label:ex.name, sublabel:'Tour '+t+'/'+rounds, duration:workSecs(ex, r.secs), side: ex.perSide ? {secs:r.secs, sw:SIDE_SWITCH_SEC} : null, ex:ex, blockLabel:'Corps de séance'});
         if(idx < list.length - 1){
-          var cr = circuitRestSec(theme, level);
-          if(cr > 0) timeline.push({type:'rest', label:'Récupération', sublabel:'Prochain exercice : '+list[idx+1].name, duration:cr, ex:null, blockLabel:'Corps de séance'});
-          else timeline.push({type:'transition', label:'Transition', sublabel:'Prochain exercice : '+list[idx+1].name, duration:transSec(level), ex:null, blockLabel:'Corps de séance'});
+          timeline.push({type:'transition', label:'Transition', sublabel:'Prochain exercice : '+list[idx+1].name, duration:circuitRestSec(theme, level), ex:null, blockLabel:'Corps de séance'});
         }
       });
       if(t < rounds){
@@ -3654,7 +3668,30 @@
       }
     });
     if(timeline.length && timeline[timeline.length-1].type==='transition') timeline.pop();
+    if(SESSION_ADJ && SESSION_ADJ.g) eachGap(timeline, function(st, key){
+      var v = SESSION_ADJ.g[key]; if(v == null) return;
+      st.duration = v;
+      if(st.type === 'transition' && v > 10){ st.label = 'Installation'; st.sublabel = 'Installe-toi pour le prochain exercice'; }
+    });
     return timeline;
+  }
+  // Pauses entre deux exercices (transition ou récup), repérées par l'exercice qui suit
+  var BLOCK_CODE = {'Échauffement':'w', 'Bloc cardio':'c', 'Corps de séance':'m', 'Retour au calme':'k'};
+  function eachGap(timeline, fn){
+    for(var i = 0; i < timeline.length; i++){
+      var st = timeline[i];
+      if(!(st.type === 'transition' || st.type === 'rest') || st.ex || st.label === 'Récupération entre tours') continue;
+      for(var j = i + 1; j < timeline.length; j++){
+        var nx = timeline[j];
+        if(nx.type === 'work' && nx.ex){ fn(st, (BLOCK_CODE[nx.blockLabel] || 'w') + ':' + nx.ex.id, nx.ex); break; }
+        if(nx.label === 'Récupération entre tours') break;
+      }
+    }
+  }
+  var GAPS = {};
+  function computeGaps(session){
+    GAPS = {};
+    eachGap(buildTimeline(session), function(st, key){ if(!GAPS[key]) GAPS[key] = {d:st.duration, k:st.type, l:st.label}; });
   }
 
   function fmtTime(sec){
@@ -4522,7 +4559,16 @@
     var html = '<div class="block '+blockKey+(foldable ? ' foldable' : '')+(folded ? ' folded' : '')+'">';
     html += '<div class="block-title"'+(foldable ? ' role="button" tabindex="0" data-fold="'+blockKey+'"' : '')+'><span class="swatch"></span>'+displayTitle+'</div>';
     if(foldable) html += '<button type="button" class="fold-sum" data-fold="'+blockKey+'">'+(folded ? '▸ Voir les '+list.length+' exercices' : '▾ Replier')+'</button>';
+    var gcode = {echauffement:'w', cardio:'c', principal:'m', retour_calme:'k'}[blockKey];
+    var canTune = lastRenderSession && !coachLocked(lastRenderSession) && !document.documentElement.classList.contains('ec-guest');
     list.forEach(function(ex, idx){
+      var gk = gcode + ':' + ex.id, gp = GAPS[gk];
+      if(gp){
+        var gl = gp.l === 'Installation' ? 'Installation' : (gp.k === 'rest' ? 'Récup' : 'Transition'), gtuned = SESSION_ADJ && SESSION_ADJ.g && SESSION_ADJ.g[gk] != null;
+        html += canTune
+          ? '<button type="button" class="gap-row'+(gtuned ? ' tuned' : '')+'" data-gap="'+gk+'" data-gname="'+escapeHtml(ex.name).replace(/"/g,'&quot;')+'"><span class="gap-ico">⏱</span>'+gl+' · '+fmtDose(gp.d)+'<span class="gap-edit">✎</span></button>'
+          : '<div class="gap-row ro"><span class="gap-ico">⏱</span>'+gl+' · '+fmtDose(gp.d)+'</div>';
+      }
       var editable = BLOCK_SESSION_KEY[blockKey] && list === (lastRenderSession && lastRenderSession[BLOCK_SESSION_KEY[blockKey]]);
       html += '<div class="exercise'+(ex.coachAdded ? ' coach-added' : '')+'" data-ex-id="'+ex.id+'"'+(rounds ? ' data-ex-rounds="'+rounds+'"' : '')
         + (editable ? ' data-block="'+BLOCK_SESSION_KEY[blockKey]+'" data-idx="'+idx+'"' : '')+'>';
@@ -4534,7 +4580,8 @@
         + (ex.coachNote ? '<div class="coach-note"><b>Conseil du coach :</b> '+escapeHtml(ex.coachNote)+'</div>' : '')
         + '<div class="zoom-hint">Toucher pour agrandir</div></div>';
       var xkey = exAdjKey(ex);
-      html += '<div class="ex-dose">'+(rounds ? circuitDoseFor(ex, level, blockTheme) : doseFor(ex, level, blockTheme))+(xkey && SESSION_ADJ.x && SESSION_ADJ.x[xkey] ? '<span class="ex-adj-mark">ajusté</span>' : '')+'</div>';
+      var tunable = canTune && ex.type === 'temps' && !(ex.breath && ex.breath.length);
+      html += '<div class="ex-dose'+(tunable ? ' tunable' : '')+'"'+(tunable ? ' data-dose="'+gcode+'" data-idx="'+idx+'"' : '')+'>'+(rounds ? circuitDoseFor(ex, level, blockTheme) : doseFor(ex, level, blockTheme))+(xkey && SESSION_ADJ.x && SESSION_ADJ.x[xkey] ? '<span class="ex-adj-mark">ajusté</span>' : '')+(tunable ? '<span class="dose-edit">✎</span>' : '')+'</div>';
       if(editable){
         var aName = ex.name.replace(/"/g,'&quot;');
         var dk = ' data-block="'+BLOCK_SESSION_KEY[blockKey]+'" data-idx="'+idx+'"';
@@ -4546,6 +4593,12 @@
       }
       html += '</div>';
     });
+    if(blockKey === 'principal' && rounds > 1 && list.length){
+      var rr = roundRestSec(theme, level), rtuned = SESSION_ADJ && SESSION_ADJ.r;
+      html += canTune
+        ? '<button type="button" class="gap-row round'+(rtuned ? ' tuned' : '')+'" data-gap="r"><span class="gap-ico">⏱</span>Récup entre les tours · '+fmtDose(rr)+'<span class="gap-edit">✎</span></button>'
+        : '<div class="gap-row round ro"><span class="gap-ico">⏱</span>Récup entre les tours · '+fmtDose(rr)+'</div>';
+    }
     if(BLOCK_SESSION_KEY[blockKey] && list === (lastRenderSession && lastRenderSession[BLOCK_SESSION_KEY[blockKey]])){
       html += '<button type="button" class="add-ex-btn" data-add-block="'+BLOCK_SESSION_KEY[blockKey]+'"><span aria-hidden="true">＋</span> Ajouter un exercice</button>';
     }
@@ -4603,6 +4656,14 @@
   }
 
   document.getElementById('results').addEventListener('click', function(e){
+    var gb = e.target.closest('[data-gap]');
+    if(gb){ e.stopPropagation(); if(gb.getAttribute('data-gap') === 'r') tuneRound(); else tuneGap(gb.getAttribute('data-gap'), gb.getAttribute('data-gname')); return; }
+    var db = e.target.closest('[data-dose]');
+    if(db){
+      e.stopPropagation();
+      var L = {w:'warm', c:'cardio', m:'main', k:'cool'}[db.getAttribute('data-dose')], ex = lastSession && lastSession[L] && lastSession[L][+db.getAttribute('data-idx')];
+      if(ex) tuneExercise(ex, L === 'main'); return;
+    }
     var fd = e.target.closest('[data-fold]');
     if(fd){ var bk = fd.getAttribute('data-fold'), blk = fd.closest('.block'); FOLD[bk] = !blk.classList.contains('folded') ? true : false;
       blk.classList.toggle('folded', FOLD[bk]); var sm = blk.querySelector('.fold-sum'); if(sm) sm.textContent = FOLD[bk] ? '▸ Voir les ' + blk.querySelectorAll('.exercise').length + ' exercices' : '▾ Replier'; return; }
@@ -4633,6 +4694,94 @@
     var rounds = row.dataset.exRounds ? parseInt(row.dataset.exRounds, 10) : null;
     if(ex && lastSession) openExerciseModal(ex, lastSession.level, lastSession.theme, rounds, true);
   });
+  // Petite fenêtre de réglage commune (une valeur, − / ＋)
+  function stepperDialog(o){
+    var old = document.getElementById('tuneDialog'); if(old) old.remove();
+    var wrap = document.createElement('div'); wrap.id = 'tuneDialog'; wrap.className = 'ec-dialog-backdrop';
+    var v = o.value;
+    wrap.innerHTML = '<div class="ec-dialog tune-box" role="dialog" aria-modal="true"><p class="ec-dialog-msg">' + escapeHtml(o.title) + '</p>'
+      + (o.sub ? '<p class="tune-sub">' + escapeHtml(o.sub) + '</p>' : '')
+      + '<div class="ta-step tune-step"><button type="button" data-d="-1" aria-label="Moins">−</button><output></output><button type="button" data-d="1" aria-label="Plus">＋</button></div>'
+      + '<p class="tune-note"></p>'
+      + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-reset>' + (o.resetLabel || 'Par défaut') + '</button><button type="button" class="ec-dialog-ok">OK</button></div></div>';
+    document.body.appendChild(wrap);
+    function upd(){
+      wrap.querySelector('output').textContent = o.fmt(v);
+      wrap.querySelector('[data-d="-1"]').disabled = !o.canDown(v);
+      wrap.querySelector('[data-d="1"]').disabled = !o.canUp(v);
+      wrap.querySelector('.tune-note').textContent = o.note ? o.note(v) : '';
+    }
+    wrap.addEventListener('click', function(e){
+      if(e.target === wrap){ wrap.remove(); return; }
+      var b = e.target.closest('[data-d]');
+      if(b && !b.disabled){ v = o.step(v, +b.getAttribute('data-d')); upd(); return; }
+      if(e.target.closest('[data-reset]')){ wrap.remove(); o.onOk(null); return; }
+      if(e.target.closest('.ec-dialog-ok')){ wrap.remove(); o.onOk(v); }
+    });
+    upd();
+  }
+  function applyAdj(S, mut){
+    var a = S.adj ? JSON.parse(JSON.stringify(S.adj)) : {};
+    mut(a);
+    var c = cleanAdj(a);
+    if(c) S.adj = c; else delete S.adj;
+    if(S.programRef && currentProgram){ var tpl = templateFor(S.programRef.week, S.programRef.slot); if(c) tpl.adj = c; else delete tpl.adj; }
+    var fit = fitSession(S);
+    var y = window.scrollY;
+    displaySession(S, S.title, true);
+    window.scrollTo(0, y);
+    if(S.programRef && currentProgram) saveProgram();
+    return fit;
+  }
+  // Pause avant un exercice (transition ou récup) : 5 s à 5 min
+  function tuneGap(key, name){
+    var S = lastSession, gp = GAPS[key]; if(!S || !gp) return;
+    function stepOf(v, d){ var inc = (v + (d > 0 ? 0 : -1)) >= 60 ? 15 : 5; return Math.max(5, Math.min(300, v + inc * d)); }
+    var isTr = gp.k === 'transition', base = isTr ? transSec(S.level) : 5;
+    stepperDialog({
+      title:(isTr ? 'Ajouter du temps avant « ' : 'Récup avant « ') + name + ' »',
+      sub:isTr ? 'La transition standard reste à ' + fmtDose(base) + '. Ajoute du temps seulement si besoin, par exemple pour t\u2019installer avec le matériel.' : 'Récupération avant cet exercice.',
+      value:gp.d, fmt:function(v){ return fmtDose(v) + (isTr && v > base ? ' (+' + fmtDose(v - base) + ')' : ''); },
+      canDown:function(v){ return v > base; }, canUp:function(v){ return v < 300; }, step:stepOf,
+      resetLabel:isTr ? 'Remettre ' + fmtDose(base) : 'Par défaut',
+      note:function(v){ return key.charAt(0) === 'm' && S.rounds > 1 && S.main[0] && key !== 'm:' + S.main[0].id ? 'S\u2019applique à chaque tour.' : ''; },
+      onOk:function(v){
+        var fit = applyAdj(S, function(a){ a.g = a.g || {}; if(v == null) delete a.g[key]; else a.g[key] = v; });
+        showToast(fit || (v == null ? 'Pause remise par défaut.' : 'Pause réglée : ' + fmtDose(v) + ' avant « ' + name + ' » ✓'), false);
+      }
+    });
+  }
+  // Récupération entre deux tours du circuit
+  function tuneRound(){
+    var S = lastSession; if(!S || !(S.rounds > 1)) return;
+    var keepA = SESSION_ADJ; SESSION_ADJ = null; var def = roundRestSec(S.theme, S.level); SESSION_ADJ = keepA;
+    var cur = (S.adj && S.adj.r) || def;
+    function stepOf(v, d){ var inc = (v + (d > 0 ? 0 : -1)) >= 60 ? 15 : 5; return Math.max(10, Math.min(300, v + inc * d)); }
+    stepperDialog({
+      title:'Récup entre les tours', sub:'Après chaque tour complet du corps de séance (' + S.rounds + ' tours). Prévu : ' + fmtDose(def) + '.',
+      value:cur, fmt:function(v){ return fmtDose(v); },
+      canDown:function(v){ return v > 10; }, canUp:function(v){ return v < 300; }, step:stepOf,
+      onOk:function(v){
+        var fit = applyAdj(S, function(a){ if(v == null || v === def) delete a.r; else a.r = v; });
+        showToast(fit || ('Récup entre les tours : ' + fmtDose(v == null ? def : v) + ' ✓'), false);
+      }
+    });
+  }
+  // Temps d'un exercice : un palier de plus ou de moins
+  function tuneExercise(ex, isMain){
+    var S = lastSession, th = isMain ? S.theme : 'equilibre', inf = exAdjInfo(ex, S.level, th); if(!inf) return;
+    stepperDialog({
+      title:ex.name, sub:'Temps d\u2019effort' + (isMain && S.rounds > 1 ? ', à chaque tour' : '') + (ex.perSide ? ', par côté' : '') + '.',
+      value:inf.delta, fmt:function(d){ return fmtDose(stepAt(inf.bi + d)); },
+      canDown:function(d){ return d > -1 && inf.bi + d > 0; }, canUp:function(d){ return d < 1 && inf.bi + d < TIME_STEPS.length - 1; },
+      step:function(d, s){ return d + s; },
+      note:function(d){ return d ? 'Prévu ' + fmtDose(inf.base) + '. La séance se remanie pour garder sa durée.' : 'Temps prévu.'; },
+      onOk:function(d){
+        var fit = applyAdj(S, function(a){ a.x = a.x || {}; if(!d) delete a.x[inf.key]; else a.x[inf.key] = d; });
+        showToast(fit || ('« ' + ex.name + ' » : ' + fmtDose(stepAt(inf.bi + (d || 0))) + ' ✓'), false);
+      }
+    });
+  }
   // Réglage du temps d'un exercice depuis sa fiche (un palier de plus ou de moins)
   var exAdjCtx = null;
   function exAdjInfo(ex, level, theme){
@@ -4990,7 +5139,7 @@
     html += '</div>';
     html += '</div></div>';
 
-    computeBlockSecs(session);
+    computeBlockSecs(session); computeGaps(session);
     if(!keepScroll) FOLD = {echauffement:true, retour_calme:true};
     html += stripHtml(session);
     html += renderBlock('Échauffement', 'echauffement', session.warm, session.level, 'equilibre');
@@ -8651,7 +8800,7 @@
       var defT = circuitRestSec(th, lv), defR = REST_SECONDS_BY_THEME[th][lv];
       var ex = S.main.filter(function(x){ return x.type === 'temps'; })[0], baseW = ex ? scaleTempsRaw(ex, lv, th).secs : 0;
       SESSION_ADJ = adjFor(S);
-      var v = {w:(keepAdj && keepAdj.w) || 0, t:(keepAdj && keepAdj.t != null) ? keepAdj.t : defT, r:(keepAdj && keepAdj.r) || defR}, keepX = (keepAdj && keepAdj.x) || null;
+      var v = {w:(keepAdj && keepAdj.w) || 0, t:(keepAdj && keepAdj.t != null) ? keepAdj.t : defT, r:(keepAdj && keepAdj.r) || defR}, keepX = (keepAdj && keepAdj.x) || null, keepG = (keepAdj && keepAdj.g) || null;
       var old = document.getElementById('timeAdjDialog'); if(old) old.remove();
       var wrap = document.createElement('div'); wrap.id = 'timeAdjDialog'; wrap.className = 'ec-dialog-backdrop';
       function row(k, lab, sub){ return '<div class="ta-row"><div class="ta-lab"><b>' + lab + '</b><span>' + sub + '</span></div>'
@@ -8659,16 +8808,16 @@
       wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Régler les temps">'
         + '<p class="ec-dialog-msg">⏱ Régler les temps</p>'
         + row('w', 'Temps d’effort', 'paliers 20 s, 30 s, 45 s, 1 min<span id="ta_ex"></span>')
-        + row('t', 'Récup entre exercices', 'dans le circuit (sans récup : 5 s pour changer)')
+        + row('t', 'Transition entre exercices', 'standard ' + fmtDose(transSec(lv)) + ', à rallonger si besoin')
         + (S.rounds > 1 ? row('r', 'Récup entre tours', 'après chaque tour complet') : '')
         + '<p class="ta-total" id="ta_total"></p>'
-        + (keepAdj && keepAdj.x ? '<p class="cp-note" style="margin:-4px 0 10px">Tu as aussi ajusté ' + Object.keys(keepAdj.x).length + ' exercice' + (Object.keys(keepAdj.x).length > 1 ? 's' : '') + ' un par un : « Par défaut » les remet aussi.</p>' : '')
+        + (keepAdj && (keepAdj.x || keepAdj.g) ? '<p class="cp-note" style="margin:-4px 0 10px">Tu as aussi réglé des exercices ou des pauses un par un : « Par défaut » les remet aussi.</p>' : '')
         + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-reset>Par défaut</button><button type="button" class="ec-dialog-ok">Appliquer</button></div></div>';
       document.body.appendChild(wrap);
-      function cand(){ return cleanAdj({w:v.w, t:v.t !== defT ? v.t : null, r:v.r !== defR ? v.r : null, x:keepX}); }
+      function cand(){ return cleanAdj({w:v.w, t:v.t !== defT ? v.t : null, r:v.r !== defR ? v.r : null, x:keepX, g:keepG}); }
       function upd(){
         wrap.querySelector('#ta_w').textContent = sgn(v.w);
-        wrap.querySelector('#ta_t').textContent = v.t ? fmtDose(v.t).replace(' sec', ' s') : 'Aucune';
+        wrap.querySelector('#ta_t').textContent = fmtDose(v.t).replace(' sec', ' s');
         var r = wrap.querySelector('#ta_r'); if(r) r.textContent = fmtDose(v.r).replace(' sec', ' s');
         wrap.querySelector('#ta_ex').textContent = ex ? ' (ex. ' + ex.name + ' : ' + fmtDose(stepAt(TIME_STEPS.indexOf(baseW) + v.w)) + ')' : '';
         var keep = S.adj, c = cand(); if(c) S.adj = c; else delete S.adj;
@@ -8684,11 +8833,11 @@
         if(b){
           var k = b.getAttribute('data-k'), d = +b.getAttribute('data-d');
           if(k === 'w') v.w = lim(v.w + d, -2, 2);
-          if(k === 't') v.t = lim(v.t + (v.t + (d > 0 ? 0 : -1) >= 60 ? 15 : 5) * d, 0, 300);
+          if(k === 't') v.t = lim(v.t + (v.t + (d > 0 ? 0 : -1) >= 60 ? 15 : 5) * d, defT, 300);
           if(k === 'r') v.r = lim(v.r + (v.r + (d > 0 ? 0 : -1) >= 60 ? 15 : 5) * d, 10, 300);
           upd(); return;
         }
-        if(e.target.closest('[data-reset]')){ v = {w:0, t:defT, r:defR}; keepX = null; upd(); return; }
+        if(e.target.closest('[data-reset]')){ v = {w:0, t:defT, r:defR}; keepX = null; keepG = null; upd(); return; }
         if(e.target.closest('.ec-dialog-ok')){
           var c = cand();
           if(c) S.adj = c; else delete S.adj;
