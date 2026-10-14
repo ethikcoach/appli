@@ -2222,6 +2222,16 @@
   .tune-step output{min-width:110px; font-size:1.3rem;}
   .tune-note{min-height:1.2em; margin:6px 0 12px; font-size:0.8rem; color:var(--stone);}
   @media screen and (prefers-color-scheme: dark){ .gap-row.tuned{background:#3A3220; color:#F0CF86; box-shadow:inset 0 0 0 1.5px #7A6330;} }
+  .ex-modal-acts{display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 0;}
+  .ex-modal-acts[hidden]{display:none;}
+  .ex-modal-acts button{flex:1 1 auto; min-height:40px; padding:6px 12px; border:none; border-radius:999px; background:var(--chip); box-shadow:inset 0 0 0 1px var(--ring-line); color:var(--ink); font-family:inherit; font-weight:700; font-size:0.82rem; cursor:pointer;}
+  .ex-modal-acts button[hidden]{display:none;}
+  .ex-modal-acts [data-ma="block"]{color:#B23A2A;}
+  .ex-modal-acts [data-ma="block"].on{color:var(--forest);}
+  .bl-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px solid var(--ring-line); font-size:0.9rem;}
+  .bl-row:first-child{border-top:none;}
+  .bl-row button{flex:none; border:none; border-radius:999px; padding:7px 14px; background:var(--forest); color:#fff; font-family:inherit; font-weight:700; font-size:0.8rem; cursor:pointer;}
+  @media screen and (prefers-color-scheme: dark){ .ex-modal-acts [data-ma="block"]{color:#F09A8A;} .bl-row button{background:#3A8558;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2525,6 +2535,11 @@
     <div class="sv-h2row"><h2 id="svHistTitle">Historique</h2><button type="button" class="sv-link" id="svHistAll" hidden>Tout afficher</button></div>
     <div id="svHist"></div>
   </section>
+  <section class="sv-card" id="svBlockedCard" hidden>
+    <h2>Exercices écartés</h2>
+    <p class="sv-hint" style="margin-top:0">L’appli ne te les propose plus dans les séances générées.</p>
+    <div id="svBlocked"></div>
+  </section>
   <section class="sv-card" id="svFavCard">
     <h2>Mes favoris</h2>
     <div id="svFav"></div>
@@ -2670,7 +2685,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 8.9 · mise à jour du 13 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 9.0 · mise à jour du 14 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -2766,6 +2781,11 @@
     <div class="ex-adj" id="exModalAdj" hidden>
       <div class="ex-adj-lab"><b>Ajuster le temps de cet exercice</b><span id="exAdjNote"></span></div>
       <div class="ta-step"><button type="button" data-xd="-1" aria-label="Moins">−</button><output id="exAdjVal"></output><button type="button" data-xd="1" aria-label="Plus">＋</button></div>
+    </div>
+    <div class="ex-modal-acts" id="exModalActs" hidden>
+      <button type="button" data-ma="replace">⇄ Remplacer</button>
+      <button type="button" data-ma="remove">✕ Retirer</button>
+      <button type="button" data-ma="block">🚫 Ne plus me proposer</button>
     </div>
     <p class="ex-load-tip" id="exModalLoad" hidden></p>
     <div class="ex-modal-section">
@@ -3088,6 +3108,13 @@
   var ZONE_LABEL = {full:'Corps complet',haut:'Haut du corps',bas:'Bas du corps',gainage:'Gainage',haut_g:'Haut du corps + gainage',bas_g:'Bas du corps + gainage'};
   // Zone choisie / zone de l'exercice (les combinaisons « + gainage » acceptent les deux)
   var ZONE_PARTS = {haut_g:['haut','gainage'], bas_g:['bas','gainage']};
+  function blockedIds(){ try{ var b = JSON.parse(localStorage.getItem('ec_ex_blocked') || '[]'); return Array.isArray(b) ? b : []; }catch(e){ return []; } }
+  function exBlocked(id){ return blockedIds().indexOf(id) > -1; }
+  function setBlocked(id, on){
+    var b = blockedIds().filter(function(x){ return x !== id; }); if(on) b.push(id);
+    try{ localStorage.setItem('ec_ex_blocked', JSON.stringify(b)); }catch(e){}
+    if(window.ecRenderBlocked) window.ecRenderBlocked();
+  }
   function zoneMatch(zone, exZone){ if(zone === 'full' || exZone === 'full' || zone === exZone) return true; var p = ZONE_PARTS[zone]; return !!(p && p.indexOf(exZone) > -1); }
   var WORK_FACTOR = 1;
   // Temps réglés à la main sur une séance : w = secondes ajoutées à l'effort du corps de séance,
@@ -4643,6 +4670,7 @@
     document.getElementById('exModalDose').textContent = rounds ? (circuitDoseFor(ex, level, exTheme) + (rounds > 1 ? ' — répété sur ' + rounds + ' tours' : '')) : doseFor(ex, level, exTheme);
     exAdjCtx = fromSession ? {ex:ex, level:level, theme:exTheme, rounds:rounds} : null;
     exAdjRender();
+    renderModalActs(ex, fromSession);
     var lt = document.getElementById('exModalLoad'), lk = loadTipKinds([ex]);
     if(lt){ lt.hidden = !(lk.w || lk.t); lt.innerHTML = lk.t ? '<strong>Inclinaison :</strong> ' + LOAD_TIP_T : (lk.w ? '<strong>Charge :</strong> ' + LOAD_TIP_W : ''); }
     if(ex.detail){
@@ -4711,6 +4739,58 @@
     var rounds = row.dataset.exRounds ? parseInt(row.dataset.exRounds, 10) : null;
     if(ex && lastSession) openExerciseModal(ex, lastSession.level, lastSession.theme, rounds, true);
   });
+  // Actions de la fiche : remplacer / retirer de la séance, ne plus proposer
+  var modalActEx = null;
+  function sessionSlot(ex){
+    var S = lastSession; if(!S) return null;
+    var keys = ['warm', 'cardio', 'main', 'cool'];
+    for(var i = 0; i < keys.length; i++){ var j = (S[keys[i]] || []).indexOf(ex); if(j > -1) return {key:keys[i], idx:j}; }
+    return null;
+  }
+  function renderModalActs(ex, fromSession){
+    var box = document.getElementById('exModalActs'); if(!box) return;
+    modalActEx = ex;
+    var guest = document.documentElement.classList.contains('ec-guest');
+    var slot = fromSession ? sessionSlot(ex) : null, locked = slot && coachLocked(lastSession);
+    var showSess = !!slot && !locked && !guest;
+    box.querySelector('[data-ma="replace"]').hidden = !showSess;
+    box.querySelector('[data-ma="remove"]').hidden = !showSess;
+    var bb = box.querySelector('[data-ma="block"]');
+    bb.hidden = guest || locked;
+    var bl = exBlocked(ex.id);
+    bb.textContent = bl ? '✓ Proposer à nouveau' : '🚫 Ne plus me proposer';
+    bb.classList.toggle('on', bl);
+    box.hidden = guest || locked;
+  }
+  document.getElementById('exModalActs').addEventListener('click', function(e){
+    var b = e.target.closest('[data-ma]'); if(!b || !modalActEx) return;
+    var ex = modalActEx, act = b.getAttribute('data-ma'), slot = sessionSlot(ex);
+    if(act === 'replace' && slot){ closeExerciseModal(); replaceExerciseInSession(slot.key, slot.idx); return; }
+    if(act === 'remove' && slot){ closeExerciseModal(); removeExerciseFromSession(slot.key, slot.idx); return; }
+    if(act === 'block'){
+      if(exBlocked(ex.id)){ setBlocked(ex.id, false); renderModalActs(ex, !!slot); showToast('« ' + ex.name + ' » pourra de nouveau être proposé.', false); return; }
+      setBlocked(ex.id, true);
+      closeExerciseModal();
+      if(slot && !coachLocked(lastSession)){
+        var cands = replacementCandidates(lastSession, ex);
+        if(cands.length){ replaceExerciseInSession(slot.key, slot.idx); var nw = lastSession[slot.key][slot.idx]; showToast('« ' + ex.name + ' » ne sera plus proposé. Remplacé par « ' + (nw && nw.name || '') + ' ».', false); return; }
+        if(totalExercises(lastSession) > 1){ removeExerciseFromSession(slot.key, slot.idx); }
+      }
+      showToast('« ' + ex.name + ' » ne sera plus proposé. Tu peux le remettre depuis l\u2019onglet Suivi.', false);
+    }
+  });
+  window.ecRenderBlocked = function(){
+    var card = document.getElementById('svBlockedCard'), box = document.getElementById('svBlocked'); if(!card || !box) return;
+    var ids = blockedIds(), list = ids.map(function(id){ return exById(id); }).filter(Boolean);
+    card.hidden = !list.length;
+    box.innerHTML = list.map(function(x){ return '<div class="bl-row"><span>' + escapeHtml(x.name) + '</span><button type="button" data-unblock="' + x.id + '">Remettre</button></div>'; }).join('');
+  };
+  document.getElementById('svBlocked').addEventListener('click', function(e){
+    var b = e.target.closest('[data-unblock]'); if(!b) return;
+    var x = exById(b.getAttribute('data-unblock')); setBlocked(b.getAttribute('data-unblock'), false);
+    showToast('« ' + (x ? x.name : 'Exercice') + ' » pourra de nouveau être proposé.', false);
+  });
+  window.ecRenderBlocked();
   // Petite fenêtre de réglage commune (une valeur, − / ＋)
   function stepperDialog(o){
     var old = document.getElementById('tuneDialog'); if(old) old.remove();
@@ -4869,7 +4949,8 @@
         && ex.levels.indexOf(state.level)!==-1
         && floorOk(ex, state.noFloor)
         && chairOk(ex, state.chair)
-        && zoneMatch(state.zone, ex.zone);
+        && zoneMatch(state.zone, ex.zone)
+        && !exBlocked(ex.id);
     });
     var coolPool = EX.filter(function(ex){
       return ex.block==='retour_calme'
@@ -4877,7 +4958,8 @@
         && floorOk(ex, state.noFloor)
         && chairOk(ex, state.chair)
         && equipMatches(ex)
-        && !(state.duration <= 10 && ex.type === 'continu');
+        && !(state.duration <= 10 && ex.type === 'continu')
+        && !exBlocked(ex.id);
     });
     var mainPool = EX.filter(function(ex){
       return ex.block==='principal'
@@ -4885,14 +4967,16 @@
         && equipMatches(ex)
         && floorOk(ex, state.noFloor)
         && chairOk(ex, state.chair)
-        && zoneMatch(state.zone, ex.zone);
+        && zoneMatch(state.zone, ex.zone)
+        && !exBlocked(ex.id);
     });
     var hasCardioEquip = !state.chair && state.equip.some(function(e){ return CARDIO_EQUIP.indexOf(e)!==-1; });
     var hasRenfoEquip = state.equip.some(function(e){ return RENFO_EQUIP.indexOf(e)!==-1; });
     var cardioPool = (hasCardioEquip && !state.chair) ? EX.filter(function(ex){
       return ex.block==='cardio'
         && ex.levels.indexOf(state.level)!==-1
-        && state.equip.indexOf(ex.equipment)!==-1;
+        && state.equip.indexOf(ex.equipment)!==-1
+        && !exBlocked(ex.id);
     }) : [];
     // Routine courte de 10 min : échauffement articulaire classique, pas de bloc machine
     var cardioAsWarmup = hasCardioEquip && hasRenfoEquip && mainPool.length > 0 && state.duration > 10;
@@ -5282,7 +5366,7 @@
     ['warm','cardio','main','cool'].forEach(function(k){ session[k].forEach(function(x){ used[x.id] = true; }); });
     var zoneOk = function(x){ return zoneMatch(zone, x.zone); };
     var pool = EX.filter(function(x){
-      if(used[x.id] || x.levels.indexOf(level)===-1 || x.block !== ex.block) return false;
+      if(used[x.id] || x.levels.indexOf(level)===-1 || x.block !== ex.block || exBlocked(x.id)) return false;
       if(!floorOk(x, !!session.noFloor)) return false;
       if(!chairOk(x, !!session.chair)) return false;
       if(x.block==='principal') return equipFits(x, equip) && zoneOk(x);
@@ -7521,6 +7605,7 @@
         + '<div class="sv-stat"><b>' + st.total + '</b><span>séance' + (st.total > 1 ? 's' : '') + ' au total · ' + fmtMins(st.mins) + '</span></div>';
       renderCal(h); renderRpe(h); renderHist(h); renderFav();
       if(window.ecRenderGamif) window.ecRenderGamif(h);
+      if(window.ecRenderBlocked) window.ecRenderBlocked();
     }
     function renderCal(h){
       var y = calRef.getFullYear(), m = calRef.getMonth();
