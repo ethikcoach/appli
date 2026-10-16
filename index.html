@@ -2232,6 +2232,41 @@
   .bl-row:first-child{border-top:none;}
   .bl-row button{flex:none; border:none; border-radius:999px; padding:7px 14px; background:var(--forest); color:#fff; font-family:inherit; font-weight:700; font-size:0.8rem; cursor:pointer;}
   @media screen and (prefers-color-scheme: dark){ .ex-modal-acts [data-ma="block"]{color:#F09A8A;} .bl-row button{background:#3A8558;} }
+  /* ---------- Vidéos et consignes ---------- */
+  .ex-yt{display:inline-flex; align-items:center; gap:4px; margin-top:6px; padding:4px 10px; border-radius:999px; background:#FDECEA; color:#B3261E; font-size:0.76rem; font-weight:700; text-decoration:none; box-shadow:inset 0 0 0 1px rgba(179,38,30,0.18);}
+  .yt-banner{display:flex; gap:10px; align-items:center; margin:10px 2px 4px; padding:10px 12px; border-radius:14px; background:#FDF1EF; box-shadow:inset 0 0 0 1px rgba(179,38,30,0.15); font-size:0.86rem; line-height:1.35; color:var(--ink);}
+  .yt-ico{flex:none; width:30px; height:30px; border-radius:9px; display:grid; place-items:center; background:#D93025; color:#fff; font-size:0.8rem;}
+  .timer-tips-wrap{width:100%; max-width:min(92vw, 420px); margin:6px auto 2px; text-align:left;}
+  .timer-tips-wrap[hidden]{display:none;}
+  .timer-tips{padding:7px 11px; border-radius:12px; background:rgba(255,255,255,0.09); color:rgba(255,255,255,0.92); font-size:0.8rem; line-height:1.32; max-height:24vh; overflow:auto;}
+  .timer-tips p{margin:0 0 4px;}
+  .timer-tips p.nx{color:#fff; font-weight:700;}
+  .timer-tips b{display:inline-block; min-width:76px; margin-right:6px; color:#A8D5B0; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;}
+  .timer-tips p.err b{color:#FFB98A;}
+  .timer-tips-yt{display:inline-block; color:#FFB4AB; font-weight:700; font-size:0.78rem; text-decoration:none;}
+  @media (max-width:640px){
+    .timer-backdrop.tips-on .timer-icon-wrap.has-photo{width:min(70vw, 300px, calc(19vh * 1.5)); width:min(70vw, 300px, calc(19dvh * 1.5)); margin-bottom:4px;}
+    .timer-backdrop.tips-on:not(.calm):not(.feedback) .tc-ring{--ring:min(48vw, 18vh, 18dvh, 230px);}
+    .timer-backdrop.tips-on .timer-kind{margin-top:2px;}
+    .timer-backdrop.tips-on .timer-next-card{margin-top:6px; padding:4px 6px;}
+    .timer-backdrop.tips-on .timer-next-thumb{width:56px;}
+    .timer-backdrop.tips-on .timer-controls{padding-top:8px;}
+  }
+  @media (max-height:700px) and (max-width:640px){
+    .timer-backdrop.tips-on .timer-icon-wrap.has-photo{width:min(60vw, calc(15vh * 1.5)); width:min(60vw, calc(15dvh * 1.5));}
+    .timer-tips{max-height:21vh; font-size:0.76rem;}
+    .timer-backdrop.tips-on .timer-next-thumb, .timer-backdrop.tips-on .timer-next{display:none;}
+    .timer-backdrop.tips-on .timer-next-card{padding:6px 10px;}
+  }
+  @media (min-width:900px) and (orientation:landscape) and (min-height:480px){
+    .timer-backdrop:not(.feedback) .timer-center > .timer-tips-wrap{max-width:none;}
+    .timer-backdrop.tips-on:not(.feedback) .timer-icon-wrap.has-photo{max-height:56vh;}
+    .timer-backdrop.tips-on:not(.calm):not(.feedback) .tc-ring{--ring:min(34vh, 24vw, 380px);}
+    .timer-tips{font-size:clamp(0.85rem, 1.15vw, 1.15rem); max-height:30vh;}
+  }
+  .timer-backdrop.calm .timer-tips-wrap, .timer-backdrop.feedback .timer-tips-wrap{display:none;}
+  @media screen and (prefers-color-scheme: dark){ .ex-yt{background:#3A1F1C; color:#FFB4AB;} .yt-banner{background:#2E1D1B;} }
+  @media print{ .ex-yt, .yt-banner{display:none !important;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2685,7 +2720,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 9.2 · mise à jour du 14 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 9.4 · mise à jour du 16 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -2831,6 +2866,7 @@
     <div class="timer-exname" id="timerExName"></div>
     <div class="timer-exsublabel" id="timerExSublabel"></div>
     <div class="timer-coach-note" id="timerCoachNote"></div>
+    <div class="timer-tips-wrap" id="timerTipsWrap" hidden><div class="timer-tips" id="timerTips"></div></div>
     <div class="timer-kind" id="timerKind"></div>
     <div class="timer-countdown" id="timerCountdown">00:00</div>
     <div class="timer-next-card" id="timerNextCard">
@@ -3744,6 +3780,21 @@
     return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
   }
 
+  // Petit bip de repère (10 s restantes : double bip ; 3, 2, 1 : bip court), même voix coupée
+  function cueTone(n){
+    if(timerState.silent || timerState.calm) return;
+    try{
+      if(!timerState.audioCtx){ timerState.audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+      var ctx = timerState.audioCtx;
+      for(var k = 0; k < n; k++){
+        var osc = ctx.createOscillator(), gain = ctx.createGain(), t0 = ctx.currentTime + k * 0.16;
+        osc.frequency.value = n > 1 ? 740 : 620;
+        osc.connect(gain); gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.11, t0);
+        osc.start(t0); osc.stop(t0 + 0.09);
+      }
+    }catch(e){}
+  }
   function playBeep(){
     if(timerState.silent) return;
     try{
@@ -4100,9 +4151,9 @@
     var curStep = timerState.timeline[timerState.index];
     if(curStep && !(curStep.ex && curStep.ex.breath)){
       if(timerState.remaining <= 3 && curStep.duration >= 6){
-        speak(String(timerState.remaining));
-      } else if(timerState.remaining === 10 && curStep.type === 'work' && curStep.duration >= 30){
-        speak('Plus que dix secondes.');
+        speak(String(timerState.remaining)); cueTone(1);
+      } else if(timerState.remaining === 10 && curStep.type === 'work' && !curStep.side && curStep.duration >= 20){
+        speak('Plus que dix secondes.'); cueTone(2);
       } else if(curStep.type === 'work' && curStep.duration >= 240 && timerState.remaining === Math.round(curStep.duration/2)){
         speak('Mi-parcours.');
       }
@@ -4622,6 +4673,7 @@
       html += '<span class="ex-num">'+(idx+1)+'</span></div>';
       html += '<div><div class="ex-name">'+ex.name+'</div><div class="ex-note">'+noteFor(ex, level)+'</div>'
         + (ex.coachNote ? '<div class="coach-note"><b>Conseil du coach :</b> '+escapeHtml(ex.coachNote)+'</div>' : '')
+        + '<a class="ex-yt" href="'+youtubeSearchUrl(ex)+'" target="_blank" rel="noopener" aria-label="Vidéo de démonstration : '+escapeHtml(ex.name).replace(/"/g,'&quot;')+'">▶ Vidéo</a>'
         + '<div class="zoom-hint">Toucher pour agrandir</div></div>';
       var xkey = exAdjKey(ex);
       var tunable = canTune && ex.type === 'temps' && !(ex.breath && ex.breath.length);
@@ -4732,6 +4784,7 @@
     if(rm){ e.stopPropagation(); removeExerciseFromSession(rm.dataset.block, parseInt(rm.dataset.idx, 10)); return; }
     var undoLink = e.target.closest('[data-undo-all]');
     if(undoLink){ restoreAllRemoved(); return; }
+    if(e.target.closest('.ex-yt')){ e.stopPropagation(); return; }
     var row = e.target.closest('.exercise');
     if(!row) return;
     var ex = (row.dataset.block && lastSession && lastSession[row.dataset.block]) ? lastSession[row.dataset.block][parseInt(row.dataset.idx,10)] : null;
@@ -5243,6 +5296,7 @@
     computeBlockSecs(session); computeGaps(session);
     if(!keepScroll) FOLD = {echauffement:true, retour_calme:true};
     html += stripHtml(session);
+    html += '<div class="yt-banner"><span class="yt-ico" aria-hidden="true">▶</span><div><b>Un doute sur un mouvement ?</b> Touche « ▶ Vidéo » sous chaque exercice pour voir des démonstrations sur YouTube.</div></div>';
     html += renderBlock('Échauffement', 'echauffement', session.warm, session.level, 'equilibre');
     html += renderBlock('Bloc cardio', 'cardio', session.cardio, session.level, 'equilibre');
     html += loadTipHtml(session);
@@ -6698,7 +6752,9 @@
     } else if(phase === 2 && el === a + sw){
       playBeep(); speak('Côté 2.');
     } else if(phase === 1 && left <= 3 && left >= 1){
-      speak(String(left));
+      speak(String(left)); cueTone(1);
+    } else if(phase !== 0 && left === 10 && (phase === 1 ? a : st.duration - a - sw) >= 20){
+      speak('Plus que dix secondes.'); cueTone(2);
     }
   }
   var _loadStep2 = loadStep;
@@ -9304,6 +9360,29 @@
     window.ecRenderGamif();
   })();
 
+  // ---------- Consignes de l'exercice pendant la séance (toujours affichées) ----------
+  (function(){
+    var wrap = document.getElementById('timerTipsWrap'), box = document.getElementById('timerTips');
+    var bd = document.getElementById('timerBackdrop');
+    function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function hide(){ wrap.hidden = true; bd.classList.remove('tips-on'); }
+    function render(){
+      var i = timerState.index, st = timerState.timeline && timerState.timeline[i];
+      var ex = st && st.type === 'work' ? st.ex : (st ? nextExerciseAfter(i) : null);
+      var d = ex && !ex.breath && ex.detail;
+      if(!st || !d || timerState.calm || bd.classList.contains('feedback') || !(d.start || d.exec)){ hide(); return; }
+      wrap.hidden = false; bd.classList.add('tips-on');
+      box.innerHTML = (st.type !== 'work' ? '<p class="nx">À suivre : ' + esc(ex.name) + '</p>' : '')
+        + (d.start ? '<p><b>Départ</b>' + esc(d.start) + '</p>' : '')
+        + (d.exec ? '<p><b>Mouvement</b>' + esc(d.exec) + '</p>' : '')
+        + (d.error ? '<p class="err"><b>À éviter</b>' + esc(d.error) + '</p>' : '')
+        + '<a class="timer-tips-yt" href="' + youtubeSearchUrl(ex) + '" target="_blank" rel="noopener">▶ Vidéo de démonstration</a>';
+    }
+    box.addEventListener('click', function(e){ e.stopPropagation(); });
+    var _ls = loadStep;
+    loadStep = function(i){ _ls(i); render(); };
+    new MutationObserver(function(){ if(bd.classList.contains('feedback') || !bd.classList.contains('open')) hide(); }).observe(bd, {attributes:true, attributeFilter:['class']});
+  })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
   // ajoute une entrée d'historique : le bouton retour la referme au lieu de
