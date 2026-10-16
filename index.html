@@ -9505,13 +9505,13 @@
     var wrap = document.getElementById('timerTipsWrap'), box = document.getElementById('timerTips');
     var bd = document.getElementById('timerBackdrop');
     function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-    function hide(){ wrap.hidden = true; bd.classList.remove('tips-on'); }
+    function hide(){ if(!wrap.hidden) wrap.hidden = true; if(bd.classList.contains('tips-on')) bd.classList.remove('tips-on'); }
     function render(){
       var i = timerState.index, st = timerState.timeline && timerState.timeline[i];
       var ex = st && st.type === 'work' ? st.ex : (st ? nextExerciseAfter(i) : null);
       var d = ex && !ex.breath && ex.detail;
       if(!st || !d || timerState.calm || bd.classList.contains('feedback') || !(d.start || d.exec)){ hide(); return; }
-      wrap.hidden = false; bd.classList.add('tips-on');
+      wrap.hidden = false; if(!bd.classList.contains('tips-on')) bd.classList.add('tips-on');
       box.innerHTML = (st.type !== 'work' ? '<p class="nx">À suivre : ' + esc(ex.name) + '</p>' : '')
         + (d.start ? '<p><b>Départ</b>' + esc(d.start) + '</p>' : '')
         + (d.exec ? '<p><b>Mouvement</b>' + esc(d.exec) + '</p>' : '')
