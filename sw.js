@@ -1,6 +1,6 @@
 // Ethik'Coach — fonctionnement hors connexion.
-// La page est toujours chargée en ligne quand le réseau répond (mises à jour immédiates),
-// et la dernière version enregistrée prend le relais sans réseau.
+// La page est chargée en ligne quand le réseau répond vite (mises à jour immédiates) ;
+// sans réseau, ou si le réseau traîne plus de 4 secondes, la dernière version enregistrée prend le relais.
 var CACHE = 'ethikcoach-v1';
 
 self.addEventListener('install', function(e){
@@ -22,15 +22,21 @@ self.addEventListener('fetch', function(e){
   var url = new URL(req.url);
 
   // La page de l'appli : réseau d'abord, copie de secours ensuite
+  // Réseau lent (salle de sport, zone blanche) : au-delà de 4 secondes, la copie enregistrée s'affiche
+  // et la nouvelle version, si elle arrive, est gardée pour la prochaine ouverture.
   if(req.mode === 'navigate'){
-    e.respondWith(
-      fetch(req).then(function(res){
-        if(res && res.ok){ var copy = res.clone(); caches.open(CACHE).then(function(c){ c.put('./', copy); }); }
-        return res;
-      }).catch(function(){
-        return caches.match('./').then(function(r){ return r || caches.match(req, {ignoreSearch:true}); });
-      })
-    );
+    var net = fetch(req).then(function(res){
+      if(res && res.ok){ var copy = res.clone(); caches.open(CACHE).then(function(c){ c.put('./', copy); }); }
+      return res;
+    });
+    var cached = function(){ return caches.match('./').then(function(r){ return r || caches.match(req, {ignoreSearch:true}); }); };
+    e.respondWith(new Promise(function(resolve){
+      var done = false;
+      var t = setTimeout(function(){ cached().then(function(r){ if(r && !done){ done = true; resolve(r); } }); }, 4000);
+      net.then(function(res){ if(!done){ done = true; clearTimeout(t); resolve(res); } })
+         .catch(function(){ clearTimeout(t); cached().then(function(r){ if(!done){ done = true; resolve(r || Response.error()); } }); });
+    }));
+    e.waitUntil(net.catch(function(){}));
     return;
   }
 
