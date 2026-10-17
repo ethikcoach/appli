@@ -2380,6 +2380,17 @@
   .tf-cancel{display:block; margin:10px auto 0; background:none; border:none; color:var(--stone); font-family:'Inter',sans-serif; font-weight:600; min-height:44px; cursor:pointer;}
   .tf-stop{width:100%; min-height:56px !important; font-size:1.1rem !important;}
   .tf-input{font-size:1.4rem !important; text-align:center;}
+  /* ---------- Suivi en onglets ---------- */
+  .sv-tabs{display:flex; gap:4px; padding:4px; margin:0 0 12px; background:var(--card); border-radius:999px; box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,0.06)); position:sticky; top:8px; z-index:5;}
+  .sv-tabs button{flex:1; min-height:44px; border:none; border-radius:999px; background:none; color:var(--stone); font-family:'Inter',sans-serif; font-weight:700; font-size:0.88rem; cursor:pointer; position:relative; padding:0 6px; white-space:nowrap;}
+  .sv-tabs button.on{background:var(--forest); color:#fff;}
+  .sv-tabs button.due::after{content:''; position:absolute; top:8px; right:10px; width:8px; height:8px; border-radius:50%; background:#F2C14E;}
+  #suiviView[data-svtab="act"] > section[data-tab]:not([data-tab="act"]),
+  #suiviView[data-svtab="prog"] > section[data-tab]:not([data-tab="prog"]),
+  #suiviView[data-svtab="mine"] > section[data-tab]:not([data-tab="mine"]){display:none !important;}
+  #svBadgeCard:not(.bd-all) .bd.bd-extra{display:none;}
+  .bd-more{margin-top:10px;}
+  @media (max-width:360px){ .sv-tabs button{font-size:0.8rem;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2694,7 +2705,7 @@
   </section>
   <section class="sv-card">
     <h2>Mes données</h2>
-    <p class="sv-hint">Ton historique et tes favoris sont enregistrés uniquement sur cet appareil. Fais une sauvegarde de temps en temps, et restaure-la si tu changes de téléphone.</p>
+    <p class="sv-hint">Ton historique, tes tests, tes charges et tes favoris sont enregistrés uniquement sur cet appareil. Fais une sauvegarde de temps en temps, et restaure-la si tu changes de téléphone.</p>
     <div class="sv-btns"><button type="button" class="sv-btn" id="svExport">💾 Sauvegarder mes données</button><button type="button" class="sv-btn ghost" id="svImport">📂 Restaurer une sauvegarde</button></div>
     <input type="file" id="svImportFile" accept="application/json,.json" hidden>
   </section>
@@ -10290,7 +10301,7 @@
     }
     var heroRow = document.querySelector('#renfoView > .intro .hero-row');
     var heroBtn = document.createElement('button'); heroBtn.type = 'button'; heroBtn.className = 'hero-stat hero-tests';
-    heroBtn.addEventListener('click', function(){ if(window.ecShowView) window.ecShowView('suivi'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); });
+    heroBtn.addEventListener('click', function(){ if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('prog'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); });
     if(heroRow) heroRow.appendChild(heroBtn);
     function renderHeroBtn(){ heroBtn.innerHTML = '🎯 Tests de forme' + (testsDue() ? ' <i class="tf-dot" aria-label="à faire"></i>' : ''); }
     window.ecRunTest = function(id){ runTest(TESTS.filter(function(T){ return T.id === id; })[0]); };
@@ -10330,7 +10341,7 @@
     today.addEventListener('click', function(e){
       var b = e.target.closest('[data-t]'); if(!b || !P) return;
       var t = b.getAttribute('data-t');
-      if(t === 'tests'){ if(window.ecShowView) window.ecShowView('suivi'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); return; }
+      if(t === 'tests'){ if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('prog'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); return; }
       var start = t === 'go';
       if(P.type === 'mob'){
         if(window.ecShowView) window.ecShowView('breath');
@@ -10353,6 +10364,62 @@
     var _rt = renderTests; renderTests = function(){ _rt(); renderHeroBtn(); };
     renderTests();
     setTimeout(renderToday, 0);
+  })();
+  // ---------- Suivi : trois onglets (Activité / Progrès / Mes séances) ----------
+  (function(){
+    var view = document.getElementById('suiviView'), stats = document.getElementById('svStats');
+    if(!view || !stats) return;
+    var TABS = [['act', '📅 Activité'], ['prog', '📈 Progrès'], ['mine', '⭐ Mes séances']];
+    var bar = document.createElement('div'); bar.className = 'sv-tabs'; bar.setAttribute('role', 'tablist');
+    bar.innerHTML = TABS.map(function(t){ return '<button type="button" role="tab" data-svtab="' + t[0] + '">' + t[1] + '</button>'; }).join('');
+    stats.parentNode.insertBefore(bar, stats.nextSibling);
+    function tag(el, t){ if(el) el.setAttribute('data-tab', t); }
+    var cards = view.querySelectorAll(':scope > section.sv-card');
+    cards.forEach(function(c){
+      var id = c.id, h = (c.querySelector('h2') || {}).textContent || '';
+      if(id === 'svTestsCard' || id === 'svChalCard' || id === 'svBadgeCard') tag(c, 'prog');
+      else if(id === 'svFavCard' || id === 'svBlockedCard' || /Mes données/.test(h)) tag(c, 'mine');
+      else tag(c, 'act');
+    });
+    // Ordre : Activité = calendrier, ressenti, historique ; Progrès = tests, défi, badges ; Mes séances = favoris, écartés, données
+    var order = ['svTestsCard', 'svChalCard', 'svBadgeCard'], last = bar;
+    var act = [].filter.call(cards, function(c){ return c.getAttribute('data-tab') === 'act'; });
+    var cal = act.filter(function(c){ return c.querySelector('#svCal'); })[0], rpe = document.getElementById('svRpeCard'), hist = act.filter(function(c){ return c.querySelector('#svHist'); })[0];
+    [cal, rpe, hist].concat(order.map(function(id){ return document.getElementById(id); }))
+      .concat([document.getElementById('svFavCard'), document.getElementById('svBlockedCard')])
+      .concat([].filter.call(cards, function(c){ return /Mes données/.test((c.querySelector('h2') || {}).textContent || ''); }))
+      .forEach(function(c){ if(c){ last.parentNode.insertBefore(c, last.nextSibling); last = c; } });
+    var cur = 'act';
+    try{ var sv = localStorage.getItem('ec_sv_tab'); if(sv === 'prog' || sv === 'mine') cur = sv; }catch(e){}
+    function set(t, keep){
+      cur = t; view.setAttribute('data-svtab', t);
+      bar.querySelectorAll('[data-svtab]').forEach(function(b){ var on = b.getAttribute('data-svtab') === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      try{ localStorage.setItem('ec_sv_tab', t); }catch(e){}
+    }
+    bar.addEventListener('click', function(e){ var b = e.target.closest('[data-svtab]'); if(b) set(b.getAttribute('data-svtab')); });
+    window.ecSuiviTab = set;
+    set(cur);
+    // Pastille sur « Progrès » quand les tests sont à faire
+    function dot(){ var due = !!document.querySelector('.hero-tests .tf-dot'); var b = bar.querySelector('[data-svtab="prog"]'); if(b) b.classList.toggle('due', due); }
+    dot(); setInterval(dot, 4000);
+    // Badges : on montre ceux obtenus et les 3 plus proches, le reste sur demande
+    var bc = document.getElementById('svBadgeCard'), showAll = false;
+    function tidy(){
+      if(!bc || bc.querySelector('.bd-more')) return;
+      var tiles = [].slice.call(bc.querySelectorAll('.bd')); if(!tiles.length) return;
+      var locked = tiles.filter(function(t){ return !t.classList.contains('on'); }).map(function(t){
+        var m = /(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/.exec((t.querySelector('.bd-p') || {}).textContent || ''), r = m ? parseFloat(m[1].replace(',', '.')) / parseFloat(m[2].replace(',', '.')) : 0;
+        return {t:t, r:r};
+      }).sort(function(a, b){ return b.r - a.r; });
+      locked.forEach(function(x, i){ if(i >= 3) x.t.classList.add('bd-extra'); });
+      var n = locked.length - 3; if(n <= 0) return;
+      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sv-link bd-more';
+      btn.textContent = showAll ? 'Masquer' : 'Voir les ' + n + ' autres badges';
+      bc.classList.toggle('bd-all', showAll);
+      btn.addEventListener('click', function(){ showAll = !showAll; bc.classList.toggle('bd-all', showAll); btn.textContent = showAll ? 'Masquer' : 'Voir les ' + n + ' autres badges'; });
+      bc.appendChild(btn);
+    }
+    if(bc){ new MutationObserver(tidy).observe(bc, {childList:true}); tidy(); }
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
