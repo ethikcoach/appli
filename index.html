@@ -2348,6 +2348,20 @@
   .fbl-row input{width:56px; min-height:40px; font-size:16px; text-align:center; border-radius:10px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; padding:0 4px;}
   .timer-tips .tip-last b{color:#B8D8A8;}
   /* ---------- Tests de forme ---------- */
+  .tf-card{padding:0 16px 8px; overflow:hidden;}
+  .tf-hero{margin:0 -16px 6px; padding:18px 16px 16px; background:var(--hero-renfo, linear-gradient(135deg,#17352A,#1F4030 45%,#3D7257)); color:#fff;}
+  .tf-hero-top{display:flex; gap:12px; align-items:flex-start;}
+  .tf-hero-ico{font-size:2rem; line-height:1;}
+  .tf-hero h2{margin:0; color:#fff; font-family:'Bricolage Grotesque',sans-serif; font-size:1.3rem;}
+  .tf-hero p{margin:4px 0 0; font-size:0.9rem; line-height:1.4; color:rgba(255,255,255,0.88);}
+  .tf-kpis{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .tf-kpis span{background:rgba(255,255,255,0.14); border-radius:999px; padding:6px 12px; font-size:0.85rem;}
+  .tf-all{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:14px; min-height:52px; border:none; border-radius:999px; background:#fff; color:var(--forest-dark, #132A1F); font-family:'Inter',sans-serif; font-weight:800; font-size:1rem; cursor:pointer;}
+  .tf-all small{font-weight:600; opacity:0.65;}
+  .tf-all.due{box-shadow:0 0 0 4px rgba(255,255,255,0.25);}
+  .tf-card > .sv-hint{margin:10px 0 0;}
+  .hero-tests{border:none; color:#fff; font:inherit; font-weight:600; cursor:pointer;}
+  .tf-dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#F2C14E; margin-left:2px;}
   .tf-row{display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--stone-light);}
   .tf-main{flex:1; min-width:0;}
   .tf-main b{display:block; font-size:0.95rem;}
@@ -10166,7 +10180,7 @@
     function tests(){ var a = lsg(TESTS_KEY, []); return Array.isArray(a) ? a : []; }
     function testVals(id){ return tests().filter(function(x){ return x.t === id; }).sort(function(a, b){ return a.at - b.at; }); }
     function lastTestAt(){ return tests().reduce(function(m, x){ return Math.max(m, x.at); }, 0); }
-    function testsDue(){ var l = lastTestAt(); return l ? (Date.now() - l > 42 * DAY) : renfoHist().length >= 3; }
+    function testsDue(){ var l = lastTestAt(); return l ? (Date.now() - l > 42 * DAY) : true; }
     function fmtV(v, unit){ return unit === 's' && v >= 60 ? Math.floor(v / 60) + ' min ' + (v % 60 < 10 ? '0' : '') + (v % 60) : v + ' ' + unit; }
     function spark(vals){
       if(vals.length < 2) return '';
@@ -10176,8 +10190,8 @@
         + pts.map(function(q, i){ return '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="' + (i === pts.length - 1 ? 3.2 : 2) + '"/>'; }).join('') + '</svg>';
     }
     var card = document.createElement('section'); card.className = 'sv-card tf-card'; card.id = 'svTestsCard';
-    var rpeCard = document.getElementById('svRpeCard');
-    if(rpeCard) rpeCard.parentNode.insertBefore(card, rpeCard);
+    var svStats = document.getElementById('svStats');
+    if(svStats) svStats.parentNode.insertBefore(card, svStats.nextSibling);
     var showOthers = false;
     function renderTests(){
       var senior = state.level === 'senior', main = senior ? 's' : 'g';
@@ -10189,18 +10203,27 @@
       }
       var mine = TESTS.filter(function(T){ return T.grp === main; }), others = TESTS.filter(function(T){ return T.grp !== main; });
       var due = testsDue();
-      card.innerHTML = '<div class="sv-h2row"><h2>Mes tests de forme</h2></div>'
-        + '<p class="sv-hint" style="margin-top:0">' + (due ? '🎯 <b>C’est le moment de faire tes tests.</b> ' : '') + 'Refais-les toutes les 4 à 6 semaines pour voir tes progrès, de préférence en début de séance, après un échauffement.</p>'
+      var lt = lastTestAt(), days = lt ? Math.floor((Date.now() - lt) / DAY) : -1;
+      var nDone = mine.filter(function(T){ return testVals(T.id).length; }).length;
+      var ups = mine.filter(function(T){ var v = testVals(T.id); return v.length >= 2 && v[v.length - 1].v > v[0].v; }).length;
+      var status = !lt ? 'Fais tes premiers tests : ils serviront de point de départ pour mesurer tes progrès.'
+        : (due ? 'Tes derniers tests datent de ' + days + ' jours : c’est le moment de les refaire !'
+        : 'Derniers tests il y a ' + (days === 0 ? 'moins d’un jour' : days + ' jour' + (days > 1 ? 's' : '')) + '. Prochains dans ' + Math.max(1, 42 - days) + ' jours environ.');
+      card.innerHTML = '<div class="tf-hero"><div class="tf-hero-top"><span class="tf-hero-ico" aria-hidden="true">🎯</span><div><h2>Mes tests de forme</h2><p>' + esc(status) + '</p></div></div>'
+        + (lt ? '<div class="tf-kpis"><span><b>' + nDone + '/' + mine.length + '</b> tests faits</span>' + (ups ? '<span><b>' + ups + '</b> en progrès 📈</span>' : '') + '</div>' : '')
+        + '<button type="button" class="tf-all' + (due ? ' due' : '') + '" data-all="1">' + (lt ? '▶ Refaire mes ' + mine.length + ' tests' : '▶ Faire mes ' + mine.length + ' tests') + ' <small>≈ ' + (mine.length * 2) + ' min</small></button></div>'
+        + '<p class="sv-hint">Toutes les 4 à 6 semaines, après un échauffement, dans les mêmes conditions.</p>'
         + mine.map(row).join('')
         + '<button type="button" class="sv-link tf-more">' + (showOthers ? 'Masquer les autres tests' : (main === 's' ? 'Voir les tests généraux' : 'Voir les tests seniors (APA)')) + '</button>'
         + (showOthers ? others.map(row).join('') : '');
     }
     card.addEventListener('click', function(e){
       if(e.target.closest('.tf-more')){ showOthers = !showOthers; renderTests(); return; }
+      if(e.target.closest('[data-all]')){ var g = state.level === 'senior' ? 's' : 'g', q = TESTS.filter(function(T){ return T.grp === g; }); runTest(q[0], q.slice(1)); return; }
       var b = e.target.closest('[data-test]'); if(b) runTest(TESTS.filter(function(T){ return T.id === b.getAttribute('data-test'); })[0]);
     });
-    function runTest(T){
-      if(!T) return;
+    function runTest(T, queue){
+      if(!T) return; queue = queue || [];
       var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop tf-backdrop'; wrap.id = 'tfDialog';
       var box = document.createElement('div'); box.className = 'ec-dialog tf-box'; wrap.appendChild(box); document.body.appendChild(wrap);
       var iv = null, t0 = 0, done = false;
@@ -10247,8 +10270,10 @@
         if(!(v >= 0) || i.value === ''){ i.focus(); return; }
         var a = tests(); a.push({t:T.id, v:v, at:Date.now()}); lss(TESTS_KEY, a.slice(-200));
         var prev = testVals(T.id); prev = prev.length >= 2 ? prev[prev.length - 2] : null;
-        var msg = prev ? (v > prev.v ? 'Bravo, tu progresses : ' + fmtV(v, T.unit) + ' contre ' + fmtV(prev.v, T.unit) + ' la dernière fois !' : (v === prev.v ? 'Même résultat que la dernière fois : ' + fmtV(v, T.unit) + '.' : 'Résultat enregistré : ' + fmtV(v, T.unit) + '. Les tests varient selon la forme du jour, c’est normal.')) : 'Premier résultat enregistré : ' + fmtV(v, T.unit) + '. Refais ce test dans 4 à 6 semaines.';
-        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><p class="tf-how">' + esc(msg) + '</p><div class="ec-dialog-actions one"><button type="button" class="ec-dialog-ok" data-a="close">Fermer</button></div>';
+        var msg = prev ? (v > prev.v ? 'Bravo, tu progresses : ' + fmtV(v, T.unit) + ' contre ' + fmtV(prev.v, T.unit) + ' la dernière fois !' : (v === prev.v ? 'Même résultat que la dernière fois : ' + fmtV(v, T.unit).replace(/\.$/, '') + '.' : 'Résultat enregistré : ' + fmtV(v, T.unit).replace(/\.$/, '') + '. Les tests varient selon la forme du jour, c’est normal.')) : 'Premier résultat enregistré : ' + fmtV(v, T.unit).replace(/\.$/, '') + '. Refais ce test dans 4 à 6 semaines.';
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><p class="tf-how">' + esc(msg) + '</p>'
+          + (queue.length ? '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-a="close">Terminer</button><button type="button" class="ec-dialog-ok" data-a="next">Test suivant ▶</button></div><p class="tf-prev" style="margin-top:10px">Ensuite : ' + esc(queue[0].name) + ' (' + (queue.length) + ' restant' + (queue.length > 1 ? 's' : '') + ')</p>'
+          : '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-ok" data-a="close">Fermer</button></div>');
         renderTests(); renderToday();
       }
       box.addEventListener('click', function(e){
@@ -10258,10 +10283,16 @@
         else if(a === 'go'){ try{ requestWakeLock(); }catch(err){} count(3, T.kind === 'reps' ? runReps : runHold); }
         else if(a === 'stop'){ clearInterval(iv); result(Math.floor((Date.now() - t0) / 1000)); }
         else if(a === 'save') save();
+        else if(a === 'next'){ clearInterval(iv); wrap.remove(); runTest(queue[0], queue.slice(1)); }
       });
       box.addEventListener('keydown', function(e){ if(e.key === 'Enter' && box.querySelector('.tf-input')) save(); });
       intro();
     }
+    var heroRow = document.querySelector('#renfoView > .intro .hero-row');
+    var heroBtn = document.createElement('button'); heroBtn.type = 'button'; heroBtn.className = 'hero-stat hero-tests';
+    heroBtn.addEventListener('click', function(){ if(window.ecShowView) window.ecShowView('suivi'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); });
+    if(heroRow) heroRow.appendChild(heroBtn);
+    function renderHeroBtn(){ heroBtn.innerHTML = '🎯 Tests de forme' + (testsDue() ? ' <i class="tf-dot" aria-label="à faire"></i>' : ''); }
     window.ecRunTest = function(id){ runTest(TESTS.filter(function(T){ return T.id === id; })[0]); };
 
     // ===== 5. Séance du jour =====
@@ -10319,6 +10350,7 @@
     window.addEventListener('focus', function(){ renderToday(); });
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) renderToday(); });
     var lv = document.getElementById('levelGroup'); if(lv) lv.addEventListener('click', function(){ setTimeout(function(){ renderTests(); renderToday(); }, 0); });
+    var _rt = renderTests; renderTests = function(){ _rt(); renderHeroBtn(); };
     renderTests();
     setTimeout(renderToday, 0);
   })();
