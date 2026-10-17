@@ -1012,8 +1012,8 @@
 
     /* Réglages repliés une fois la séance générée */
     .app.collapsed .intro, .app.collapsed .session-info-bar{display:none;}
-    .app.collapsed .panel{padding:10px 12px;}
-    .app.collapsed .panel > :not(.panel-summary){display:none !important;}
+    .app.collapsed .panel:not(#mobPanel){padding:10px 12px;}
+    .app.collapsed .panel:not(#mobPanel) > :not(.panel-summary){display:none !important;}
     .app.collapsed .panel-summary{display:flex; align-items:center; gap:10px;}
     .ps-tags{flex:1; min-width:0; display:flex; flex-wrap:wrap; gap:4px;}
     .ps-tags span{font-size:0.76rem; background:var(--sage-light); color:var(--forest); padding:3px 8px; border-radius:10px; white-space:nowrap;}
@@ -2145,7 +2145,7 @@
   .block.foldable:not(.folded) .fold-sum{background:transparent; box-shadow:none; padding:4px 2px; font-size:0.78rem; color:var(--stone);}
   @media screen{ .results:not(.editing) .block.folded > .exercise{display:none !important;} }
   @media print{ .fold-sum, .sess-strip, .timer-tip{display:none !important;} }
-  .app.quick .panel > :not(.panel-summary):not(.generate-btn):not(.form-msg):not(.quick-start):not(.current-program){display:none !important;}
+  .app.quick .panel:not(#mobPanel) > :not(.panel-summary):not(.generate-btn):not(.form-msg):not(.quick-start):not(.current-program){display:none !important;}
   .app.quick .panel > .panel-summary{display:flex !important; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; margin-bottom:10px;}
   .app.quick .panel > .panel-summary .ps-tags{flex:1; min-width:0;}
   .app.quick .panel > .generate-btn{position:static !important;}
@@ -2317,6 +2317,55 @@
   .help-voice-sel{flex:1; min-width:0; min-height:48px; font-family:'Inter',sans-serif; font-size:16px; padding:0 12px; border:1px solid var(--stone-light); border-radius:14px; background:var(--paper); color:var(--ink);}
   .help-voice-row .help-btn{flex:none; padding:0 16px;}
   .help-voice-tip{margin-top:10px !important;}
+  /* ---------- Séance du jour ---------- */
+  .today-card{position:relative; background:var(--card); border-radius:var(--r-card, 20px); box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,0.06)); padding:16px 16px 14px; margin:12px 0; border-left:5px solid var(--sage);}
+  .today-card[hidden], .app.collapsed > .today-card{display:none;}
+  .tc-kicker{font-size:0.75rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--sage);}
+  .tc-title{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.3rem; line-height:1.2; margin-top:2px; color:var(--ink);}
+  .tc-why{margin:6px 0 12px; font-size:0.9rem; line-height:1.4; color:var(--stone);}
+  .tc-btns{display:flex; gap:8px;}
+  .tc-btns button{flex:1; min-height:48px; border-radius:999px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.95rem; cursor:pointer;}
+  .tc-go{background:var(--forest); color:#fff; border:none;}
+  .tc-see{background:none; color:var(--ink); border:1px solid var(--stone-light);}
+  .tc-tests{display:block; width:100%; margin-top:10px; background:var(--sage-light); color:var(--ink); border:none; border-radius:14px; padding:10px 12px; font-family:'Inter',sans-serif; font-weight:600; font-size:0.88rem; text-align:left; cursor:pointer;}
+  /* ---------- Séance adaptée au ressenti ---------- */
+  .adapt-banner{display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--sage-light); color:var(--ink); border-radius:14px; padding:10px 12px; margin:10px 0;}
+  .adapt-banner .ab-ico{font-size:1.3rem;}
+  .adapt-banner > div{flex:1; min-width:180px; font-size:0.88rem; line-height:1.35;}
+  .adapt-banner b{display:block; font-size:0.95rem;}
+  .adapt-banner button{background:none; border:1px solid var(--stone); color:var(--ink); border-radius:999px; min-height:40px; padding:0 14px; font-family:'Inter',sans-serif; font-weight:600; font-size:0.85rem; cursor:pointer;}
+  /* ---------- Charges notées ---------- */
+  .ex-last{font-size:0.8rem; font-weight:600; color:var(--sage); margin-top:3px;}
+  .fb-loads{margin:14px 0 4px; text-align:left; background:rgba(255,255,255,0.08); border-radius:14px; padding:4px 12px;}
+  .fb-loads summary{cursor:pointer; padding:10px 0; font-weight:700; list-style:none;}
+  .fb-loads summary::-webkit-details-marker{display:none;}
+  .fb-loads summary small{font-weight:500; opacity:0.75;}
+  .fbl-hint{margin:0 0 6px; font-size:0.8rem; opacity:0.8;}
+  .fbl-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid rgba(255,255,255,0.12);}
+  .fbl-name{flex:1; font-size:0.88rem; line-height:1.25;}
+  .fbl-name small{display:block; opacity:0.7; font-size:0.75rem;}
+  .fbl-row label{display:flex; align-items:center; gap:4px; font-size:0.8rem;}
+  .fbl-row input{width:56px; min-height:40px; font-size:16px; text-align:center; border-radius:10px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; padding:0 4px;}
+  .timer-tips .tip-last b{color:#B8D8A8;}
+  /* ---------- Tests de forme ---------- */
+  .tf-row{display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--stone-light);}
+  .tf-main{flex:1; min-width:0;}
+  .tf-main b{display:block; font-size:0.95rem;}
+  .tf-info{display:flex; flex-wrap:wrap; gap:4px 8px; align-items:baseline; margin-top:2px; font-size:0.82rem; color:var(--stone);}
+  .tf-last{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ink);}
+  .tf-delta.up{color:#2E7D4F; font-weight:700;}
+  .tf-delta.down{color:var(--warn);}
+  .tf-spark{width:84px; height:30px; flex:none;}
+  .tf-spark polyline{fill:none; stroke:var(--forest); stroke-width:2; stroke-linejoin:round; stroke-linecap:round;}
+  .tf-spark circle{fill:var(--forest);}
+  .tf-go{flex:none; min-height:40px; padding:0 14px; border-radius:999px; border:1px solid var(--forest); background:none; color:var(--forest); font-family:'Inter',sans-serif; font-weight:700; cursor:pointer;}
+  .tf-more{margin-top:6px;}
+  .tf-how{margin:0 0 14px; font-size:0.95rem; line-height:1.45;}
+  .tf-prev{margin:-6px 0 14px; font-size:0.9rem;}
+  .tf-big{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:4.5rem; line-height:1; text-align:center; margin:10px 0 8px; color:var(--forest); font-variant-numeric:tabular-nums;}
+  .tf-cancel{display:block; margin:10px auto 0; background:none; border:none; color:var(--stone); font-family:'Inter',sans-serif; font-weight:600; min-height:44px; cursor:pointer;}
+  .tf-stop{width:100%; min-height:56px !important; font-size:1.1rem !important;}
+  .tf-input{font-size:1.4rem !important; text-align:center;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2770,7 +2819,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 9.5 · mise à jour du 16 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 9.6 · mise à jour du 17 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -5333,6 +5382,7 @@
     ensureWarmup(session);
     ensureCooldown(session);
     if(silent){ session.title = title; return session; }
+    if(window.ecAutoAdapt) window.ecAutoAdapt(session);
     fitSession(session);
     displaySession(session, title);
   }
@@ -9681,6 +9731,7 @@
       if(diff < -3) msg.textContent = 'Peu de postures disponibles avec ces réglages : la séance dure ' + Math.round(sessionSeconds(S) / 60) + ' min.' + (mob.z !== 'full' ? ' Choisis « Corps entier » pour plus de choix.' : '');
     }
     window.ecMobGenerate = generate;
+    window.ecMobSet = function(c){ Object.keys(c).forEach(function(k){ mob[k] = c[k]; }); mob.p = normP(mob.p); syncForm(); saveForm(); try{ setMode('mob'); }catch(e){} };
 
     // Durée : on ajoute ou retire des postures plutôt que des tours
     var _fit = fitSession;
@@ -9858,7 +9909,7 @@
       ['💪', 'Renfo', 'Choisis ton matériel, ton niveau, ta durée, ton objectif et la zone à travailler : ta séance est prête en un clic. Tu peux aussi générer un programme sur plusieurs semaines, ou composer ta séance toi-même.'],
       ['🧘', 'Récup', 'Deux parties : <b>Mobilité & étirements</b> (Réveil, Mobilité, Étirements, Yoga, Détente du soir), toujours encadrés par une respiration au début et à la fin, et <b>Respiration</b> pour une respiration guidée seule.'],
       ['📚', 'Exercices', 'Tous les exercices de l’appli avec photo, position de départ, mouvement, erreur à éviter et vidéo de démonstration. Un exercice ne te convient pas ? Tu peux demander à ne plus te le proposer.'],
-      ['📈', 'Suivi', 'Ton historique, ton ressenti des dernières séances, tes badges et tes séances favorites. C’est aussi là que tu sauvegardes tes données.'],
+      ['📈', 'Suivi', 'Ton historique, tes tests de forme avec ta courbe de progression, ton ressenti des dernières séances, tes badges et tes séances favorites. C’est aussi là que tu sauvegardes tes données.'],
       ['⏱️', 'Pendant la séance', 'Le chrono te guide : annonces vocales, bips, consignes de l’exercice affichées en permanence et aperçu du suivant. Touche l’écran pour mettre en pause, glisse vers la gauche pour passer.']
     ];
     var QA = [
@@ -9868,6 +9919,9 @@
       ['Démarrer', 'Quelle différence entre Mobilité, Étirements, Yoga… dans Récup ?', '<b>Réveil</b> : court et dynamique pour démarrer la journée. <b>Mobilité</b> : mouvements contrôlés pour gagner en amplitude, idéal avant une séance. <b>Étirements</b> : postures douces et tenues, après l’effort ou pour gagner en souplesse. <b>Yoga</b> : postures et enchaînements au rythme du souffle. <b>Détente du soir</b> : lent et au sol, pour préparer le sommeil.'],
       ['Ma séance', 'Je peux modifier la séance proposée ?', 'Oui. Sur chaque exercice, <b>⇄ Remplacer</b> en propose un autre équivalent et <b>✕ Retirer</b> l’enlève. Tu peux aussi régler les temps de travail et de récupération, ou toucher <b>Refaire</b> pour une nouvelle séance avec les mêmes réglages.'],
       ['Ma séance', 'Un exercice ne me convient pas.', 'Remplace-le pour cette séance avec <b>⇄ Remplacer</b>. S’il ne te convient jamais, touche-le pour ouvrir sa fiche, puis <b>🚫 Ne plus me proposer</b>. Tu retrouves la liste dans <b>Suivi › Exercices écartés</b> si tu veux le remettre.'],
+      ['Ma séance', 'C’est quoi « Ta séance du jour » ?', 'En haut de <b>Renfo</b>, l’appli te propose une séance prête, d’après tes dernières séances : elle alterne haut et bas du corps, propose une récup après une séance dure, et reprend tes réglages habituels. <b>Démarrer ▶</b> lance directement le chrono ; <b>Voir la séance</b> te la montre d’abord.'],
+      ['Ma séance', 'Pourquoi ma séance est « un cran plus intense » ou « plus douce » ?', 'L’appli tient compte de ta note de ressenti. Après deux séances faciles (4/10 ou moins), elle allonge un peu les temps d’effort ; après une séance très dure ou une gêne signalée, elle les raccourcit. La durée totale reste la même. Le bouton <b>Revenir à la normale</b> annule l’ajustement.'],
+      ['Ma séance', 'Comment noter mes répétitions et mes charges ?', 'À la fin de la séance, ouvre <b>📊 Noter mes répétitions et charges</b> et indique ce que tu as fait par série (et le poids pour les kettlebells et haltères). La prochaine fois, « Dernière fois : … » s’affiche sous l’exercice et pendant le chrono.'],
       ['Ma séance', 'Comment garder une séance que j’aime ?', 'Touche <b>☆ Enregistrer</b> sur la séance. Tu la retrouves ensuite dans <b>Suivi › Mes favoris</b>, prête à relancer.'],
       ['Ma séance', 'Comment partager une séance ?', 'Touche <b>✉ Envoyer</b> sous la séance : un lien est créé, à partager par message. Il ouvre la séance directement chez la personne. Elle doit avoir elle-même un accès à l’appli.'],
       ['Pendant la séance', 'Comment mettre en pause ou passer un exercice ?', 'Touche <b>Pause</b>, ou n’importe où sur l’écran ; touche à nouveau pour reprendre. Pour passer à la suite, touche <b>Passer ▶</b> ou glisse vers la gauche.'],
@@ -9876,6 +9930,7 @@
       ['Pendant la séance', 'L’écran s’éteint pendant la séance.', 'L’appli demande au téléphone de garder l’écran allumé, mais certains réglages d’économie d’énergie l’en empêchent. Installe l’appli sur ton écran d’accueil et, si besoin, allonge le délai de verrouillage automatique dans les réglages du téléphone.'],
       ['Pendant la séance', 'J’ai quitté l’appli en pleine séance.', 'Pas de souci : à ton retour, la carte <b>Séance interrompue</b> te propose de <b>Reprendre</b> là où tu t’étais arrêté.'],
       ['Pendant la séance', 'J’ai une douleur pendant un exercice.', 'Arrête l’exercice. Une gêne légère peut se gérer en réduisant l’amplitude ou en remplaçant l’exercice ; une vraie douleur, non. Signale-la dans le retour de fin de séance pour que ton coach adapte la suite, et consulte un professionnel de santé si elle persiste.'],
+      ['Suivi et coach', 'À quoi servent les tests de forme ?', 'Dans <b>Suivi › Mes tests de forme</b>, des tests simples (squats en 1 minute, gainage, assis-debout en 30 secondes pour les seniors…) mesurent tes progrès. L’appli te guide avec un chrono et trace ta courbe. Refais-les toutes les 4 à 6 semaines, dans les mêmes conditions.'],
       ['Suivi et coach', 'Comment envoyer mon ressenti à mon coach ?', 'À la fin de chaque séance, note l’effort de 1 à 10, indique une éventuelle gêne, puis envoie ton retour par WhatsApp, SMS ou e-mail. Le message est déjà rédigé.'],
       ['Suivi et coach', 'Où sont enregistrées mes données ?', 'Uniquement sur ton appareil : rien n’est envoyé sur internet sans ton action. Si tu changes de téléphone, fais <b>Suivi › Sauvegarder mes données</b> sur l’ancien, puis <b>Restaurer une sauvegarde</b> sur le nouveau.'],
       ['L’appli', 'Comment installer l’appli sur mon écran d’accueil ?', 'Sur iPhone : dans Safari, touche le bouton <b>Partager</b> puis <b>Sur l’écran d’accueil</b>. Sur Android : menu <b>⋮</b> puis <b>Installer l’application</b> (ou le bouton 📲 en haut de l’appli). Elle s’ouvre ensuite en plein écran, comme une vraie appli.'],
@@ -9949,6 +10004,324 @@
     var hr = document.querySelector('.header-right');
     if(hr){ var ts = hr.querySelector('.textsize-btn'); hr.insertBefore(hb, ts ? ts.nextSibling : hr.firstChild); }
   })();
+  // ---------- Séance du jour, adaptation au ressenti, charges notées, tests de forme ----------
+  (function(){
+    function lsg(k, d){ try{ var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; }catch(e){ return d; } }
+    function lss(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+    function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    var DAY = 86400000;
+    var MOB_TITLE = /^(Réveil|Mobilité|Étirements|Récupération|Souplesse|Yoga|Détente du soir|Après l)/;
+    function kindOf(e){ return e.kind || (e.breath ? 'breath' : (MOB_TITLE.test(e.title || '') ? 'mob' : 'renfo')); }
+    function renfoHist(){ return loadHist().filter(function(e){ return kindOf(e) === 'renfo'; }); }
+
+    // ===== 1. Historique enrichi (type de séance, zone, ajustement) =====
+    var _ofb = openFeedback;
+    openFeedback = function(){
+      _ofb.apply(this, arguments);
+      try{
+        if(currentHistId){
+          var S = lastSession, calm = isCalm();
+          updateCurrentHist({kind:calm ? 'breath' : (S && S.mob ? 'mob' : 'renfo'), zone:(!calm && S && !S.mob) ? (S.zone || null) : null,
+            adapt:(!calm && S && !S.mob && S.adapt) ? (S.adapt.step || 0) : 0});
+        }
+      }catch(e){}
+      try{ renderLoadsForm(); }catch(e){}
+    };
+
+    // ===== 2. Adaptation automatique au ressenti =====
+    function adaptInfo(){
+      if(lsg('ec_adapt_off', false)) return null;
+      var h = renfoHist().filter(function(e){ return e.rpe && e.total && e.done / e.total >= 0.5 && Date.now() - e.at < 21 * DAY; });
+      if(!h.length) return null;
+      var a = h[h.length - 1], b = h[h.length - 2], prev = +a.adapt || 0, step = prev, why = '';
+      var hard = a.pain === 'gênante' || a.rpe >= 9 || (b && a.rpe >= 8 && b.rpe >= 8);
+      var easy = b && a.rpe <= 4 && b.rpe <= 4 && a.pain !== 'gênante' && b.pain !== 'gênante' && a.done === a.total;
+      if(hard){
+        step = Math.max(-2, prev - 1); if(a.pain === 'gênante') step = Math.min(step, -1);
+        why = a.pain === 'gênante' ? 'tu as signalé une gêne à ta dernière séance' : (a.rpe >= 9 ? 'ta dernière séance était très dure (' + a.rpe + '/10)' : 'tes deux dernières séances étaient dures (' + b.rpe + ' puis ' + a.rpe + '/10)');
+      } else if(easy){
+        step = Math.min(2, prev + 1);
+        why = 'tes deux dernières séances étaient faciles (' + b.rpe + ' puis ' + a.rpe + '/10)';
+      } else if(prev){
+        why = 'ce réglage te convenait à ta dernière séance (' + a.rpe + '/10)';
+      }
+      return step ? {step:step, why:why} : null;
+    }
+    window.ecAutoAdapt = function(S){
+      if(!S || S.composed || S.programRef || S.shared || S.mob || S.adj) return;
+      var info = adaptInfo(); if(!info) return;
+      var c = cleanAdj({w:info.step}); if(!c) return;
+      S.adj = c; S.adapt = info;
+    };
+    function adaptLabel(step){ return step >= 2 ? 'deux crans plus intense' : (step === 1 ? 'un cran plus intense' : (step <= -2 ? 'deux crans plus douce' : 'un cran plus douce')); }
+    var _dsA = displaySession;
+    displaySession = function(session){
+      var r = _dsA.apply(this, arguments);
+      try{ decorateAdapt(session); }catch(e){}
+      try{ decorateLoads(); }catch(e){}
+      return r;
+    };
+    function decorateAdapt(S){
+      var res = document.getElementById('results'); if(!res) return;
+      var old = res.querySelector('.adapt-banner'); if(old) old.remove();
+      if(!S || S.mob || !S.adapt || !S.adapt.step) return;
+      var div = document.createElement('div'); div.className = 'adapt-banner';
+      div.innerHTML = '<span class="ab-ico" aria-hidden="true">' + (S.adapt.step > 0 ? '⚡' : '🌿') + '</span><div><b>Séance ' + adaptLabel(S.adapt.step) + '</b><span>Adaptée à ton ressenti : ' + esc(S.adapt.why) + '. Temps d’effort ' + (S.adapt.step > 0 ? 'allongés' : 'raccourcis') + ', durée totale identique.</span></div><button type="button">Revenir à la normale</button>';
+      div.querySelector('button').addEventListener('click', function(){
+        var st = S.adapt.step; S.adapt = {step:0};
+        applyAdj(S, function(a){ a.w = (a.w || 0) - st; });
+      });
+      var anchor = res.querySelector('.session-head, .session-meta');
+      var host = anchor ? anchor.parentNode : res;
+      host.insertBefore(div, anchor ? anchor.nextSibling : host.firstChild);
+    }
+
+    // ===== 3. Répétitions et charges =====
+    var LOADS_KEY = 'ec_loads_v1';
+    function loads(){ var o = lsg(LOADS_KEY, {}); return o && typeof o === 'object' ? o : {}; }
+    function lastLoad(id){ var l = loads()[id]; return l && l.length ? l[l.length - 1] : null; }
+    function loadTxt(x){ return x ? [x.r ? x.r + ' rép.' : '', x.kg ? String(x.kg).replace('.', ',') + ' kg' : ''].filter(Boolean).join(' · ') : ''; }
+    function weighted(ex){ return eqHas(ex, 'kettlebell') || eqHas(ex, 'halteres'); }
+    function doneMainExercises(){
+      var tl = timerState.timeline || [], seen = {}, out = [];
+      tl.forEach(function(st){
+        if(st.type !== 'work' || !st.ex || st.skipped || st.blockLabel !== 'Corps de séance' || (st.ex.breath && st.ex.breath.length)) return;
+        if(seen[st.ex.id]) return; seen[st.ex.id] = 1; out.push(st.ex);
+      });
+      return out;
+    }
+    var fbLoads = document.createElement('details'); fbLoads.className = 'fb-loads'; fbLoads.hidden = true;
+    var fbSend = document.querySelector('#timerFeedback .fb-send');
+    if(fbSend) fbSend.parentNode.insertBefore(fbLoads, fbSend);
+    var pending = {};
+    function renderLoadsForm(){
+      pending = {};
+      var S = lastSession, list = (!isCalm() && S && !S.mob) ? doneMainExercises() : [];
+      fbLoads.hidden = !list.length; fbLoads.open = false;
+      if(!list.length){ fbLoads.innerHTML = ''; return; }
+      fbLoads.innerHTML = '<summary>📊 Noter mes répétitions et charges <small>(facultatif)</small></summary><p class="fbl-hint">Répétitions faites par série. Tu retrouveras ces chiffres la prochaine fois.</p>'
+        + list.map(function(ex){
+          var l = lastLoad(ex.id), w = weighted(ex);
+          return '<div class="fbl-row" data-id="' + esc(ex.id) + '"><div class="fbl-name">' + esc(ex.name) + (l ? '<small>Dernière fois : ' + esc(loadTxt(l)) + '</small>' : '') + '</div>'
+            + '<label><input type="number" inputmode="numeric" min="0" max="999" data-k="r" placeholder="' + (l && l.r ? l.r : '–') + '"><span>rép.</span></label>'
+            + (w ? '<label><input type="number" inputmode="decimal" min="0" max="300" step="0.5" data-k="kg" placeholder="' + (l && l.kg ? l.kg : '–') + '"><span>kg</span></label>' : '') + '</div>';
+        }).join('');
+    }
+    fbLoads.addEventListener('input', function(e){
+      var inp = e.target.closest('input[data-k]'); if(!inp) return;
+      var id = inp.closest('.fbl-row').getAttribute('data-id'), v = parseFloat(String(inp.value).replace(',', '.'));
+      pending[id] = pending[id] || {};
+      if(v > 0) pending[id][inp.getAttribute('data-k')] = Math.round(v * 2) / 2; else delete pending[id][inp.getAttribute('data-k')];
+      commitLoads();
+      try{ refreshFeedbackLinks(); }catch(err){}
+    });
+    function commitLoads(){
+      var all = loads(), hid = currentHistId || 0, mine = {};
+      Object.keys(pending).forEach(function(id){
+        var p = pending[id], arr = (all[id] || []).filter(function(x){ return x.h !== hid || !hid; });
+        if(p.r || p.kg){ arr.push({h:hid, at:Date.now(), r:p.r || 0, kg:p.kg || 0}); mine[id] = {r:p.r || 0, kg:p.kg || 0}; }
+        if(arr.length) all[id] = arr.slice(-12); else delete all[id];
+      });
+      lss(LOADS_KEY, all);
+      try{ updateCurrentHist({loads:mine}); }catch(e){}
+    }
+    var _fbMsg = feedbackMessage;
+    feedbackMessage = function(){
+      var m = _fbMsg.apply(this, arguments), parts = [];
+      Object.keys(pending).forEach(function(id){ var p = pending[id], ex = exById(id); if(ex && (p.r || p.kg)) parts.push(ex.name + ' : ' + loadTxt(p)); });
+      if(parts.length){ var lines = m.split('\n'), i = lines.findIndex(function(l){ return l.indexOf('💪') === 0; }); lines.splice(i < 0 ? lines.length : i, 0, '📊 ' + parts.join(' ; ')); m = lines.join('\n'); }
+      return m;
+    };
+    function decorateLoads(){
+      var res = document.getElementById('results'); if(!res || (lastSession && lastSession.mob)) return;
+      res.querySelectorAll('.exercise[data-ex-id]').forEach(function(row){
+        var l = lastLoad(row.getAttribute('data-ex-id')), note = row.querySelector('.ex-note');
+        if(!l || !note || row.querySelector('.ex-last')) return;
+        var d = document.createElement('div'); d.className = 'ex-last'; d.textContent = 'Dernière fois : ' + loadTxt(l);
+        note.parentNode.insertBefore(d, note.nextSibling);
+      });
+    }
+    var _lsL = loadStep;
+    loadStep = function(i){
+      _lsL.apply(this, arguments);
+      try{
+        var st = timerState.timeline && timerState.timeline[i], box = document.getElementById('timerTips');
+        if(!st || !box || (lastSession && lastSession.mob)) return;
+        var ex = st.type === 'work' ? st.ex : nextExerciseAfter(i), l = ex && lastLoad(ex.id);
+        var old = box.querySelector('.tip-last'); if(old) old.remove();
+        if(l && !document.getElementById('timerTipsWrap').hidden){ var p = document.createElement('p'); p.className = 'tip-last'; p.innerHTML = '<b>Dernière fois</b>' + esc(loadTxt(l)); box.insertBefore(p, box.querySelector('.timer-tips-yt')); }
+      }catch(e){}
+    };
+
+    // ===== 4. Tests de forme =====
+    var TESTS_KEY = 'ec_tests_v1';
+    var TESTS = [
+      {id:'squat60', grp:'g', name:'Squats en 1 minute', unit:'rép.', kind:'reps', secs:60, how:'Pieds largeur de hanches. Descends jusqu’à ce que les fesses frôlent une chaise placée derrière toi, puis remonte jambes tendues. Compte chaque squat complet.'},
+      {id:'pompes60', grp:'g', name:'Pompes en 1 minute', unit:'rép.', kind:'reps', secs:60, how:'Pompes classiques, sur les genoux ou mains contre un mur selon ton niveau. Garde toujours la même version d’un test à l’autre. Corps gainé, poitrine proche du sol.'},
+      {id:'planche', grp:'g', name:'Gainage planche', unit:'s', kind:'hold', max:300, how:'Sur les avant-bras, corps aligné des épaules aux chevilles. Arrête le chrono dès que le bassin descend ou monte.'},
+      {id:'chaise', grp:'g', name:'Chaise contre le mur', unit:'s', kind:'hold', max:300, how:'Dos plaqué au mur, genoux à 90°, bras le long du corps. Arrête le chrono quand tu ne peux plus tenir la position.'},
+      {id:'assisdebout', grp:'s', name:'Assis-debout en 30 secondes', unit:'rép.', kind:'reps', secs:30, how:'Chaise calée contre un mur, bras croisés sur la poitrine. Lève-toi complètement puis rassieds-toi, le plus de fois possible. Compte chaque lever complet.'},
+      {id:'unipodal', grp:'s', name:'Équilibre sur une jambe', unit:'s', kind:'hold', max:60, how:'Debout près d’un mur ou d’une chaise pour la sécurité, mains sur les hanches. Lève un pied. Arrête le chrono dès que tu poses le pied ou te rattrapes (60 s maximum).'}
+    ];
+    function tests(){ var a = lsg(TESTS_KEY, []); return Array.isArray(a) ? a : []; }
+    function testVals(id){ return tests().filter(function(x){ return x.t === id; }).sort(function(a, b){ return a.at - b.at; }); }
+    function lastTestAt(){ return tests().reduce(function(m, x){ return Math.max(m, x.at); }, 0); }
+    function testsDue(){ var l = lastTestAt(); return l ? (Date.now() - l > 42 * DAY) : renfoHist().length >= 3; }
+    function fmtV(v, unit){ return unit === 's' && v >= 60 ? Math.floor(v / 60) + ' min ' + (v % 60 < 10 ? '0' : '') + (v % 60) : v + ' ' + unit; }
+    function spark(vals){
+      if(vals.length < 2) return '';
+      var W = 120, H = 36, p = 4, mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), rg = mx - mn || 1;
+      var pts = vals.map(function(v, i){ return [p + i * (W - 2 * p) / (vals.length - 1), H - p - (v - mn) / rg * (H - 2 * p)]; });
+      return '<svg class="tf-spark" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><polyline points="' + pts.map(function(q){ return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ') + '"/>'
+        + pts.map(function(q, i){ return '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="' + (i === pts.length - 1 ? 3.2 : 2) + '"/>'; }).join('') + '</svg>';
+    }
+    var card = document.createElement('section'); card.className = 'sv-card tf-card'; card.id = 'svTestsCard';
+    var rpeCard = document.getElementById('svRpeCard');
+    if(rpeCard) rpeCard.parentNode.insertBefore(card, rpeCard);
+    var showOthers = false;
+    function renderTests(){
+      var senior = state.level === 'senior', main = senior ? 's' : 'g';
+      function row(T){
+        var v = testVals(T.id), last = v[v.length - 1], first = v[0], vals = v.slice(-8).map(function(x){ return x.v; });
+        var delta = (v.length >= 2) ? last.v - first.v : 0;
+        var info = last ? '<span class="tf-last">' + esc(fmtV(last.v, T.unit)) + '</span>' + (v.length >= 2 ? '<span class="tf-delta ' + (delta > 0 ? 'up' : (delta < 0 ? 'down' : '')) + '">' + (delta > 0 ? '+' : '') + esc(delta + ' ' + T.unit) + ' depuis le début</span>' : '<span class="tf-delta">1<sup>er</sup> résultat, le ' + new Date(last.at).toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>') : '<span class="tf-delta">Pas encore fait</span>';
+        return '<div class="tf-row"><div class="tf-main"><b>' + esc(T.name) + '</b><div class="tf-info">' + info + '</div></div>' + spark(vals) + '<button type="button" class="tf-go" data-test="' + T.id + '">' + (last ? 'Refaire' : 'Faire') + '</button></div>';
+      }
+      var mine = TESTS.filter(function(T){ return T.grp === main; }), others = TESTS.filter(function(T){ return T.grp !== main; });
+      var due = testsDue();
+      card.innerHTML = '<div class="sv-h2row"><h2>Mes tests de forme</h2></div>'
+        + '<p class="sv-hint" style="margin-top:0">' + (due ? '🎯 <b>C’est le moment de faire tes tests.</b> ' : '') + 'Refais-les toutes les 4 à 6 semaines pour voir tes progrès, de préférence en début de séance, après un échauffement.</p>'
+        + mine.map(row).join('')
+        + '<button type="button" class="sv-link tf-more">' + (showOthers ? 'Masquer les autres tests' : (main === 's' ? 'Voir les tests généraux' : 'Voir les tests seniors (APA)')) + '</button>'
+        + (showOthers ? others.map(row).join('') : '');
+    }
+    card.addEventListener('click', function(e){
+      if(e.target.closest('.tf-more')){ showOthers = !showOthers; renderTests(); return; }
+      var b = e.target.closest('[data-test]'); if(b) runTest(TESTS.filter(function(T){ return T.id === b.getAttribute('data-test'); })[0]);
+    });
+    function runTest(T){
+      if(!T) return;
+      var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop tf-backdrop'; wrap.id = 'tfDialog';
+      var box = document.createElement('div'); box.className = 'ec-dialog tf-box'; wrap.appendChild(box); document.body.appendChild(wrap);
+      var iv = null, t0 = 0, done = false;
+      function close(){ clearInterval(iv); try{ releaseWakeLock(); }catch(e){} wrap.remove(); }
+      function say(t){ try{ speak(t, {force:true}); }catch(e){} }
+      function intro(){
+        var v = testVals(T.id), last = v[v.length - 1];
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><p class="tf-how">' + esc(T.how) + '</p>'
+          + (last ? '<p class="tf-prev">Dernier résultat : <b>' + esc(fmtV(last.v, T.unit)) + '</b></p>' : '')
+          + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-a="manual">Saisir un résultat</button><button type="button" class="ec-dialog-ok" data-a="go">Démarrer le test</button></div>'
+          + '<button type="button" class="tf-cancel" data-a="close">Annuler</button>';
+      }
+      function count(n, then){
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><div class="tf-big">' + n + '</div><p class="tf-how">Prépare-toi…</p>';
+        say(String(n));
+        if(n > 1) iv = setTimeout(function(){ count(n - 1, then); }, 1000); else iv = setTimeout(then, 1000);
+      }
+      function runReps(){
+        t0 = Date.now(); say('Partez !');
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><div class="tf-big" id="tfClock">' + T.secs + '</div><p class="tf-how">Compte tes répétitions</p><button type="button" class="tf-cancel" data-a="close">Arrêter</button>';
+        var said10 = false;
+        iv = setInterval(function(){
+          var left = Math.max(0, T.secs - Math.floor((Date.now() - t0) / 1000)), c = document.getElementById('tfClock'); if(c) c.textContent = left;
+          if(left === 10 && !said10){ said10 = true; say('Plus que dix secondes.'); }
+          if(left <= 0){ clearInterval(iv); try{ playBeep(); }catch(e){} say('Stop !'); result(null); }
+        }, 200);
+      }
+      function runHold(){
+        t0 = Date.now(); say('Partez !');
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><div class="tf-big" id="tfClock">0</div><p class="tf-how">Tiens le plus longtemps possible</p><button type="button" class="ec-dialog-ok tf-stop" data-a="stop">Stop</button><button type="button" class="tf-cancel" data-a="close">Annuler</button>';
+        iv = setInterval(function(){
+          var s = Math.floor((Date.now() - t0) / 1000), c = document.getElementById('tfClock'); if(c) c.textContent = fmtV(s, 's').replace(' s', '');
+          if(T.max && s >= T.max){ clearInterval(iv); try{ playBeep(); }catch(e){} say('Bravo, temps maximum atteint.'); result(T.max); }
+        }, 200);
+      }
+      function result(v){
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><p class="tf-how">' + (T.kind === 'reps' ? 'Combien de répétitions as-tu faites ?' : 'Ton temps, en secondes (tu peux le corriger) :') + '</p>'
+          + '<input type="number" class="ec-dialog-input tf-input" inputmode="numeric" min="0" max="999"' + (v != null ? ' value="' + v + '"' : '') + '>'
+          + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-a="close">Annuler</button><button type="button" class="ec-dialog-ok" data-a="save">Enregistrer</button></div>';
+        setTimeout(function(){ var i = box.querySelector('.tf-input'); if(i){ i.focus(); } }, 50);
+      }
+      function save(){
+        var i = box.querySelector('.tf-input'), v = Math.round(parseFloat(String(i.value).replace(',', '.')));
+        if(!(v >= 0) || i.value === ''){ i.focus(); return; }
+        var a = tests(); a.push({t:T.id, v:v, at:Date.now()}); lss(TESTS_KEY, a.slice(-200));
+        var prev = testVals(T.id); prev = prev.length >= 2 ? prev[prev.length - 2] : null;
+        var msg = prev ? (v > prev.v ? 'Bravo, tu progresses : ' + fmtV(v, T.unit) + ' contre ' + fmtV(prev.v, T.unit) + ' la dernière fois !' : (v === prev.v ? 'Même résultat que la dernière fois : ' + fmtV(v, T.unit) + '.' : 'Résultat enregistré : ' + fmtV(v, T.unit) + '. Les tests varient selon la forme du jour, c’est normal.')) : 'Premier résultat enregistré : ' + fmtV(v, T.unit) + '. Refais ce test dans 4 à 6 semaines.';
+        box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><p class="tf-how">' + esc(msg) + '</p><div class="ec-dialog-actions one"><button type="button" class="ec-dialog-ok" data-a="close">Fermer</button></div>';
+        renderTests(); renderToday();
+      }
+      box.addEventListener('click', function(e){
+        var a = e.target.closest('[data-a]'); if(!a) return; a = a.getAttribute('data-a');
+        if(a === 'close') close();
+        else if(a === 'manual') result(null);
+        else if(a === 'go'){ try{ requestWakeLock(); }catch(err){} count(3, T.kind === 'reps' ? runReps : runHold); }
+        else if(a === 'stop'){ clearInterval(iv); result(Math.floor((Date.now() - t0) / 1000)); }
+        else if(a === 'save') save();
+      });
+      box.addEventListener('keydown', function(e){ if(e.key === 'Enter' && box.querySelector('.tf-input')) save(); });
+      intro();
+    }
+    window.ecRunTest = function(id){ runTest(TESTS.filter(function(T){ return T.id === id; })[0]); };
+
+    // ===== 5. Séance du jour =====
+    var OPP = {haut:'bas', bas:'haut', haut_g:'bas_g', bas_g:'haut_g'};
+    var today = document.createElement('section'); today.className = 'today-card'; today.id = 'todayCard'; today.hidden = true;
+    var rIntro = document.querySelector('#renfoView > .intro');
+    if(rIntro) rIntro.parentNode.insertBefore(today, rIntro.nextSibling);
+    function plan(){
+      var h = loadHist(), last = h[h.length - 1], now = Date.now(), d = new Date();
+      var rh = renfoHist(), lr = rh[rh.length - 1];
+      if(last && new Date(last.at).toDateString() === d.toDateString()){
+        return {type:'mob', g:d.getHours() >= 19 ? 'soir' : 'recup', d:10, kicker:'Séance faite aujourd’hui ✓', title:(d.getHours() >= 19 ? 'Détente du soir' : 'Étirements') + ' · 10 min', why:'Envie d’un petit plus ? Une routine douce pour bien récupérer.'};
+      }
+      if(last && now - last.at < 30 * 3600000 && kindOf(last) === 'renfo' && (last.rpe >= 8 || last.pain === 'gênante')){
+        return {type:'mob', g:'recup', d:15, kicker:'Ta séance du jour', title:'Étirements · 15 min', why:last.pain === 'gênante' ? 'Tu as signalé une gêne hier : place à la récupération.' : 'Ta dernière séance était dure (' + last.rpe + '/10) : place à la récupération.'};
+      }
+      var zone = state.zone, why = '';
+      if(lr && lr.zone && OPP[lr.zone] && now - lr.at < 4 * DAY){ zone = OPP[lr.zone]; why = 'Ta dernière séance travaillait le ' + ZONE_LABEL[lr.zone].toLowerCase().replace(' + gainage', '') + ' : aujourd’hui, on alterne.'; }
+      if(!h.length){ return {type:'renfo', zone:'full', dur:Math.min(state.duration, 20), kicker:'Ta première séance', title:'Renfo corps complet · ' + Math.min(state.duration, 20) + ' min', why:'Une séance courte pour découvrir l’appli, avec tes réglages : ' + LEVEL_LABEL[state.level] + '.'}; }
+      var ad = adaptInfo();
+      if(ad) why += (why ? ' ' : '') + 'Intensité ajustée : ' + ad.why + '.';
+      if(!why) why = 'Avec tes réglages habituels : ' + state.equip.map(function(e){ return EQUIP_LABEL[e]; }).join(', ') + ' · ' + LEVEL_LABEL[state.level] + '.';
+      return {type:'renfo', zone:zone, dur:state.duration, kicker:'Ta séance du jour', title:'Renfo ' + ZONE_LABEL[zone].toLowerCase() + ' · ' + state.duration + ' min', why:why};
+    }
+    var P = null;
+    function renderToday(){
+      var progCta = document.querySelector('#renfoView [data-prog-next]');
+      if((progCta && !progCta.hidden) || document.documentElement.classList.contains('ec-guest')){ today.hidden = true; return; }
+      P = plan();
+      today.innerHTML = '<div class="tc-kicker">' + esc(P.kicker) + '</div><div class="tc-title">' + esc(P.title) + '</div><p class="tc-why">' + esc(P.why) + '</p>'
+        + '<div class="tc-btns"><button type="button" class="tc-go" data-t="go">Démarrer ▶</button><button type="button" class="tc-see" data-t="see">Voir la séance</button></div>'
+        + (testsDue() ? '<button type="button" class="tc-tests" data-t="tests">🎯 C’est le moment de faire tes tests de forme</button>' : '');
+      today.hidden = false;
+    }
+    today.addEventListener('click', function(e){
+      var b = e.target.closest('[data-t]'); if(!b || !P) return;
+      var t = b.getAttribute('data-t');
+      if(t === 'tests'){ if(window.ecShowView) window.ecShowView('suivi'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); return; }
+      var start = t === 'go';
+      if(P.type === 'mob'){
+        if(window.ecShowView) window.ecShowView('breath');
+        if(window.ecMobSet) window.ecMobSet({g:P.g, d:P.d, z:'full'});
+        if(window.ecMobGenerate) window.ecMobGenerate();
+      } else {
+        if(typeof uiMode !== 'undefined' && uiMode === 'program') setMode('session');
+        state.zone = P.zone; state.duration = P.dur; syncSettingsUI();
+        generateSession();
+      }
+      var sb = document.getElementById('startBtn');
+      if(start && sb) sb.click();
+      else { var r = document.getElementById('results'); if(r) setTimeout(function(){ r.scrollIntoView({behavior:'smooth', block:'start'}); }, 80); }
+    });
+    var fbc = document.getElementById('fbClose');
+    if(fbc) fbc.addEventListener('click', function(){ setTimeout(function(){ renderToday(); renderTests(); }, 50); });
+    window.addEventListener('focus', function(){ renderToday(); });
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) renderToday(); });
+    var lv = document.getElementById('levelGroup'); if(lv) lv.addEventListener('click', function(){ setTimeout(function(){ renderTests(); renderToday(); }, 0); });
+    renderTests();
+    setTimeout(renderToday, 0);
+  })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
   // ajoute une entrée d'historique : le bouton retour la referme au lieu de
@@ -9973,6 +10346,7 @@
       {k:'install', open:function(){ return bd('installBackdrop'); }, close:function(){ closeInstallSheet(); }},
       {k:'share', open:function(){ return bd('shareBackdrop'); }, close:function(){ closeShareSheet(); }},
       {k:'timer', open:function(){ return bd('timerBackdrop'); }, close:function(){ exitWorkout(); }},
+      {k:'tf', open:function(){ return !!document.getElementById('tfDialog'); }, close:function(){ var b = document.querySelector('#tfDialog [data-a="close"]'); if(b) b.click(); else { var d = document.getElementById('tfDialog'); if(d) d.remove(); } }},
       {k:'help', open:function(){ var h = document.getElementById('helpSheet'); return !!(h && !h.hidden); }, close:function(){ if(window.ecCloseHelp) window.ecCloseHelp(); }},
       {k:'hist', open:function(){ return !!q('.hist-dialog'); }, close:function(){ var b = q('.hist-dialog .ec-dialog-ok'); if(b) b.click(); }},
       {k:'compose', open:function(){ return !!document.getElementById('composeDialog'); }, close:function(){ var d = document.getElementById('composeDialog'); if(d) d.remove(); }},
@@ -10040,7 +10414,7 @@
     }
     function summary(view){
       var tags = [];
-      var panel = view.querySelector('.panel');
+      var panel = view.querySelector('.panel:not(#mobPanel)'); if(!panel) return;
       if(view.id === 'renfoView'){
         var prog = document.getElementById('modeProgram');
         if(prog && prog.classList.contains('active')) tags.push('Programme');
@@ -10057,7 +10431,7 @@
       } else {
         panel.querySelectorAll('.chip.active').forEach(function(c){ tags.push(textOf(c)); });
       }
-      var box = panel.querySelector('.ps-tags'); box.innerHTML = '';
+      var box = panel.querySelector('.ps-tags'); if(!box) return; box.innerHTML = '';
       tags.forEach(function(t){ var s = document.createElement('span'); s.textContent = t; box.appendChild(s); });
     }
     function setup(viewId, resultsId){
@@ -10081,7 +10455,7 @@
         expanded = true; view.classList.remove('collapsed');
         view.scrollIntoView({behavior:'smooth', block:'start'});
       });
-      view.querySelector('.panel').addEventListener('click', function(e){
+      view.querySelector('.panel:not(#mobPanel)').addEventListener('click', function(e){
         if(e.target.closest('.generate-btn, .saved-load, .qs-btn')){ expanded = false; view.classList.remove('quick'); }
       }, true);
       update();
