@@ -9556,25 +9556,30 @@
       soir:{l:'Détente du soir', d:'Lent et au sol, pour relâcher les tensions et préparer le sommeil.'}
     };
     var ZONES = {full:'Corps entier', bas:'Jambes & hanches', dos:'Dos', haut:'Épaules & nuque'};
-    var POS = {sol:'Avec passage au sol', debout:'Debout uniquement', chaise:'Sur chaise'};
+    var POS = {sol:'Au sol', debout:'Debout', chaise:'Sur chaise'};
+    // Positions : plusieurs choix possibles, codés en lettres (s = sol, d = debout, c = chaise)
+    var PL = {sol:'s', debout:'d', chaise:'c'};
+    function normP(p){ if(p === 'sol') return 'sd'; if(p === 'debout') return 'd'; if(p === 'chaise') return 'c'; var r = 'sdc'.split('').filter(function(k){ return String(p || '').indexOf(k) > -1; }).join(''); return r || 'sd'; }
+    function hasP(p, k){ return normP(p).indexOf(k) > -1; }
     var LVL = {debutant:'Doux', intermediaire:'Normal', avance:'Profond'};
     var mob = {g:'recup', d:15, z:'full', p:'sol', l:'intermediaire'};
     try{ var sv = JSON.parse(localStorage.getItem('ec_mob_form') || 'null'); if(sv && GOALS[sv.g]) mob = Object.assign(mob, sv); }catch(e){}
+    mob.p = normP(mob.p);
     function saveForm(){ try{ localStorage.setItem('ec_mob_form', JSON.stringify(mob)); }catch(e){} }
 
-    function posOk(x, p){ var q = x.mob.p; return p === 'chaise' ? q === 'chaise' : (p === 'debout' ? q === 'debout' : q !== 'chaise'); }
+    function posOk(x, p){ return hasP(p, PL[x.mob.p] || 's'); }
     function zoneOk(x, z){ return z === 'full' || x.mob.z.indexOf(z) > -1; }
     function pool(o, used){ return EX.filter(function(x){ return x.mob && !used[x.id] && !exBlocked(x.id) && posOk(x, o.p); }); }
     function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     function rank(list, o){
-      return shuffle(list.slice()).map(function(x){ return {x:x, s:(x.mob.g.indexOf(o.g) > -1 ? 4 : 0) + (zoneOk(x, o.z) ? 2 : 0) + Math.random()}; })
+      return shuffle(list.slice()).map(function(x){ return {x:x, s:(x.mob.g.indexOf(o.g) > -1 ? 4 : 0) + (zoneOk(x, o.z) ? 2 : 0) + (['recup','soir','yoga'].indexOf(o.g) > -1 && hasP(o.p, 's') && x.mob.p === 'sol' ? 5 : 0) + Math.random()}; })
         .sort(function(a, b){ return b.s - a.s; }).map(function(r){ return r.x; });
     }
     function usedOf(S){ var u = {}; ['warm','main','cool'].forEach(function(k){ (S[k] || []).forEach(function(x){ u[x.id] = 1; }); }); return u; }
     function sortMain(S){ S.main.sort(function(a, b){ return (a.mob ? a.mob.o : 1) - (b.mob ? b.mob.o : 1); }); }
     function mainCands(S, o){
       var holdGoal = ['recup','soup','soir','yoga'].indexOf(o.g) > -1;
-      return rank(pool(o, usedOf(S)).filter(function(x){ return x.mob.k !== 'dyn' || !holdGoal || o.p === 'chaise'; }), o);
+      return rank(pool(o, usedOf(S)).filter(function(x){ return x.mob.k !== 'dyn' || !holdGoal || normP(o.p) === 'c'; }), o);
     }
     function fill(S, o){
       var target = S.durationMinutes * 60, c = mainCands(S, o), keepA = SESSION_ADJ; SESSION_ADJ = adjFor(S);
@@ -9591,13 +9596,13 @@
       if(o.g === 'soir') nWarm = Math.min(nWarm, 1);
       if(o.g === 'matin' || o.g === 'mobi') nWarm = Math.min(4, nWarm + 1);
       warm = rank(pool(o, used).filter(function(x){ return x.mob.k === 'dyn' && x.block !== 'principal'; }), o).slice(0, nWarm);
+      // Étirements (récupération) : on démarre et on termine par la respiration, sans mise en route physique
+      warm = ['r1'].map(exById).filter(Boolean);
       warm.forEach(function(x){ used[x.id] = 1; });
-      if(o.d >= 10 && o.g !== 'matin'){
-        var bid = o.g === 'soir' ? (o.d >= 30 ? ['r4','r5'] : ['r5']) : (o.g === 'yoga' || o.g === 'soup' ? ['r1'] : ['r5']);
-        cool = bid.map(exById).filter(Boolean);
-      }
+      var bid = o.g === 'soir' ? (o.d >= 30 ? ['r4','r5'] : ['r5']) : (o.g === 'yoga' && o.d >= 15 ? ['r3'] : ['r5']);
+      cool = bid.map(exById).filter(Boolean);
       var S = {warm:warm, cardio:[], main:[], cool:cool, level:o.l, theme:'equilibre', rounds:1, durationMinutes:o.d,
-        equip:['poids_du_corps'], zone:'full', noFloor:o.p !== 'sol', chair:o.p === 'chaise', mob:{g:o.g, z:o.z, p:o.p}};
+        equip:['poids_du_corps'], zone:'full', noFloor:!hasP(o.p, 's'), chair:normP(o.p) === 'c', mob:{g:o.g, z:o.z, p:normP(o.p)}};
       fill(S, o);
       if(!S.main.length){ S.main = S.warm.splice(1); }
       return S;
@@ -9687,7 +9692,7 @@
     panel.innerHTML = '<div class="field"><span class="field-label">Objectif</span>' + tiles('g', GOALS, 'mob-3') + '<p class="tile-note" id="mobGoalNote"></p></div>'
       + '<div class="field"><span class="field-label">Durée</span><div class="chip-group seg-row mob-5" data-mf="d">' + Object.keys(DUR).map(function(k){ return '<button type="button" class="chip" data-v="' + k + '">' + DUR[k] + '</button>'; }).join('') + '</div></div>'
       + '<div class="field"><span class="field-label">Zone ciblée</span>' + tiles('z', ZONES) + '</div>'
-      + '<div class="field"><span class="field-label">Position</span>' + tiles('p', {sol:'Avec sol', debout:'Debout', chaise:'Sur chaise'}, 'mob-3') + '</div>'
+      + '<div class="field"><span class="field-label">Position</span>' + tiles('p', POS, 'mob-3') + '<p class="tile-note">Plusieurs choix possibles.</p></div>'
       + '<div class="field"><span class="field-label">Intensité des étirements</span>' + tiles('l', LVL, 'mob-3') + '</div>'
       + '<button class="generate-btn" id="mobGenerateBtn">Générer ma séance de mobilité</button><div class="form-msg" id="mobFormMsg"></div>';
     bPanel.parentNode.insertBefore(panel, bPanel);
@@ -9695,13 +9700,19 @@
     bPanel.parentNode.insertBefore(slot, bPanel);
     var EMPTY_MOB = '<div class="empty-state"><h3>Ta séance de mobilité apparaîtra ici</h3><p>Choisis ton objectif et ta durée, puis lance la génération.</p></div>';
     function syncForm(){
-      panel.querySelectorAll('[data-mf]').forEach(function(g){ var k = g.getAttribute('data-mf'); g.querySelectorAll('[data-v]').forEach(function(b){ b.classList.toggle('active', String(mob[k]) === b.getAttribute('data-v')); }); });
+      panel.querySelectorAll('[data-mf]').forEach(function(g){ var k = g.getAttribute('data-mf'); g.querySelectorAll('[data-v]').forEach(function(b){ b.classList.toggle('active', k === 'p' ? hasP(mob.p, PL[b.getAttribute('data-v')]) : String(mob[k]) === b.getAttribute('data-v')); }); });
       document.getElementById('mobGoalNote').textContent = GOALS[mob.g].d;
     }
     panel.addEventListener('click', function(e){
       var b = e.target.closest('[data-v]'), g = b && b.closest('[data-mf]'); if(!g) return;
-      var k = g.getAttribute('data-mf'), v = b.getAttribute('data-v'); mob[k] = k === 'd' ? +v : v;
-      if(k === 'p' && v === 'chaise' && mob.l === 'avance') mob.l = 'debutant';
+      var k = g.getAttribute('data-mf'), v = b.getAttribute('data-v');
+      if(k === 'p'){
+        var cur = normP(mob.p), L = PL[v];
+        var nx = cur.indexOf(L) > -1 ? cur.replace(L, '') : cur + L;
+        if(!nx){ var fm = document.getElementById('mobFormMsg'); if(fm) fm.textContent = 'Garde au moins une position.'; return; }
+        mob.p = normP(nx); var fm2 = document.getElementById('mobFormMsg'); if(fm2) fm2.textContent = '';
+        if(mob.p === 'c' && mob.l === 'avance') mob.l = 'debutant';
+      } else mob[k] = k === 'd' ? +v : v;
       syncForm(); saveForm();
     });
     document.getElementById('mobGenerateBtn').addEventListener('click', generate);
@@ -9752,13 +9763,14 @@
     function decorate(S){
       var r = results, m = S.mob; if(m && m.g === 'soup') m.g = 'recup';
       var meta = r.querySelector('.session-meta');
-      if(meta){ var tot = /⏱ Durée totale [^·]+/.exec(meta.textContent); meta.textContent = 'Mobilité · ' + (GOALS[m.g] ? GOALS[m.g].l : '') + ' · ' + (LVL[S.level] || '') + (tot ? ' · ' + tot[0].trim() : '') + (S.chair ? ' · sur chaise' : (S.noFloor ? ' · debout' : '')); }
-      var LAB = {echauffement:'Mise en route', principal:'Postures & étirements', retour_calme:'Respiration finale'};
+      if(meta){ var tot = /⏱ Durée totale [^·]+/.exec(meta.textContent); meta.textContent = 'Mobilité · ' + (GOALS[m.g] ? GOALS[m.g].l : '') + ' · ' + (LVL[S.level] || '') + (tot ? ' · ' + tot[0].trim() : '') + ' · ' + normP(m.p).split('').map(function(k){ return {s:'au sol', d:'debout', c:'sur chaise'}[k]; }).join(' + '); }
+      var W = 'Respiration d\u2019arrivée';
+      var LAB = {echauffement:W, principal:'Postures & étirements', retour_calme:'Respiration finale'};
       Object.keys(LAB).forEach(function(k){
         var t = r.querySelector('.block.' + k + ' > .block-title'); if(!t) return;
         var dur = t.querySelector('.bt-dur'); t.innerHTML = '<span class="swatch"></span>' + LAB[k] + (k === 'principal' && S.rounds > 1 ? ' · ' + S.rounds + ' passages' : '') + (dur ? dur.outerHTML : '');
       });
-      r.querySelectorAll('.ss-leg span').forEach(function(s){ s.innerHTML = s.innerHTML.replace('Échauff.', 'Mise en route').replace('Corps de séance', 'Postures'); });
+      r.querySelectorAll('.ss-leg span').forEach(function(s){ s.innerHTML = s.innerHTML.replace('Échauff.', 'Respiration').replace('Corps de séance', 'Postures'); });
       var rn = r.querySelector('.rest-note'); if(rn) rn.hidden = true;
       r.querySelectorAll('.block.principal .ex-dose').forEach(function(d){ d.innerHTML = d.innerHTML.replace(/ \/ tour/g, S.rounds > 1 ? ' / passage' : ''); });
       var gr = r.querySelector('.gap-row.round'); if(gr) gr.outerHTML = '<div class="gap-row round ro"><span class="gap-ico">↻</span>' + S.rounds + ' passages de ces postures</div>';
@@ -9767,7 +9779,7 @@
       if(rg){ var nb = rg.cloneNode(true); rg.parentNode.replaceChild(nb, rg); nb.addEventListener('click', function(){ mob.g = m.g; mob.z = m.z; mob.p = m.p; mob.d = S.durationMinutes; mob.l = S.level; syncForm(); generate(); }); }
     }
     // Chrono : noms des parties adaptés à la mobilité
-    var TL = {'Échauffement':'Mise en route', 'Corps de séance':'Postures & étirements', 'Retour au calme':'Respiration finale'};
+    var TL = {'Échauffement':'Respiration d\u2019arrivée', 'Corps de séance':'Postures & étirements', 'Retour au calme':'Respiration finale'};
     var _lsM = loadStep;
     loadStep = function(i){ _lsM(i); var st = timerState.timeline && timerState.timeline[i]; if(lastSession && lastSession.mob && st && TL[st.blockLabel]) document.getElementById('timerBlockLabel').textContent = TL[st.blockLabel]; };
     if(pendingMob){ mode = 'mob'; mobS = pendingMob; }
