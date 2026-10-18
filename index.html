@@ -3666,6 +3666,37 @@
   var ZONE_PARTS = {haut_g:['haut','gainage'], bas_g:['bas','gainage']};
   function blockedIds(){ try{ var b = JSON.parse(localStorage.getItem('ec_ex_blocked') || '[]'); return Array.isArray(b) ? b : []; }catch(e){ return []; } }
   function exBlocked(id){ return blockedIds().indexOf(id) > -1; }
+  // Variété d'une séance à l'autre : les exercices des 2 dernières séances générées (moins de 8 h)
+  // passent après les autres, tant qu'il en reste assez pour composer la séance.
+  var RECENT_KEY = 'ec_recent_v1';
+  function recentMap(n){
+    var m = {};
+    try{
+      var L = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'), now = Date.now();
+      L.filter(function(e){ return e && now - e.t < 8 * 3600 * 1000; }).slice(-(n || 2)).forEach(function(e){ (e.ids || []).forEach(function(id){ m[id] = 1; }); });
+    }catch(e){}
+    return m;
+  }
+  function srcId(x){ return x.alias || x.id; }
+  function freshFirst(pool, need){
+    if(!pool || !pool.length) return pool;
+    need = Math.max(1, need || 1);
+    for(var n = 2; n >= 1; n--){
+      var r = recentMap(n);
+      var fresh = pool.filter(function(x){ return !r[x.id] && !r[srcId(x)]; });
+      if(fresh.length >= need) return fresh;
+    }
+    return pool;
+  }
+  function rememberSession(S){
+    try{
+      var ids = [];
+      ['warm','cardio','main','cool'].forEach(function(k){ (S[k] || []).forEach(function(x){ if(x && x.id && ids.indexOf(x.id) < 0) ids.push(x.id); if(x && x.alias && ids.indexOf(x.alias) < 0) ids.push(x.alias); }); });
+      var L = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      L.push({t:Date.now(), ids:ids});
+      localStorage.setItem(RECENT_KEY, JSON.stringify(L.slice(-4)));
+    }catch(e){}
+  }
   function setBlocked(id, on){
     var b = blockedIds().filter(function(x){ return x !== id; }); if(on) b.push(id);
     try{ localStorage.setItem('ec_ex_blocked', JSON.stringify(b)); }catch(e){}
@@ -3741,7 +3772,8 @@
   // et au retour au calme, avec leur visuel. Ils n'apparaissent qu'une fois dans la bibliothèque.
   (function(){
     var WARM = [['w_m33','m33'],['w_m34','m34'],['w_m35','m35'],['w_m36','m36'],['w_m45','m45'],
-      ['w_p8','p8',"Pont fessier d'activation"],['w_p19','p19','Montées sur pointes de pieds (activation)']];
+      ['w_p8','p8',"Pont fessier d'activation"],['w_p19','p19','Montées sur pointes de pieds (activation)'],
+      ['w_m55','m55'],['w_m58','m58'],['w_m51','m51'],['w_m52','m52']];
     var COOL = [['c_m9','m9'],['c_m29','m29'],['c_m30','m30'],['c_m32','m32'],['c_m48','m48'],['c_m46','m46'],['c_m28','m28'],['c_m31','m31'],
       ['c_m7','m7'],['c_m2','m2'],['c_m3','m3'],['c_m13','m13'],['c_m14','m14'],['c_m6','m6'],
       ['c_m37','m37'],['c_m38','m38'],['c_m51','m51'],['c_m52','m52'],['c_m53','m53'],['c_m56','m56']];
@@ -5421,6 +5453,11 @@
         && zoneMatch(state.zone, ex.zone)
         && !exBlocked(ex.id);
     });
+    if(!silent){
+      warmPool = freshFirst(warmPool, plan.warm + 1);
+      mainPool = freshFirst(mainPool, plan.main + 1);
+      coolPool = freshFirst(coolPool.filter(function(x){ return !(x.breath && x.breath.length); }), plan.cool).concat(coolPool.filter(function(x){ return x.breath && x.breath.length; }));
+    }
     var hasCardioEquip = !state.chair && state.equip.some(function(e){ return CARDIO_EQUIP.indexOf(e)!==-1; });
     var hasRenfoEquip = state.equip.some(function(e){ return RENFO_EQUIP.indexOf(e)!==-1; });
     var cardioPool = (hasCardioEquip && !state.chair) ? EX.filter(function(ex){
@@ -5508,10 +5545,12 @@
     // un étirement seulement sur les séances longues, et la séance se termine toujours sur une respiration.
     (function(){
       var BREATH_ORDER = ['r1','r3','r5','r2'];
+      var rcm = silent ? {} : recentMap();
       var breathPool = coolPool.filter(function(ex){ return ex.breath && ex.breath.length; })
-        .sort(function(a, b){ return BREATH_ORDER.indexOf(a.id) - BREATH_ORDER.indexOf(b.id); });
+        .sort(function(a, b){ return ((rcm[a.id] ? 10 : 0) + BREATH_ORDER.indexOf(a.id)) - ((rcm[b.id] ? 10 : 0) + BREATH_ORDER.indexOf(b.id)); });
       if(!breathPool.length) return;
-      var stretchPool = coolPool.filter(function(ex){ return !(ex.breath && ex.breath.length) && ex.type !== 'continu' && ex.id !== 'r4'; });
+      var warmSrc = (warm || []).map(srcId);
+      var stretchPool = coolPool.filter(function(ex){ return !(ex.breath && ex.breath.length) && ex.type !== 'continu' && ex.id !== 'r4' && warmSrc.indexOf(srcId(ex)) < 0; });
       var nStretch = (plan.cool >= 3 && stretchPool.length) ? 1 : 0;
       var nBreath = Math.max(1, Math.min(breathPool.length, plan.cool - nStretch));
       // Dès 30 min : un étirement de la zone travaillée, en plus de la respiration
@@ -5539,6 +5578,7 @@
     if(silent){ session.title = title; return session; }
     if(window.ecAutoAdapt) window.ecAutoAdapt(session);
     fitSession(session);
+    rememberSession(session);
     displaySession(session, title);
   }
   // Retour au calme suffisant : 2 min (jusqu'à 30 min), 3 min au-delà ; on ajoute des étirements avant la respiration
@@ -5549,7 +5589,7 @@
     var keepA = SESSION_ADJ; SESSION_ADJ = null;
     var ref = S.cool.filter(function(x){ return x.block === 'retour_calme' && !(x.breath && x.breath.length); })[0] || S.cool[0] || {block:'retour_calme', zone:'full', equipment:'poids_du_corps'};
     for(var i = 0; i < 5 && coolSeconds(S) < target - 10; i++){
-      var all = replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && x.id !== 'r4' && x.id !== 'r5'; });
+      var all = freshFirst(replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && x.id !== 'r4' && x.id !== 'r5'; }), 1);
       var stretch = all.filter(function(x){ return !(x.breath && x.breath.length); });
       var cands = stretch.length ? stretch : all;
       if(!cands.length) break;
@@ -5568,7 +5608,7 @@
     var keepA = SESSION_ADJ; SESSION_ADJ = null;
     var ref = S.warm.filter(function(x){ return x.block === 'echauffement'; })[0] || {block:'echauffement', zone:S.zone === 'full' ? 'full' : S.zone, equipment:'poids_du_corps'};
     for(var i = 0; i < 9 && warmSeconds(S) < target - 10; i++){
-      var cands = replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && !(x.breath && x.breath.length); });
+      var cands = freshFirst(replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && !(x.breath && x.breath.length); }), 1);
       if(!cands.length) break;
       var pick = cands[Math.floor(Math.random() * cands.length)];
       var at = 0; while(at < S.warm.length && S.warm[at].block === 'echauffement') at++;
@@ -5820,10 +5860,10 @@
     var zone = session.zone || state.zone;
     var level = session.level;
     var used = {};
-    ['warm','cardio','main','cool'].forEach(function(k){ session[k].forEach(function(x){ used[x.id] = true; }); });
+    ['warm','cardio','main','cool'].forEach(function(k){ session[k].forEach(function(x){ used[x.id] = true; used[srcId(x)] = true; }); });
     var zoneOk = function(x){ return zoneMatch(zone, x.zone); };
     var pool = EX.filter(function(x){
-      if(used[x.id] || x.levels.indexOf(level)===-1 || x.block !== ex.block || exBlocked(x.id)) return false;
+      if(used[x.id] || used[srcId(x)] || x.levels.indexOf(level)===-1 || x.block !== ex.block || exBlocked(x.id)) return false;
       if(!floorOk(x, !!session.noFloor)) return false;
       if(!chairOk(x, !!session.chair)) return false;
       if(x.block==='principal') return equipFits(x, equip) && zoneOk(x);
