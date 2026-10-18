@@ -2391,6 +2391,87 @@
   #svBadgeCard:not(.bd-all) .bd.bd-extra{display:none;}
   .bd-more{margin-top:10px;}
   @media (max-width:360px){ .sv-tabs button{font-size:0.8rem;} }
+  /* ---------- Programmes tout prêts ---------- */
+  html, body{overflow-x:clip; max-width:100%;}
+  .app > *{min-width:0;}
+  .cat-sec{margin:4px 0 6px;}
+  .prog-mob .prog-phase, .prog-mob .prog-phase-note{display:none !important;}
+  .cat-head{margin:0 0 8px;}
+  .cat-head h3{margin:0; font-family:'Bricolage Grotesque',sans-serif; font-size:1.1rem; color:var(--ink);}
+  .cat-head span{font-size:0.82rem; color:var(--stone);}
+  .cat-list{display:flex; flex-direction:column; gap:8px;}
+  .cat-item{display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px; border:1px solid var(--stone-light); border-radius:16px; background:var(--card); color:var(--ink); font-family:'Inter',sans-serif; cursor:pointer;}
+  .cat-item:active{transform:scale(0.99);}
+  .ci-ico{font-size:1.6rem; line-height:1; flex:none; width:36px; text-align:center;}
+  .ci-txt{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .ci-txt b{font-size:0.98rem; line-height:1.2;}
+  .ci-meta{font-size:0.78rem; font-weight:700; color:var(--sage);}
+  .ci-pitch{font-size:0.82rem; line-height:1.35; color:var(--stone); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .ci-chev{flex:none; font-size:1.6rem; color:var(--stone); line-height:1;}
+  .cat-or{display:flex; align-items:center; gap:10px; margin:18px 0 6px; font-size:0.82rem; font-weight:700; color:var(--stone); text-transform:uppercase; letter-spacing:0.04em;}
+  .cat-or::before, .cat-or::after{content:''; flex:1; height:1px; background:var(--stone-light);}
+  /* ---------- Programme calé sur une course ---------- */
+  .race-box .race-how{margin:0 0 12px; font-size:0.92rem; line-height:1.45; color:var(--stone);}
+  .race-l{display:block; font-weight:700; font-size:0.88rem; margin-bottom:10px;}
+  .race-l small{font-weight:500; color:var(--stone);}
+  .race-l input{margin-top:6px; width:100%; box-sizing:border-box;}
+  .race-info{min-height:1.2em; margin:0 0 12px; font-size:0.88rem; line-height:1.4; color:var(--forest); font-weight:600;}
+  .race-banner{background:var(--card); border-radius:var(--r-card, 20px); box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,0.06)); padding:14px 16px; margin:12px 0; border-left:5px solid #E0A070;}
+  .rb-top{display:flex; align-items:center; gap:10px;}
+  .rb-flag{font-size:1.6rem;}
+  .rb-top > div:not(.rb-j){flex:1; min-width:0;}
+  .rb-top span{display:block;}
+  .rb-top b{display:block; font-family:'Bricolage Grotesque',sans-serif; font-size:1.1rem; color:var(--ink);}
+  .rb-top span{font-size:0.85rem; color:var(--stone);}
+  .rb-j{flex:none; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.4rem; color:var(--forest); white-space:nowrap;}
+  .race-banner p{margin:8px 0 0; font-size:0.88rem; line-height:1.45; color:var(--stone);}
+  .pw-dates{font-weight:500; font-size:0.85em; color:var(--stone);}
+  .prog-week.pw-now{outline:2px solid var(--sage); outline-offset:4px; border-radius:12px;}
+  .race-day{margin:6px 0 8px; padding:8px 12px; border-radius:12px; background:#F7E3D2; color:#5A3A1E; font-weight:600; font-size:0.88rem;}
+  .prog-card.optional{opacity:0.6;}
+  .opt-tag{font-size:0.72rem; font-weight:700; color:var(--warn);}
+  /* ---------- Modifier un programme ---------- */
+  .pe-l{font-weight:700; font-size:0.88rem; margin:12px 0 6px;}
+  .pe-seg{display:flex; gap:5px;}
+  .pe-seg button{flex:1 1 0; min-height:42px; min-width:0; padding:0 4px; white-space:nowrap; border-radius:999px; border:1px solid var(--stone-light); background:none; color:var(--ink); font-family:'Inter',sans-serif; font-weight:600; font-size:0.88rem; cursor:pointer;}
+  .pe-seg button.on{background:var(--forest); border-color:var(--forest); color:#fff;}
+  .pe-box .race-info{margin-top:12px;}
+  .pe-note{margin:0 0 14px; font-size:0.8rem; line-height:1.4; color:var(--stone);}
+  .rb-edit{margin-top:10px; min-height:40px; padding:0 14px; border-radius:999px; border:1px solid var(--stone-light); background:none; color:var(--ink); font-family:'Inter',sans-serif; font-weight:600; font-size:0.85rem; cursor:pointer;}
+  /* ---------- Page programme épurée ---------- */
+  .prog-view .prog-acts{display:grid !important; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%;}
+  .prog-view .prog-acts button{display:flex !important; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:58px !important; height:auto !important; width:auto !important; padding:6px 4px !important; margin:0 !important; border-radius:16px !important; font-size:0.8rem !important; font-weight:700; line-height:1.15;}
+  .prog-view .prog-acts .pa-ico{font-size:1.15rem; line-height:1;}
+  .prog-view .prog-acts .cal-btn{background:rgba(255,255,255,0.14); border:none;}
+  .prog-view .session-head .prog-progress{color:rgba(255,255,255,0.85) !important; font-weight:600;}
+  .prog-view .prog-acts .cal-btn{border:none !important;}
+  .prog-next{display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; margin:14px 0 4px; padding:12px 18px; border:none; border-radius:18px; background:#fff; color:var(--forest-dark, #132A1F); font-family:'Inter',sans-serif; text-align:left; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.18);}
+  .prog-next span{font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--sage);}
+  .prog-next b{font-family:'Bricolage Grotesque',sans-serif; font-size:1.15rem;}
+  .prog-next:disabled{cursor:default;}
+  .prog-how{margin:12px 0; background:var(--card); border-radius:16px; padding:0 14px;}
+  .prog-how summary{cursor:pointer; list-style:none; padding:12px 0; font-weight:700; color:var(--ink);}
+  .prog-how summary::-webkit-details-marker{display:none;}
+  .prog-how .prog-intro{margin:0 0 12px; border:none !important; background:none !important; padding:0 !important;}
+  .pw-all{display:flex; align-items:center; justify-content:space-between; margin:18px 2px 0;}
+  .pw-all span{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ink);}
+  .pw-all button{background:none; border:none; color:var(--forest); font-family:'Inter',sans-serif; font-weight:700; font-size:0.88rem; min-height:40px; cursor:pointer;}
+  .prog-view .prog-week{margin-top:10px; background:var(--card); border-radius:16px; padding:12px 14px; box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,0.05));}
+  .prog-view .prog-week-head{cursor:pointer; border-bottom:none; padding-bottom:0; align-items:center; position:relative; padding-right:26px;}
+  .prog-view .prog-week:not(.closed) .prog-week-head{padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid var(--stone-light);}
+  .prog-view .prog-week.closed > :not(.prog-week-head){display:none;}
+  .prog-view .prog-week.closed .prog-phase-note{display:none;}
+  .prog-view .prog-week.pw-next{box-shadow:0 0 0 2px var(--sage), var(--shadow-1, 0 2px 10px rgba(0,0,0,0.05));}
+  .prog-view .prog-week.pw-now{outline:none;}
+  .pw-count{margin-left:auto; font-size:0.8rem; font-weight:700; color:var(--stone); background:var(--paper); border-radius:999px; padding:3px 9px;}
+  .pw-count.full{color:#fff; background:var(--forest);}
+  .pw-chev{position:absolute; right:0; top:50%; width:9px; height:9px; border-right:2px solid var(--stone); border-bottom:2px solid var(--stone); transform:translateY(-70%) rotate(45deg); transition:transform .2s;}
+  .prog-week:not(.closed) .pw-chev{transform:translateY(-30%) rotate(-135deg);}
+  @media print{
+    .prog-view .prog-week.closed > :not(.prog-week-head){display:block !important;}
+    .prog-next, .pw-all button, .pw-chev{display:none !important;}
+    .prog-how{display:block;} .prog-how summary{display:none;}
+  }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2844,7 +2925,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 9.6 · mise à jour du 17 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 9.7 · mise à jour du 18 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -6140,6 +6221,16 @@
                 zones:{1:['full'], 2:['haut','gainage'], 3:['haut','gainage','full'], 4:['haut','gainage','haut','full']}},
     posture:   {label:'Gainage et posture', desc:'Tronc solide, dos protégé, contrôle du mouvement', themes:['stabilite'],
                 zones:{1:['gainage'], 2:['gainage','full'], 3:['gainage','full','gainage'], 4:['gainage','full','gainage','bas']}},
+    route_court: {label:'Renfo course sur route (5 et 10 km)', desc:'Puissance des appuis, vitesse, gainage', hidden:true, themes:['force','stabilite'], prefer: SPORT_PREFER.course,
+                zones:{1:['bas'], 2:['bas','gainage'], 3:['bas','gainage','full'], 4:['bas','gainage','bas','full']}},
+    route_long: {label:'Renfo semi-marathon et marathon', desc:'Endurance musculaire des jambes, gainage, prévention des blessures', hidden:true, themes:['endurance_force','stabilite'], prefer: SPORT_PREFER.course,
+                zones:{1:['bas'], 2:['bas','gainage'], 3:['bas','gainage','full'], 4:['bas','gainage','full','bas']}},
+    ultra: {label:'Renfo ultra-trail', desc:'Jambes qui encaissent les descentes, gainage, endurance musculaire', hidden:true, themes:['endurance_force','stabilite','force','stabilite'], prefer: SPORT_PREFER.course,
+                zones:{1:['bas'], 2:['bas','gainage'], 3:['bas','gainage','full'], 4:['bas','gainage','full','bas']}},
+    raid: {label:'Renfo raid multisports', desc:'Course, VTT, canoë : jambes, tirages, gainage', hidden:true, themes:['endurance_force','stabilite','force'], prefer: SPORT_PREFER.course.concat(SPORT_PREFER.kayak),
+                zones:{1:['full'], 2:['bas','haut'], 3:['bas','haut','gainage'], 4:['bas','haut','gainage','full']}},
+    yoga_doux: {label:'Yoga doux', desc:'Séances de yoga guidées', hidden:true, themes:['equilibre'], zones:{1:['full'],2:['full','full'],3:['full','full','full'],4:['full','full','full','full']}},
+    mobilite: {label:'Mobilité', desc:'Routines de mobilité guidées', hidden:true, themes:['equilibre'], zones:{1:['full'],2:['full','full'],3:['full','full','full'],4:['full','full','full','full']}},
     autonomie: {label:'Autonomie et prévention des chutes', desc:'Équilibre, jambes, confiance : idéal en senior', themes:['stabilite','equilibre'],
                 zones:{1:['bas'], 2:['bas','full'], 3:['bas','full','bas'], 4:['bas','full','bas','full']}}
   };
@@ -9756,6 +9847,7 @@
       if(diff < -3) msg.textContent = 'Peu de postures disponibles avec ces réglages : la séance dure ' + Math.round(sessionSeconds(S) / 60) + ' min.' + (mob.z !== 'full' ? ' Choisis « Corps entier » pour plus de choix.' : '');
     }
     window.ecMobGenerate = generate;
+    window.ecMobBuild = function(o){ return build({g:o.g, d:o.d, z:o.z, p:normP(o.p), l:o.l}); };
     window.ecMobSet = function(c){ Object.keys(c).forEach(function(k){ mob[k] = c[k]; }); mob.p = normP(mob.p); syncForm(); saveForm(); try{ setMode('mob'); }catch(e){} };
 
     // Durée : on ajoute ou retire des postures plutôt que des tours
@@ -9939,6 +10031,8 @@
     ];
     var QA = [
       ['Démarrer', 'Comment lancer ma première séance ?', 'Dans <b>Renfo</b> (ou <b>Récup</b>), règle tes choix puis touche <b>Générer ma séance</b>. Vérifie la séance proposée, puis touche <b>Démarrer la séance ▶</b> : le chrono s’ouvre et te guide jusqu’au bout.'],
+      ['Démarrer', 'C’est quoi les « Programmes tout prêts » ?', 'Dans <b>Renfo</b>, touche <b>📅 Programmes</b> en haut (ou l’onglet <b>Un programme</b>) : des programmes de plusieurs semaines (prépa trail, ultra-trail, 5/10 km, semi et marathon, raid multisports, VTT, vélo, yoga doux, mobilité, dos solide, remise en forme, équilibre senior, gainage express…). Touche <b>Commencer</b> : toutes les séances sont prêtes, avec une progression semaine après semaine. Coche chaque séance quand elle est faite.'],
+      ['Démarrer', 'Comment caler un programme sur ma course ?', 'Pour les programmes sportifs (trail, ultra-trail, 5/10 km, semi et marathon, raid multisports, vélo, VTT, kayak), l’appli te demande la date de ta course. Le programme s’étale jusqu’au jour J : la charge monte jusqu’à un pic, puis 2 semaines d’affûtage allègent les séances pour que tu arrives frais. La semaine de course, une seule séance courte, au plus tard 3 à 4 jours avant.'],
       ['Démarrer', 'Quel niveau choisir ?', '<b>Débutant</b> si tu reprends ou si tu ne fais pas de renfo régulièrement. <b>Intermédiaire</b> si tu en fais déjà 1 à 2 fois par semaine. <b>Avancé</b> si tu es à l’aise avec les mouvements et les charges. <b>Senior · adapté APA</b> propose des exercices à faible impact, avec appuis possibles. En cas de doute, commence plus bas : tu pourras monter ensuite.'],
       ['Démarrer', 'Je ne peux pas aller au sol, ou je préfère rester assis.', 'Dans <b>Renfo</b>, utilise <b>Contrainte</b> : « Sans passage au sol » ou « Séance sur chaise ». Dans <b>Récup</b>, coche seulement <b>Debout</b> et/ou <b>Sur chaise</b> dans Position.'],
       ['Démarrer', 'Quelle différence entre Mobilité, Étirements, Yoga… dans Récup ?', '<b>Réveil</b> : court et dynamique pour démarrer la journée. <b>Mobilité</b> : mouvements contrôlés pour gagner en amplitude, idéal avant une séance. <b>Étirements</b> : postures douces et tenues, après l’effort ou pour gagner en souplesse. <b>Yoga</b> : postures et enchaînements au rythme du souffle. <b>Détente du soir</b> : lent et au sol, pour préparer le sommeil.'],
@@ -10421,6 +10515,455 @@
     }
     if(bc){ new MutationObserver(tidy).observe(bc, {childList:true}); tidy(); }
   })();
+  // ---------- Programmes tout prêts ----------
+  (function(){
+    var CAT = [
+      {id:'trail6', sport:true, ico:'⛰️', t:'Prépa trail', obj:'course', w:6, s:2, d:30, pitch:'Jambes, chevilles, gainage : des appuis solides pour la montée, la descente et la fin de course.'},
+      {id:'route10', sport:true, ico:'🏃', t:'Course 5 km / 10 km', obj:'route_court', w:6, s:2, d:20, pitch:'Des appuis plus toniques et un gainage solide pour courir plus vite, en 20 min, à côté de tes sorties.'},
+      {id:'semi8', sport:true, ico:'🏅', t:'Semi-marathon / Marathon', obj:'route_long', w:8, s:2, d:30, pitch:'Des jambes qui tiennent la distance et un tronc stable jusqu’au bout, pour limiter les blessures.'},
+      {id:'ultra10', sport:true, ico:'🏔️', t:'Ultra-trail', obj:'ultra', w:10, s:2, d:45, pitch:'Des quadriceps qui encaissent les longues descentes, des chevilles solides et un tronc qui tient des heures.'},
+      {id:'raid6', sport:true, ico:'🧭', t:'Raid multisports', obj:'raid', w:6, s:2, d:30, pitch:'Course, VTT, canoë : jambes, tirages, épaules et gainage pour enchaîner les disciplines.'},
+      {id:'yoga4', mob:true, ico:'🧘', t:'Yoga doux', obj:'yoga_doux', g:'yoga', w:4, s:3, d:20, l:'debutant', zones:['full','dos','bas'], pitch:'Trois séances par semaine, au rythme du souffle : souplesse, équilibre et calme. Accessible à tous.'},
+      {id:'mobi4', mob:true, ico:'🤸', t:'Mobilité au quotidien', obj:'mobilite', g:'mobi', w:4, s:4, d:15, zones:['full','bas','dos','haut'], pitch:'15 minutes, 4 fois par semaine : hanches, dos et épaules plus libres, idéal en complément du sport.'},
+      {id:'dos4', ico:'🧍', t:'Dos solide', obj:'posture', w:4, s:3, d:20, pitch:'Gainage et posture pour soulager et protéger le dos au quotidien.'},
+      {id:'forme8', ico:'🌱', t:'Remise en forme', obj:'reprise', w:8, s:3, d:30, lvl:'debutant', pitch:'Reprendre en douceur et durablement, tout le corps, avec une progression semaine après semaine.'},
+      {id:'senior8', ico:'🧓', t:'Équilibre et prévention des chutes', obj:'autonomie', w:8, s:2, d:30, lvl:'senior', noFloor:true, pitch:'Jambes, équilibre et confiance, sans passage au sol. Idéal en senior et en APA.'},
+      {id:'gainage4', ico:'🔥', t:'Gainage express', obj:'posture', w:4, s:4, d:10, pitch:'10 minutes, 4 fois par semaine : un tronc solide sans y passer des heures.'},
+      {id:'force4', ico:'💪', t:'Force', obj:'force', w:4, s:3, d:30, pitch:'Efforts courts et intenses, récupérations longues, pour gagner en puissance.'},
+      {id:'velo6', sport:true, ico:'🚴', t:'Prépa vélo (route, gravel)', obj:'velo', w:6, s:2, d:30, pitch:'Jambes puissantes, bassin stable et dos qui tient la position sur le vélo.'},
+      {id:'vtt6', sport:true, ico:'🚵', t:'Prépa VTT', obj:'vtt', w:6, s:2, d:30, pitch:'Jambes explosives, haut du corps solide pour le pilotage et gainage pour encaisser le terrain.'},
+      {id:'kayak6', sport:true, ico:'🛶', t:'Canoë-kayak slalom', obj:'kayak', w:6, s:2, d:30, pitch:'Tirages explosifs, rotation du tronc, épaules solides et gainage.'},
+      {id:'endu6', ico:'⏱️', t:'Endurance musculaire', obj:'endurance', w:6, s:3, d:30, pitch:'Tenir l’effort plus longtemps, avec des récupérations courtes.'}
+    ];
+    var sec = document.createElement('section'); sec.className = 'cat-sec'; sec.id = 'progCatalog';
+    sec.innerHTML = '<div class="cat-head"><h3>Programmes tout prêts</h3><span>Touche un programme pour le lancer. 🏁 = il se cale sur la date de ta course.</span></div><div class="cat-list">'
+      + CAT.map(function(c){
+        return '<button type="button" class="cat-item" data-start="' + c.id + '"><span class="ci-ico" aria-hidden="true">' + c.ico + '</span><span class="ci-txt"><b>' + escapeHtml(c.t) + '</b>'
+          + '<span class="ci-meta">' + c.w + ' sem. · ' + c.s + '×/sem · ' + c.d + ' min' + (c.lvl === 'senior' ? ' · Senior' : (c.lvl === 'debutant' ? ' · Débutant' : '')) + (c.sport ? ' · 🏁' : '') + '</span>'
+          + '<span class="ci-pitch">' + escapeHtml(c.pitch) + '</span></span><span class="ci-chev" aria-hidden="true">›</span></button>';
+      }).join('') + '</div><div class="cat-or"><span>ou compose ton programme sur mesure</span></div>';
+    var pf = document.getElementById('progFields');
+    if(pf) pf.insertBefore(sec, pf.firstChild);
+    // Accès rapide depuis l'accueil
+    var heroRowP = document.querySelector('#renfoView > .intro .hero-row');
+    if(heroRowP){
+      var hp = document.createElement('button'); hp.type = 'button'; hp.className = 'hero-stat hero-tests hero-progs'; hp.textContent = '📅 Programmes';
+      hp.addEventListener('click', function(){
+        var v = document.getElementById('renfoView');
+        if(v && (v.classList.contains('quick') || v.classList.contains('collapsed'))){ var e = v.querySelector('.ps-edit'); if(e) e.click(); }
+        setMode('program');
+        setTimeout(function(){ sec.scrollIntoView({behavior:'smooth', block:'start'}); }, 120);
+      });
+      heroRowP.insertBefore(hp, heroRowP.firstChild ? heroRowP.firstChild.nextSibling : null);
+    }
+    function start(c, race){
+      if(c.mob){ if(window.ecStartMobProgram) window.ecStartMobProgram(c); return; }
+      if(race){ c = Object.assign({}, c, {w:race.weeks}); }
+      var keep = {duration:state.duration, level:state.level, noFloor:state.noFloor, chair:state.chair};
+      var keepF = {obj:progForm.obj, weeks:progForm.weeks, spw:progForm.spw};
+      progForm.obj = c.obj; progForm.weeks = c.w; progForm.spw = c.s;
+      state.duration = c.d; if(c.lvl) state.level = c.lvl; if(c.noFloor){ state.noFloor = true; }
+      var before = currentProgram;
+      generateProgram();
+      var ok = currentProgram && currentProgram !== before;
+      if(ok){ currentProgram.title = c.t + (race && race.name ? ' · ' + race.name : ''); currentProgram.cat = c.id; if(race) currentProgram.race = {date:race.date, name:race.name || '', start:race.start}; saveProgram(); showProgram(false); }
+      state.duration = keep.duration; state.level = keep.level; state.noFloor = keep.noFloor; state.chair = keep.chair;
+      progForm.obj = keepF.obj; progForm.weeks = keepF.weeks; progForm.spw = keepF.spw;
+      try{ syncSettingsUI(); }catch(e){}
+      if(ok){ var r = document.getElementById('results'); if(r) setTimeout(function(){ r.scrollIntoView({behavior:'smooth', block:'start'}); }, 80); }
+      else { var m = document.getElementById('formMsg'); if(m && m.textContent){ var fs = document.querySelector('#renfoView .ps-edit'); if(fs) fs.click(); m.scrollIntoView({behavior:'smooth', block:'center'}); } }
+    }
+    var DAYMS = 86400000;
+    function ymd(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    function parseYmd(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+    function weeksTo(date){
+      var t = new Date(); t.setHours(0,0,0,0); var days = Math.round((date - t) / DAYMS);
+      var full = Math.ceil((days + 1) / 7), w = Math.max(2, Math.min(16, full));
+      var start = full > 16 ? new Date(date.getTime() - (16 * 7 - 1) * DAYMS) : t;
+      return {days:days, weeks:w, start:start, late:full > 16};
+    }
+    function askRace(c){
+      var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop'; wrap.id = 'raceDialog';
+      var min = new Date(); min.setDate(min.getDate() + 10);
+      wrap.innerHTML = '<div class="ec-dialog race-box" role="dialog" aria-modal="true"><p class="ec-dialog-msg">🏁 Tu as une course en vue ?</p>'
+        + '<p class="race-how">Indique sa date : le programme se cale dessus, avec une progression, un pic de forme, puis 2 semaines d’affûtage pour arriver frais le jour J.</p>'
+        + '<label class="race-l">Date de la course<input type="date" class="ec-dialog-input" id="raceDate" min="' + ymd(min) + '"></label>'
+        + '<label class="race-l">Nom de la course <small>(facultatif)</small><input type="text" class="ec-dialog-input" id="raceName" maxlength="40" placeholder="ex. Trail des Falaises"></label>'
+        + '<p class="race-info" id="raceInfo"></p>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-r="nodate">Sans date (' + c.w + ' sem.)</button><button type="button" class="ec-dialog-ok" data-r="ok">Calibrer sur ma course</button></div>'
+        + '<button type="button" class="tf-cancel" data-r="close">Annuler</button></div>';
+      document.body.appendChild(wrap);
+      var di = wrap.querySelector('#raceDate'), info = wrap.querySelector('#raceInfo');
+      function upd(){
+        var d = parseYmd(di.value); if(!d){ info.textContent = ''; return; }
+        var w = weeksTo(d);
+        if(w.days < 10){ info.textContent = 'Ta course est dans moins de 10 jours : trop tôt pour un programme. Garde des séances courtes et légères, et privilégie la récup.'; return; }
+        info.textContent = 'Programme de ' + w.weeks + ' semaines' + (w.late ? ' (le maximum) : il démarrera le ' + w.start.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'}) + '. D’ici là, fais des séances libres.' : ', d’aujourd’hui au jour J (J-' + w.days + ').');
+      }
+      di.addEventListener('input', upd); di.addEventListener('change', upd);
+      wrap.addEventListener('click', function(e){
+        var b = e.target.closest('[data-r]'); if(!b){ if(e.target === wrap) wrap.remove(); return; }
+        var r = b.getAttribute('data-r');
+        if(r === 'close'){ wrap.remove(); return; }
+        if(r === 'nodate'){ wrap.remove(); start(c); return; }
+        var d = parseYmd(di.value);
+        if(!d){ di.focus(); info.textContent = 'Choisis la date de ta course.'; return; }
+        var w = weeksTo(d); if(w.days < 10){ upd(); return; }
+        wrap.remove(); start(c, {date:di.value, name:(wrap.querySelector('#raceName').value || '').trim(), weeks:w.weeks, start:ymd(w.start)});
+      });
+      setTimeout(function(){ di.focus(); }, 50);
+    }
+    sec.addEventListener('click', function(e){
+      var b = e.target.closest('[data-start]'); if(!b) return;
+      var c = CAT.filter(function(x){ return x.id === b.getAttribute('data-start'); })[0]; if(!c) return;
+      var go = function(){ if(c.sport) askRace(c); else start(c); };
+      if(currentProgram){
+        var name = currentProgram.title || 'ton programme en cours';
+        ecConfirm('Remplacer « ' + name + ' » par « ' + c.t + ' » ? Tu peux enregistrer ton programme actuel avant, avec ☆ Enregistrer.', 'Continuer', go, false, 'Annuler');
+      } else go();
+    });
+  })();
+  // ---------- Programme calé sur une date de course : pic de forme puis affûtage ----------
+  (function(){
+    var DAYMS = 86400000;
+    PHASES.push({label:'Affûtage', note:'Moins de volume, même qualité : tu gardes tes sensations et tu effaces la fatigue.', deload:true});
+    PHASES.push({label:'Semaine de course', note:'Une séance courte en début de semaine, puis repos des jambes jusqu’au jour J.', deload:true});
+    var IDX_TAPER = PHASES.length - 2, IDX_RACE = PHASES.length - 1;
+    function raceP(){ var P = currentProgram; return P && P.race && P.race.date && P.weeks >= 2 ? P : null; }
+    function off(n){ return (((2 - (n - 3)) % 4) + 4) % 4; }
+    var _phaseOf = phaseOf, _factorFor = factorFor;
+    phaseOf = function(week, total){
+      var P = raceP(); if(!P) return _phaseOf(week, total);
+      var n = P.weeks;
+      if(week === n - 1) return IDX_RACE;
+      if(week === n - 2) return n >= 3 ? IDX_TAPER : 1;
+      var ph = (week + off(n)) % 4;
+      return (ph === 3 && week === 0) ? 0 : ph;   // on ne commence jamais par une semaine allégée
+    };
+    factorFor = function(week){
+      var P = raceP(); if(!P) return _factorFor(week);
+      var ph = phaseOf(week);
+      if(ph === IDX_RACE) return 0.7;
+      if(ph === IDX_TAPER) return 0.85;
+      if(ph === 3) return 0.8;
+      var block = Math.floor((week + off(P.weeks)) / 4);
+      return Math.min(1.2, [0.9, 1.0, 1.08][ph] + 0.03 * block);
+    };
+    var _pp = programPayload;
+    programPayload = function(P){ var o = _pp.apply(this, arguments); if(P && P.race) o.rc = {d:P.race.date, n:P.race.name || undefined, s:P.race.start || undefined}; return o; };
+    function raceFrom(rc){ return (rc && /^\d{4}-\d{2}-\d{2}$/.test(rc.d)) ? {date:rc.d, name:String(rc.n || '').slice(0, 40), start:/^\d{4}-\d{2}-\d{2}$/.test(rc.s || '') ? rc.s : undefined} : null; }
+    var _pf = programFromPayload;
+    programFromPayload = function(d){ var P = _pf.apply(this, arguments); var r = P && d && raceFrom(d.rc); if(r) P.race = r; return P; };
+    // Programme déjà chargé au démarrage : on récupère sa course
+    try{
+      if(currentProgram && !currentProgram.race){
+        var raw = JSON.parse(localStorage.getItem(PROG_KEY) || 'null'), r0 = raw && raw.p && raw.p.id === currentProgram.id && raceFrom(raw.p.rc);
+        if(r0){ currentProgram.race = r0; var res0 = document.getElementById('results'); if(res0 && res0.querySelector('.prog-week')) showProgram(false); }
+      }
+    }catch(e){}
+    // Séances d'un programme : jamais plus de 30 % au-dessus de la durée prévue
+    var _sft = sessionFromTemplate;
+    sessionFromTemplate = function(tpl, week, slot){
+      var ses = _sft.apply(this, arguments);
+      try{
+        var dur = (currentProgram && currentProgram.duration || 30), ph = raceP() ? phaseOf(week) : -1;
+        var lim = dur * (ph === IDX_RACE ? 0.6 : (ph === IDX_TAPER ? 0.8 : 1.3));
+        while(ses.rounds > 1 && minutesWithFactor(ses) > lim) ses.rounds--;
+        if(ph === IDX_RACE || ph === IDX_TAPER){ while(ses.main && ses.main.length > 3 && minutesWithFactor(ses) > lim) ses.main = ses.main.slice(0, -1); }
+      }catch(e){}
+      return ses;
+    };
+    function raceDate(P){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(P.race.date); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+    function fmt(d, o){ return d.toLocaleDateString('fr-FR', o || {day:'numeric', month:'short'}); }
+    var _show = showProgram;
+    showProgram = function(){
+      var r = _show.apply(this, arguments);
+      try{
+        var P = raceP(), res = document.getElementById('results'); if(!P || !res) return r;
+        var rd = raceDate(P); if(!rd) return r;
+        var today = new Date(); today.setHours(0,0,0,0);
+        var j = Math.round((rd - today) / DAYMS), n = P.weeks;
+        var sm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(P.race.start || ''), start = sm ? new Date(+sm[1], +sm[2] - 1, +sm[3]) : new Date(rd.getTime() - (n * 7 - 1) * DAYMS);
+        var peak = n >= 3 ? n - 2 : 1;
+        var b = document.createElement('div'); b.className = 'race-banner';
+        b.innerHTML = '<div class="rb-top"><span class="rb-flag" aria-hidden="true">🏁</span><div><b>' + escapeHtml(P.race.name || 'Ta course') + '</b><span>' + escapeHtml(fmt(rd, {weekday:'long', day:'numeric', month:'long'})) + '</span></div><div class="rb-j">' + (j > 0 ? 'J-' + j : (j === 0 ? 'Jour J !' : 'Terminé')) + '</div></div>'
+          + '<p>Programme calé sur ta course : la charge monte jusqu’à la semaine ' + peak + ', puis ' + (n >= 3 ? '2 semaines d’affûtage' : 'une semaine légère') + ' pour arriver en pleine forme.' + (start > today ? ' Il démarre le ' + escapeHtml(fmt(start, {weekday:'long', day:'numeric', month:'long'})) + ' : d’ici là, fais des séances libres.' : '') + '</p>';
+        var head = res.querySelector('.session-head');
+        res.insertBefore(b, head ? head.nextSibling : res.firstChild);
+        var weeks = res.querySelectorAll('.prog-week');
+        weeks.forEach(function(sec, w){
+          var ws = new Date(start.getTime() + w * 7 * DAYMS), we = new Date(ws.getTime() + 6 * DAYMS);
+          var t = sec.querySelector('.prog-week-title'); if(t && !t.querySelector('.pw-dates')){ var sp = document.createElement('span'); sp.className = 'pw-dates'; sp.textContent = ' · du ' + fmt(ws) + ' au ' + fmt(we); t.appendChild(sp); }
+          if(today >= ws && today <= we) sec.classList.add('pw-now');
+          if(w === n - 1){
+            sec.classList.add('pw-race');
+            sec.querySelectorAll('.prog-card').forEach(function(card, i){
+              if(i > 0){ card.classList.add('optional'); var tp = card.querySelector('.prog-card-top'); if(tp && !card.querySelector('.opt-tag')){ var o = document.createElement('span'); o.className = 'opt-tag'; o.textContent = 'Facultative : repos conseillé'; tp.appendChild(o); } }
+            });
+            var hd = sec.querySelector('.prog-week-head'); if(hd && !sec.querySelector('.race-day')){ var rdv = document.createElement('div'); rdv.className = 'race-day'; rdv.textContent = '🏁 ' + (P.race.name || 'Course') + ' le ' + fmt(rd, {weekday:'long', day:'numeric', month:'long'}) + '. Fais la séance A au plus tard 3 à 4 jours avant.'; hd.parentNode.insertBefore(rdv, hd.nextSibling); }
+          }
+        });
+        var cur = res.querySelector('.pw-now'); if(cur && arguments[0] === false) setTimeout(function(){ cur.scrollIntoView({behavior:'smooth', block:'center'}); }, 400);
+      }catch(e){}
+      return r;
+    };
+  })();
+  // ---------- Modifier un programme : date de course, durée, séances par semaine ----------
+  (function(){
+    var DAYMS = 86400000;
+    function ymd(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    function parseYmd(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+    function plan(date){
+      var t = new Date(); t.setHours(0,0,0,0); var days = Math.round((date - t) / DAYMS);
+      var full = Math.ceil((days + 1) / 7);
+      return {days:days, weeks:Math.max(2, Math.min(16, full)), start:full > 16 ? new Date(date.getTime() - (16 * 7 - 1) * DAYMS) : t, late:full > 16};
+    }
+    function editable(P){ return P && P.obj !== 'perso' && !P.by && PROG_OBJECTIVES[P.obj] && !P.blocks.some(function(b){ return b.some(function(t){ return t.composed; }); }); }
+    function rebuild(P, o){
+      if(P.mob && window.ecStartMobProgram){
+        var done = {};
+        Object.keys(P.done || {}).forEach(function(k){ var p = k.split('-'); if(P.done[k] && +p[0] < o.weeks && +p[1] < o.spw) done[k] = true; });
+        return window.ecStartMobProgram({obj:P.obj, t:P.title, id:P.cat, g:P.mob.g, p:P.mob.p, l:P.mob.l, zones:P.mob.zones || ['full'], w:o.weeks, s:o.spw, d:o.duration}, {id:P.id, done:done, athlete:P.athlete});
+      }
+      var keepS = {duration:state.duration, level:state.level, noFloor:state.noFloor, chair:state.chair, equip:state.equip.slice()};
+      var keepF = {obj:progForm.obj, weeks:progForm.weeks, spw:progForm.spw};
+      progForm.obj = P.obj; progForm.weeks = o.weeks; progForm.spw = o.spw;
+      state.duration = o.duration; state.level = P.level; state.noFloor = P.noFloor; state.chair = !!P.chair; state.equip = P.equip.slice();
+      var old = P, ok = false;
+      try{
+        generateProgram();
+        var N = currentProgram;
+        if(N && N !== old){
+          var need = Math.ceil(o.weeks / 4);
+          if(o.spw === old.spw && o.duration === old.duration){
+            N.blocks = old.blocks.slice(0, need).concat(N.blocks.slice(old.blocks.length, need));
+          }
+          N.id = old.id; N.title = old.title; N.cat = old.cat; N.athlete = old.athlete;
+          if(o.race) N.race = o.race; else if(old.race && !o.dropRace) N.race = old.race;
+          var done = {};
+          Object.keys(old.done || {}).forEach(function(k){ var p = k.split('-'), w = +p[0], s = +p[1]; if(old.done[k] && w < o.weeks && s < o.spw) done[k] = true; });
+          N.done = done;
+          currentProgram = N; ok = true;
+        } else currentProgram = old;
+      }catch(e){ currentProgram = old; }
+      state.duration = keepS.duration; state.level = keepS.level; state.noFloor = keepS.noFloor; state.chair = keepS.chair; state.equip = keepS.equip;
+      progForm.obj = keepF.obj; progForm.weeks = keepF.weeks; progForm.spw = keepF.spw;
+      try{ syncSettingsUI(); }catch(e){}
+      if(ok){ saveProgram(); showProgram(false); }
+      return ok;
+    }
+    function seg(name, vals, cur, fmt){
+      return '<div class="pe-seg" data-name="' + name + '">' + vals.map(function(v){ return '<button type="button" data-v="' + v + '" class="' + (v === cur ? 'on' : '') + '">' + (fmt ? fmt(v) : v) + '</button>'; }).join('') + '</div>';
+    }
+    function openEdit(focusDate){
+      var P = currentProgram; if(!editable(P)) return;
+      var hasRace = !!(P.race && P.race.date);
+      var o = {weeks:P.weeks, spw:P.spw, duration:P.duration};
+      var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop'; wrap.id = 'progEditDialog';
+      var min = new Date(); min.setDate(min.getDate() + 10);
+      var weeksVals = [4, 6, 8, 10, 12]; if(weeksVals.indexOf(P.weeks) < 0 && !hasRace) weeksVals.push(P.weeks), weeksVals.sort(function(a, b){ return a - b; });
+      wrap.innerHTML = '<div class="ec-dialog pe-box" role="dialog" aria-modal="true"><p class="ec-dialog-msg">⚙️ Modifier le programme</p>'
+        + (hasRace ? '<label class="race-l">Date de la course<input type="date" class="ec-dialog-input" id="peDate" min="' + ymd(min) + '" value="' + P.race.date + '"></label>'
+                     + '<label class="race-l">Nom de la course <small>(facultatif)</small><input type="text" class="ec-dialog-input" id="peName" maxlength="40" value="' + escapeHtml(P.race.name || '') + '"></label>'
+                   : '<div class="pe-l">Durée du programme</div>' + seg('weeks', weeksVals, P.weeks, function(v){ return v + ' sem.'; }))
+        + '<div class="pe-l">Séances par semaine</div>' + seg('spw', [1, 2, 3, 4], P.spw)
+        + '<div class="pe-l">Durée de chaque séance</div>' + seg('duration', P.mob ? [10, 15, 20, 30] : [10, 20, 30, 45, 60], P.duration, function(v){ return v + ' min'; })
+        + '<p class="race-info" id="peInfo"></p>'
+        + '<p class="pe-note">Les séances déjà cochées sont gardées. Si tu changes le nombre ou la durée des séances, les exercices sont recalculés.</p>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-a="close">Annuler</button><button type="button" class="ec-dialog-ok" data-a="ok">Appliquer</button></div></div>';
+      document.body.appendChild(wrap);
+      var info = wrap.querySelector('#peInfo'), di = wrap.querySelector('#peDate');
+      function upd(){
+        if(hasRace){
+          var d = parseYmd(di.value); if(!d){ info.textContent = 'Choisis la date de ta course.'; return; }
+          var pl = plan(d);
+          info.textContent = pl.days < 10 ? 'Course dans moins de 10 jours : garde le programme actuel et fais des séances légères.' : 'Programme recalé : ' + pl.weeks + ' semaines jusqu’au jour J (J-' + pl.days + ')' + (pl.late ? ', il démarrera le ' + pl.start.toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) : '') + '.';
+        } else info.textContent = o.weeks + ' semaines · ' + o.spw + ' séance' + (o.spw > 1 ? 's' : '') + ' par semaine · ' + o.duration + ' min, soit ' + (o.weeks * o.spw) + ' séances.';
+      }
+      wrap.addEventListener('click', function(e){
+        var b = e.target.closest('.pe-seg [data-v]');
+        if(b){ var g = b.closest('.pe-seg'); g.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); o[g.getAttribute('data-name')] = +b.getAttribute('data-v'); upd(); return; }
+        var a = e.target.closest('[data-a]'); if(!a){ if(e.target === wrap) wrap.remove(); return; }
+        if(a.getAttribute('data-a') === 'close'){ wrap.remove(); return; }
+        if(hasRace){
+          var d = parseYmd(di.value); if(!d){ di.focus(); return; }
+          var pl = plan(d); if(pl.days < 10){ upd(); return; }
+          o.weeks = pl.weeks; o.race = {date:di.value, name:(wrap.querySelector('#peName').value || '').trim(), start:ymd(pl.start)};
+          if(o.race.name !== (P.race.name || '')){ var base = (P.title || '').split(' · ')[0]; P.title = base + (o.race.name ? ' · ' + o.race.name : ''); }
+        }
+        wrap.remove(); rebuild(P, o);
+      });
+      if(di){ di.addEventListener('input', upd); di.addEventListener('change', upd); }
+      upd();
+      if(focusDate && di) setTimeout(function(){ di.focus(); }, 50);
+    }
+    window.ecEditProgram = openEdit;
+    var _sp = showProgram;
+    showProgram = function(){
+      var r = _sp.apply(this, arguments);
+      try{
+        var P = currentProgram, res = document.getElementById('results'); if(!editable(P) || !res) return r;
+        var acts = res.querySelector('.session-actions');
+        if(acts && !acts.querySelector('[data-prog-edit]')){ var b = document.createElement('button'); b.className = 'btn-ghost'; b.setAttribute('data-prog-edit', ''); b.textContent = '⚙️ Modifier le programme'; b.addEventListener('click', function(){ openEdit(false); }); acts.insertBefore(b, acts.firstChild); }
+        var rb = res.querySelector('.race-banner');
+        if(rb && !rb.querySelector('.rb-edit')){ var c = document.createElement('button'); c.type = 'button'; c.className = 'rb-edit'; c.textContent = '📅 Changer la date'; c.addEventListener('click', function(){ openEdit(true); }); rb.appendChild(c); }
+      }catch(e){}
+      return r;
+    };
+  })();
+  // ---------- Programmes Récup (yoga doux, mobilité) : plusieurs semaines de séances guidées ----------
+  (function(){
+    var MZ = {full:'Corps entier', bas:'Jambes & hanches', dos:'Dos', haut:'Épaules & nuque'};
+    var MG = {yoga:'Yoga', mobi:'Mobilité', recup:'Étirements', soir:'Détente du soir', matin:'Réveil'};
+    function buildMob(o){
+      var t = window.ecMobBuild ? window.ecMobBuild({g:o.g, d:o.d, z:o.z, p:o.p, l:o.l}) : null;
+      if(!t || !t.main || !t.main.length) return null;
+      t.zone = o.z; t.theme = 'equilibre'; t.title = (MG[o.g] || 'Récup') + ' — ' + (MZ[o.z] || ''); t.mob = {g:o.g, z:o.z, p:o.p};
+      return t;
+    }
+    window.ecStartMobProgram = function(c, keep){
+      var blocks = [], nb = Math.ceil(c.w / 4);
+      for(var b = 0; b < nb; b++){
+        var tpls = [];
+        for(var s = 0; s < c.s; s++){
+          var z = c.zones[(s + b) % c.zones.length], t = buildMob({g:c.g, d:c.d, z:z, p:c.p || 'sd', l:c.l || 'intermediaire'});
+          if(!t) return false;
+          tpls.push(t);
+        }
+        blocks.push(tpls);
+      }
+      currentProgram = {id:(keep && keep.id) || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), obj:c.obj, title:c.t, cat:c.id,
+        weeks:c.w, spw:c.s, duration:c.d, level:c.l === 'debutant' ? 'debutant' : 'intermediaire', equip:['poids_du_corps'], noFloor:false, chair:false,
+        athlete:(keep && keep.athlete != null) ? keep.athlete : (document.getElementById('athleteName').value || '').trim(), blocks:blocks, done:(keep && keep.done) || {}, mob:{g:c.g, p:c.p || 'sd', zones:c.zones, l:c.l || 'intermediaire'}};
+      saveProgram(); showProgram(false);
+      var r = document.getElementById('results'); if(r) setTimeout(function(){ r.scrollIntoView({behavior:'smooth', block:'start'}); }, 80);
+      return true;
+    };
+    // Sauvegarde / chargement : on garde l'objectif Récup du programme
+    var _pp = programPayload;
+    programPayload = function(P){ var o = _pp.apply(this, arguments); if(P && P.mob) o.mb = {g:P.mob.g, p:P.mob.p, z:P.mob.zones, l:P.mob.l}; return o; };
+    var _pf = programFromPayload;
+    programFromPayload = function(d){
+      var P = _pf.apply(this, arguments);
+      if(P && d && d.mb && MG[d.mb.g]){
+        P.mob = {g:d.mb.g, p:d.mb.p || 'sd', zones:Array.isArray(d.mb.z) && d.mb.z.length ? d.mb.z.filter(function(z){ return MZ[z]; }) : ['full'], l:d.mb.l === 'debutant' ? 'debutant' : (d.mb.l === 'avance' ? 'avance' : 'intermediaire')};
+        P.blocks.forEach(function(bl){ bl.forEach(function(t){ t.mob = {g:P.mob.g, z:MZ[t.zone] ? t.zone : 'full', p:P.mob.p}; }); });
+      }
+      return P;
+    };
+    try{
+      if(currentProgram && !currentProgram.mob){
+        var raw = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
+        if(raw && raw.p && raw.p.mb && raw.p.id === currentProgram.id){ var P2 = programFromPayload(raw.p, raw.done); if(P2){ currentProgram = P2; } }
+      }
+    }catch(e){}
+    var _sft = sessionFromTemplate;
+    sessionFromTemplate = function(tpl){
+      var ses = _sft.apply(this, arguments);
+      if(tpl && tpl.mob){ ses.mob = {g:tpl.mob.g, z:tpl.mob.z, p:tpl.mob.p}; ses.theme = 'equilibre'; ses.workFactor = 1; }
+      return ses;
+    };
+    var _sp = showProgram;
+    showProgram = function(){
+      var r = _sp.apply(this, arguments);
+      try{
+        var P = currentProgram, res = document.getElementById('results'); if(!P || !P.mob || !res) return r;
+        res.classList.add('prog-mob');
+        var meta = res.querySelector('.session-head .session-meta'), tags = res.querySelector('.session-head .sh-tags');
+        var parts = [P.spw + ' séance' + (P.spw > 1 ? 's' : '') + ' par semaine', P.duration + ' min', MG[P.mob.g] || 'Récup'];
+        if(meta) meta.textContent = parts.join(' · ');
+        if(tags) tags.innerHTML = parts.map(function(x){ return '<span>' + escapeHtml(x) + '</span>'; }).join('');
+        res.querySelectorAll('.prog-card').forEach(function(card){
+          var btn = card.querySelector('[data-prog-open]'); if(!btn) return;
+          var t = templateFor(+btn.getAttribute('data-week'), +btn.getAttribute('data-slot'));
+          var f = card.querySelector('.prog-focus'); if(f && t) f.textContent = (MG[P.mob.g] || 'Récup') + ' · ' + (MZ[t.zone] || 'Corps entier');
+        });
+        var intro = res.querySelector('.prog-intro');
+        if(intro) intro.innerHTML = '<b>Comment ça marche :</b> chaque séance commence et finit par une respiration, avec des postures douces entre les deux. Les zones travaillées changent d’une séance à l’autre ; toutes les 4 semaines, de nouvelles postures prennent le relais. Touche une séance pour l’ouvrir et la lancer avec le chrono.';
+      }catch(e){}
+      return r;
+    };
+  })();
+  // ---------- Page programme : plus claire (actions compactes, prochaine séance, semaines repliables) ----------
+  (function(){
+    var openSet = null, forId = null;
+    var LBL = {'data-prog-edit':['⚙️', 'Modifier'], 'data-prog-share':['✉️', 'Envoyer'], 'data-prog-save':null, 'data-prog-print':['🖨️', 'PDF'], 'data-prog-new':['➕', 'Nouveau']};
+    function nextOf(P){ for(var w = 0; w < P.weeks; w++) for(var s = 0; s < P.spw; s++) if(!P.done[w + '-' + s]) return {w:w, s:s}; return null; }
+    var _sp = showProgram;
+    showProgram = function(){
+      var r = _sp.apply(this, arguments);
+      try{
+        var P = currentProgram, res = document.getElementById('results'); if(!P || !res) return r;
+        res.classList.add('prog-view');
+        // 1. Actions en grille compacte
+        var acts = res.querySelector('.session-head .session-actions');
+        if(acts){
+          acts.classList.add('prog-acts');
+          acts.querySelectorAll('button').forEach(function(b){
+            var key = Object.keys(LBL).filter(function(k){ return b.hasAttribute(k); })[0], ico, txt;
+            if(key === 'data-prog-save'){ var saved = /★/.test(b.textContent); ico = saved ? '★' : '☆'; txt = saved ? 'Enregistré' : 'Enregistrer'; }
+            else if(key){ ico = LBL[key][0]; txt = LBL[key][1]; }
+            else if(b.classList.contains('cal-btn')){ ico = '📅'; txt = 'Agenda'; }
+            else return;
+            b.innerHTML = '<span class="pa-ico" aria-hidden="true">' + ico + '</span><span class="pa-t">' + txt + '</span>';
+          });
+        }
+        setTimeout(function(){ var cb = res.querySelector('.prog-acts .cal-btn'); if(cb && !cb.querySelector('.pa-ico')) cb.innerHTML = '<span class="pa-ico" aria-hidden="true">📅</span><span class="pa-t">Agenda</span>'; }, 0);
+        // 2. Prochaine séance, bien visible
+        var nx = nextOf(P), prog = res.querySelector('.session-head .prog-progress');
+        if(prog && !res.querySelector('.prog-next')){
+          var nb = document.createElement('button'); nb.type = 'button'; nb.className = 'prog-next';
+          if(nx){ nb.innerHTML = '<span>▶ Prochaine séance</span><b>Semaine ' + (nx.w + 1) + ' · Séance ' + SLOT_LETTERS[nx.s] + '</b>'; nb.addEventListener('click', function(){ openProgramSession(nx.w, nx.s); window.scrollTo(0, 0); }); }
+          else { nb.innerHTML = '<span>🎉 Programme terminé</span><b>Bravo, toutes les séances sont faites !</b>'; nb.disabled = true; }
+          prog.parentNode.insertBefore(nb, prog.nextSibling);
+        }
+        // 3. « Comment ça progresse » replié
+        var intro = res.querySelector('.prog-intro');
+        if(intro && !intro.closest('details')){
+          var det = document.createElement('details'); det.className = 'prog-how';
+          det.innerHTML = '<summary>ℹ️ Comment ça progresse</summary>';
+          intro.parentNode.insertBefore(det, intro); det.appendChild(intro);
+          var rb = res.querySelector('.race-banner'); if(rb) det.parentNode.insertBefore(rb, det);
+        }
+        // 4. Semaines repliables : on ouvre celle de la prochaine séance
+        if(forId !== P.id){ forId = P.id; openSet = {}; }
+        var target = nx ? nx.w : P.weeks - 1;
+        if(!openSet.__init || openSet.__target !== target){ openSet = {__init:1, __target:target}; openSet[target] = 1; }
+        res.querySelectorAll('.prog-week').forEach(function(sec, w){
+          var head = sec.querySelector('.prog-week-head'); if(!head) return;
+          var done = 0; for(var s = 0; s < P.spw; s++) if(P.done[w + '-' + s]) done++;
+          if(!head.querySelector('.pw-count')){
+            var c = document.createElement('span'); c.className = 'pw-count' + (done === P.spw ? ' full' : '');
+            c.textContent = done === P.spw ? '✓ ' + done + '/' + P.spw : done + '/' + P.spw;
+            head.appendChild(c);
+            var ch = document.createElement('span'); ch.className = 'pw-chev'; ch.setAttribute('aria-hidden', 'true'); head.appendChild(ch);
+          }
+          head.setAttribute('role', 'button'); head.setAttribute('tabindex', '0');
+          sec.classList.toggle('closed', !openSet[w]); head.setAttribute('aria-expanded', openSet[w] ? 'true' : 'false');
+          if(w === target) sec.classList.add('pw-next');
+          if(!head.__pw){
+            head.__pw = 1;
+            var tog = function(){ openSet[w] = !openSet[w]; sec.classList.toggle('closed', !openSet[w]); head.setAttribute('aria-expanded', openSet[w] ? 'true' : 'false'); };
+            head.addEventListener('click', function(e){ if(e.target.closest('button, a')) return; tog(); });
+            head.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tog(); } });
+          }
+        });
+        if(!res.querySelector('.pw-all')){
+          var first = res.querySelector('.prog-week');
+          if(first){ var all = document.createElement('div'); all.className = 'pw-all'; all.innerHTML = '<span>Les semaines</span><button type="button">Tout déplier</button>'; first.parentNode.insertBefore(all, first);
+            all.querySelector('button').addEventListener('click', function(){
+              var closedAny = !!res.querySelector('.prog-week.closed');
+              res.querySelectorAll('.prog-week').forEach(function(sec, w){ openSet[w] = closedAny ? 1 : (w === target ? 1 : 0); sec.classList.toggle('closed', !openSet[w]); });
+              this.textContent = closedAny ? 'Tout replier' : 'Tout déplier';
+            });
+          }
+        }
+      }catch(e){}
+      return r;
+    };
+    // Le programme est peut-être déjà affiché
+    try{ var res0 = document.getElementById('results'); if(currentProgram && res0 && res0.querySelector('.prog-week')) showProgram(false); }catch(e){}
+  })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
   // ajoute une entrée d'historique : le bouton retour la referme au lieu de
@@ -10445,6 +10988,8 @@
       {k:'install', open:function(){ return bd('installBackdrop'); }, close:function(){ closeInstallSheet(); }},
       {k:'share', open:function(){ return bd('shareBackdrop'); }, close:function(){ closeShareSheet(); }},
       {k:'timer', open:function(){ return bd('timerBackdrop'); }, close:function(){ exitWorkout(); }},
+      {k:'pedit', open:function(){ return !!document.getElementById('progEditDialog'); }, close:function(){ var d = document.getElementById('progEditDialog'); if(d) d.remove(); }},
+      {k:'race', open:function(){ return !!document.getElementById('raceDialog'); }, close:function(){ var d = document.getElementById('raceDialog'); if(d) d.remove(); }},
       {k:'tf', open:function(){ return !!document.getElementById('tfDialog'); }, close:function(){ var b = document.querySelector('#tfDialog [data-a="close"]'); if(b) b.click(); else { var d = document.getElementById('tfDialog'); if(d) d.remove(); } }},
       {k:'help', open:function(){ var h = document.getElementById('helpSheet'); return !!(h && !h.hidden); }, close:function(){ if(window.ecCloseHelp) window.ecCloseHelp(); }},
       {k:'hist', open:function(){ return !!q('.hist-dialog'); }, close:function(){ var b = q('.hist-dialog .ec-dialog-ok'); if(b) b.click(); }},
