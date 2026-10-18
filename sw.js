@@ -1,11 +1,14 @@
 // Ethik'Coach — fonctionnement hors connexion.
 // La page est chargée en ligne quand le réseau répond vite (mises à jour immédiates) ;
 // sans réseau, ou si le réseau traîne plus de 4 secondes, la dernière version enregistrée prend le relais.
-var CACHE = 'ethikcoach-v1';
+// Les visuels des exercices (photos.js) sont gardés en mémoire, une version à la fois.
+var CACHE = 'ethikcoach-v2';
 
 self.addEventListener('install', function(e){
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.add('./'); }).catch(function(){}));
+  e.waitUntil(caches.open(CACHE).then(function(c){
+    return c.add('./').catch(function(){});
+  }));
 });
 
 self.addEventListener('activate', function(e){
@@ -37,6 +40,27 @@ self.addEventListener('fetch', function(e){
          .catch(function(){ clearTimeout(t); cached().then(function(r){ if(!done){ done = true; resolve(r || Response.error()); } }); });
     }));
     e.waitUntil(net.catch(function(){}));
+    return;
+  }
+
+  // Visuels des exercices : la page demande photos.js?v=… ; chaque version est gardée en mémoire.
+  // Même version déjà enregistrée : affichage immédiat. Nouvelle version : téléchargée puis gardée
+  // (les anciennes versions sont effacées). Hors connexion : la dernière version enregistrée.
+  if(url.origin === self.location.origin && /\/photos\.js$/.test(url.pathname)){
+    e.respondWith(caches.open(CACHE).then(function(c){
+      return c.match(req).then(function(hit){
+        if(hit) return hit;
+        return fetch(req).then(function(res){
+          if(res && res.ok){
+            var copy = res.clone();
+            c.keys().then(function(keys){ keys.forEach(function(k){ if(/\/photos\.js/.test(k.url) && k.url !== req.url) c.delete(k); }); c.put(req, copy); });
+          }
+          return res;
+        }).catch(function(){
+          return c.keys().then(function(keys){ var k = keys.filter(function(k){ return /\/photos\.js/.test(k.url); })[0]; return k ? c.match(k) : Response.error(); });
+        });
+      });
+    }));
     return;
   }
 
