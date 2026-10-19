@@ -2597,6 +2597,43 @@
   .timer-kind.recup-breath{transition:opacity .6s ease; letter-spacing:0.04em;}
   .timer-kind.recup-breath.out{opacity:0.75;}
   .help-voice-sel[hidden]{display:none !important;}
+  /* ---------- Choix de la voix ---------- */
+  .voice-head{position:relative;}
+  .voice-head svg{width:20px; height:20px;}
+  .voice-head .vh-dot{display:none; position:absolute; top:5px; right:5px; width:9px; height:9px; border-radius:50%; background:#E07A3F; box-shadow:0 0 0 2px var(--paper);}
+  .voice-head.new .vh-dot{display:block;}
+  .timer-voice-pick{margin-left:6px;}
+  .voice-link{display:inline-flex; align-items:center; gap:8px; margin-top:10px; min-height:44px; padding:0 14px; border-radius:999px; border:1px solid var(--stone-light); background:var(--card); color:var(--ink); font:600 0.92rem/1.2 'Inter',sans-serif; cursor:pointer; max-width:100%;}
+  .voice-link svg{flex:none; color:var(--forest);}
+  .voice-link .vl-txt{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .voice-link .vl-go{flex:none; color:var(--forest); font-weight:700;}
+  .help-voice-open{gap:8px; width:100%; margin-top:12px;}
+  .help-voice-open b{font-weight:800;}
+  .help-voice-row[hidden]{display:none !important;}
+  .vsheet{position:fixed; inset:0; z-index:120; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,15,0); transition:background .2s;}
+  .vsheet[hidden]{display:none;}
+  .vsheet.show{background:rgba(10,20,15,0.55);}
+  .vsheet-card{width:100%; max-width:520px; max-height:88vh; overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--paper); color:var(--ink); border-radius:24px 24px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .22s ease;}
+  .vsheet.show .vsheet-card{transform:none;}
+  @media (min-width:700px){ .vsheet{align-items:center;} .vsheet-card{border-radius:24px;} }
+  .vsheet-head{display:flex; align-items:center; justify-content:space-between;}
+  .vsheet-head h2{margin:0; font-family:'Bricolage Grotesque',sans-serif; font-size:1.3rem;}
+  .vsheet-x{width:44px; height:44px; border:none; background:none; color:var(--ink); font-size:1.8rem; line-height:1; cursor:pointer;}
+  .vsheet-sub{margin:2px 0 12px; color:var(--stone); font-size:0.92rem; line-height:1.4;}
+  .vsheet-list{display:flex; flex-direction:column; gap:8px;}
+  .vs-row{display:flex; align-items:center; gap:12px; width:100%; min-height:58px; padding:8px 14px; border-radius:16px; border:1.5px solid var(--stone-light); background:var(--card); color:var(--ink); text-align:left; font:inherit; cursor:pointer;}
+  .vs-row.on{border-color:var(--forest); box-shadow:0 0 0 1px var(--forest) inset;}
+  .vs-play{flex:none; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:var(--sage-light, #E4EEE5); color:var(--forest);}
+  .vs-main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .vs-name{font-weight:700; font-size:1rem;}
+  .vs-name em{font-style:normal; font-size:0.72rem; font-weight:700; color:var(--forest); margin-left:4px; text-transform:uppercase; letter-spacing:0.04em;}
+  .vs-tags{font-size:0.8rem; color:var(--stone); margin-top:2px;}
+  .vs-check{flex:none; width:22px; height:22px; border-radius:50%; border:2px solid var(--stone-light);}
+  .vs-row.on .vs-check{border-color:var(--forest); background:var(--forest) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;}
+  .vsheet-empty{color:var(--stone);}
+  .vsheet-tip{margin:12px 0 0; padding:10px 12px; border-radius:14px; background:var(--card); font-size:0.85rem; line-height:1.45; color:var(--stone);}
+  .vsheet-tip[hidden]{display:none;}
+  .vsheet-ok{display:block; width:100%; min-height:50px; margin-top:14px; border:none; border-radius:999px; background:var(--forest); color:#fff; font:700 1rem 'Inter',sans-serif; cursor:pointer;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -4471,13 +4508,17 @@
     var list = window.speechSynthesis.getVoices() || [];
     var fr = list.filter(function(v){ return /^fr(-|_|$)/i.test(v.lang); });
     voice.all = fr.slice().sort(function(a, b){ return voiceScore(b) - voiceScore(a); });
-    // Voix unique : toujours la plus naturelle disponible (plus de choix manuel)
-    try{ localStorage.removeItem('ec_voice_uri'); }catch(e){}
-    voice.fr = voice.all[0] || null;
+    // Par défaut : la voix féminine la plus douce ; un choix manuel reste prioritaire
+    var want = null; try{ want = localStorage.getItem('ec_voice_uri'); }catch(e){}
+    voice.fr = (want && voice.all.filter(function(v){ return v.voiceURI === want; })[0]) || voice.all[0] || null;
+    try{ document.dispatchEvent(new Event('ec-voice')); }catch(e){}
   }
   // Les voix les plus naturelles d'abord : premium / améliorées / neuronales, puis les voix classiques.
   // Les voix « fantaisie » d'iPhone (Grand-mère, Rocko…) passent en dernier.
   var NOVELTY = /eloquence|grandma|grandpa|grand-m|grand-p|rocko|shelley|sandy|reed|eddy|\bflo\b|bahh|bells|boing|bubbles|cellos|wobble|whisper|zarvox|trinoids|organ|albert|jester|superstar|bad news|good news/i;
+  var FEMALE = /amélie|amelie|audrey|aurélie|aurelie|marie|denise|vivienne|eloise|éloïse|julie|léa|\blea\b|hortense|brigitte|celeste|céleste|coralie|jacqueline|josephine|joséphine|yvette|sylvie|chantal|caroline|juliette|virginie|ariane|claire|x-fra|x-frc|google français|google francais/i;
+  var MALE = /thomas|daniel|henri|rémy|remy|nicolas|paul\b|jacques|jean|alain|antoine|claude|jérôme|jerome|maurice|yves|félix|felix|guillaume|fabrice|gérard|gerard|x-frb|x-frd|liam|thierry|antoine|henri/i;
+  window.ecVoiceIsFemale = function(v){ var n = v ? (v.name || '') + ' ' + (v.voiceURI || '') : ''; return FEMALE.test(n); };
   function voiceScore(v){
     var n = (v.name || '') + ' ' + (v.voiceURI || ''), sc = 0;
     if(NOVELTY.test(n)) return -100;
@@ -4485,8 +4526,11 @@
     if(/enhanced|améliorée|amelioree|neural|natural|naturel|online/i.test(n)) sc += 40;
     if(/google/i.test(n)) sc += 25;
     if(/amélie|amelie|thomas|audrey|aurélie|aurelie|marie|daniel|denise|henri|vivienne|eloise|remy/i.test(n)) sc += 10;
-    // Voix au timbre plus doux et posé, à qualité égale
-    if(/amélie|amelie|audrey|aurélie|aurelie|marie|denise|vivienne|eloise|julie|léa|lea/i.test(n)) sc += 6;
+    // Voix féminine douce en priorité (même devant une voix masculine « Premium »)
+    if(FEMALE.test(n)) sc += 100;
+    else if(MALE.test(n)) sc -= 60;
+    // Parmi les voix féminines, les timbres les plus doux et posés
+    if(/audrey|amélie|amelie|denise|vivienne|eloise|julie|léa|lea/i.test(n)) sc += 6;
     if(/fr[-_]FR/i.test(v.lang)) sc += 8;
     return sc;
   }
@@ -4495,7 +4539,7 @@
   window.ecVoiceSet = function(uri){ try{ if(uri) localStorage.setItem('ec_voice_uri', uri); else localStorage.removeItem('ec_voice_uri'); }catch(e){} pickFrenchVoice(); };
   window.ecVoiceTest = function(){
     if(!voice.supported) return false;
-    try{ var synth = window.speechSynthesis; synth.cancel(); var u = new SpeechSynthesisUtterance('Super, on continue. Plus que dix secondes, garde le rythme !'); u.lang = 'fr-FR'; if(voice.fr) u.voice = voice.fr; u.rate = 1; synth.speak(u); return true; }catch(e){ return false; }
+    try{ var synth = window.speechSynthesis; synth.cancel(); var u = new SpeechSynthesisUtterance('Bonjour. Installe-toi confortablement, et respire profondément.'); u.lang = 'fr-FR'; if(voice.fr) u.voice = voice.fr; u.rate = 0.85; u.pitch = 0.97; synth.speak(u); return true; }catch(e){ return false; }
   };
   if(voice.supported){
     pickFrenchVoice();
@@ -4535,7 +4579,7 @@
       u.pitch = 1;
       u.volume = 1;
       // Onglet Récup : voix plus lente, plus grave et plus douce
-      if(timerState.recup){ u.rate = Math.min(u.rate, 0.8); u.pitch = 0.92; u.volume = 0.85; }
+      if(timerState.recup){ u.rate = Math.min(u.rate, 0.8); u.pitch = 0.97; u.volume = 0.85; }
       synth.speak(u);
     }catch(e){}
   }
@@ -10176,7 +10220,7 @@
       ['Ma séance', 'Comment partager une séance ?', 'Touche <b>✉ Envoyer</b> sous la séance : un lien est créé, à partager par message. Il ouvre la séance directement chez la personne. Elle doit avoir elle-même un accès à l’appli.'],
       ['Pendant la séance', 'Comment mettre en pause ou passer un exercice ?', 'Touche <b>Pause</b>, ou n’importe où sur l’écran ; touche à nouveau pour reprendre. Pour passer à la suite, touche <b>Passer ▶</b> ou glisse vers la gauche.'],
       ['Pendant la séance', 'Je n’entends pas la voix.', 'Vérifie que le bouton <b>Voix</b> est activé en haut du chrono, que le volume est monté et, sur iPhone, que le mode silencieux est désactivé. Avec des écouteurs Bluetooth, la voix passe par eux.'],
-      ['Pendant la séance', 'La voix fait « robot ». Peut-on la rendre plus naturelle ?', 'La voix vient de ton téléphone. Choisis-en une autre dans <b>Voix des annonces</b>, plus bas dans cette aide. Pour une voix beaucoup plus naturelle, télécharge une voix améliorée (gratuit) :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français › Amélie ou Thomas, version <b>Améliorée</b> ou <b>Premium</b>.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français.<br>Ferme et rouvre ensuite l’appli : la meilleure voix est choisie automatiquement.'],
+      ['Pendant la séance', 'La voix fait « robot ». Peut-on la rendre plus naturelle ?', 'La voix vient de ton téléphone. Change-la avec le <b>bouton haut-parleur</b> en haut de l’écran (ou « Choisir » pendant la séance). Pour une voix beaucoup plus naturelle, télécharge une voix améliorée (gratuit) :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › <b>Audrey</b>, version <b>Améliorée</b> ou <b>Premium</b>.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français, puis choisis une voix féminine.<br>Ferme et rouvre ensuite l’appli : la meilleure voix est choisie automatiquement.'],
       ['Pendant la séance', 'L’écran s’éteint pendant la séance.', 'L’appli demande au téléphone de garder l’écran allumé, mais certains réglages d’économie d’énergie l’en empêchent. Installe l’appli sur ton écran d’accueil et, si besoin, allonge le délai de verrouillage automatique dans les réglages du téléphone.'],
       ['Pendant la séance', 'J’ai quitté l’appli en pleine séance.', 'Pas de souci : à ton retour, la carte <b>Séance interrompue</b> te propose de <b>Reprendre</b> là où tu t’étais arrêté.'],
       ['Pendant la séance', 'J’ai une douleur pendant un exercice.', 'Arrête l’exercice. Une gêne légère peut se gérer en réduisant l’amplitude ou en remplaçant l’exercice ; une vraie douleur, non. Signale-la dans le retour de fin de séance pour que ton coach adapte la suite, et consulte un professionnel de santé si elle persiste.'],
@@ -10202,7 +10246,7 @@
           return '<div class="help-cat"><h4>' + esc(c) + '</h4>' + QA.filter(function(q){ return q[0] === c; }).map(function(q){
             return '<details class="help-q"><summary>' + esc(q[1]) + '</summary><p>' + q[2] + '</p></details>'; }).join('') + '</div>';
         }).join('') + '<p class="help-none" hidden>Aucune question ne correspond. Écris directement à ton coach.</p></section>'
-      + '<section class="help-voice"><h3>Voix des annonces</h3><p>L’appli choisit automatiquement la voix la plus naturelle de ton téléphone. Dans l’onglet Récup, elle se fait plus lente et plus douce.</p><div class="help-voice-row"><select class="help-voice-sel" aria-label="Voix des annonces" hidden></select><button type="button" class="help-btn ghost help-voice-test">▶ Écouter la voix</button></div><p class="help-voice-tip" hidden></p></section>'
+      + '<section class="help-voice"><h3>Voix des annonces</h3><p><b>Tu peux changer la voix à tout moment</b> : bouton haut-parleur en haut de l’écran, ou « Choisir » pendant la séance. Par défaut, l’appli prend une voix féminine douce ; dans l’onglet Récup, elle se fait encore plus lente et plus posée.</p><div class="help-voice-row"><select class="help-voice-sel" aria-label="Voix des annonces"></select><button type="button" class="help-btn ghost help-voice-test">▶ Écouter</button></div><p class="help-voice-tip" hidden></p></section>'
       + '<section class="help-contact"><h3>Une autre question ?</h3><p>Écris à ton coach, il te répond directement.</p><div class="help-btns">'
       + (typeof COACH_WHATSAPP !== 'undefined' && COACH_WHATSAPP ? '<a class="help-btn" target="_blank" rel="noopener" href="https://wa.me/' + COACH_WHATSAPP + '?text=' + encodeURIComponent('Bonjour Benoît, j’ai une question sur l’appli Ethik’Coach : ') + '">WhatsApp</a>' : '')
       + (typeof COACH_EMAIL !== 'undefined' && COACH_EMAIL ? '<a class="help-btn ghost" href="mailto:' + COACH_EMAIL + '?subject=' + encodeURIComponent('Question sur l’appli Ethik’Coach') + '">E-mail</a>' : '')
@@ -10233,9 +10277,9 @@
         var q = /premium/i.test(v.name + v.voiceURI) ? ' · Premium' : (/enhanced|améliorée|neural|natural|online/i.test(v.name + v.voiceURI) ? ' · Améliorée' : '');
         return '<option value="' + esc(v.voiceURI) + '"' + (cur && cur.voiceURI === v.voiceURI ? ' selected' : '') + '>' + esc(v.name.replace(/\s*\(.*\)\s*$/, '')) + q + (/fr[-_]FR/i.test(v.lang) ? '' : ' (' + esc(v.lang) + ')') + '</option>';
       }).join('') : '<option>Voix du téléphone</option>';
-      var good = list.some(function(v){ return /premium|enhanced|améliorée|neural|natural|online|google/i.test(v.name + v.voiceURI); });
+      var good = cur && window.ecVoiceIsFemale && window.ecVoiceIsFemale(cur) && /premium|enhanced|améliorée|neural|natural|online|google/i.test(cur.name + cur.voiceURI);
       vTip.hidden = good || !list.length;
-      vTip.innerHTML = 'Aucune voix améliorée sur ce téléphone : tu peux en télécharger une gratuitement (voir la question « La voix fait robot » ci-dessus).';
+      vTip.innerHTML = 'Pour une voix féminine vraiment douce, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> ou <b>Premium</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français, puis choisis une voix féminine.<br>Ferme et rouvre l’appli : elle la prend automatiquement.';
     }
     vSel.addEventListener('change', function(){ if(window.ecVoiceSet) window.ecVoiceSet(vSel.value); if(window.ecVoiceTest) window.ecVoiceTest(); });
     wrap.querySelector('.help-voice-test').addEventListener('click', function(){ if(window.ecVoiceTest) window.ecVoiceTest(); });
@@ -11766,6 +11810,114 @@
     sideHook = function(c){ _sh(c); show(); };
     var _ex = exitWorkout;
     exitWorkout = function(){ var r = _ex.apply(this, arguments); if(!document.getElementById('timerBackdrop').classList.contains('open')) timerState.recup = false; return r; };
+  })();
+  // ---------- Choix de la voix : panneau rapide, accessible partout ----------
+  (function(){
+    if(!('speechSynthesis' in window)) return;
+    function lsg(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+    function lss(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+    function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    var ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+    function clean(v){ return v ? v.name.replace(/\s*\(.*\)\s*$/, '').replace(/^Microsoft |^Google /, '').replace(/ - .*$/, '').replace(/ Online.*$/, '') : ''; }
+    function quality(v){ var n = v.name + ' ' + v.voiceURI; return /premium/i.test(n) ? 'Premium' : (/enhanced|améliorée|amelioree|neural|natural|online/i.test(n) ? 'Améliorée' : ''); }
+    function gender(v){ return window.ecVoiceIsFemale && window.ecVoiceIsFemale(v) ? 'Féminine' : ''; }
+    function region(v){ return /fr[-_]CA/i.test(v.lang) ? 'Québec' : (/fr[-_]BE/i.test(v.lang) ? 'Belgique' : (/fr[-_]CH/i.test(v.lang) ? 'Suisse' : '')); }
+
+    // Panneau
+    var sh = document.createElement('div'); sh.className = 'vsheet'; sh.hidden = true;
+    sh.innerHTML = '<div class="vsheet-card" role="dialog" aria-modal="true" aria-labelledby="vsheetTitle">'
+      + '<div class="vsheet-head"><h2 id="vsheetTitle">Choisir la voix</h2><button type="button" class="vsheet-x" aria-label="Fermer">&times;</button></div>'
+      + '<p class="vsheet-sub">Touche une voix pour l’écouter : elle est aussitôt choisie pour toutes tes séances.</p>'
+      + '<div class="vsheet-list" role="radiogroup" aria-label="Voix disponibles"></div>'
+      + '<p class="vsheet-tip"></p>'
+      + '<button type="button" class="vsheet-ok">C’est parfait</button></div>';
+    document.body.appendChild(sh);
+    var list = sh.querySelector('.vsheet-list'), tip = sh.querySelector('.vsheet-tip'), lastFocus = null;
+    function sample(v){
+      try{ var sy = window.speechSynthesis; sy.cancel(); var u = new SpeechSynthesisUtterance('Bonjour. Installe-toi confortablement, et respire profondément.'); u.lang = v && v.lang || 'fr-FR'; if(v) u.voice = v; u.rate = 0.9; u.pitch = 0.97; sy.speak(u); }catch(e){}
+    }
+    function fill(){
+      var vs = window.ecVoiceList ? window.ecVoiceList() : [], cur = window.ecVoiceCurrent ? window.ecVoiceCurrent() : null;
+      if(!vs.length){ list.innerHTML = '<p class="vsheet-empty">Aucune voix française trouvée sur cet appareil.</p>'; }
+      else list.innerHTML = vs.slice(0, 12).map(function(v, i){
+        var on = cur && cur.voiceURI === v.voiceURI, tags = [gender(v), quality(v), region(v)].filter(Boolean);
+        return '<button type="button" class="vs-row' + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-uri="' + esc(v.voiceURI) + '">'
+          + '<span class="vs-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>'
+          + '<span class="vs-main"><span class="vs-name">' + esc(clean(v)) + (i === 0 ? ' <em>conseillée</em>' : '') + '</span>'
+          + (tags.length ? '<span class="vs-tags">' + tags.map(esc).join(' · ') + '</span>' : '') + '</span>'
+          + '<span class="vs-check" aria-hidden="true"></span></button>';
+      }).join('');
+      var good = cur && window.ecVoiceIsFemale && window.ecVoiceIsFemale(cur) && quality(cur);
+      tip.innerHTML = good ? '' : 'Pour une voix plus douce et naturelle, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français.<br>Puis ferme et rouvre l’appli.';
+      tip.hidden = !!good;
+    }
+    list.addEventListener('click', function(e){
+      var r = e.target.closest('.vs-row'); if(!r) return;
+      var uri = r.getAttribute('data-uri');
+      if(window.ecVoiceSet) window.ecVoiceSet(uri);
+      var v = (window.ecVoiceList() || []).filter(function(x){ return x.voiceURI === uri; })[0];
+      sample(v); fill();
+      var nr = list.querySelector('.vs-row.on'); if(nr) nr.focus();
+    });
+    var pausedByUs = false;
+    function inTimer(){ var bd = document.getElementById('timerBackdrop'); return bd && bd.classList.contains('open'); }
+    function open(){
+      lss('ec_voice_seen', '1'); paint();
+      pausedByUs = false;
+      if(inTimer() && timerState.running){ var pb = document.getElementById('timerPause'); if(pb){ pb.click(); pausedByUs = !timerState.running; } }
+      lastFocus = document.activeElement; fill(); sh.hidden = false;
+      requestAnimationFrame(function(){ sh.classList.add('show'); var on = list.querySelector('.vs-row.on') || list.querySelector('.vs-row'); if(on) try{ on.focus({preventScroll:true}); }catch(e){} });
+    }
+    function close(){
+      if(pausedByUs && inTimer() && !timerState.running){ var pb = document.getElementById('timerPause'); if(pb) pb.click(); }
+      pausedByUs = false;
+      sh.classList.remove('show'); setTimeout(function(){ sh.hidden = true; }, 200); try{ window.speechSynthesis.cancel(); }catch(e){} if(lastFocus && lastFocus.focus) try{ lastFocus.focus({preventScroll:true}); }catch(e){} }
+    window.ecOpenVoice = open;
+    sh.querySelector('.vsheet-x').addEventListener('click', close);
+    sh.querySelector('.vsheet-ok').addEventListener('click', close);
+    sh.addEventListener('click', function(e){ if(e.target === sh) close(); });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !sh.hidden){ e.stopPropagation(); close(); } }, true);
+
+    // 1) En-tête : bouton « voix » toujours visible, à côté du « ? »
+    var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'help-btn-head voice-head';
+    hb.innerHTML = ICON + '<span class="vh-dot" aria-hidden="true"></span>';
+    hb.addEventListener('click', open);
+    function placeHead(){ var hr = document.querySelector('.header-right'), q = hr && hr.querySelector('.help-btn-head:not(.voice-head)'); if(hr && !hb.parentNode) hr.insertBefore(hb, q || hr.firstChild); }
+    // 2) Chrono : « Changer » à côté du bouton Voix
+    var tv = document.getElementById('timerVoice'), tb = document.createElement('button');
+    tb.type = 'button'; tb.className = 'timer-voice timer-voice-pick'; tb.setAttribute('aria-label', 'Choisir la voix'); tb.innerHTML = '<span>Choisir</span>';
+    tb.addEventListener('click', open);
+    if(tv) tv.parentNode.insertBefore(tb, tv.nextSibling);
+    // 3) Onglet Récup : lien sous « Guidage pendant la séance »
+    function placeRecup(){
+      var g = document.getElementById('breathGuideGroup'); if(!g || g.parentNode.querySelector('.voice-link')) return;
+      var l = document.createElement('button'); l.type = 'button'; l.className = 'voice-link'; l.innerHTML = ICON + '<span class="vl-txt"></span><span class="vl-go">Changer</span>';
+      l.addEventListener('click', open); g.parentNode.insertBefore(l, g.nextSibling); paint();
+    }
+    // 4) Aide : bouton qui ouvre le même panneau
+    function paint(){
+      var n = clean(window.ecVoiceCurrent && window.ecVoiceCurrent());
+      hb.setAttribute('aria-label', 'Voix des annonces' + (n ? ' : ' + n : '') + '. Changer de voix'); hb.title = 'Voix : ' + (n || 'du téléphone');
+      hb.classList.toggle('new', !lsg('ec_voice_seen'));
+      document.querySelectorAll('.voice-link .vl-txt').forEach(function(t){ t.textContent = 'Voix : ' + (n || 'du téléphone'); });
+      document.querySelectorAll('.help-voice-cur').forEach(function(t){ t.textContent = n || 'voix du téléphone'; });
+    }
+    function mount(){
+      placeHead(); placeRecup();
+      var hv = document.querySelector('.help-voice');
+      if(hv && !hv.querySelector('.help-voice-open')){
+        var row = hv.querySelector('.help-voice-row'); if(row) row.hidden = true;
+        var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'help-btn help-voice-open'; bt.innerHTML = ICON + '<span>Choisir la voix · <b class="help-voice-cur"></b></span>';
+        bt.addEventListener('click', function(){ open(); });
+        hv.insertBefore(bt, row ? row.nextSibling : null);
+      }
+      paint();
+    }
+    document.addEventListener('ec-voice', paint);
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+    var mo = new MutationObserver(function(){ placeRecup(); placeHead(); var hv = document.querySelector('.help-voice'); if(hv && !hv.querySelector('.help-voice-open')) mount(); });
+    mo.observe(document.body, {childList:true, subtree:true});
+    setTimeout(paint, 1200);
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
