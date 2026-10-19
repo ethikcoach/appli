@@ -2590,6 +2590,13 @@
   /* Icône de la durée totale (pastille blanche) */
   .sh-tags span.sh-total > .ui-ico{display:inline-flex !important; width:1.05em !important; height:1.05em !important; padding:0 !important; background:none !important; color:inherit !important; font-size:inherit !important; border-radius:0 !important;}
   @media print{ .app > .intro::after, .results .session-head::after{display:none !important;} }
+  /* ---------- Chrono Récup : décompte en respirations ---------- */
+  .timer-countdown.cycles{letter-spacing:0; font-variant-numeric:tabular-nums;}
+  .timer-cycles-lbl{position:absolute; left:0; right:0; top:68%; margin:0; font-size:0.6rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#CFE6D4; opacity:0.85; text-align:center; pointer-events:none;}
+  .tc-ring:has(.timer-cycles-lbl:not([hidden])) .timer-countdown{transform:translateY(-8%);}
+  .timer-kind.recup-breath{transition:opacity .6s ease; letter-spacing:0.04em;}
+  .timer-kind.recup-breath.out{opacity:0.75;}
+  .help-voice-sel[hidden]{display:none !important;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -2753,6 +2760,7 @@
       <div class="chip-group stack">
         <button type="button" class="chip chip-toggle" id="noFloorChip" aria-pressed="false"><span class="toggle-box" aria-hidden="true"></span><span>Sans passage au sol<small>Aucun exercice allongé, assis au sol, à genoux ou à quatre pattes</small></span></button>
         <button type="button" class="chip chip-toggle" id="chairChip" aria-pressed="false"><span class="toggle-box" aria-hidden="true"></span><span>Séance sur chaise<small>Tout se fait assis ou avec la chaise : APA, mobilité réduite, reprise après blessure</small></span></button>
+        <button type="button" class="chip chip-toggle" id="noImpactChip" aria-pressed="false"><span class="toggle-box" aria-hidden="true"></span><span>Sans impact<small>Ni sauts, ni rebonds, ni course : articulations ménagées</small></span></button>
       </div>
     </div>
 
@@ -3755,13 +3763,17 @@
   }
 
   // ---------- State ----------
-  var state = {equip:['poids_du_corps'], level:'intermediaire', zone:'full', theme:'equilibre', duration:30, noFloor:false, chair:false};
+  var state = {equip:['poids_du_corps'], level:'intermediaire', zone:'full', theme:'equilibre', duration:30, noFloor:false, chair:false, noImpact:false};
 
   // Exercices qui demandent de descendre au sol (allongé, assis au sol, à genoux,
   // à quatre pattes, planche, mains au sol). Écartés avec l'option « Sans passage au sol ».
   var FLOOR_IDS = ['e7','e14','r4','p3','p4','p5','p8','p9','p10','p12','p14','p15','p16','p17','p18','p24','p25','p26','p27','p28','p29','p30','p31','p32','p34','p36','p37','p38','t5','t13','t18','t21','k10','k11','h3','b8','p48','b18','p49','n3','n7','n18','n22','n29','n32','n35','n38','n42','sb1','sb2','sb3','sb6','sb10'];
   EX.forEach(function(ex){ ex.floor = FLOOR_IDS.indexOf(ex.id) !== -1 || !!ex.gymFloor; });
   function floorOk(ex, noFloor){ return !noFloor || !ex.floor; }
+  // Option « Sans impact » : exercices avec sauts, rebonds, bonds ou course écartés
+  var IMPACT_IDS = ['e2','e3','e9','n4','cf24','p10','p11','p33','p34','t15','g58','cf10','cf22','cf25','cf26','cf38','n31','n41','c2','c3','c4','c14','c15','c16','c17','cf23'];
+  EX.forEach(function(ex){ ex.impact = IMPACT_IDS.indexOf(ex.id) !== -1; });
+  function impactOk(ex, noImpact){ return !noImpact || !ex.impact; }
 
   // Option « Sur chaise » : exercices assis ou en appui sur la chaise uniquement.
   var CHAIR_EXTRA = ['v1','b12','r1','r2','r3','r5'];
@@ -3882,6 +3894,11 @@
     state.noFloor = !state.noFloor;
     this.classList.toggle('active', state.noFloor);
     this.setAttribute('aria-pressed', state.noFloor ? 'true' : 'false');
+  });
+  document.getElementById('noImpactChip').addEventListener('click', function(){
+    state.noImpact = !state.noImpact;
+    this.classList.toggle('active', state.noImpact);
+    this.setAttribute('aria-pressed', state.noImpact ? 'true' : 'false');
   });
   document.getElementById('chairChip').addEventListener('click', function(){
     state.chair = !state.chair;
@@ -4356,7 +4373,7 @@
 
   // Petit bip de repère (10 s restantes : double bip ; 3, 2, 1 : bip court), même voix coupée
   function cueTone(n){
-    if(timerState.silent || timerState.calm) return;
+    if(timerState.silent || timerState.calm || timerState.recup) return;
     try{
       if(!timerState.audioCtx){ timerState.audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
       var ctx = timerState.audioCtx;
@@ -4454,8 +4471,9 @@
     var list = window.speechSynthesis.getVoices() || [];
     var fr = list.filter(function(v){ return /^fr(-|_|$)/i.test(v.lang); });
     voice.all = fr.slice().sort(function(a, b){ return voiceScore(b) - voiceScore(a); });
-    var want = null; try{ want = localStorage.getItem('ec_voice_uri'); }catch(e){}
-    voice.fr = (want && fr.filter(function(v){ return v.voiceURI === want; })[0]) || voice.all[0] || null;
+    // Voix unique : toujours la plus naturelle disponible (plus de choix manuel)
+    try{ localStorage.removeItem('ec_voice_uri'); }catch(e){}
+    voice.fr = voice.all[0] || null;
   }
   // Les voix les plus naturelles d'abord : premium / améliorées / neuronales, puis les voix classiques.
   // Les voix « fantaisie » d'iPhone (Grand-mère, Rocko…) passent en dernier.
@@ -4467,6 +4485,8 @@
     if(/enhanced|améliorée|amelioree|neural|natural|naturel|online/i.test(n)) sc += 40;
     if(/google/i.test(n)) sc += 25;
     if(/amélie|amelie|thomas|audrey|aurélie|aurelie|marie|daniel|denise|henri|vivienne|eloise|remy/i.test(n)) sc += 10;
+    // Voix au timbre plus doux et posé, à qualité égale
+    if(/amélie|amelie|audrey|aurélie|aurelie|marie|denise|vivienne|eloise|julie|léa|lea/i.test(n)) sc += 6;
     if(/fr[-_]FR/i.test(v.lang)) sc += 8;
     return sc;
   }
@@ -4503,7 +4523,7 @@
     opts = opts || {};
     if(timerState.silent) return;
     if(timerState.calmNoVoice && !opts.force) return;
-    if(timerState.calm && /^(\d+|Plus que dix secondes\.|Mi-parcours\.|Reprise\.|Pause\.)$/.test(text)) return;
+    if((timerState.calm || timerState.recup) && /^(\d+|Plus que dix secondes\.|Mi-parcours\.|Reprise\.|Pause\.)$/.test(text)) return;
     if(!voice.supported || !voice.on || !text) return;
     try{
       var synth = window.speechSynthesis;
@@ -4514,6 +4534,8 @@
       u.rate = opts.rate || ((((timerState.meta && timerState.meta.level) || (lastSession && lastSession.level)) === 'senior') ? 0.85 : 1);
       u.pitch = 1;
       u.volume = 1;
+      // Onglet Récup : voix plus lente, plus grave et plus douce
+      if(timerState.recup){ u.rate = Math.min(u.rate, 0.8); u.pitch = 0.92; u.volume = 0.85; }
       synth.speak(u);
     }catch(e){}
   }
@@ -5431,6 +5453,7 @@
       return ex.block==='echauffement'
         && ex.levels.indexOf(state.level)!==-1
         && floorOk(ex, state.noFloor)
+        && impactOk(ex, state.noImpact)
         && chairOk(ex, state.chair)
         && zoneMatch(state.zone, ex.zone)
         && !exBlocked(ex.id);
@@ -5439,6 +5462,7 @@
       return ex.block==='retour_calme'
         && ex.levels.indexOf(state.level)!==-1
         && floorOk(ex, state.noFloor)
+        && impactOk(ex, state.noImpact)
         && chairOk(ex, state.chair)
         && equipMatches(ex)
         && !(state.duration <= 10 && ex.type === 'continu')
@@ -5449,6 +5473,7 @@
         && ex.levels.indexOf(state.level)!==-1
         && equipMatches(ex)
         && floorOk(ex, state.noFloor)
+        && impactOk(ex, state.noImpact)
         && chairOk(ex, state.chair)
         && zoneMatch(state.zone, ex.zone)
         && !exBlocked(ex.id);
@@ -5464,6 +5489,7 @@
       return ex.block==='cardio'
         && ex.levels.indexOf(state.level)!==-1
         && state.equip.indexOf(ex.equipment)!==-1
+        && impactOk(ex, state.noImpact)
         && !exBlocked(ex.id);
     }) : [];
     // Routine courte de 10 min : échauffement articulaire classique, pas de bloc machine
@@ -5572,7 +5598,7 @@
     if(!silent && state.sport) title = 'Prépa ' + SPORT_LABEL[state.sport].toLowerCase().replace('vtt','VTT') + ' — ' + ZONE_LABEL[state.zone] + ' · ' + equipLabels;
     if(main.length === 0) rounds = 0;
 
-    var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, sport:(!silent && state.sport) || null};
+    var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, noImpact:!!state.noImpact, sport:(!silent && state.sport) || null};
     ensureWarmup(session);
     ensureCooldown(session);
     if(silent){ session.title = title; return session; }
@@ -5639,7 +5665,7 @@
     WORK_FACTOR = S.workFactor || 1;
     var r0 = S.rounds, main0 = S.main.slice(), n0 = main0.length;
     if(!S._fitExtra){
-      var ex0 = main0[main0.length - 1], extra = [], tmp = {warm:S.warm, cardio:S.cardio, main:main0.slice(), cool:S.cool, equip:S.equip, zone:S.zone, level:S.level, noFloor:S.noFloor, chair:S.chair};
+      var ex0 = main0[main0.length - 1], extra = [], tmp = {warm:S.warm, cardio:S.cardio, main:main0.slice(), cool:S.cool, equip:S.equip, zone:S.zone, level:S.level, noFloor:S.noFloor, chair:S.chair, noImpact:S.noImpact};
       for(var i = 0; i < 2; i++){
         var cands = replacementCandidates(tmp, ex0).filter(function(x){ return x.type === 'temps'; });
         if(!cands.length) break;
@@ -5721,7 +5747,7 @@
     }
     html += '<div class="session-head">';
     html += '<div><div class="session-title">'+title+'</div>';
-    html += '<div class="session-meta">'+LEVEL_LABEL[session.level]+' · '+(session.sport && SPORT_LABEL[session.sport] ? SPORT_LABEL[session.sport]+' ('+THEME_LABEL[session.theme].toLowerCase()+')' : THEME_LABEL[session.theme])+' · ⏱ Durée totale '+fmtTotal(sessionSeconds(session))+(session.rounds ? ' · '+session.rounds+' tour'+(session.rounds > 1 ? 's' : '') : '')+(session.chair ? ' · sur chaise' : (session.noFloor ? ' · sans passage au sol' : ''))+'</div>'
+    html += '<div class="session-meta">'+LEVEL_LABEL[session.level]+' · '+(session.sport && SPORT_LABEL[session.sport] ? SPORT_LABEL[session.sport]+' ('+THEME_LABEL[session.theme].toLowerCase()+')' : THEME_LABEL[session.theme])+' · ⏱ Durée totale '+fmtTotal(sessionSeconds(session))+(session.rounds ? ' · '+session.rounds+' tour'+(session.rounds > 1 ? 's' : '') : '')+(session.chair ? ' · sur chaise' : (session.noFloor ? ' · sans passage au sol' : ''))+(session.noImpact && !session.chair ? ' · sans impact' : '')+'</div>'
       + ((session.removed && session.removed.length) ? '<div class="removed-note">'+session.removed.length+' exercice'+(session.removed.length>1?'s':'')+' retiré'+(session.removed.length>1?'s':'')+' · <button type="button" data-undo-all>Tout remettre</button></div>' : '')
       + (session.main && session.main.length && !coachLocked(session) ? '<button type="button" class="time-adj-btn'+(session.adj ? ' on' : '')+'" data-time-adj>⏱ '+(session.adj ? 'Temps réglés · modifier' : 'Régler les temps')+'</button>' : '')
       + '</div>';
@@ -5865,6 +5891,7 @@
     var pool = EX.filter(function(x){
       if(used[x.id] || used[srcId(x)] || x.levels.indexOf(level)===-1 || x.block !== ex.block || exBlocked(x.id)) return false;
       if(!floorOk(x, !!session.noFloor)) return false;
+      if(!impactOk(x, !!session.noImpact)) return false;
       if(!chairOk(x, !!session.chair)) return false;
       if(x.block==='principal') return equipFits(x, equip) && zoneOk(x);
       if(x.block==='echauffement') return zoneOk(x);
@@ -5996,6 +6023,7 @@
       if(used[x.id] || x.block !== block || x.breath) return false;
       if(x.levels.indexOf(session.level) === -1) return false;
       if(!floorOk(x, !!session.noFloor)) return false;
+      if(!impactOk(x, !!session.noImpact)) return false;
       if(!chairOk(x, !!session.chair)) return false;
       if(showAll) return true;
       if(block === 'principal') return equipFits(x, equip) && zoneMatch(zone, x.zone);
@@ -6156,7 +6184,7 @@
     var name = (document.getElementById('athleteName').value || '').trim();
     var payload = {
       v:1, t:session.title, l:session.level, th:session.theme, r:session.rounds, d:session.durationMinutes,
-      e:session.equip || null, z:session.zone || null, nf:session.noFloor ? 1 : 0, ch:session.chair ? 1 : undefined, sp:session.sport || undefined,
+      e:session.equip || null, z:session.zone || null, nf:session.noFloor ? 1 : 0, ni:session.noImpact ? 1 : undefined, ch:session.chair ? 1 : undefined, sp:session.sport || undefined,
       w:idsOf(session.warm), c:idsOf(session.cardio), m:idsOf(session.main), k:idsOf(session.cool),
       n:name || undefined,
       by:EC_IS_COACH ? 'Benoît' : undefined,
@@ -6268,7 +6296,7 @@
       }).filter(Boolean),
       cardio: mapIds(data.c), main: mapIds(data.m), cool: mapIds(data.k),
       level: data.l, theme: data.th, rounds: data.r || 0, durationMinutes: data.d || 30,
-      equip: data.e || null, zone: data.z || null, noFloor: !!data.nf, chair: !!data.ch, sport: (data.sp && SPORT_LABEL[data.sp]) ? data.sp : null,
+      equip: data.e || null, zone: data.z || null, noFloor: !!data.nf, noImpact: !!data.ni, chair: !!data.ch, sport: (data.sp && SPORT_LABEL[data.sp]) ? data.sp : null,
       shared: true, sharedFor: data.n || '', sharedBy: data.by || '', coachMsg: data.cm || '', shownMinutes: data.mm || null
     };
     if(data.mb && typeof data.mb === 'object') session.mob = {g:String(data.mb.g || 'recup'), z:String(data.mb.z || 'full'), p:String(data.mb.p || 'sol')};
@@ -6418,7 +6446,7 @@
     currentProgram = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
       obj: progForm.obj, weeks: progForm.weeks, spw: progForm.spw, duration: state.duration,
-      level: state.level, equip: state.equip.slice(), noFloor: state.noFloor, chair: state.chair,
+      level: state.level, equip: state.equip.slice(), noFloor: state.noFloor, chair: state.chair, noImpact: !!state.noImpact,
       athlete: (document.getElementById('athleteName').value || '').trim(),
       blocks: blocks, done: {}
     };
@@ -6450,7 +6478,7 @@
     var ses = {
       warm: tpl.warm, cardio: tpl.cardio, main: tpl.main, cool: tpl.cool,
       level: currentProgram.level, theme: tpl.theme, rounds: tpl.rounds, durationMinutes: currentProgram.duration,
-      equip: currentProgram.equip, zone: tpl.zone, noFloor: currentProgram.noFloor, chair: !!currentProgram.chair,
+      equip: currentProgram.equip, zone: tpl.zone, noFloor: currentProgram.noFloor, chair: !!currentProgram.chair, noImpact: !!currentProgram.noImpact,
       workFactor: factorFor(week), programRef: {week: week, slot: slot}, title: tpl.title, composed: !!tpl.composed
     };
     if(tpl.adj) ses.adj = tpl.adj;
@@ -6542,7 +6570,7 @@
     return {z:t.zone, th:t.theme, r:t.rounds, t:t.title, cp:t.composed ? 1 : undefined, w:idsOf(t.warm), c:idsOf(t.cardio), m:idsOf(t.main), k:idsOf(t.cool), no:notesOf(t) || undefined, ad:addedOf(t) || undefined, aj:t.adj || undefined};
   }
   function programPayload(P){
-    return {v:1, kind:'p', id:P.id, o:P.obj, ti:P.title || undefined, wk:P.weeks, spw:P.spw, d:P.duration, l:P.level, e:P.equip, nf:P.noFloor?1:0, ch:P.chair?1:undefined, n:P.athlete || undefined,
+    return {v:1, kind:'p', id:P.id, o:P.obj, ti:P.title || undefined, wk:P.weeks, spw:P.spw, d:P.duration, l:P.level, e:P.equip, nf:P.noFloor?1:0, ni:P.noImpact?1:undefined, ch:P.chair?1:undefined, n:P.athlete || undefined,
       b:P.blocks.map(function(bl){ return bl.map(serializeTpl); })};
   }
   function programFromPayload(d, done){
@@ -6562,7 +6590,7 @@
       var aj = cleanAdj(t.aj); if(aj) tpl.adj = aj;
       return tpl;
     }); });
-    return {id:d.id || ('p'+Date.now()), obj:d.o, title:d.ti || '', by:d.by || '', cm:d.cm || '', weeks:d.wk, spw:d.spw, duration:d.d, level:d.l, equip:d.e || ['poids_du_corps'], noFloor:!!d.nf, chair:!!d.ch, athlete:d.n || '', blocks:blocks, done:done || {}};
+    return {id:d.id || ('p'+Date.now()), obj:d.o, title:d.ti || '', by:d.by || '', cm:d.cm || '', weeks:d.wk, spw:d.spw, duration:d.d, level:d.l, equip:d.e || ['poids_du_corps'], noFloor:!!d.nf, noImpact:!!d.ni, chair:!!d.ch, athlete:d.n || '', blocks:blocks, done:done || {}};
   }
   function saveProgram(){
     if(!currentProgram) return;
@@ -6796,6 +6824,7 @@
       equip: lastSession.equip || null,
       zone: lastSession.zone || null,
       noFloor: !!lastSession.noFloor,
+      noImpact: !!lastSession.noImpact,
       sport: lastSession.sport || null,
       chair: !!lastSession.chair,
       mob: lastSession.mob || undefined,
@@ -6843,6 +6872,7 @@
       equip: rec.equip || null,
       zone: rec.zone || null,
       noFloor: !!rec.noFloor,
+      noImpact: !!rec.noImpact,
       sport: rec.sport || null,
       chair: !!rec.chair,
       mob: rec.mob || undefined
@@ -6969,7 +6999,7 @@
     sequence.forEach(function(ex, idx){
       timeline.push({type:'work', label:ex.name, sublabel:'Respiration guidée', duration: scaleTempsRaw(ex, level, 'equilibre').secs, ex:ex, blockLabel:'Respiration & détente'});
       if(idx < sequence.length - 1){
-        timeline.push({type:'transition', label:'Transition', sublabel:'Installe-toi pour le prochain exercice', duration: transSec, ex:null, blockLabel:'Respiration & détente'});
+        timeline.push({type:'transition', label:'Respire profondément', sublabel:'Installe-toi pour le prochain exercice', duration: Math.max(10, transSec), ex:null, blockLabel:'Respiration & détente'});
       }
     });
     lastBreathSession = {sequence:sequence, timeline:timeline, level:level};
@@ -7004,14 +7034,14 @@
   var SETTINGS_KEY = 'ec_settings_v1';
   function saveSettings(){
     LS.set(SETTINGS_KEY, {r:{equip:state.equip, level:state.level, zone:state.zone, theme:state.theme, sport:state.sport || null,
-      duration:state.duration, noFloor:!!state.noFloor, chair:!!state.chair}, b:{duration:breathFormState.duration, profile:breathFormState.profile}});
+      duration:state.duration, noFloor:!!state.noFloor, chair:!!state.chair, noImpact:!!state.noImpact}, b:{duration:breathFormState.duration, profile:breathFormState.profile}});
   }
   function syncSettingsUI(){
     document.querySelectorAll('#equipGroup .chip').forEach(function(c){ c.classList.toggle('active', state.equip.indexOf(c.dataset.equip) !== -1); });
     document.querySelectorAll('#levelGroup .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.level === state.level); });
     syncZoneChips();
     document.querySelectorAll('#themeGroup .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.theme === state.theme && (c.dataset.sport || null) === (state.sport || null)); });
-    [['noFloorChip','noFloor'],['chairChip','chair']].forEach(function(p){ var c = $id(p[0]); c.classList.toggle('active', !!state[p[1]]); c.setAttribute('aria-pressed', state[p[1]] ? 'true' : 'false'); });
+    [['noFloorChip','noFloor'],['chairChip','chair'],['noImpactChip','noImpact']].forEach(function(p){ var c = $id(p[0]); c.classList.toggle('active', !!state[p[1]]); c.setAttribute('aria-pressed', state[p[1]] ? 'true' : 'false'); });
     $id('durationSelect').value = String(state.duration);
     document.querySelectorAll('#breathDurationGroup .chip').forEach(function(c){ c.classList.toggle('active', parseInt(c.dataset.breathDuration,10) === breathFormState.duration); });
     document.querySelectorAll('#breathSeniorGroup .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.breathProfile === breathFormState.profile); });
@@ -7028,7 +7058,7 @@
     if(ZONE_LABEL[r.zone]) state.zone = r.zone;
     if(document.querySelector('#themeGroup [data-theme="'+r.theme+'"]')){ state.theme = r.theme; state.sport = r.sport || null; }
     if([10,20,30,45,60].indexOf(r.duration) !== -1) state.duration = r.duration;
-    state.noFloor = !!r.noFloor; state.chair = !!r.chair;
+    state.noFloor = !!r.noFloor; state.chair = !!r.chair; state.noImpact = !!r.noImpact;
     var b = sv.b || {};
     if(document.querySelector('#breathDurationGroup [data-breath-duration="'+b.duration+'"]')) breathFormState.duration = b.duration;
     if(document.querySelector('#breathSeniorGroup [data-breath-profile="'+b.profile+'"]')) breathFormState.profile = b.profile;
@@ -7042,7 +7072,7 @@
   function recFromSession(sess, title){
     return {title:title || sess.title, level:sess.level, theme:sess.theme, rounds:sess.rounds, durationMinutes:sess.durationMinutes, workFactor:sess.programRef ? undefined : (sess.workFactor || undefined),
       warmIds:idsOf(sess.warm), cardioIds:idsOf(sess.cardio), mainIds:idsOf(sess.main), coolIds:idsOf(sess.cool),
-      equip:sess.equip || null, zone:sess.zone || null, noFloor:!!sess.noFloor, sport:sess.sport || null, chair:!!sess.chair,
+      equip:sess.equip || null, zone:sess.zone || null, noFloor:!!sess.noFloor, noImpact:!!sess.noImpact || undefined, sport:sess.sport || null, chair:!!sess.chair,
       notes:notesOf(sess), added:addedOf(sess), adj:sess.adj || undefined};
   }
   var qs = document.createElement('div');
@@ -7538,7 +7568,7 @@
     function speechSecs(t){ return Math.ceil(String(t).split(/\s+/).length / 2.1) + 2; }
     var planTechs = plan.map(function(p){ return BT[p[0]]; });
     var prep = Math.max(15, speechSecs(POSITION_TEXT[o.pos] + ' Première technique : ' + planTechs[0].name + '. ' + planTechs[0].intro));
-    var transFor = function(t){ return Math.max(8, speechSecs('Prochaine technique : ' + t.name + '. ' + t.intro)); };
+    var transFor = function(t){ return Math.max(10, speechSecs('Respire profondément. Prochaine technique : ' + t.name + '. ' + t.intro)); };
     var transTotal = function(){ return plan.slice(1).reduce(function(s, p){ return s + transFor(BT[p[0]]); }, 0); };
     var avail = o.duration * 60 - prep - transTotal();
     // Sur les séances courtes, on garde les techniques principales (au moins 40 s chacune)
@@ -7568,7 +7598,7 @@
     var timeline = [{type:'transition', prep:true, calm:true, label:'Installe-toi', sublabel:POSITION_TEXT[o.pos], duration:prep, ex:null, blockLabel:'Respiration & détente'}];
     blocks.forEach(function(b, i){
       timeline.push({type:'work', calm:true, label:b.ex.name, sublabel:i === 0 ? '' : '', duration:b.secs, ex:b.ex, blockLabel:'Respiration & détente'});
-      if(i < blocks.length - 1) timeline.push({type:'transition', calm:true, label:'Prochaine technique', sublabel:blocks[i + 1].ex.name, duration:transFor(BT[blocks[i + 1].ex.tech]), ex:null, blockLabel:'Respiration & détente'});
+      if(i < blocks.length - 1) timeline.push({type:'transition', calm:true, label:'Respire profondément', sublabel:'Ensuite : ' + blocks[i + 1].ex.name, duration:Math.max(10, transFor(BT[blocks[i + 1].ex.tech])), ex:null, blockLabel:'Respiration & détente'});
     });
     var secsTotal = timeline.reduce(function(s, st){ return s + st.duration; }, 0);
     return {blocks:blocks, timeline:timeline, level:BREATH_LEVEL[breathFormState.profile], profile:breathFormState.profile,
@@ -7669,6 +7699,9 @@
       if(breathFormState.guide.sound) playTone(kind === 'in' ? 440 : (kind === 'hold' ? 349 : 262), Math.min(1.2, ph.seconds * 0.5));
       if(breathFormState.guide.vibe){ try{ if(navigator.vibrate) navigator.vibrate(kind === 'in' ? 90 : (kind === 'hold' ? [30,60,30] : [40,80,40,80,40])); }catch(e){} }
       var tk = $id('timerKind'); tk.textContent = ph.label; tk.className = 'timer-kind calm breath-' + kind;
+    } else if(breathState.phases && timerState.recup){
+      var ph2 = breathState.phases[breathState.idx % breathState.phases.length], tk2 = $id('timerKind');
+      tk2.textContent = ph2.label; tk2.className = 'timer-kind work recup-breath ' + (/^(inspire|encore)/i.test(ph2.label) ? 'in' : 'out');
     }
     return _runBreathPhase();
   };
@@ -7680,7 +7713,7 @@
     if(!st || !st.calm) return;
     var kind = $id('timerKind');
     if(st.prep){ kind.textContent = 'Départ dans'; }
-    else if(st.type === 'transition'){ kind.textContent = 'Prochaine technique'; }
+    else if(st.type === 'transition'){ kind.textContent = 'Respire profondément'; }
     else if(st.ex && st.ex.cues){ kind.textContent = 'Laisse-toi guider'; }
     else if(breathState.phases){
       var cph = breathState.phases[breathState.idx % breathState.phases.length], cl = cph.label.toLowerCase();
@@ -7697,7 +7730,7 @@
         if(breathFormState.guide.vibe){ try{ if(navigator.vibrate) navigator.vibrate([200, 120, 200]); }catch(e){} }
       }
       stopSpeech();
-      speak((st.prep ? POSITION_TEXT[lastBreathSession ? lastBreathSession.position : 'assis'] + ' ' : '') + (st.prep ? 'Première technique : ' : 'Prochaine technique : ') + nextWork.ex.name + '. ' + nextWork.ex.intro, {rate:0.85});
+      speak((st.prep ? POSITION_TEXT[lastBreathSession ? lastBreathSession.position : 'assis'] + ' ' : '') + (st.prep ? 'Première technique : ' : 'Respire profondément. Prochaine technique : ') + nextWork.ex.name + '. ' + nextWork.ex.intro, {rate:0.85});
       $id('timerExSublabel').textContent = nextWork.ex.intro;
     }
     if(st.type === 'work' && st.ex && st.ex.cues){ $id('timerExSublabel').textContent = st.ex.intro; }
@@ -7721,7 +7754,7 @@
   };
   // Annonces : pas de décompte « 3, 2, 1 » ni de bips en mode calme
   var _playBeep = playBeep;
-  playBeep = function(){ if(timerState.calm) return; return _playBeep(); };
+  playBeep = function(){ if(timerState.calm) return; if(timerState.recup){ playTone(392, 1.1); return; } return _playBeep(); };
 
   // ---- Retour de fin de séance en mode calme ----
   var fb = $id('timerFeedback');
@@ -9503,6 +9536,7 @@
       debout: '<circle cx="12" cy="4" r="2"/><path d="M12 7v7.5M12 9.5l-4 3M12 9.5l4 3M12 14.5l-3 6M12 14.5l3 6"/>',
       nofloor: '<path d="M3 19h18"/><circle cx="12" cy="4" r="1.8"/><path d="M12 6.5v6M12 8.5l-3.5 2.5M12 8.5l3.5 2.5M12 12.5l-2.5 4.5M12 12.5l2.5 4.5"/><path d="M4 22 20 16" stroke-width="1.6"/>',
       chair: '<path d="M7.5 3v17M7.5 13h10v7M7.5 6.5h3.5M7.5 9.5h3.5M11 3.5v6.5"/>',
+      noimpact: '<path d="M3 20h18"/><circle cx="9" cy="4.5" r="1.8"/><path d="M9 7v6M9 9l-3 2M9 9l3 2M9 13l-2 5.5M9 13l2 5.5"/><path d="M18 15V6M15.6 8.4 18 6l2.4 2.4"/><path d="M14.5 15.5l7-7"/>',
       full: '<circle cx="12" cy="3.8" r="1.8"/><path d="M12 6.5v8M12 8.5H6.5M12 8.5h5.5M12 14.5l-3 6M12 14.5l3 6"/>',
       haut: '<circle cx="12" cy="4.5" r="2"/><path d="M5.5 9.5h13M5.5 9.5 4.5 5.5M18.5 9.5l1-4M9 9.5l1 9h4l1-9" stroke-width="2.3"/>',
       bas: '<path d="M8 4h8M8.5 4l-.5 7.5L7 20.5M15.5 4l.5 7.5 1 9M12 4v5" stroke-width="2.3"/><path d="M5 20.5h4M15 20.5h4"/>',
@@ -9521,7 +9555,7 @@
       p_posture: '<circle cx="12" cy="3.8" r="1.8"/><path d="M12 6.5v8.5M8.5 9h7M12 15l-2.5 5.5M12 15l2.5 5.5"/><path d="M6 3v18" stroke-dasharray="2 2.5"/>',
       p_autonomie: '<circle cx="10" cy="4" r="1.8"/><path d="M10 6.5 9 13l-2.5 7M9 13l3 7M10 8l4 2.5M14 10.5V20.5M14 10.5c0-1.5 2.5-1.5 2.5 0"/>'
     };
-    var SHORT = {nofloor:'Sans passage au sol', chair:'Sur chaise', full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage', haut_g:'Haut + gainage', bas_g:'Bas + gainage',
+    var SHORT = {nofloor:'Sans passage au sol', chair:'Sur chaise', noimpact:'Sans impact', full:'Corps complet', haut:'Haut du corps', bas:'Bas du corps', gainage:'Gainage', haut_g:'Haut + gainage', bas_g:'Bas + gainage',
       equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité', course:'Course &amp; trail', velo_sp:'Vélo', vtt:'VTT', kayak:'Canoë-kayak',
       poids_du_corps:'Poids du corps', barre_traction:'Barre traction', swissball:'Swiss ball', tapis:'Tapis', elliptique:'Elliptique', corde:'Corde',
       intermediaire:'Inter&shy;médiaire', senior:'Senior APA',
@@ -9576,10 +9610,10 @@
       new MutationObserver(sync).observe(group, {subtree:true, attributes:true, attributeFilter:['class']}); sync();
     }
     // Contrainte
-    var nf = document.getElementById('noFloorChip'), ch = document.getElementById('chairChip');
+    var nf = document.getElementById('noFloorChip'), ch = document.getElementById('chairChip'), ni = document.getElementById('noImpactChip');
     if(nf && ch){
       var cg = nf.parentNode; grid(cg); cg.classList.remove('stack'); cg.classList.add('two');
-      tile(nf, 'nofloor'); tile(ch, 'chair');
+      tile(nf, 'nofloor'); tile(ch, 'chair'); if(ni) tile(ni, 'noimpact');
     }
     // Zone de travail
     var zg = document.getElementById('zoneGroup');
@@ -9970,6 +10004,8 @@
     buildTimelineInner = function(S){
       var t = _bti(S);
       if(S && S.mob) t.forEach(function(st){
+        st.recup = true;
+        if(st.type === 'transition' && !st.prep){ st.duration = Math.max(10, st.duration || 0); st.label = 'Respire profondément'; }
         if(st.label === 'Récupération entre tours'){ st.duration = 10; st.label = 'Nouveau passage'; st.sublabel = 'On reprend les postures'; }
         else if(/^Tour \d+\/\d+$/.test(st.sublabel || '') && S.rounds > 1) st.sublabel = st.sublabel.replace('Tour', 'Passage');
       });
@@ -10121,6 +10157,7 @@
       ['⏱️', 'Pendant la séance', 'Le chrono te guide : annonces vocales, bips, consignes de l’exercice affichées en permanence et aperçu du suivant. Touche l’écran pour mettre en pause, glisse vers la gauche pour passer.']
     ];
     var QA = [
+      ['Démarrer', 'À quoi sert l’option « Sans impact » ?', 'Dans <b>Renfo › Options</b>, la tuile <b>Sans impact</b> retire tous les exercices avec sauts, rebonds, bonds ou course (squats sautés, burpees, jumping jacks, corde à sauter, course sur tapis…). Idéal pour ménager les articulations : reprise après blessure, surpoids, douleurs aux genoux ou au dos, seniors. Elle se cumule avec « Sans passage au sol » ; la tuile <b>+ Course à pied</b> est alors désactivée.'],
       ['Démarrer', 'Comment faire une séance mixte renfo + course ?', 'Dans <b>Renfo › Options</b>, touche la tuile <b>+ Course à pied</b> (à côté de « Sans passage au sol » et « Sur chaise ») et choisis la distance : 200 m, 400 m, 800 m ou 1 km. Une course est placée avant chaque tour du circuit, à la place de la récupération, et le renfo est réduit pour garder la durée choisie. Un footing d’échauffement est ajouté au début. La séance s’enregistre et se partage comme les autres.'],
       ['Démarrer', 'Comment faire une séance CrossFit ou HYROX ?', 'Dans <b>Renfo</b>, touche <b>⚡ CrossFit / HYROX</b> en haut. <b>HYROX</b> : les stations de la course dans l’ordre (SkiErg, traîneau, burpees, rameur, farmer carry, fentes sandbag, wall balls), avec en option <b>🏃 la course à pied</b> avant chaque station (250 m, 500 m ou 1 km) et une <b>simulation complète</b>. <b>CrossFit</b> : un WOD en <b>AMRAP</b>, <b>EMOM</b>, <b>Tabata</b> ou <b>EMOM + AMRAP</b>. L’appli utilise ton matériel (mode 🏋️ Salle conseillé) et remplace ce qui manque par un exercice équivalent. Comme toute séance, tu peux l’<b>enregistrer en favori</b> ou l’<b>envoyer</b> : la personne reçoit exactement le même WOD.'],
       ['Démarrer', 'Comment lancer ma première séance ?', 'Dans <b>Renfo</b> (ou <b>Récup</b>), règle tes choix puis touche <b>Générer ma séance</b>. Vérifie la séance proposée, puis touche <b>Démarrer la séance ▶</b> : le chrono s’ouvre et te guide jusqu’au bout.'],
@@ -10165,7 +10202,7 @@
           return '<div class="help-cat"><h4>' + esc(c) + '</h4>' + QA.filter(function(q){ return q[0] === c; }).map(function(q){
             return '<details class="help-q"><summary>' + esc(q[1]) + '</summary><p>' + q[2] + '</p></details>'; }).join('') + '</div>';
         }).join('') + '<p class="help-none" hidden>Aucune question ne correspond. Écris directement à ton coach.</p></section>'
-      + '<section class="help-voice"><h3>Voix des annonces</h3><p>Choisis la voix qui te guide pendant les séances. Les voix « Améliorée » ou « Premium » sont les plus naturelles.</p><div class="help-voice-row"><select class="help-voice-sel" aria-label="Voix des annonces"></select><button type="button" class="help-btn ghost help-voice-test">▶ Écouter</button></div><p class="help-voice-tip" hidden></p></section>'
+      + '<section class="help-voice"><h3>Voix des annonces</h3><p>L’appli choisit automatiquement la voix la plus naturelle de ton téléphone. Dans l’onglet Récup, elle se fait plus lente et plus douce.</p><div class="help-voice-row"><select class="help-voice-sel" aria-label="Voix des annonces" hidden></select><button type="button" class="help-btn ghost help-voice-test">▶ Écouter la voix</button></div><p class="help-voice-tip" hidden></p></section>'
       + '<section class="help-contact"><h3>Une autre question ?</h3><p>Écris à ton coach, il te répond directement.</p><div class="help-btns">'
       + (typeof COACH_WHATSAPP !== 'undefined' && COACH_WHATSAPP ? '<a class="help-btn" target="_blank" rel="noopener" href="https://wa.me/' + COACH_WHATSAPP + '?text=' + encodeURIComponent('Bonjour Benoît, j’ai une question sur l’appli Ethik’Coach : ') + '">WhatsApp</a>' : '')
       + (typeof COACH_EMAIL !== 'undefined' && COACH_EMAIL ? '<a class="help-btn ghost" href="mailto:' + COACH_EMAIL + '?subject=' + encodeURIComponent('Question sur l’appli Ethik’Coach') + '">E-mail</a>' : '')
@@ -10821,10 +10858,10 @@
         Object.keys(P.done || {}).forEach(function(k){ var p = k.split('-'); if(P.done[k] && +p[0] < o.weeks && +p[1] < o.spw) done[k] = true; });
         return window.ecStartMobProgram({obj:P.obj, t:P.title, id:P.cat, g:P.mob.g, p:P.mob.p, l:P.mob.l, zones:P.mob.zones || ['full'], w:o.weeks, s:o.spw, d:o.duration}, {id:P.id, done:done, athlete:P.athlete});
       }
-      var keepS = {duration:state.duration, level:state.level, noFloor:state.noFloor, chair:state.chair, equip:state.equip.slice()};
+      var keepS = {duration:state.duration, level:state.level, noFloor:state.noFloor, chair:state.chair, noImpact:state.noImpact, equip:state.equip.slice()};
       var keepF = {obj:progForm.obj, weeks:progForm.weeks, spw:progForm.spw};
       progForm.obj = P.obj; progForm.weeks = o.weeks; progForm.spw = o.spw;
-      state.duration = o.duration; state.level = P.level; state.noFloor = P.noFloor; state.chair = !!P.chair; state.equip = P.equip.slice();
+      state.duration = o.duration; state.level = P.level; state.noFloor = P.noFloor; state.chair = !!P.chair; state.noImpact = !!P.noImpact; state.equip = P.equip.slice();
       var old = P, ok = false;
       try{
         generateProgram();
@@ -10842,7 +10879,7 @@
           currentProgram = N; ok = true;
         } else currentProgram = old;
       }catch(e){ currentProgram = old; }
-      state.duration = keepS.duration; state.level = keepS.level; state.noFloor = keepS.noFloor; state.chair = keepS.chair; state.equip = keepS.equip;
+      state.duration = keepS.duration; state.level = keepS.level; state.noFloor = keepS.noFloor; state.chair = keepS.chair; state.noImpact = keepS.noImpact; state.equip = keepS.equip;
       progForm.obj = keepF.obj; progForm.weeks = keepF.weeks; progForm.spw = keepF.spw;
       try{ syncSettingsUI(); }catch(e){}
       if(ok){ saveProgram(); showProgram(false); }
@@ -11167,7 +11204,7 @@
   // ---------- Séances CrossFit et HYROX (formats AMRAP, EMOM, Tabata, course + stations) ----------
   (function(){
     function X(id){ return exById(id); }
-    function okEq(ex){ return !!ex && (equipMatches(ex) || [].concat(ex.equipment || []).join() === 'poids_du_corps') && (!state.noFloor || !ex.floor); }
+    function okEq(ex){ return !!ex && (equipMatches(ex) || [].concat(ex.equipment || []).join() === 'poids_du_corps') && (!state.noFloor || !ex.floor) && (!state.noImpact || !ex.impact); }
     function first(ids){ for(var i = 0; i < ids.length; i++){ var e = X(ids[i]); if(e && okEq(e)) return e; } return null; }
     function shuffle(a){ a = a.slice(); for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     var LV = function(){ return state.level === 'senior' ? 'debutant' : state.level; };
@@ -11434,7 +11471,7 @@
     var chip = null, seg = null, wrap = null;
     if(grid){
       var lab = field.querySelector('.field-label'); if(lab) lab.textContent = 'Options';
-      grid.classList.remove('two'); grid.classList.add('three');
+      grid.classList.remove('two'); grid.classList.remove('three'); grid.classList.add('two');
       chip = document.createElement('button'); chip.type = 'button'; chip.className = 'chip chip-toggle tile'; chip.id = 'runMixChip'; chip.setAttribute('aria-pressed', 'false');
       chip.setAttribute('aria-label', 'Ajouter de la course à pied');
       chip.innerHTML = '<span class="toggle-box" aria-hidden="true"></span><span class="t-ico">' + RUN_SVG + '</span><span class="t-lab">+ Course à pied</span><small>Une course avant chaque tour du circuit, à la place de la récupération. Le renfo s’adapte pour garder la durée</small>';
@@ -11446,7 +11483,7 @@
     }
     function paint(){
       if(!chip) return;
-      var dis = !!state.chair;
+      var dis = !!state.chair || !!state.noImpact;
       chip.classList.toggle('active', R.on && !dis); chip.setAttribute('aria-pressed', R.on && !dis ? 'true' : 'false');
       chip.classList.toggle('rm-dis', dis); chip.disabled = dis;
       wrap.hidden = !R.on || dis;
@@ -11455,10 +11492,10 @@
     if(chip){
       chip.addEventListener('click', function(){ R.on = !R.on; save(); paint(); });
       seg.addEventListener('click', function(e){ var b = e.target.closest('[data-d]'); if(!b) return; R.d = +b.getAttribute('data-d'); save(); paint(); });
-      var cc = document.getElementById('chairChip'); if(cc) cc.addEventListener('click', function(){ setTimeout(paint, 0); });
+      ['chairChip','noImpactChip'].forEach(function(id){ var cc = document.getElementById(id); if(cc) cc.addEventListener('click', function(){ setTimeout(paint, 0); }); });
       paint();
     }
-    window.ecRunMix = function(){ return R.on && !state.chair ? {d:R.d} : null; };
+    window.ecRunMix = function(){ return R.on && !state.chair && !state.noImpact ? {d:R.d} : null; };
     // À la génération : on marque la séance et on ajoute un footing d'échauffement
     var _aa = window.ecAutoAdapt;
     window.ecAutoAdapt = function(S){
@@ -11666,6 +11703,69 @@
     });
     new MutationObserver(function(){ if(document.querySelector('.yt-banner')) apply(); }).observe(document.body, {subtree:true, childList:true});
     apply();
+  })();
+  // ---------- Onglet Récup : ambiance douce, transitions « Respire profondément », décompte en respirations ----------
+  (function(){
+    var CYCLE = 8, IN = 3;   // un cycle respiratoire calme : 3 s d'inspiration, 5 s d'expiration
+    function isRecupTl(tl){ return !!(tl && tl.length && (tl[0].calm || tl[0].recup || (tl[1] && tl[1].recup))); }
+    var _sw = startWorkout;
+    startWorkout = function(tl){
+      var t = (tl && typeof tl.length === 'number') ? tl : buildTimeline();
+      timerState.recup = isRecupTl(t); timerState.recupRythme = false;
+      var r = _sw.apply(this, arguments);
+      // Le « Prépare-toi » ajouté au départ reste dans l'ambiance Récup
+      var t0 = timerState.timeline && timerState.timeline[0];
+      if(timerState.recup && t0 && t0.prep && !t0.calm){ t0.recup = true; t0.label = 'Installe-toi'; }
+      return r;
+    };
+    function holdStep(st){ return !!(timerState.recup && st && st.type === 'work' && st.ex && !st.ex.breath && st.ex.mob && st.ex.mob.k !== 'dyn'); }
+    function cyclesOf(sec){ return Math.max(1, Math.round(sec / CYCLE)); }
+    var _an = announceStep;
+    announceStep = function(i){
+      var st = timerState.timeline[i];
+      if(!timerState.recup || !st || st.calm) return _an(i);
+      var nx = nextExerciseAfter(i);
+      if(st.prep){ speak('Installe-toi confortablement. ' + (nx ? 'Première posture : ' + nx.name + '.' : '')); return; }
+      if(st.type === 'transition' || st.type === 'rest'){ speak('Respire profondément.' + (nx ? ' Ensuite : ' + nx.name + '.' : '')); return; }
+      if(holdStep(st)){
+        var n = cyclesOf(st.side ? st.side.secs : st.duration);
+        var rythme = '';
+        if(!timerState.recupRythme){ timerState.recupRythme = true; rythme = ' Inspire sur ' + IN + ' secondes, expire sur ' + (CYCLE - IN) + '.'; }
+        speak(st.label + '. ' + n + ' respirations' + (st.side ? ' de chaque côté' : '') + '.' + rythme);
+        return;
+      }
+      return _an(i);
+    };
+    // Affichage : le nombre de respirations restantes à la place des secondes
+    var cd = document.getElementById('timerCountdown'), lbl = document.createElement('div');
+    lbl.className = 'timer-cycles-lbl'; lbl.hidden = true; cd.parentNode.insertBefore(lbl, cd.nextSibling);
+    function show(){
+      var st = timerState.timeline && timerState.timeline[timerState.index], kind = document.getElementById('timerKind');
+      cd.classList.remove('cycles'); lbl.hidden = true;
+      if(!timerState.recup || !st) return;
+      cd.classList.remove('urgent');
+      if(!st.calm && (st.type === 'transition' || st.type === 'rest') && kind){ kind.textContent = st.prep ? 'Installe-toi' : 'Respire profondément'; }
+      if(st.type === 'work' && !st.calm && !(st.ex && st.ex.breath) && kind && !holdStep(st) && !st.side) kind.textContent = 'Mouvement lent';
+      if(!holdStep(st)) return;
+      var el = st.duration - timerState.remaining, left = timerState.remaining, inPhase = el, side = '';
+      if(st.side){
+        var a = st.side.secs, sw = st.side.sw;
+        if(el < a){ left = a - el; side = 'Côté 1/2 · '; }
+        else if(el < a + sw){ return; }
+        else { left = st.duration - el; inPhase = el - a - sw; side = 'Côté 2/2 · '; }
+      }
+      var n = Math.max(1, Math.ceil(left / CYCLE));
+      cd.textContent = String(n); cd.classList.add('cycles');
+      lbl.textContent = n > 1 ? 'respirations' : 'respiration'; lbl.hidden = false;
+      var ph = inPhase % CYCLE, isIn = ph < IN, rem = isIn ? IN - ph : CYCLE - ph;
+      if(kind){ kind.textContent = side + (isIn ? 'Inspire' : 'Expire') + ' · ' + rem + ' s'; kind.className = 'timer-kind work recup-breath ' + (isIn ? 'in' : 'out'); }
+      var sub = document.getElementById('timerExSublabel');
+      if(sub){ var rt = 'Rythme : inspire ' + IN + ' s · expire ' + (CYCLE - IN) + ' s'; var tr = /^Tour \d+\/\d+/.exec(st.sublabel || ''); rt = (tr ? tr[0] + ' · ' : '') + rt; if(sub.textContent !== rt) sub.textContent = rt; }
+    }
+    var _sh = sideHook;
+    sideHook = function(c){ _sh(c); show(); };
+    var _ex = exitWorkout;
+    exitWorkout = function(){ var r = _ex.apply(this, arguments); if(!document.getElementById('timerBackdrop').classList.contains('open')) timerState.recup = false; return r; };
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
