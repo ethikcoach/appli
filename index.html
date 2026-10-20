@@ -2335,6 +2335,14 @@
   /* ---------- Séance du jour ---------- */
   .today-card{position:relative; background:var(--card); border-radius:var(--r-card, 20px); box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,0.06)); padding:16px 16px 14px; margin:12px 0; border-left:5px solid var(--sage);}
   .today-card[hidden], .app.collapsed > .today-card{display:none;}
+  /* iPad / ordinateur : la carte du jour prend toute la largeur, boutons à droite */
+  @media (min-width:861px){
+    #renfoView > .today-card:not([hidden]){grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:28px; align-items:center; margin:-12px 0 0; padding:18px 22px;}
+    #renfoView > .today-card .tc-kicker, #renfoView > .today-card .tc-title, #renfoView > .today-card .tc-why{grid-column:1;}
+    #renfoView > .today-card .tc-why{margin-bottom:0;}
+    #renfoView > .today-card .tc-btns{grid-column:2; grid-row:1 / span 3; min-width:340px;}
+    #renfoView > .today-card .tc-tests{grid-column:1 / -1; margin-top:14px;}
+  }
   .tc-kicker{font-size:0.75rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--sage);}
   .tc-title{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.3rem; line-height:1.2; margin-top:2px; color:var(--ink);}
   .tc-why{margin:6px 0 12px; font-size:0.9rem; line-height:1.4; color:var(--stone);}
