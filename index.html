@@ -2642,6 +2642,9 @@
   .vsheet-tip{margin:12px 0 0; padding:10px 12px; border-radius:14px; background:var(--card); font-size:0.85rem; line-height:1.45; color:var(--stone);}
   .vsheet-tip[hidden]{display:none;}
   .vsheet-ok{display:block; width:100%; min-height:50px; margin-top:14px; border:none; border-radius:999px; background:var(--forest); color:#fff; font:700 1rem 'Inter',sans-serif; cursor:pointer;}
+  .sv-ios-warn{background:#FFF4E5; color:#6B3B00 !important; border-radius:12px; padding:10px 12px;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .sv-ios-warn{background:#3A2A12; color:#F5D9B0 !important;} }
+  :root[data-theme="dark"] .sv-ios-warn{background:#3A2A12; color:#F5D9B0 !important;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -10228,7 +10231,7 @@
       ['Ma séance', 'Comment partager une séance ?', 'Touche <b>✉ Envoyer</b> sous la séance : un lien est créé, à partager par message. Il ouvre la séance directement chez la personne. Elle doit avoir elle-même un accès à l’appli.'],
       ['Pendant la séance', 'Comment mettre en pause ou passer un exercice ?', 'Touche <b>Pause</b>, ou n’importe où sur l’écran ; touche à nouveau pour reprendre. Pour passer à la suite, touche <b>Passer ▶</b> ou glisse vers la gauche.'],
       ['Pendant la séance', 'Je n’entends pas la voix.', 'Vérifie que le bouton <b>Voix</b> est activé en haut du chrono, que le volume est monté et, sur iPhone, que le mode silencieux est désactivé. Avec des écouteurs Bluetooth, la voix passe par eux.'],
-      ['Pendant la séance', 'La voix fait « robot ». Peut-on la rendre plus naturelle ?', 'La voix vient de ton téléphone. Change-la avec le <b>bouton haut-parleur</b> en haut de l’écran (ou « Choisir » pendant la séance). Pour une voix beaucoup plus naturelle, télécharge une voix améliorée (gratuit) :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › <b>Audrey</b>, version <b>Améliorée</b> ou <b>Premium</b>.<br><b>Android</b> : la voix se règle dans le téléphone (l’appli ne peut pas la choisir elle-même) : Paramètres › Synthèse vocale › moteur <b>Services vocaux Google</b> › ⚙ › Installer les données vocales › Français (France) › touche la voix voulue. Ferme ensuite complètement Chrome et l’appli avant de rouvrir.<br>Ferme et rouvre ensuite l’appli : la meilleure voix est choisie automatiquement.'],
+      ['Pendant la séance', 'La voix fait « robot ». Peut-on la rendre plus naturelle ?', 'La voix vient de ton téléphone. Change-la avec le <b>bouton haut-parleur</b> en haut de l’écran (ou « Choisir » pendant la séance). Pour une voix beaucoup plus naturelle, télécharge une voix améliorée (gratuit) :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › <b>Audrey</b>, version <b>Améliorée</b> ou <b>Premium</b>. Selon la version d’iOS, Safari ne la propose pas toujours aux applis web : si elle n’apparaît pas, garde Audrey ou Amélie.<br><b>Android</b> : la voix se règle dans le téléphone (l’appli ne peut pas la choisir elle-même) : Paramètres › Synthèse vocale › moteur <b>Services vocaux Google</b> › ⚙ › Installer les données vocales › Français (France) › touche la voix voulue. Ferme ensuite complètement Chrome et l’appli avant de rouvrir.'],
       ['Pendant la séance', 'L’écran s’éteint pendant la séance.', 'L’appli demande au téléphone de garder l’écran allumé, mais certains réglages d’économie d’énergie l’en empêchent. Installe l’appli sur ton écran d’accueil et, si besoin, allonge le délai de verrouillage automatique dans les réglages du téléphone.'],
       ['Pendant la séance', 'J’ai quitté l’appli en pleine séance.', 'Pas de souci : à ton retour, la carte <b>Séance interrompue</b> te propose de <b>Reprendre</b> là où tu t’étais arrêté.'],
       ['Pendant la séance', 'J’ai une douleur pendant un exercice.', 'Arrête l’exercice. Une gêne légère peut se gérer en réduisant l’amplitude ou en remplaçant l’exercice ; une vraie douleur, non. Signale-la dans le retour de fin de séance pour que ton coach adapte la suite, et consulte un professionnel de santé si elle persiste.'],
@@ -11864,7 +11867,7 @@
           + '<span class="vs-check" aria-hidden="true"></span></button>';
       }).join('');
       var good = !ANDROID && cur && window.ecVoiceIsFemale && window.ecVoiceIsFemale(cur) && quality(cur);
-      tip.innerHTML = good ? '' : ANDROID ? ANDROID_TIP : 'Pour une voix plus douce et naturelle, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français.<br>Puis ferme et rouvre l’appli.';
+      tip.innerHTML = good ? '' : ANDROID ? ANDROID_TIP : 'Pour une voix plus douce et naturelle, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br>Puis ferme et rouvre l’appli.<br><i>Attention : selon la version d’iOS, Safari ne propose pas toujours les voix téléchargées aux applis web. Si Audrey Améliorée n’apparaît pas dans la liste après réouverture, c’est une limite d’Apple : garde Audrey ou Amélie.</i>';
       tip.hidden = !!good;
     }
     list.addEventListener('click', function(e){
@@ -11934,6 +11937,19 @@
     var mo = new MutationObserver(function(){ placeRecup(); placeHead(); var hv = document.querySelector('.help-voice'); if(hv && !hv.querySelector('.help-voice-open')) mount(); });
     mo.observe(document.body, {childList:true, subtree:true});
     setTimeout(paint, 1200);
+  })();
+  // ---------- Données conservées : demande au navigateur de ne pas effacer le suivi ----------
+  (function(){
+    try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(function(p){ if(!p) navigator.storage.persist().catch(function(){}); }).catch(function(){}); }catch(e){}
+    // iPhone / iPad dans Safari (pas depuis l'écran d'accueil) : Safari peut effacer les données après 7 jours sans visite
+    var ua = navigator.userAgent || '';
+    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    if(!ios || standalone) return;
+    var ex = document.getElementById('svExport'), hint = ex && ex.parentNode.previousElementSibling; if(!hint) return;
+    var w = document.createElement('p'); w.className = 'sv-hint sv-ios-warn';
+    w.innerHTML = '<b>Sur iPhone, installe l’appli sur ton écran d’accueil</b> (Safari › Partager › Sur l’écran d’accueil) : utilisée seulement dans Safari, tes données peuvent être effacées après 7 jours sans ouverture.';
+    hint.parentNode.insertBefore(w, hint.nextSibling);
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
