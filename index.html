@@ -607,6 +607,8 @@
   .fb-input{width:100%; margin-top:8px; font-family:'Inter',sans-serif; font-size:16px; color:#fff; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); border-radius:6px; padding:10px 12px;}
   .fb-input::placeholder{color:rgba(255,255,255,0.5);}
   .fb-input[hidden]{display:none;}
+  label.fb-q{display:block;}
+  .fb-name{margin-top:0;}
   textarea.fb-input{resize:vertical; min-height:64px; line-height:1.4;}
   .fb-send{margin-top:18px;}
   .fb-main{width:100%; min-height:54px; background:var(--sage); color:var(--forest-dark); border:none; border-radius:var(--radius); font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:1.05rem; cursor:pointer;}
@@ -3316,6 +3318,8 @@
       <div class="fb-q">Un mot pour ton coach ?</div>
       <textarea class="fb-input" id="fbComment" rows="2" maxlength="400" placeholder="Facultatif : ce qui était facile, difficile, ce que tu as adapté…"></textarea>
       <div class="fb-send">
+        <label class="fb-q" for="fbName">Ton nom et prénom</label>
+        <input type="text" class="fb-input fb-name" id="fbName" maxlength="60" autocomplete="name" autocapitalize="words" placeholder="ex. Marie Dupont">
         <div class="fb-q">Envoie ton retour au coach</div>
         <button type="button" class="fb-main" id="fbShare">Envoyer…</button>
         <div class="fb-channels">
@@ -4983,6 +4987,8 @@
     document.getElementById('fbPainWhere').hidden = true;
     document.getElementById('fbPainWhere').value = '';
     document.getElementById('fbComment').value = '';
+    (function(){ var f = document.getElementById('fbName'); if(!f || f.value.trim()) return; var v = ''; try{ v = localStorage.getItem('ec_fb_name') || ''; }catch(e){}
+      if(!v){ try{ if(typeof EC_USER !== 'undefined' && EC_USER && EC_USER.n && !EC_IS_COACH) v = EC_USER.n; }catch(e){} } f.value = v; })();
     document.getElementById('fbShare').style.display = navigator.share ? '' : 'none';
     document.getElementById('timerBackdrop').classList.add('feedback');
     document.getElementById('timerFeedback').hidden = false;
@@ -4993,7 +4999,7 @@
   function feedbackMessage(){
     var st = timerState.stats || sessionStats();
     var meta = timerState.meta || {};
-    var name = (document.getElementById('athleteName').value || '').trim();
+    var name = ((document.getElementById('fbName') || {}).value || '').trim() || (document.getElementById('athleteName').value || '').trim();
     var date = (document.getElementById('athleteDate').value || '').trim();
     var lines = ["Retour de séance — Ethik'Coach"];
     if(name || date) lines.push('👤 ' + [name, date].filter(Boolean).join(' · '));
@@ -5034,7 +5040,8 @@
     if(!w.hidden) setTimeout(function(){ w.focus(); }, 30);
     refreshFeedbackLinks();
   });
-  ['fbPainWhere','fbComment'].forEach(function(id){ document.getElementById(id).addEventListener('input', refreshFeedbackLinks); });
+  ['fbPainWhere','fbComment','fbName'].forEach(function(id){ document.getElementById(id).addEventListener('input', refreshFeedbackLinks); });
+  document.getElementById('fbName').addEventListener('change', function(){ try{ var v = this.value.trim(); if(v) localStorage.setItem('ec_fb_name', v); else localStorage.removeItem('ec_fb_name'); }catch(e){} });
   document.getElementById('fbShare').addEventListener('click', function(){
     var msg = feedbackMessage();
     if(navigator.share){
