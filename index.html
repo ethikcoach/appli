@@ -9972,22 +9972,33 @@
     var LVL = {debutant:'Doux', intermediaire:'Normal', avance:'Profond'};
     var mob = {g:'recup', d:15, z:'full', p:'sol', l:'intermediaire'};
     try{ var sv = JSON.parse(localStorage.getItem('ec_mob_form') || 'null'); if(sv && GOALS[sv.g]) mob = Object.assign(mob, sv); }catch(e){}
-    mob.p = normP(mob.p);
+    mob.p = normP(mob.p); mob.z = normZ(mob.z);
     function saveForm(){ try{ localStorage.setItem('ec_mob_form', JSON.stringify(mob)); }catch(e){} }
 
     function posOk(x, p){ return hasP(p, PL[x.mob.p] || 's'); }
-    function zoneOk(x, z){ return z === 'full' || x.mob.z.indexOf(z) > -1; }
+    // Zones : « full » ou plusieurs zones séparées par des virgules (ex. « bas,dos »)
+    function zs(z){ var a = String(z || 'full').split(',').filter(function(k){ return ZONES[k] && k !== 'full'; }); return a.length && a.length < 3 ? a : []; }
+    function normZ(z){ var a = zs(z); return a.length ? a.join(',') : 'full'; }
+    function zoneLabel(z){ var a = zs(z); return a.length ? a.map(function(k){ return ZONES[k]; }).join(' + ') : ZONES.full; }
+    function zoneOk(x, z){ var a = zs(z); return !a.length || a.some(function(k){ return x.mob.z.indexOf(k) > -1; }); }
     function pool(o, used){ return EX.filter(function(x){ return x.mob && !used[x.id] && !exBlocked(x.id) && posOk(x, o.p); }); }
     function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     function rank(list, o){
-      return shuffle(list.slice()).map(function(x){ return {x:x, s:(x.mob.g.indexOf(o.g) > -1 ? 4 : 0) + (zoneOk(x, o.z) ? 2 : 0) + (['recup','soir','yoga'].indexOf(o.g) > -1 && hasP(o.p, 's') && x.mob.p === 'sol' ? 5 : 0) + Math.random()}; })
+      return shuffle(list.slice()).map(function(x){ return {x:x, s:(x.mob.g.indexOf(o.g) > -1 ? 4 : 0) + (zs(o.z).length && zoneOk(x, o.z) ? 6 : 0) + (['recup','soir','yoga'].indexOf(o.g) > -1 && hasP(o.p, 's') && x.mob.p === 'sol' ? 5 : 0) + Math.random()}; })
         .sort(function(a, b){ return b.s - a.s; }).map(function(r){ return r.x; });
     }
     function usedOf(S){ var u = {}; ['warm','main','cool'].forEach(function(k){ (S[k] || []).forEach(function(x){ u[x.id] = 1; }); }); return u; }
     function sortMain(S){ S.main.sort(function(a, b){ return (a.mob ? a.mob.o : 1) - (b.mob ? b.mob.o : 1); }); }
     function mainCands(S, o){
       var holdGoal = ['recup','soup','soir','yoga'].indexOf(o.g) > -1;
-      return rank(pool(o, usedOf(S)).filter(function(x){ return x.mob.k !== 'dyn' || !holdGoal || normP(o.p) === 'c'; }), o);
+      var r = rank(pool(o, usedOf(S)).filter(function(x){ return x.mob.k !== 'dyn' || !holdGoal || normP(o.p) === 'c'; }), o);
+      // Plusieurs zones choisies : on alterne entre elles pour que chacune ait sa part de postures
+      var zl = zs(o.z); if(zl.length < 2) return r;
+      var top = r.filter(function(x){ return zoneOk(x, o.z); }), rest = r.filter(function(x){ return top.indexOf(x) < 0; });
+      var B = zl.map(function(){ return []; });
+      top.forEach(function(x){ var best = -1; zl.forEach(function(k, i){ if(x.mob.z.indexOf(k) > -1 && (best < 0 || B[i].length < B[best].length)) best = i; }); B[best].push(x); });
+      var out = []; for(var i = 0; B.some(function(b){ return b.length; }); i++){ var b = B[i % B.length]; if(b.length) out.push(b.shift()); }
+      return out.concat(rest);
     }
     function fill(S, o){
       var target = S.durationMinutes * 60, c = mainCands(S, o), keepA = SESSION_ADJ; SESSION_ADJ = adjFor(S);
@@ -10015,7 +10026,7 @@
       if(!S.main.length){ S.main = S.warm.splice(1); }
       return S;
     }
-    function titleOf(S){ var m = S.mob; if(m.g === 'soup') m.g = 'recup'; return (GOALS[m.g] ? GOALS[m.g].l : 'Mobilité') + ' — ' + (ZONES[m.z] || 'Corps entier'); }
+    function titleOf(S){ var m = S.mob; if(m.g === 'soup') m.g = 'recup'; return (GOALS[m.g] ? GOALS[m.g].l : 'Mobilité') + ' — ' + zoneLabel(m.z); }
     function generate(){
       var msg = document.getElementById('mobFormMsg'); msg.textContent = '';
       clearSharedHash();
@@ -10052,7 +10063,7 @@
     pickerCandidates = function(key, all){
       var S = lastSession;
       if(!(S && S.mob)) return _pc(key, all);
-      var o = {g:S.mob.g, z:all ? 'full' : S.mob.z, p:S.mob.p};
+      var o = {g:S.mob.g, z:all ? 'full' : normZ(S.mob.z), p:S.mob.p};
       return pool(o, usedOf(S)).filter(function(x){ return key !== 'warm' || x.mob.k === 'dyn'; }).sort(function(a, b){ return a.name.localeCompare(b.name); });
     };
     var _bti = buildTimelineInner;
@@ -10103,7 +10114,7 @@
     var panel = document.createElement('aside'); panel.className = 'panel compact-form'; panel.id = 'mobPanel';
     panel.innerHTML = '<div class="field"><span class="field-label">Objectif</span>' + tiles('g', GOALS, 'mob-3') + '<p class="tile-note" id="mobGoalNote"></p></div>'
       + '<div class="field"><span class="field-label">Durée</span><div class="chip-group seg-row mob-5" data-mf="d">' + Object.keys(DUR).map(function(k){ return '<button type="button" class="chip" data-v="' + k + '">' + DUR[k] + '</button>'; }).join('') + '</div></div>'
-      + '<div class="field"><span class="field-label">Zone ciblée</span>' + tiles('z', ZONES) + '</div>'
+      + '<div class="field"><span class="field-label">Zones ciblées</span>' + tiles('z', ZONES) + '<p class="tile-note">Plusieurs zones possibles, ou « Corps entier ».</p></div>'
       + '<div class="field"><span class="field-label">Position</span>' + tiles('p', POS, 'mob-3') + '<p class="tile-note">Plusieurs choix possibles.</p></div>'
       + '<div class="field"><span class="field-label">Intensité des étirements</span>' + tiles('l', LVL, 'mob-3') + '</div>'
       + '<button class="generate-btn" id="mobGenerateBtn">Générer ma séance de mobilité</button><div class="form-msg" id="mobFormMsg"></div>';
@@ -10112,7 +10123,7 @@
     bPanel.parentNode.insertBefore(slot, bPanel);
     var EMPTY_MOB = '<div class="empty-state"><h3>Ta séance de mobilité apparaîtra ici</h3><p>Choisis ton objectif et ta durée, puis lance la génération.</p></div>';
     function syncForm(){
-      panel.querySelectorAll('[data-mf]').forEach(function(g){ var k = g.getAttribute('data-mf'); g.querySelectorAll('[data-v]').forEach(function(b){ b.classList.toggle('active', k === 'p' ? hasP(mob.p, PL[b.getAttribute('data-v')]) : String(mob[k]) === b.getAttribute('data-v')); }); });
+      panel.querySelectorAll('[data-mf]').forEach(function(g){ var k = g.getAttribute('data-mf'); g.querySelectorAll('[data-v]').forEach(function(b){ var v = b.getAttribute('data-v'), on = k === 'p' ? hasP(mob.p, PL[v]) : (k === 'z' ? (v === 'full' ? normZ(mob.z) === 'full' : zs(mob.z).indexOf(v) > -1) : String(mob[k]) === v); b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); });
       document.getElementById('mobGoalNote').textContent = GOALS[mob.g].d;
     }
     panel.addEventListener('click', function(e){
@@ -10124,6 +10135,9 @@
         if(!nx){ var fm = document.getElementById('mobFormMsg'); if(fm) fm.textContent = 'Garde au moins une position.'; return; }
         mob.p = normP(nx); var fm2 = document.getElementById('mobFormMsg'); if(fm2) fm2.textContent = '';
         if(mob.p === 'c' && mob.l === 'avance') mob.l = 'debutant';
+      } else if(k === 'z'){
+        if(v === 'full') mob.z = 'full';
+        else { var a = zs(mob.z), i = a.indexOf(v); if(i > -1) a.splice(i, 1); else a.push(v); mob.z = a.length >= 3 ? 'full' : normZ(a.join(',')); }
       } else mob[k] = k === 'd' ? +v : v;
       syncForm(); saveForm();
     });
