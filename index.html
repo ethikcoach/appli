@@ -1981,6 +1981,12 @@
   .cp-note{font-size:0.8rem; color:var(--stone); margin:14px 0 4px; line-height:1.4; text-align:left;}
   .results .block:has(.add-ex-btn):not(:has(.exercise)) .block-title::after{content:'vide'; margin-left:6px; font-weight:600; text-transform:none; letter-spacing:0; color:var(--stone); opacity:0.7;}
   @media screen and (prefers-color-scheme: dark){ .compose-btn{color:#A7D8B4; box-shadow:inset 0 0 0 1.5px #357D51;} }
+  .share-info{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:10px;}
+  html:not(.ec-coach) .share-info{display:none !important;}
+  .share-info label{display:block; min-width:0;}
+  .share-info input{width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--stone-light); border-radius:12px; background:var(--card); color:var(--ink); font-family:inherit; font-size:16px;}
+  .print-for{display:none;}
+  @media print{ .print-for{display:block; margin:0 0 8px; font-size:0.9rem; color:#000; border-bottom:1px solid #000; padding-bottom:6px;} }
   .share-select{width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--stone-light); border-radius:12px; background:var(--card); color:var(--ink); font-family:inherit; font-size:16px;}
   .share-channel.pdf{font-weight:700;}
   /* ---------- Séance seule (lien sans accès) ---------- */
@@ -2284,6 +2290,7 @@
   .compact-form .tile-grid.mob-3{grid-template-columns:repeat(3, minmax(0,1fr)) !important;}
   .compact-form .seg-row.mob-5{grid-template-columns:repeat(5, minmax(0,1fr)) !important;}
   .compact-form .seg-row.mob-5 .chip{font-size:0.82rem;}
+  @media (min-width:861px){ #renfoView > aside.panel{grid-column:1;} #renfoView > .results{grid-column:2;} }
   @media (min-width:861px){ #breathView{grid-template-columns:minmax(300px, 400px) 1fr;} #breathView .recup-switch{grid-column:1 / -1; max-width:520px;} }
   @media screen and (prefers-color-scheme: dark){ .recup-switch button.active{background:#357D51;} }
   /* ---------- Aide ---------- */
@@ -2769,10 +2776,6 @@
     <p>Choisis ton matériel, ton niveau et ta durée : ta séance est prête en un clic.</p>
   </div>
 
-  <div class="session-info-bar coach-only">
-    <label>Nom de l'athlète <input type="text" id="athleteName" placeholder="—"></label>
-    <label>Date <input type="text" id="athleteDate" placeholder="—"></label>
-  </div>
 
   <aside class="panel">
     <div class="panel-summary" hidden><div class="ps-tags"></div><button type="button" class="ps-edit">Modifier les réglages</button></div>
@@ -3200,6 +3203,10 @@
     <button type="button" class="share-inbox" id="shareInbox" hidden>📲 Envoyer dans son appli</button></div>
     <label class="share-field-label coach-only" for="shareCoachMsg">Consigne affichée dans la séance (facultatif)</label>
     <input type="text" id="shareCoachMsg" class="coach-only" maxlength="160" placeholder="ex. Garde 2 répétitions en réserve sur chaque série" autocomplete="off">
+    <div class="share-info coach-only">
+      <label><span class="share-field-label">Prénom de l’athlète</span><input type="text" id="athleteName" placeholder="ex. Marie" autocomplete="off"></label>
+      <label><span class="share-field-label">Date</span><input type="text" id="athleteDate" placeholder="—" autocomplete="off"></label>
+    </div>
     <label class="share-field-label" for="shareMessage">Message</label>
     <textarea id="shareMessage"></textarea>
     <label class="share-field-label" for="shareLink">Lien de la séance</label>
@@ -7980,7 +7987,6 @@
     function hello(){
       var h = new Date().getHours();
       var name = '';
-      try{ name = ($('#athleteName') && $('#athleteName').value || '').trim().split(/\s+/)[0] || ''; }catch(e){}
       if(!name && typeof EC_USER !== 'undefined' && EC_USER && EC_USER.n) name = EC_USER.n;
       return (h >= 18 || h < 5 ? 'Bonsoir' : 'Bonjour') + (name ? ' ' + name : '') + ' 👋';
     }
@@ -8916,6 +8922,8 @@
       $('#shareMessage').value = shareMessageFor(lastSession, url);
       refreshShareChannels();
     }
+    // Prénom saisi dans la fenêtre de partage : message et lien mis à jour aussitôt
+    (function(){ var an = document.getElementById('athleteName'), t = null; if(an) an.addEventListener('input', function(){ clearTimeout(t); t = setTimeout(function(){ if(document.getElementById('shareBackdrop').classList.contains('open')) rebuild(); }, 250); }); })();
     if(sel){
       sel.addEventListener('change', function(){
         window.__ecShareKey = sel.value; updNote();
@@ -10183,15 +10191,21 @@
     var renfoS = (lastSession && !lastSession.mob) ? lastSession : null, mobS = null, mode = 'mob';
     try{ if(localStorage.getItem('ec_recup_mode') === 'breath') mode = 'breath'; }catch(e){}
     function inMob(){ return window.__ecView === 'breath' && mode === 'mob'; }
+    function putHome(){
+      var rp = home.querySelector(':scope > aside.panel');
+      if(rp){ if(rp.nextSibling !== results) home.insertBefore(results, rp.nextSibling); }
+      else if(results.parentNode !== home) home.appendChild(results);
+    }
     function place(){
       if(inMob()){
         if(results.parentNode !== slot) slot.appendChild(results);
         if(mobS && lastSession !== mobS) displaySession(mobS, mobS.title, true);
         else if(!mobS && (!lastSession || !lastSession.mob)){ results.innerHTML = EMPTY_MOB; }
       } else {
-        if(results.parentNode !== home) home.insertBefore(results, homeNext && homeNext.parentNode === home ? homeNext : null);
+        putHome();
         if(renfoS && lastSession !== renfoS) displaySession(renfoS, renfoS.title, true);
         else if(!renfoS && lastSession && lastSession.mob){ results.innerHTML = EMPTY_RENFO; lastSession = null; }
+        else if(!renfoS && !lastSession){ results.innerHTML = EMPTY_RENFO; }
       }
     }
     function setMode(m){
@@ -10213,7 +10227,7 @@
         if(results.parentNode !== slot) slot.appendChild(results);
       } else if(S){
         renfoS = S;
-        if(results.parentNode !== home){ home.insertBefore(results, homeNext && homeNext.parentNode === home ? homeNext : null); if(window.__ecView !== 'renfo' && window.ecShowView) window.ecShowView('renfo'); }
+        if(results.parentNode !== home){ putHome(); if(window.__ecView !== 'renfo' && window.ecShowView) window.ecShowView('renfo'); }
       }
       _ds(S, title, keep);
       if(S && S.mob) decorate(S);
@@ -12058,6 +12072,16 @@
     }
     if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
     setTimeout(mount, 800);
+  })();
+  // ---------- Impression : prénom et date (saisis dans la fenêtre de partage) en tête de fiche ----------
+  (function(){
+    window.addEventListener('beforeprint', function(){
+      var n = ((document.getElementById('athleteName') || {}).value || '').trim(), d = ((document.getElementById('athleteDate') || {}).value || '').trim();
+      var r = document.getElementById('results'); if(!r || !n || !document.documentElement.classList.contains('ec-coach')) return;
+      var p = document.createElement('p'); p.className = 'print-for'; p.textContent = 'Athlète : ' + n + (d ? ' · ' + d : '');
+      r.insertBefore(p, r.firstChild);
+    });
+    window.addEventListener('afterprint', function(){ document.querySelectorAll('.print-for').forEach(function(p){ p.remove(); }); });
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
