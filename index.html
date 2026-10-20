@@ -2598,6 +2598,12 @@
   /* Icône de la durée totale (pastille blanche) */
   .sh-tags span.sh-total > .ui-ico{display:inline-flex !important; width:1.05em !important; height:1.05em !important; padding:0 !important; background:none !important; color:inherit !important; font-size:inherit !important; border-radius:0 !important;}
   @media print{ .app > .intro::after, .results .session-head::after{display:none !important;} }
+  /* Espace coach : même logo en filigrane que les autres bandeaux */
+  .ct-hero::after{content:'' !important; position:absolute !important; border-radius:0 !important; top:50% !important; right:-62px !important; left:auto !important; bottom:auto !important;
+    width:180px !important; height:153px !important; transform:translateY(-50%) rotate(-6deg); background:var(--ec-wm) no-repeat center / contain !important; opacity:0.11; pointer-events:none;}
+  .ct-hero > *{position:relative; z-index:1;}
+  @media (min-width:700px){ .ct-hero::after{width:300px !important; height:254px !important; right:10px !important; opacity:0.13;} }
+  @media print{ .ct-hero::after{display:none !important;} }
   /* ---------- Chrono Récup : décompte en respirations ---------- */
   .timer-countdown.cycles{letter-spacing:0; font-variant-numeric:tabular-nums;}
   .timer-cycles-lbl{position:absolute; left:0; right:0; top:68%; margin:0; font-size:0.6rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#CFE6D4; opacity:0.85; text-align:center; pointer-events:none;}
