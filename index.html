@@ -18,6 +18,14 @@
   (function(){
     try{
       if(!/^https?:$/.test(location.protocol)) return;
+      var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if(!ios){
+        // Android & ordinateur : manifeste en fichier, indispensable pour une vraie installation
+        // (l'appli apparaît dans la liste des applis et son icône ne disparaît plus au redémarrage).
+        var lk = document.createElement('link'); lk.rel = 'manifest'; lk.href = 'manifest.webmanifest';
+        document.head.appendChild(lk); return;
+      }
+      // iPhone / iPad : manifeste généré ici, pour garder la clé d'accès dans l'adresse de l'appli
       var start = location.href.split('#')[0];
       var scope = start.replace(/[^\/]*$/, '');
       var manifest = {
@@ -10220,7 +10228,7 @@
       ['Ma séance', 'Comment partager une séance ?', 'Touche <b>✉ Envoyer</b> sous la séance : un lien est créé, à partager par message. Il ouvre la séance directement chez la personne. Elle doit avoir elle-même un accès à l’appli.'],
       ['Pendant la séance', 'Comment mettre en pause ou passer un exercice ?', 'Touche <b>Pause</b>, ou n’importe où sur l’écran ; touche à nouveau pour reprendre. Pour passer à la suite, touche <b>Passer ▶</b> ou glisse vers la gauche.'],
       ['Pendant la séance', 'Je n’entends pas la voix.', 'Vérifie que le bouton <b>Voix</b> est activé en haut du chrono, que le volume est monté et, sur iPhone, que le mode silencieux est désactivé. Avec des écouteurs Bluetooth, la voix passe par eux.'],
-      ['Pendant la séance', 'La voix fait « robot ». Peut-on la rendre plus naturelle ?', 'La voix vient de ton téléphone. Change-la avec le <b>bouton haut-parleur</b> en haut de l’écran (ou « Choisir » pendant la séance). Pour une voix beaucoup plus naturelle, télécharge une voix améliorée (gratuit) :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › <b>Audrey</b>, version <b>Améliorée</b> ou <b>Premium</b>.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français, puis choisis une voix féminine.<br>Ferme et rouvre ensuite l’appli : la meilleure voix est choisie automatiquement.'],
+      ['Pendant la séance', 'La voix fait « robot ». Peut-on la rendre plus naturelle ?', 'La voix vient de ton téléphone. Change-la avec le <b>bouton haut-parleur</b> en haut de l’écran (ou « Choisir » pendant la séance). Pour une voix beaucoup plus naturelle, télécharge une voix améliorée (gratuit) :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › <b>Audrey</b>, version <b>Améliorée</b> ou <b>Premium</b>.<br><b>Android</b> : la voix se règle dans le téléphone (l’appli ne peut pas la choisir elle-même) : Paramètres › Synthèse vocale › moteur <b>Services vocaux Google</b> › ⚙ › Installer les données vocales › Français (France) › touche la voix voulue. Ferme ensuite complètement Chrome et l’appli avant de rouvrir.<br>Ferme et rouvre ensuite l’appli : la meilleure voix est choisie automatiquement.'],
       ['Pendant la séance', 'L’écran s’éteint pendant la séance.', 'L’appli demande au téléphone de garder l’écran allumé, mais certains réglages d’économie d’énergie l’en empêchent. Installe l’appli sur ton écran d’accueil et, si besoin, allonge le délai de verrouillage automatique dans les réglages du téléphone.'],
       ['Pendant la séance', 'J’ai quitté l’appli en pleine séance.', 'Pas de souci : à ton retour, la carte <b>Séance interrompue</b> te propose de <b>Reprendre</b> là où tu t’étais arrêté.'],
       ['Pendant la séance', 'J’ai une douleur pendant un exercice.', 'Arrête l’exercice. Une gêne légère peut se gérer en réduisant l’amplitude ou en remplaçant l’exercice ; une vraie douleur, non. Signale-la dans le retour de fin de séance pour que ton coach adapte la suite, et consulte un professionnel de santé si elle persiste.'],
@@ -10228,6 +10236,7 @@
       ['Suivi et coach', 'Comment envoyer mon ressenti à mon coach ?', 'À la fin de chaque séance, note l’effort de 1 à 10, indique une éventuelle gêne, puis envoie ton retour par WhatsApp, SMS ou e-mail. Le message est déjà rédigé.'],
       ['Suivi et coach', 'Où sont enregistrées mes données ?', 'Uniquement sur ton appareil : rien n’est envoyé sur internet sans ton action. Si tu changes de téléphone, fais <b>Suivi › Sauvegarder mes données</b> sur l’ancien, puis <b>Restaurer une sauvegarde</b> sur le nouveau.'],
       ['L’appli', 'Comment installer l’appli sur mon écran d’accueil ?', 'Sur iPhone : dans Safari, touche le bouton <b>Partager</b> puis <b>Sur l’écran d’accueil</b>. Sur Android : menu <b>⋮</b> puis <b>Installer l’application</b> (ou le bouton 📲 en haut de l’appli). Elle s’ouvre ensuite en plein écran, comme une vraie appli.'],
+      ['L’appli', 'Android : l’icône a disparu de mon écran d’accueil.', 'Ouvre l’appli dans <b>Chrome</b>, puis menu <b>⋮</b> › <b>Installer l’application</b> (et non « Ajouter à l’écran d’accueil »). L’appli est alors installée pour de bon : elle apparaît aussi dans la liste de tes applis et reste en place après un redémarrage. Tes réglages et ton suivi sont conservés.'],
       ['L’appli', 'Le texte est trop petit.', 'Touche le bouton <b>AA</b> en haut à droite : il passe en grande puis très grande taille.'],
       ['L’appli', 'L’appli fonctionne sans internet ?', 'Une fois ouverte une première fois, elle fonctionne même avec une connexion faible. Les vidéos de démonstration, elles, ont besoin d’internet.'],
       ['L’appli', 'Mon accès ne fonctionne plus.', 'Ta clé d’accès est peut-être arrivée à échéance, ou l’appli a été réinstallée. Contacte ton coach avec le bouton ci-dessous : il te renvoie un accès.']
@@ -10279,7 +10288,7 @@
       }).join('') : '<option>Voix du téléphone</option>';
       var good = cur && window.ecVoiceIsFemale && window.ecVoiceIsFemale(cur) && /premium|enhanced|améliorée|neural|natural|online|google/i.test(cur.name + cur.voiceURI);
       vTip.hidden = good || !list.length;
-      vTip.innerHTML = 'Pour une voix féminine vraiment douce, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> ou <b>Premium</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français, puis choisis une voix féminine.<br>Ferme et rouvre l’appli : elle la prend automatiquement.';
+      vTip.innerHTML = 'Pour une voix féminine vraiment douce, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> ou <b>Premium</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : la voix se règle dans le téléphone (l’appli ne peut pas la choisir elle-même) : Paramètres › Synthèse vocale › moteur <b>Services vocaux Google</b> › ⚙ › Installer les données vocales › Français (France) › touche la voix voulue. Ferme ensuite complètement Chrome et l’appli avant de rouvrir.<br>Ferme et rouvre l’appli : elle la prend automatiquement.';
     }
     vSel.addEventListener('change', function(){ if(window.ecVoiceSet) window.ecVoiceSet(vSel.value); if(window.ecVoiceTest) window.ecVoiceTest(); });
     wrap.querySelector('.help-voice-test').addEventListener('click', function(){ if(window.ecVoiceTest) window.ecVoiceTest(); });
@@ -11836,8 +11845,15 @@
     function sample(v){
       try{ var sy = window.speechSynthesis; sy.cancel(); var u = new SpeechSynthesisUtterance('Bonjour. Installe-toi confortablement, et respire profondément.'); u.lang = v && v.lang || 'fr-FR'; if(v) u.voice = v; u.rate = 0.9; u.pitch = 0.97; sy.speak(u); }catch(e){}
     }
+    var ANDROID = /Android/i.test(navigator.userAgent);
+    var ANDROID_TIP = '<b>Sur Android, la voix se choisit dans les réglages du téléphone</b> (l’appli utilise la voix française réglée par défaut) :<br>'
+      + '1. Paramètres › cherche « <b>Synthèse vocale</b> » (souvent dans Accessibilité, ou Gestion globale › Langue).<br>'
+      + '2. Moteur préféré : <b>Services vocaux Google</b> (sur Samsung, remplace « Samsung TTS »).<br>'
+      + '3. Touche ⚙ à côté du moteur › Installer les données vocales › <b>Français (France)</b> › touche la voix qui te plaît (écoute-la, puis choisis-la).<br>'
+      + '4. <b>Ferme complètement Chrome et l’appli</b> (glisse-les hors des applis récentes), puis rouvre.';
     function fill(){
       var vs = window.ecVoiceList ? window.ecVoiceList() : [], cur = window.ecVoiceCurrent ? window.ecVoiceCurrent() : null;
+      sh.querySelector('.vsheet-sub').textContent = ANDROID ? 'Touche une voix pour l’écouter. Sur Android, chaque ligne correspond à une langue : le timbre (femme, homme, plus doux) se règle dans le téléphone, voir plus bas.' : 'Touche une voix pour l’écouter : elle est aussitôt choisie pour toutes tes séances.';
       if(!vs.length){ list.innerHTML = '<p class="vsheet-empty">Aucune voix française trouvée sur cet appareil.</p>'; }
       else list.innerHTML = vs.slice(0, 12).map(function(v, i){
         var on = cur && cur.voiceURI === v.voiceURI, tags = [gender(v), quality(v), region(v)].filter(Boolean);
@@ -11847,8 +11863,8 @@
           + (tags.length ? '<span class="vs-tags">' + tags.map(esc).join(' · ') + '</span>' : '') + '</span>'
           + '<span class="vs-check" aria-hidden="true"></span></button>';
       }).join('');
-      var good = cur && window.ecVoiceIsFemale && window.ecVoiceIsFemale(cur) && quality(cur);
-      tip.innerHTML = good ? '' : 'Pour une voix plus douce et naturelle, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français.<br>Puis ferme et rouvre l’appli.';
+      var good = !ANDROID && cur && window.ecVoiceIsFemale && window.ecVoiceIsFemale(cur) && quality(cur);
+      tip.innerHTML = good ? '' : ANDROID ? ANDROID_TIP : 'Pour une voix plus douce et naturelle, télécharge gratuitement <b>Audrey</b> en version <b>Améliorée</b> :<br><b>iPhone / iPad</b> : Réglages › Accessibilité › Contenu énoncé › Voix › Français (France) › Audrey.<br><b>Android</b> : Paramètres › Synthèse vocale › Moteur Google › Installer les données vocales › Français.<br>Puis ferme et rouvre l’appli.';
       tip.hidden = !!good;
     }
     list.addEventListener('click', function(e){
