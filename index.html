@@ -2645,6 +2645,32 @@
   .sv-ios-warn{background:#FFF4E5; color:#6B3B00 !important; border-radius:12px; padding:10px 12px;}
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .sv-ios-warn{background:#3A2A12; color:#F5D9B0 !important;} }
   :root[data-theme="dark"] .sv-ios-warn{background:#3A2A12; color:#F5D9B0 !important;}
+  /* ---------- Retours utilisateurs (WhatsApp) ---------- */
+  .fb-card{background:var(--card); border:1px solid var(--stone-light); border-radius:20px; padding:16px; margin:16px auto; max-width:760px;}
+  .fb-foot{margin:24px 16px 16px;}
+  @media (min-width:800px){ .fb-foot{margin:24px auto 16px;} }
+  .help-scroll .fb-card{margin:0 0 12px; border:none;}
+  .fb-card h3{margin:0; font-family:'Bricolage Grotesque',sans-serif; font-size:1.1rem;}
+  .fb-sub{margin:4px 0 12px; font-size:0.92rem; line-height:1.45; color:var(--stone);}
+  .fb-list{display:flex; flex-direction:column; gap:8px;}
+  .fb-row{display:flex; align-items:center; gap:12px; min-height:56px; padding:8px 12px; border-radius:14px; border:1px solid var(--stone-light); background:var(--paper); color:var(--ink); text-decoration:none;}
+  .fb-ico{flex:none; display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:var(--sage-light); color:var(--forest);}
+  .fb-txt{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .fb-txt b{font-size:0.98rem;}
+  .fb-txt small{font-size:0.82rem; color:var(--stone); margin-top:1px;}
+  .fb-mini{padding:0;}
+  .fb-toggle{display:flex; align-items:center; gap:12px; width:100%; min-height:60px; padding:10px 16px; border:none; background:none; color:var(--ink); font:inherit; text-align:left; cursor:pointer; border-radius:20px;}
+  .fb-t-ico{flex:none; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:#1F8A4C; color:#fff;}
+  .fb-t-txt{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .fb-t-txt b{font-size:1rem;}
+  .fb-t-txt small{font-size:0.84rem; color:var(--stone); margin-top:1px;}
+  .fb-chev{flex:none; width:10px; height:10px; border-right:2px solid var(--stone); border-bottom:2px solid var(--stone); transform:rotate(45deg); margin:0 4px 4px; transition:transform .2s;}
+  .fb-mini.open .fb-chev{transform:rotate(-135deg); margin-bottom:-4px;}
+  .fb-body{padding:0 16px 16px;}
+  .fb-body .fb-sub{margin-top:0;}
+  .fb-body[hidden]{display:none;}
+  .fb-wa{flex:none; display:flex; align-items:center; justify-content:center; width:34px; height:34px; color:#fff; background:#1F8A4C; border-radius:50%;}
+  @media print{ .fb-card{display:none !important;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -11964,6 +11990,68 @@
     var w = document.createElement('p'); w.className = 'sv-hint sv-ios-warn';
     w.innerHTML = '<b>Sur iPhone, installe l’appli sur ton écran d’accueil</b> (Safari › Partager › Sur l’écran d’accueil) : utilisée seulement dans Safari, tes données peuvent être effacées après 7 jours sans ouverture.';
     hint.parentNode.insertBefore(w, hint.nextSibling);
+  })();
+  // ---------- Retours des utilisateurs : exercice, fonction, bug → WhatsApp du coach ----------
+  (function(){
+    var NUM = (typeof COACH_WHATSAPP !== 'undefined' && COACH_WHATSAPP) || '33611323245';
+    function sv(d){ return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; }
+    var K = {
+      exo:{t:'Proposer un exercice', d:'Un exercice qui manque, une variante', i:sv('<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>')},
+      fn:{t:'Suggérer une fonction', d:'Une idée pour améliorer l’appli', i:sv('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>')},
+      bug:{t:'Signaler un bug', d:'Quelque chose ne marche pas', i:sv('<rect x="8" y="7" width="8" height="12" rx="4"/><path d="M12 7V4M9.5 4.5 11 7M14.5 4.5 13 7M8 11H4M20 11h-4M8 15.5H4.5M19.5 15.5H16M5 7l3 2M19 7l-3 2"/>')}
+    };
+    var WA = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5zm0 1.8a7.7 7.7 0 1 1-3.9 14.3l-.3-.2-2.8.8.8-2.7-.2-.3A7.7 7.7 0 0 1 12 4.3zm-3 3.6c-.2 0-.5 0-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2l-.4-.3-1.6-.8c-.2-.1-.4-.1-.6.1l-.7.9c-.1.2-.3.2-.5.1-.2-.1-1-.4-1.9-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.5.3-.4v-.4l-.7-1.8c-.2-.5-.4-.4-.6-.4H9z"/></svg>';
+    function tech(){
+      var ua = navigator.userAgent || '', dev = 'Appareil inconnu', br = 'navigateur';
+      var mi = /(iPhone|iPad|iPod).*?OS (\d+)[_.](\d+)/.exec(ua), ma = /Android (\d+(\.\d+)?)/.exec(ua);
+      if(mi) dev = mi[1] + ' iOS ' + mi[2] + '.' + mi[3];
+      else if(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) dev = 'iPad';
+      else if(ma) dev = 'Android ' + ma[1];
+      else if(/Windows/.test(ua)) dev = 'Windows'; else if(/Mac/.test(ua)) dev = 'Mac';
+      br = /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /CriOS|Chrome/.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : br;
+      var inst = (window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) ? 'appli installée' : 'dans le navigateur';
+      var view = {renfo:'Renfo', breath:'Récup', lib:'Exercices', suivi:'Suivi', coach:'Espace coach'}[window.__ecView] || window.__ecView || '';
+      var v = window.ecVoiceCurrent && window.ecVoiceCurrent(), ver = (document.getElementById('appVersion') || {}).textContent || '';
+      ver = (/Version [\d.]+/.exec(ver) || [''])[0];
+      return [ver, dev, br, inst, view ? 'onglet ' + view : '', v ? 'voix ' + v.name : ''].filter(Boolean).join(' · ');
+    }
+    function who(){ try{ return (typeof EC_USER !== 'undefined' && EC_USER && EC_USER.n) ? ' (' + EC_USER.n + ')' : ''; }catch(e){ return ''; } }
+    function text(k){
+      if(k === 'exo') return 'Bonjour Benoît' + who() + ', j’aimerais qu’on ajoute un exercice à l’appli :\n- Nom de l’exercice : \n- Pour quoi (zone, objectif) : \n- Matériel : \n';
+      if(k === 'fn') return 'Bonjour Benoît' + who() + ', j’ai une idée pour l’appli :\n';
+      return 'Bonjour Benoît' + who() + ', je signale un souci sur l’appli :\n- Ce qui se passe : \n- Ce que je faisais juste avant : \n\n(Infos techniques : ' + tech() + ')';
+    }
+    window.ecFeedbackUrl = function(k){ return 'https://wa.me/' + NUM + '?text=' + encodeURIComponent(text(k)); };
+    function card(cls, title, sub, keys){
+      var c = document.createElement('section'); c.className = 'fb-card ' + (cls || '');
+      c.innerHTML = '<h3>' + title + '</h3><p class="fb-sub">' + sub + '</p><div class="fb-list">' + keys.map(function(k){
+        return '<a class="fb-row" data-fb="' + k + '" target="_blank" rel="noopener" href="https://wa.me/' + NUM + '"><span class="fb-ico">' + K[k].i + '</span><span class="fb-txt"><b>' + K[k].t + '</b><small>' + K[k].d + '</small></span><span class="fb-wa" aria-label="WhatsApp">' + WA + '</span></a>';
+      }).join('') + '</div>';
+      return c;
+    }
+    // Le message est préparé au moment du toucher (onglet, voix… à jour)
+    document.addEventListener('click', function(e){ var a = e.target.closest && e.target.closest('[data-fb]'); if(a) a.href = window.ecFeedbackUrl(a.getAttribute('data-fb')); }, true);
+    function mount(){
+      // 1) Bas de page, sur tous les onglets
+      var foot = document.getElementById('ethikBlock');
+      if(foot && !document.querySelector('.fb-card.fb-foot')){
+        var fc = card('fb-foot fb-mini', 'Une idée ? Un souci ?', 'L’appli évolue avec tes retours : écris-moi directement sur WhatsApp, le message est déjà prêt.', ['exo','fn','bug']);
+        // Bandeau réduit : une ligne, qui s'ouvre au toucher
+        var h = fc.querySelector('h3'), bt = document.createElement('button');
+        bt.type = 'button'; bt.className = 'fb-toggle'; bt.setAttribute('aria-expanded', 'false');
+        bt.innerHTML = '<span class="fb-t-ico">' + WA + '</span><span class="fb-t-txt"><b>Une idée ? Un souci ?</b><small>Exercice, fonction, bug : écris-moi</small></span><span class="fb-chev" aria-hidden="true"></span>';
+        h.parentNode.replaceChild(bt, h);
+        var body = document.createElement('div'); body.className = 'fb-body'; body.hidden = true;
+        body.appendChild(fc.querySelector('.fb-sub')); body.appendChild(fc.querySelector('.fb-list')); fc.appendChild(body);
+        bt.addEventListener('click', function(){ var open = body.hidden; body.hidden = !open; bt.setAttribute('aria-expanded', open ? 'true' : 'false'); fc.classList.toggle('open', open); });
+        foot.parentNode.insertBefore(fc, foot);
+      }
+      // 3) Aide
+      var hc = document.querySelector('.help-contact');
+      if(hc && !document.querySelector('.fb-card.fb-help')) hc.parentNode.insertBefore(card('fb-help', 'Une idée ? Un souci ?', 'Un exercice à ajouter, une fonction à imaginer, un bug à corriger : le message WhatsApp est déjà prêt.', ['exo','fn','bug']), hc);
+    }
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+    setTimeout(mount, 800);
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
