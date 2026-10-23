@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Ethik'Coach — Séances de renforcement",
+  "name": "Ethik’Coach_Renfo-Récup-Respi",
   "short_name": "Ethik'Coach",
-  "description": "Générateur de séances de renforcement guidées, avec chrono et annonces vocales.",
+  "description": "Séances guidées de renfo, récup et respiration, avec chrono et annonces vocales.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
