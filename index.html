@@ -3302,6 +3302,18 @@
   html[data-pg="moncoach"] #moncoachView .mc-card{background:linear-gradient(140deg, #263F58, #3B5E7E) !important; box-shadow:0 10px 30px rgba(38,63,88,0.28) !important;}
   html[data-pg="suivi"] .sv-tabs button.on, html[data-pg="espace"] #coachTools button.on, html[data-pg="espace"] #coachTools .active{background:var(--pg-a) !important; color:#fff !important;}
   html.ec-p2[data-pg="today"] #todayView .td-intro .tw-dot{color:#263F58;}
+  /* Créer une séance et Exercices : même bleu nuit qu'Aujourd'hui */
+  html[data-pg="hub"], html[data-pg="lib"]{--paper:#E8EDF2; --pg-a:#34536F; --pg-band:linear-gradient(135deg, #172636 0%, #263F58 55%, #4A6F8F 100%);}
+  @media screen and (prefers-color-scheme: dark){ html[data-pg="hub"], html[data-pg="lib"]{--paper:#0C1218; --pg-a:#7FA6C9;} }
+  html[data-pg="lib"] #libView{--forest:var(--pg-a); --sage:#6F8CA6; --sage-light:#DCE5EE;}
+  @media screen and (prefers-color-scheme: dark){ html[data-pg="lib"] #libView{--sage-light:rgba(255,255,255,0.08);} html[data-pg="lib"] #libView button.on{color:#0C1218 !important;} }
+  html.ec-p2[data-pg="hub"] #renfoView > .intro, html[data-pg="lib"] #libView > .intro{background:var(--pg-band) !important;}
+  html[data-pg="lib"] #libView button.on{background:var(--pg-a) !important; color:#fff;}
+  /* Menu du bas : surlignement bleu nuit */
+  html .bnav button.active{color:#263F58 !important;}
+  html .bnav button.active .bn-ico, html .bnav button:active .bn-ico{background:#DCE5EE !important;}
+  html .bnav button:hover{color:#263F58;} html .bnav button:hover .bn-ico{background:#E6ECF2;}
+  @media screen and (prefers-color-scheme: dark){ html .bnav button.active{color:#9FC0DD !important;} html .bnav button.active .bn-ico, html .bnav button:active .bn-ico{background:rgba(127,166,201,0.2) !important;} html .bnav button:hover{color:#9FC0DD;} html .bnav button:hover .bn-ico{background:rgba(127,166,201,0.12);} }
   /* Page Tests de forme */
   #testsView > .intro{display:grid !important; grid-template-columns:auto 1fr; column-gap:12px; align-items:center; padding:18px !important;}
   #testsView > .intro .pg-k{display:block; grid-column:2;}
