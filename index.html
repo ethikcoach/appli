@@ -2756,6 +2756,18 @@
   .cat-rail .ci-chev{display:none;}
   .cat-rail .cat-or{margin:10px 0 0;}
   @media screen and (prefers-color-scheme: dark){ .cat-sec.cat-rail{background:linear-gradient(135deg, #1E3528, var(--card));} .cat-filters button.on{background:#357D51;} }
+  /* ---------- Croix de fermeture (séance, programme, encarts) ---------- */
+  .card-x{position:absolute; top:10px; right:10px; z-index:3; width:36px; height:36px; display:grid; place-items:center; padding:0; border:none; border-radius:50%; background:rgba(31,64,48,0.08); color:var(--stone); font-size:1.4rem; line-height:1; cursor:pointer;}
+  .card-x:active{transform:scale(0.92);}
+  .today-card, .quick-start{position:relative;}
+  .today-card .tc-kicker, .today-card .tc-title{padding-right:44px;}
+  .quick-start{padding-right:52px !important;}
+  .quick-start .qs-x{top:50%; transform:translateY(-50%); right:8px; width:32px; height:32px; font-size:1.25rem;}
+  .session-head.has-x{position:relative;}
+  .session-head .res-x{background:rgba(255,255,255,0.16); color:#fff;}
+  .session-head.has-x .session-title{padding-right:40px;}
+  @media print{ .card-x{display:none !important;} }
+  @media screen and (prefers-color-scheme: dark){ .card-x{background:rgba(255,255,255,0.1); color:#ddd;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -7353,14 +7365,16 @@
   }
   var qs = document.createElement('div');
   qs.className = 'quick-start'; qs.hidden = true;
-  qs.innerHTML = '<div class="qs-text"><span class="qs-cap">Ta dernière séance</span><span class="qs-title"></span></div><button type="button" class="qs-btn">Refaire</button>';
+  qs.innerHTML = '<div class="qs-text"><span class="qs-cap">Ta dernière séance</span><span class="qs-title"></span></div><button type="button" class="qs-btn">Refaire</button><button type="button" class="card-x qs-x" aria-label="Fermer">&times;</button>';
   var renfoPanel = document.querySelector('#renfoView .panel');
   renfoPanel.insertBefore(qs, renfoPanel.querySelector('.mode-switch'));
   function renderQuickStart(){
     var rec = LS.get(LAST_KEY);
-    qs.hidden = !(rec && rec.mainIds);
+    qs.hidden = !(rec && rec.mainIds) || (function(){ try{ return !!rec && localStorage.getItem('ec_qs_hide') === qsSig(rec); }catch(e){ return false; } })();
     if(rec) qs.querySelector('.qs-title').textContent = (rec.title || 'Séance') + (rec.durationMinutes ? ', ' + rec.durationMinutes + ' min' : '');
   }
+  function qsSig(r){ return [r.title, r.durationMinutes, (r.mainIds || []).join(',')].join('|'); }
+  qs.querySelector('.qs-x').addEventListener('click', function(){ var r = LS.get(LAST_KEY); try{ if(r) localStorage.setItem('ec_qs_hide', qsSig(r)); }catch(e){} qs.hidden = true; });
   qs.querySelector('.qs-btn').addEventListener('click', function(){
     var rec = LS.get(LAST_KEY); if(!rec) return;
     displaySession(sessionFromRec(rec), rec.title);
@@ -10885,7 +10899,8 @@
       var progCta = document.querySelector('#renfoView [data-prog-next]');
       if((progCta && !progCta.hidden) || document.documentElement.classList.contains('ec-guest')){ today.hidden = true; return; }
       P = plan();
-      today.innerHTML = '<div class="tc-kicker">' + esc(P.kicker) + '</div><div class="tc-title">' + esc(P.title) + '</div><p class="tc-why">' + esc(P.why) + '</p>'
+      var dk = new Date().toDateString(); try{ if(localStorage.getItem('ec_today_hide') === dk){ today.hidden = true; return; } }catch(e){}
+      today.innerHTML = '<button type="button" class="card-x" data-t="close" aria-label="Fermer">&times;</button><div class="tc-kicker">' + esc(P.kicker) + '</div><div class="tc-title">' + esc(P.title) + '</div><p class="tc-why">' + esc(P.why) + '</p>'
         + '<div class="tc-btns"><button type="button" class="tc-go" data-t="go">Démarrer ▶</button><button type="button" class="tc-see" data-t="see">Voir la séance</button></div>'
         + (testsDue() ? '<button type="button" class="tc-tests" data-t="tests">🎯 C’est le moment de faire tes tests de forme</button>' : '');
       today.hidden = false;
@@ -10893,6 +10908,7 @@
     today.addEventListener('click', function(e){
       var b = e.target.closest('[data-t]'); if(!b || !P) return;
       var t = b.getAttribute('data-t');
+      if(t === 'close'){ try{ localStorage.setItem('ec_today_hide', new Date().toDateString()); }catch(err){} today.hidden = true; return; }
       if(t === 'tests'){ if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('prog'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); return; }
       var start = t === 'go';
       if(P.type === 'mob'){
@@ -12790,8 +12806,34 @@
     res.scrollIntoView = function(){ scrollRes(); };
     var _spS = showProgram;
     showProgram = function(scrollTop){ var r = _spS.apply(this, arguments); if(scrollTop) scrollRes(); return r; };
+    // Grand écran (iPad en plein écran, ordinateur) : la séance s'affiche à côté des réglages, on y défile aussi
+    var _dsS = displaySession;
+    displaySession = function(session, title, keepScroll){ var r = _dsS.apply(this, arguments); if(!keepScroll && !document.getElementById('timerBackdrop').classList.contains('open')) scrollRes(); return r; };
     var _gpS = generateProgram;
     generateProgram = function(){ var before = currentProgram, r = _gpS.apply(this, arguments); if(currentProgram && currentProgram !== before) scrollRes(); return r; };
+  })();
+
+  // ---------- Croix pour fermer la séance ou le programme affiché ----------
+  (function(){
+    var res = document.getElementById('results'); if(!res) return;
+    function addX(){
+      var head = res.querySelector('.session-head'); if(!head || head.querySelector('.res-x')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'card-x res-x'; b.setAttribute('aria-label', res.classList.contains('prog-view') ? 'Fermer le programme' : 'Fermer la séance'); b.innerHTML = '&times;';
+      head.classList.add('has-x'); head.insertBefore(b, head.firstChild);
+    }
+    res.addEventListener('click', function(e){
+      if(!e.target.closest('.res-x')) return;
+      e.stopPropagation();
+      var prog = res.classList.contains('prog-view'), mobS = !!(lastSession && lastSession.mob);
+      // On vide la zone : l'accueil (bandeau, séance du jour, réglages) revient comme avant la génération
+      res.classList.remove('prog-view'); res.classList.remove('wod-view'); res.innerHTML = '';
+      try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(err){}
+      showToast(prog ? 'Programme fermé (il reste en cours : « Ouvrir le programme » pour le retrouver)' : (mobS ? 'Séance fermée' : 'Séance fermée (« Refaire » pour la retrouver)'), false);
+    });
+    var _dsX = displaySession;
+    displaySession = function(){ var r = _dsX.apply(this, arguments); try{ addX(); }catch(e){} return r; };
+    var _spX = showProgram;
+    showProgram = function(){ var r = _spX.apply(this, arguments); try{ addX(); }catch(e){} return r; };
   })();
 
   // ---------- Bouton retour du téléphone ----------
