@@ -2726,6 +2726,18 @@
   .music-row{display:flex; gap:10px; align-items:flex-start; margin:10px 0 12px; padding:10px 12px; border-radius:12px; background:var(--chip); text-align:left; cursor:pointer;}
   .music-row input{width:22px; height:22px; flex:none; margin-top:2px; accent-color:var(--forest);}
   .music-row small{display:block; margin-top:3px; font-size:0.78rem; line-height:1.35; color:var(--stone);}
+  /* ---------- Ajout d'exercice : catégories / programme ---------- */
+  .picker-cats{display:flex; gap:6px; overflow-x:auto; padding:8px 0 6px; margin:0 -2px; scrollbar-width:none;}
+  .picker-cats::-webkit-scrollbar{display:none;}
+  .picker-cats button{flex:none; min-height:36px; padding:6px 12px; border:none; border-radius:999px; background:var(--chip); box-shadow:inset 0 0 0 1px var(--ring-line); color:var(--ink); font-family:inherit; font-size:0.82rem; font-weight:600; cursor:pointer; white-space:nowrap;}
+  .picker-cats button.on{background:var(--forest); color:#fff; box-shadow:none;}
+  .picker-all[hidden]{display:none !important;}
+  .picker-cat{display:inline-block; padding:0 6px; margin-right:2px; border-radius:6px; background:var(--sage-light); color:var(--forest); font-size:0.7rem; font-weight:700;}
+  .picker-warn{display:block; margin-top:2px; font-size:0.72rem; color:#A0572A;}
+  .picker-count{padding:6px 4px; font-size:0.78rem; color:var(--stone);}
+  .cp-acts{display:flex; gap:8px; flex-wrap:wrap;}
+  .current-program button.cp-stop{background:transparent; color:#A0412A; box-shadow:inset 0 0 0 1.5px #D9A08F;}
+  @media screen and (prefers-color-scheme: dark){ .picker-cats button.on{background:#357D51;} .picker-cat{background:#1E3528; color:#A7D8B4;} .picker-warn{color:#F0B48A;} .current-program button.cp-stop{color:#F09A8A; box-shadow:inset 0 0 0 1.5px #7A4A3F;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -5450,6 +5462,7 @@
     var pd = e.target.closest('[data-prog-toggle]');
     if(pd){ toggleProgDone(parseInt(pd.dataset.week,10), parseInt(pd.dataset.slot,10)); showProgram(false); return; }
     if(e.target.closest('[data-prog-new]')){ generateProgram(); return; }
+    if(e.target.closest('[data-prog-stop]')){ stopProgram(); return; }
     if(e.target.closest('[data-prog-print]')){ window.print(); return; }
     if(e.target.closest('[data-prog-share]')){ openProgramShare(); return; }
     if(e.target.closest('[data-prog-save]')){ saveProgramAs(); return; }
@@ -6743,6 +6756,7 @@
     html += '<button class="btn-ghost" data-prog-save>'+(isSaved ? '★ Enregistré' : '☆ Enregistrer')+'</button>';
     html += '<button class="btn-ghost" data-prog-print>Imprimer / PDF</button>';
     html += '<button class="btn-ghost" data-prog-new>Nouveau programme</button>';
+    html += '<button class="btn-ghost" data-prog-stop>Arrêter ce programme</button>';
     html += '</div></div>';
     var nBlocks = P.blocks.length;
     html += '<p class="prog-intro"><b>Comment ça progresse :</b> les mêmes séances reviennent pendant 4 semaines pour bien maîtriser les exercices, avec un temps d\u2019effort qui augmente de semaine en semaine. La 4<sup>e</sup> semaine est allégée pour récupérer.'
@@ -6831,6 +6845,22 @@
     if(changed){ storeSavedPrograms(list); if(typeof renderSavedProgramsList === 'function') renderSavedProgramsList(); }
     renderCurrentProgramLink();
   }
+  // Arrêter le programme en cours (il reste dans « Programmes enregistrés » s'il y a été enregistré)
+  function stopProgram(){
+    if(!currentProgram) return;
+    var saved = findSavedProgram(currentProgram.id);
+    ecConfirm('Arrêter ce programme ? Il ne sera plus proposé à l’accueil ni dans « Programme en cours ».' + (saved ? ' Tu le retrouveras dans « Programmes enregistrés ».' : ' Il n’est pas enregistré : il sera supprimé (tes séances déjà faites restent dans ton suivi).'), 'Arrêter le programme', function(){
+      currentProgram = null;
+      try{ localStorage.removeItem(PROG_KEY); }catch(e){}
+      renderCurrentProgramLink();
+      var res = document.getElementById('results');
+      if(res && res.classList.contains('prog-view')){ res.classList.remove('prog-view'); res.innerHTML = ''; res.classList.remove('show'); }
+      if(typeof putHome === 'function') try{ putHome(); }catch(e){}
+      showToast('Programme arrêté', false);
+      try{ window.scrollTo(0, 0); }catch(e){}
+    }, true, 'Continuer le programme');
+  }
+  window.ecStopProgram = stopProgram;
   function loadStoredProgram(){
     try{
       var raw = localStorage.getItem(PROG_KEY);
@@ -6853,9 +6883,10 @@
     var P = currentProgram, total = P.weeks * P.spw;
     var doneCount = Object.keys(P.done).filter(function(k){ return P.done[k]; }).length;
     box.innerHTML = '<b>Programme en cours</b>' + PROG_OBJECTIVES[P.obj].label + ' · ' + P.weeks + ' semaines · ' + doneCount + '/' + total + ' séances faites'
-      + '<div><button type="button" id="openCurrentProgram">Ouvrir le programme</button></div>';
+      + '<div class="cp-acts"><button type="button" id="openCurrentProgram">Ouvrir le programme</button><button type="button" id="stopCurrentProgram" class="cp-stop">Arrêter</button></div>';
     box.hidden = false;
     document.getElementById('openCurrentProgram').onclick = function(){ showProgram(true); };
+    document.getElementById('stopCurrentProgram').onclick = function(){ stopProgram(); };
   }
 
   // Envoi du programme par lien
@@ -11290,7 +11321,7 @@
   // ---------- Page programme : plus claire (actions compactes, prochaine séance, semaines repliables) ----------
   (function(){
     var openSet = null, forId = null;
-    var LBL = {'data-prog-edit':['⚙️', 'Modifier'], 'data-prog-share':['✉️', 'Envoyer'], 'data-prog-save':null, 'data-prog-print':['🖨️', 'PDF'], 'data-prog-new':['➕', 'Nouveau']};
+    var LBL = {'data-prog-edit':['⚙️', 'Modifier'], 'data-prog-share':['✉️', 'Envoyer'], 'data-prog-save':null, 'data-prog-print':['🖨️', 'PDF'], 'data-prog-new':['➕', 'Nouveau'], 'data-prog-stop':['🗑️', 'Arrêter']};
     function nextOf(P){ for(var w = 0; w < P.weeks; w++) for(var s = 0; s < P.spw; s++) if(!P.done[w + '-' + s]) return {w:w, s:s}; return null; }
     var _sp = showProgram;
     showProgram = function(){
@@ -12549,6 +12580,91 @@
       vb.parentNode.insertBefore(mb, vb.nextSibling); pm();
       var _p = paint; paint = function(){ _p(); pm(); };
     }
+  })();
+
+  // ---------- Ajouter un exercice : recherche dans toute la bibliothèque, par catégorie ----------
+  (function(){
+    var search = document.getElementById('pickerSearch'), listEl = document.getElementById('pickerList');
+    if(!search || !listEl) return;
+    var CATS = [['auto','Suggestions'],['all','Tous'],['echauffement','Échauffement'],['principal','Renfo'],['cardio','Cardio'],['mobilite','Mobilité & étirements'],['retour_calme','Retour au calme']];
+    var CAT_TXT = {echauffement:'Échauffement', principal:'Renfo', cardio:'Cardio', mobilite:'Mobilité', retour_calme:'Retour au calme'};
+    var PAT = {push:'pousser pompe pectoraux poitrine triceps epaule', pull:'tirer tirage dos biceps rowing traction', squat:'jambe cuisse quadriceps squat fente', hinge:'fessier fesse ischio hanche pont', core:'abdo abdominaux gainage tronc ventre', full:'complet cardio', balance:'equilibre proprioception cheville', neck:'nuque cou'};
+    var MZ = {bas:'jambe hanche', dos:'dos', haut:'epaule nuque'};
+    var cat = 'auto';
+    var bar = document.createElement('div'); bar.className = 'picker-cats'; bar.setAttribute('role', 'tablist');
+    bar.innerHTML = CATS.map(function(c){ return '<button type="button" data-cat="' + c[0] + '">' + c[1] + '</button>'; }).join('');
+    search.parentNode.insertBefore(bar, search.nextSibling);
+    var allLbl = document.getElementById('pickerAll') && document.getElementById('pickerAll').closest('label');
+    search.placeholder = 'Rechercher : nom, muscle, matériel (ex. pompe, fessier, élastique)…';
+    function norm(t){ return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+    function stem(w){ return w.length > 4 ? w.replace(/(aux|eaux|es|s|x)$/, '') : w; }
+    var HAY = {};
+    function hay(x){
+      if(HAY[x.id]) return HAY[x.id];
+      var eq = [].concat(x.equipment || []).map(function(e){ return EQUIP_LABEL[e] || e; }).join(' ');
+      var h = [x.name, ZONE_WORD[x.zone] || '', eq, PAT[x.pattern] || '', CAT_TXT[x.block] || '', x.mob ? (x.mob.z || []).map(function(z){ return MZ[z] || ''; }).join(' ') + (x.mob.roll ? ' rouleau massage' : '') + (x.mob.gun ? ' pistolet massage' : '') + ' etirement mobilite' : ''].join(' ');
+      return (HAY[x.id] = ' ' + norm(h).split(' ').map(stem).join(' ') + ' ' + norm(h) + ' ');
+    }
+    function matches(x, q){ var ws = norm(q).split(' ').filter(function(w){ return w.length > 1; }); var H = hay(x); return ws.every(function(w){ return H.indexOf(stem(w)) > -1; }); }
+    function usedIds(){ var u = {}, S = lastSession; ['warm','cardio','main','cool'].forEach(function(k){ (S[k] || []).forEach(function(x){ u[x.id] = 1; }); }); return u; }
+    function pool(){
+      var S = lastSession, u = usedIds();
+      return EX.filter(function(x){
+        if(u[x.id] || x.breath || /^[wc]_/.test(x.id) || !CAT_TXT[x.block]) return false;
+        if(S.mob && !x.mob) return false;
+        return cat === 'all' || cat === 'auto' || x.block === cat;
+      });
+    }
+    function warn(x){
+      var S = lastSession, w = [];
+      if(x.levels && x.levels.indexOf(S.level) === -1) w.push('autre niveau');
+      if(x.block !== 'mobilite' && !S.mob && typeof equipFits === 'function' && !equipFits(x, S.equip || state.equip) && [].concat(x.equipment || []).join() !== 'poids_du_corps') w.push('matériel non coché');
+      if(S.noFloor && x.floor) w.push('au sol');
+      if(S.noImpact && x.impact) w.push('avec impact');
+      return w;
+    }
+    function item(x){
+      var ph = getExercisePhoto(x), w = warn(x);
+      var eq = Array.isArray(x.equipment) ? x.equipment.map(function(e){ return EQUIP_LABEL[e] || e; }).join(' ou ') : (EQUIP_LABEL[x.equipment] || 'Sans matériel');
+      return '<button type="button" class="picker-item" data-pick="' + x.id + '">'
+        + '<span class="picker-thumb">' + (ph ? '<img src="' + ph + '" alt="" loading="lazy">' : '') + '</span>'
+        + '<span><span class="picker-name">' + escapeHtml(x.name) + '</span><span class="picker-meta" style="display:block;"><span class="picker-cat">' + (CAT_TXT[x.block] || '') + '</span> ' + (ZONE_WORD[x.zone] || '') + (x.zone ? ' · ' : '') + escapeHtml(eq) + '</span>'
+        + (w.length ? '<span class="picker-warn">⚠ ' + escapeHtml(w.join(' · ')) + '</span>' : '') + '</span></button>';
+    }
+    function paint(){
+      bar.querySelectorAll('[data-cat]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-cat') === cat); });
+      if(allLbl) allLbl.hidden = cat !== 'auto' || !!search.value.trim();
+    }
+    function render(){
+      if(!pickerKey || !lastSession) return;
+      paint();
+      var q = search.value.trim();
+      if(cat === 'auto' && !q) return; // suggestions : liste d'origine (bloc, zone, matériel de la séance)
+      var block = BLOCK_OF_KEY[pickerKey], S = lastSession;
+      var list = pool().filter(function(x){ return !q || matches(x, q); });
+      var qs = norm(q).split(' ').filter(function(w){ return w.length > 1; }).map(stem);
+      function inName(x){ if(!qs.length) return 0; var n = ' ' + norm(x.name).split(' ').map(stem).join(' ') + ' ' + norm(x.name); return qs.every(function(w){ return n.indexOf(w) > -1; }) ? 0 : 4; }
+      list.sort(function(a, b){
+        var sa = inName(a) + (a.block === block ? 0 : 2) + (warn(a).length ? 1 : 0), sb = inName(b) + (b.block === block ? 0 : 2) + (warn(b).length ? 1 : 0);
+        return sa - sb || a.name.localeCompare(b.name);
+      });
+      var n = list.length; list = list.slice(0, 150);
+      listEl.innerHTML = (q ? '<div class="picker-count">' + n + ' exercice' + (n > 1 ? 's' : '') + ' trouvé' + (n > 1 ? 's' : '') + (n > 150 ? ' (150 premiers affichés)' : '') + '</div>' : '')
+        + (list.map(item).join('') || '<div class="picker-empty">Aucun exercice ne correspond. Essaie un autre mot (muscle, matériel, nom) ou la catégorie « Tous ».</div>');
+    }
+    bar.addEventListener('click', function(e){ var b = e.target.closest('[data-cat]'); if(!b) return; cat = b.getAttribute('data-cat'); renderPicker(); render(); });
+    search.addEventListener('input', function(){ render(); });
+    var _op = openPicker;
+    openPicker = function(key){
+      cat = 'auto';
+      var r = _op.apply(this, arguments);
+      try{
+        var sub = document.getElementById('pickerSub');
+        if(sub && key === 'warm') sub.textContent += ' Tu peux y ajouter n’importe quel exercice : choisis « Tous » ou une catégorie, ou fais une recherche.';
+        render();
+      }catch(e){}
+      return r;
+    };
   })();
 
   // ---------- Bouton retour du téléphone ----------
