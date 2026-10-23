@@ -10421,9 +10421,11 @@
         else if(!mobS && (!lastSession || !lastSession.mob)){ results.innerHTML = EMPTY_MOB; }
       } else {
         putHome();
+        // Programme affiché (composé ou lancé depuis un autre onglet) : on le laisse
+        if(results.classList.contains('prog-view') && currentProgram) return;
         if(renfoS && lastSession !== renfoS) displaySession(renfoS, renfoS.title, true);
         else if(!renfoS && lastSession && lastSession.mob){ results.innerHTML = EMPTY_RENFO; lastSession = null; }
-        else if(!renfoS && !lastSession){ results.innerHTML = EMPTY_RENFO; }
+        else if(!renfoS && !lastSession && !(results.classList.contains('prog-view') && currentProgram)){ results.innerHTML = EMPTY_RENFO; }
       }
     }
     function setMode(m){
@@ -12796,11 +12798,19 @@
       if(hd && /sticky|fixed/.test(getComputedStyle(hd).position)) top -= hd.offsetHeight;
       return Math.max(0, Math.round(top));
     }
+    var t3 = null, until = 0, userTouched = false;
+    function fix(){ if(!userTouched && Date.now() < until && res.offsetHeight && Math.abs(res.getBoundingClientRect().top - 12) > 30) window.scrollTo({top:target(), behavior:'auto'}); }
+    window.addEventListener('touchstart', function(){ if(Date.now() < until) userTouched = true; }, {passive:true});
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', function(){ if(Date.now() < until) setTimeout(fix, 60); });
     function scrollRes(){
-      clearTimeout(t1); clearTimeout(t2);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      // Clavier encore ouvert (nom de la séance ou du programme) : on le ferme, sinon iOS annule le défilement
+      try{ var ae = document.activeElement; if(ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) ae.blur(); }catch(e){}
+      userTouched = false; until = Date.now() + 2200;
       // On attend la mise en page (iPad : colonnes, cartes repliées) avant de défiler, puis on corrige si besoin
       t1 = setTimeout(function(){ if(res.offsetHeight) window.scrollTo({top:target(), behavior:'smooth'}); }, 140);
-      t2 = setTimeout(function(){ if(res.offsetHeight && Math.abs(res.getBoundingClientRect().top - 12) > 40) window.scrollTo({top:target(), behavior:'auto'}); }, 950);
+      t2 = setTimeout(fix, 900);
+      t3 = setTimeout(fix, 1700);
     }
     window.ecScrollToResults = scrollRes;
     res.scrollIntoView = function(){ scrollRes(); };
