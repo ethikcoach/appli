@@ -3341,6 +3341,60 @@
   .ec-tests{cursor:pointer;}
   .app-ver2{text-align:center; font-size:0.75rem; color:var(--stone); margin:18px 0 6px; letter-spacing:0.02em;}
   @media (max-width:600px){ html.ec-p2 .ec-tests.et-compact .et-txt b{white-space:normal;} html.ec-p2 #todayView .td-duo .ec-tests .et-s{white-space:normal;} }
+  /* ================= Barre du bas à la couleur de la page ================= */
+  html{--pg-nav:#263F58; --pg-navd:#9FC0DD;}
+  html[data-pg="renfo"]{--pg-nav:#23603D; --pg-navd:#8FD0A5;} html[data-pg="prog"]{--pg-nav:#4A3B93; --pg-navd:#B7AAF0;}
+  html[data-pg="mob"]{--pg-nav:#17625F; --pg-navd:#86D0CB;} html[data-pg="breath"]{--pg-nav:#285E9E; --pg-navd:#9EC1EF;}
+  html[data-pg="wod"]{--pg-nav:#A9561A; --pg-navd:#F2B27A;} html[data-pg="tests"]{--pg-nav:#8A5A0F; --pg-navd:#F2C46B;}
+  html .bnav button.active{color:var(--pg-nav) !important; transition:color .3s ease;}
+  html .bnav button.active .bn-ico, html .bnav button:active .bn-ico{background:color-mix(in srgb, var(--pg-nav) 15%, transparent) !important; transition:background-color .3s ease;}
+  @media screen and (prefers-color-scheme: dark){ html .bnav button.active{color:var(--pg-navd) !important;} html .bnav button.active .bn-ico, html .bnav button:active .bn-ico{background:color-mix(in srgb, var(--pg-navd) 18%, transparent) !important;} }
+  /* Séance générée : couleur du type (défi, WOD) */
+  html[data-pg="wod"] #renfoView{--hero-renfo:var(--pg-band);}
+  html[data-pg="wod"] #renfoView .generate-btn{background:var(--pg-band) !important;}
+  html[data-pg="wod"] #renfoView > .panel{display:none !important;}
+  html[data-pg="wod"] #renfoView > .results{grid-column:1 / -1;}
+  /* Favoris : retirer */
+  .sv-fav{position:relative;}
+  .sv-fav-x{flex:none; width:36px; height:36px; margin-left:6px; border:none; border-radius:50%; background:var(--chip, #F1F4EF); color:var(--stone); font-size:1.3rem; line-height:1; cursor:pointer;}
+  .sv-fav-x:active{transform:scale(0.92);}
+  /* Aujourd'hui : semaine colorée par type, cartes en cours avec croix */
+  .tw-dot.on.k-mob{background:#1E7A78 !important;} .tw-dot.on.k-breath{background:#2F6DB5 !important;} .tw-dot.on.k-wod{background:#C2661B !important;} .tw-dot.on.k-renfo{background:#2E7D4F !important;}
+  html.ec-p2 #todayView .td-intro .tw-dot.on{color:#fff !important;}
+  html.ec-p2 #todayView .td-week{cursor:pointer;}
+  .td-prog{position:relative;}
+  .td-x{position:absolute; top:10px; right:10px; width:34px; height:34px; border:none; border-radius:50%; background:rgba(255,255,255,0.18); color:#fff; font-size:1.3rem; line-height:1; cursor:pointer; z-index:2;}
+  .td-x:active{transform:scale(0.92);}
+  .td-parc{position:relative; margin:0 0 10px; padding:14px 16px; border-radius:22px; background:linear-gradient(140deg, #9C4815, #C2661B 55%, #E08F45); color:#fff; box-shadow:0 12px 28px rgba(194,102,27,0.28); display:flex; flex-direction:column; gap:4px;}
+  .td-parc[hidden]{display:none;}
+  .td-parc .tp-k{color:#FCE3CC;}
+  .td-parc .tp-go{color:#9C4815;}
+  .td-parc .pc-bar{height:6px; border-radius:999px; background:rgba(255,255,255,0.25); overflow:hidden; margin:4px 0 2px;}
+  .td-parc .pc-bar i{display:block; height:100%; background:#fff; border-radius:999px;}
+  @media (max-width:600px){ .td-parc{padding:12px 14px;} }
+  /* ================= Page Défis intégrée comme les autres ================= */
+  #wodView .wod-page .ec-dialog{background:transparent !important; box-shadow:none !important; padding:0 !important; border:none !important;}
+  #wodView .wod-box{counter-reset:wdstep;}
+  #wodView .wod-box > .pe-seg[data-name="type"]{display:grid !important; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin:0 0 4px;}
+  #wodView .wod-box > .pe-seg[data-name="type"] button{display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; min-height:70px; padding:10px 12px !important; border-radius:18px !important; border:none !important; background:var(--card) !important; color:var(--ink) !important; box-shadow:var(--shadow-1); font-weight:800; font-size:0.95rem; text-align:left; white-space:normal;}
+  #wodView .wod-box > .pe-seg[data-name="type"] button::after{display:block; font-weight:500; font-size:0.7rem; line-height:1.2; opacity:0.75;}
+  #wodView .wod-box > .pe-seg[data-name="type"] [data-v="hyrox"]::after{content:'Course + stations';}
+  #wodView .wod-box > .pe-seg[data-name="type"] [data-v="crossfit"]::after{content:'AMRAP, EMOM, Tabata';}
+  #wodView .wod-box > .pe-seg[data-name="type"] [data-v="defi"]::after{content:'Chrono, parcours';}
+  #wodView .wod-box > .pe-seg[data-name="type"] button.on{background:var(--pg-band) !important; color:#fff !important; box-shadow:0 8px 20px rgba(194,102,27,0.3);}
+  #wodView .wd-sec{margin:12px 0 0; padding:14px; border-radius:20px; background:var(--card); box-shadow:var(--shadow-1);}
+  #wodView .wd-sec > .pe-l{margin:0 0 10px; font-size:0.98rem; display:flex; align-items:center; gap:8px;}
+  #wodView .wd-sec > .pe-l::before{counter-increment:wdstep; content:counter(wdstep); display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--pg-a); color:#fff; font-size:0.78rem; font-weight:800; flex:none;}
+  #wodView .wd-sec .pe-note{margin:10px 0 0;}
+  #wodView .wd-sec.wd-run{padding:4px 6px;}
+  #wodView .wd-sec.wd-run .gym-it{margin:0; background:transparent !important;}
+  #wodView .wod-box > .dp-card{margin:12px 0 0; border-radius:20px; box-shadow:var(--shadow-1);}
+  #wodView .dp-go{background:var(--pg-band) !important; color:#fff !important; border:none !important;}
+  #wodView .wod-box > .pe-note{margin:12px 4px 0; font-size:0.78rem;}
+  #wodView .wod-box > .ec-dialog-actions{margin-top:14px; gap:8px;}
+  #wodView .wod-box > .ec-dialog-actions .ec-dialog-cancel{border:1.5px solid var(--stone-light) !important;}
+  #wodView .wod-box > .ec-dialog-actions .ec-dialog-cancel::before{content:'‹ '; font-size:1.2rem; line-height:0;}
+  @media (max-width:640px){ #wodView .wod-box > .ec-dialog-actions{position:sticky; bottom:calc(var(--bnav-h, 0px) + 10px + env(safe-area-inset-bottom,0px)); z-index:5; border-radius:20px; box-shadow:0 0 0 8px var(--paper); background:var(--paper);} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -9080,8 +9134,16 @@
         });
       });
       $('#svFav').innerHTML = rows.length ? rows.join('') : '<p class="sv-empty">Aucun favori. Après avoir généré une séance, appuie sur « ☆ Favori » pour la retrouver ici.</p>';
+      $('#svFav').querySelectorAll('.sv-fav [data-fav]').forEach(function(b){ var x = document.createElement('button'); x.type = 'button'; x.className = 'sv-fav-x'; x.setAttribute('data-favx', b.getAttribute('data-fav')); x.setAttribute('aria-label', 'Retirer des favoris'); x.innerHTML = '&times;'; b.parentNode.appendChild(x); });
     }
     $('#svFav').addEventListener('click', function(e){
+      var x = e.target.closest('[data-favx]');
+      if(x){
+        var q = x.getAttribute('data-favx').split('|'), item = document.querySelectorAll(q[0] + ' .saved-item')[+q[1]];
+        var nm = item && item.querySelector('.saved-item-name') ? item.querySelector('.saved-item-name').textContent : 'ce favori';
+        ecConfirm('Retirer « ' + nm + ' » de tes favoris ?', 'Retirer', function(){ var del = item && item.querySelector('.saved-delete'); if(del) del.click(); setTimeout(function(){ renderFav(); showToast('Retiré des favoris', false); }, 80); }, true, 'Garder');
+        return;
+      }
       var b = e.target.closest('[data-fav]'); if(!b) return;
       var p = b.getAttribute('data-fav').split('|');
       var it = document.querySelectorAll(p[0] + ' .saved-item')[+p[1]];
@@ -12480,6 +12542,11 @@
     function lsS(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
     function parc(){ var P = lsG('ec_parcours_v1', null); if(!P || typeof P !== 'object' || !P.done) P = {done:{}}; return P; }
     function parcNext(){ var P = parc(); for(var i = 0; i < PARC.length; i++) if(!P.done[i]) return i; return -1; }
+    window.ecParc = {
+      info:function(){ var P = parc(), nx = parcNext(), n = Object.keys(P.done).length; return {n:n, total:PARC.length, next:nx, label:nx < 0 ? '' : 'Étape ' + (nx + 1) + ' · semaine ' + (Math.floor(nx / 4) + 1) + ' : ' + DFN[PARC[nx][0]] + ' ' + PARC[nx][1] + ' min'}; },
+      go:function(){ var ni = parcNext(); if(ni < 0) return; generate({type:'defi', df:PARC[ni][0], d:PARC[ni][1], ps:ni}); },
+      stop:function(){ lsS('ec_parcours_v1', {done:{}}); }
+    };
     function parcHtml(){
       var P = parc(), nx = parcNext(), n = Object.keys(P.done).length, h = '<div class="dp-card"><div class="dp-h"><b>🗺️ Parcours 4 semaines</b><span>' + n + ' / ' + PARC.length + '</span></div><div class="dp-weeks">';
       for(var w = 0; w < 4; w++){
@@ -13989,17 +14056,17 @@
         var ch = window.ecCreerChosen ? window.ecCreerChosen() : false, pm = false;
         try{ pm = typeof uiMode !== 'undefined' && uiMode === 'program'; }catch(e){}
         var re = document.getElementById('results');
-        if(re.querySelector('.session-head')) return re.classList.contains('prog-view') ? 'prog' : 'renfo';
+        if(re.querySelector('.session-head')){ if(re.classList.contains('prog-view')) return 'prog'; try{ if(typeof lastSession !== 'undefined' && lastSession && lastSession.wod) return 'wod'; }catch(e){} return 'renfo'; }
         return (ch === 'prog' || pm) ? 'prog' : 'renfo';
       }
       if(v === 'breath'){ var a = bv.querySelector('.recup-switch [data-rm].active'); return a && a.getAttribute('data-rm') === 'breath' ? 'breath' : 'mob'; }
       return v;
     }
-    var TITLES = {hub:'Créer une séance', renfo:'Renfo sur mesure', prog:'Mon programme'};
+    var TITLES = {hub:'Créer une séance', renfo:'Renfo sur mesure', prog:'Mon programme', wod:'Défis & WOD'};
     function update(){
       var k = key();
       if(H.getAttribute('data-pg') !== k) H.setAttribute('data-pg', k);
-      if(rv){ var sub = k === 'renfo' || k === 'prog'; rv.classList.toggle('cr-sub', sub); if(rH1 && window.__ecView === 'renfo'){ var t = TITLES[k] || TITLES.hub; if(rH1.textContent !== t) rH1.textContent = t; } }
+      if(rv){ var sub = k === 'renfo' || k === 'prog' || (k === 'wod' && window.__ecView === 'renfo'); rv.classList.toggle('cr-sub', sub); if(rH1 && window.__ecView === 'renfo'){ var t = TITLES[k] || TITLES.hub; if(rH1.textContent !== t) rH1.textContent = t; } }
       if(bH1 && window.__ecView === 'breath'){ var bt = k === 'breath' ? 'Respiration' : 'Récup & étirements'; if(bH1.textContent !== bt) bH1.textContent = bt; }
       wodBack();
     }
@@ -14180,6 +14247,92 @@
       var v = document.getElementById(id); if(!v || !ver) return;
       var p = document.createElement('p'); p.className = 'app-ver2'; p.textContent = ver; v.appendChild(p);
     });
+  })();
+  // ---------- Version 10 · finitions : défis intégrés, croix sur Aujourd'hui, semaine colorée, Partager ----------
+  (function(){
+    // 1. Page Défis : chaque réglage dans sa carte, comme Renfo / Récup
+    var host = document.getElementById('wodPageHost');
+    function wrapWod(){
+      var box = host && host.querySelector('.wod-box'); if(!box) return;
+      if(!box.querySelector(':scope > .pe-l') && !box.querySelector(':scope > .wod-run')) return;
+      var kids = [].slice.call(box.children), cur = null;
+      kids.forEach(function(el){
+        if(el.classList.contains('wod-run')){ var s0 = document.createElement('div'); s0.className = 'wd-sec wd-run'; box.insertBefore(s0, el); s0.appendChild(el); cur = null; return; }
+        if(el.classList.contains('pe-l')){ cur = document.createElement('div'); cur.className = 'wd-sec'; box.insertBefore(cur, el); cur.appendChild(el); return; }
+        if(el.classList.contains('ec-dialog-actions') || el.classList.contains('dp-card') || el.classList.contains('ec-dialog-msg') || (el.classList.contains('pe-seg') && el.getAttribute('data-name') === 'type')){ cur = null; return; }
+        if(el.classList.contains('pe-note') && /^Matériel utilisé/.test(el.textContent)){ cur = null; return; }
+        if(cur) cur.appendChild(el);
+      });
+    }
+    if(host){ new MutationObserver(function(){ wrapWod(); }).observe(host, {childList:true, subtree:true}); wrapWod(); }
+
+    // 2. Aujourd'hui : croix pour arrêter un programme ou le parcours de défis
+    var tv = document.getElementById('todayView');
+    if(tv){
+      var prog = tv.querySelector('.td-prog');
+      var pc = document.createElement('section'); pc.className = 'td-parc'; pc.hidden = true;
+      if(prog) prog.parentNode.insertBefore(pc, prog.nextSibling);
+      function later(test, fn){ var n = 0, t = setInterval(function(){ if(test() || ++n > 60){ clearInterval(t); fn(); } }, 250); }
+      function paint(){
+        if(prog && !prog.hidden && !prog.querySelector('.td-x')){
+          var x = document.createElement('button'); x.type = 'button'; x.className = 'td-x'; x.setAttribute('aria-label', 'Arrêter le programme'); x.innerHTML = '&times;'; prog.appendChild(x);
+        }
+        var P = window.ecParc ? window.ecParc.info() : null, on = !!(P && P.n > 0 && P.next >= 0);
+        pc.hidden = !on;
+        if(on) pc.innerHTML = '<button type="button" class="td-x" data-pc="stop" aria-label="Arrêter le parcours de défis">&times;</button><span class="tp-k">Parcours défis en cours · ' + P.n + ' / ' + P.total + '</span><b class="tp-t">' + P.label + '</b><span class="pc-bar"><i style="width:' + Math.round(P.n / P.total * 100) + '%"></i></span><button type="button" class="tp-go" data-pc="go">▶ Lancer l’étape</button>';
+        paintWeek();
+      }
+      if(prog) prog.addEventListener('click', function(e){
+        if(!e.target.closest('.td-x')) return; e.stopPropagation();
+        if(window.ecStopProgram) window.ecStopProgram();
+        later(function(){ return !(window.ecProgNext && window.ecProgNext()); }, function(){ if(window.ecRenderToday) window.ecRenderToday(); if(window.ecRenderTodayCard) window.ecRenderTodayCard(); });
+      }, true);
+      pc.addEventListener('click', function(e){
+        var b = e.target.closest('[data-pc]'); if(!b) return;
+        if(b.getAttribute('data-pc') === 'go'){ if(window.ecParc) window.ecParc.go(); return; }
+        ecConfirm('Arrêter le parcours de défis ? Ta progression sera remise à zéro.', 'Arrêter', function(){ if(window.ecParc) window.ecParc.stop(); paint(); showToast('Parcours arrêté', false); }, true, 'Continuer');
+      });
+      // 3. Semaine : points colorés selon le type de séance, toucher = voir le calendrier
+      function kind(e){ var t = e.title || ''; if(e.breath || e.kind === 'breath') return 'breath'; if(/^(Réveil|Mobilité|Étirements|Récupération|Souplesse|Yoga|Détente du soir|Après l|Auto-massage)/.test(t) || e.kind === 'mob') return 'mob'; if(/Défi|Chrono|Pyramide|Montagne|Sandwich|Tabata|HYROX|CrossFit|AMRAP|EMOM|WOD/i.test(t) || e.kind === 'wod') return 'wod'; return 'renfo'; }
+      function paintWeek(){
+        var w = tv.querySelector('.td-week'); if(!w) return;
+        var h = []; try{ h = JSON.parse(localStorage.getItem('ec_history_v1') || '[]'); }catch(e){}
+        var now = new Date(); now.setHours(0,0,0,0); var mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() + 6) % 7);
+        var dots = w.querySelectorAll('.tw-dot');
+        dots.forEach(function(d, i){
+          var day = new Date(mon); day.setDate(mon.getDate() + i); var k = null;
+          h.forEach(function(e){ var dd = new Date(e.at); dd.setHours(0,0,0,0); if(dd.getTime() === day.getTime()) k = kind(e); });
+          d.classList.remove('k-renfo', 'k-mob', 'k-breath', 'k-wod'); if(k) d.classList.add('k-' + k);
+        });
+        w.setAttribute('role', 'button'); w.setAttribute('aria-label', 'Ta semaine : voir le calendrier dans Suivi');
+        var st = tv.querySelector('.td-stat');
+        if(st){ var n = 0; h.forEach(function(e){ if(e.at >= mon.getTime()) n++; }); var sv = st.querySelector('svg'); st.textContent = ''; if(sv) st.appendChild(sv); st.appendChild(document.createTextNode(n ? n + (n > 1 ? ' séances' : ' séance') + ' cette semaine' : 'Aucune séance cette semaine')); }
+      }
+      var wk = tv.querySelector('.td-week');
+      if(wk) wk.addEventListener('click', function(){ window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('act'); window.scrollTo(0, 0); });
+      var _rf = window.ecRenderFirst; window.ecRenderFirst = function(){ if(_rf) _rf(); try{ paint(); }catch(e){} };
+      paint();
+    }
+
+    // 4. Athlètes : « Envoyer » devient « Partager » (envoyer la séance à un ami ou à son coach)
+    function coach(){ return document.documentElement.classList.contains('ec-coach'); }
+    function relabel(){
+      if(coach()) return;
+      document.querySelectorAll('#shareSessionBtn, #breathShareBtn, [data-prog-share]').forEach(function(b){
+        if(b.dataset.relab) return; b.dataset.relab = '1';
+        b.childNodes.forEach(function(n){ if(n.nodeType === 3 && /Envoyer/.test(n.textContent)) n.textContent = n.textContent.replace('Envoyer', 'Partager'); });
+        if(b.textContent.indexOf('Partager') < 0) b.innerHTML = b.innerHTML.replace('Envoyer', 'Partager');
+      });
+    }
+    var shT = document.getElementById('shareTitle'), shS = document.querySelector('#shareBackdrop .share-sub');
+    var shBd = document.getElementById('shareBackdrop');
+    if(shBd) new MutationObserver(function(){
+      if(coach() || !shBd.classList.contains('open')) return;
+      if(shT) shT.textContent = shT.textContent.replace('Envoyer', 'Partager');
+      if(shS) shS.textContent = 'Envoie cette séance à un ami pour la faire ensemble, ou à ton coach pour lui montrer : la personne ouvre le lien et retrouve exactement la même séance, chrono et annonces vocales compris.';
+    }).observe(shBd, {attributes:true, attributeFilter:['class']});
+    ['results', 'breathResults'].forEach(function(id){ var r = document.getElementById(id); if(r) new MutationObserver(relabel).observe(r, {childList:true, subtree:true}); });
+    relabel();
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
