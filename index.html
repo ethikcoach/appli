@@ -10291,6 +10291,14 @@
         if(st.label === 'Récupération entre tours'){ st.duration = 10; st.label = 'Nouveau passage'; st.sublabel = 'On reprend les postures'; }
         else if(/^Tour \d+\/\d+$/.test(st.sublabel || '') && S.rounds > 1) st.sublabel = st.sublabel.replace('Tour', 'Passage');
       });
+      // Explications audio : la transition avant chaque nouvelle posture laisse le temps d'écouter la mise en place
+      if(S && S.mob && window.ecRecupExplain && window.ecRecupExplain()){
+        var seenX = {};
+        t.forEach(function(st, k){
+          if(st.type !== 'transition' || st.prep) return;
+          for(var j = k + 1; j < t.length; j++){ var w = t[j]; if(w.type === 'work'){ if(w.ex && !w.ex.breath && w.ex.detail && w.ex.detail.start && !seenX[w.ex.id]){ seenX[w.ex.id] = 1; st.duration = Math.max(st.duration || 0, Math.min(28, Math.ceil(w.ex.detail.start.length / 12) + 6)); st.explain = 1; } break; } }
+        });
+      }
       if(S && S.mob) t.forEach(function(st){ if(st.sublabel === 'Tour 1/1') st.sublabel = st.ex && st.ex.mob ? (st.ex.mob.k === 'dyn' ? 'Mouvement lent et contrôlé' : (st.ex.mob.k === 'flow' ? 'Au rythme de ta respiration' : 'Tiens la posture, respire calmement')) : ''; });
       return t;
     };
@@ -12263,6 +12271,26 @@
       var st = timerState.timeline[i];
       if(!timerState.recup || !st || st.calm) return _an(i);
       var nx = nextExerciseAfter(i);
+      var EXP = window.ecRecupExplain && window.ecRecupExplain(), tlx = timerState.timeline; tlx.explained = tlx.explained || {};
+      function dt(ex){ return ex && !ex.breath && ex.detail ? ex.detail : null; }
+      function clean(t){ return String(t || '').replace(/\s+/g, ' ').trim().replace(/([^.!?])$/, '$1.'); }
+      if(EXP && (st.type === 'transition' || st.type === 'rest') && !st.prep && nx && dt(nx) && !tlx.explained['s' + nx.id]){
+        tlx.explained['s' + nx.id] = 1;
+        speak('Respire profondément. Ensuite : ' + nx.name + '. Mise en place : ' + clean(dt(nx).start), {rate:0.85});
+        return;
+      }
+      if(EXP && st.type === 'work' && dt(st.ex) && dt(st.ex).exec && !tlx.explained['e' + st.ex.id]){
+        tlx.explained['e' + st.ex.id] = 1;
+        var ex0 = clean(String(dt(st.ex).exec).replace(/,?\s*puis changer de (côté|jambe|bras|pied)\.?/gi, '.').replace(/\s*Changer de (côté|jambe|bras|pied)\.?/gi, ''));
+        if(holdStep(st)){
+          var n0 = cyclesOf(st.side ? st.side.secs : st.duration), ry0 = '';
+          if(!timerState.recupRythme){ timerState.recupRythme = true; ry0 = ' Inspire sur ' + IN + ' secondes, expire sur ' + (CYCLE - IN) + '.'; }
+          speak(st.label + '. ' + ex0 + ' ' + n0 + ' respirations' + (st.side ? ' de chaque côté' : '') + '.' + ry0, {rate:0.85});
+        } else {
+          speak(st.label + '. ' + ex0 + ' ' + (st.side ? durationWords(st.side.secs) + ' par côté' : durationWords(st.duration)) + '.', {rate:0.85});
+        }
+        return;
+      }
       if(st.prep){ speak('Installe-toi confortablement. ' + (nx ? 'Première posture : ' + nx.name + '.' : '')); return; }
       if(st.type === 'transition' || st.type === 'rest'){ speak('Respire profondément.' + (nx ? ' Ensuite : ' + nx.name + '.' : '')); return; }
       if(holdStep(st)){
@@ -12557,6 +12585,16 @@
       try{ sideHook(false); }catch(e){}
       showToast('↪ ' + st.ex.name + ' reporté à la fin du tour', false);
     });
+  })();
+
+  // ---------- Récup : explications des postures lues à voix haute ----------
+  (function(){
+    window.ecRecupExplain = function(){ try{ return localStorage.getItem('ec_recup_explain') !== '0'; }catch(e){ return true; } };
+    var vs = document.querySelector('.vsheet .vsheet-ok'); if(!vs) return;
+    var d = document.createElement('label'); d.className = 'music-row';
+    d.innerHTML = '<input type="checkbox" class="rx-cb"' + (window.ecRecupExplain() ? ' checked' : '') + '><span><b>🧘 Explications audio en Récup</b><small>La voix décrit la mise en place et le mouvement de chaque posture, la première fois qu’elle arrive dans la séance.</small></span>';
+    vs.parentNode.insertBefore(d, vs);
+    d.querySelector('input').addEventListener('change', function(){ try{ localStorage.setItem('ec_recup_explain', this.checked ? '1' : '0'); }catch(e){} });
   })();
 
   // ---------- Mode musique : réglage dans le panneau de la voix et dans le chrono ----------
