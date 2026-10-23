@@ -2371,6 +2371,9 @@
   .fbl-name{flex:1; font-size:0.88rem; line-height:1.25;}
   .fbl-name small{display:block; opacity:0.7; font-size:0.75rem;}
   .fbl-row label{display:flex; align-items:center; gap:4px; font-size:0.8rem;}
+  .fbl-row select{min-height:40px; max-width:118px; font-size:16px; border-radius:10px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; padding:0 6px;}
+  .fbl-row select option{color:#111;}
+  .fbl-opt{display:block; font-size:0.62rem; opacity:0.7; line-height:1;}
   .fbl-row input{width:56px; min-height:40px; font-size:16px; text-align:center; border-radius:10px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:#fff; padding:0 4px;}
   .timer-tips .tip-last b{color:#B8D8A8;}
   /* ---------- Tests de forme ---------- */
@@ -2715,6 +2718,14 @@
   .ft-chrono small{color:rgba(255,255,255,0.75);}
   .timer-backdrop.ft-on #timerSkip{background:#E8C77A; color:#1F4030; font-weight:800;}
   @media screen and (prefers-color-scheme: dark){ .dp-w{background:rgba(255,255,255,0.06);} .dp-card{background:#1E3528; box-shadow:inset 0 0 0 1.5px #8FC49E;} .dp-h span{color:#A7D8B4;} .dp-dot.on{background:#8FC49E;} .dp-go{background:#357D51;} .dp-go.ghost{background:transparent; color:#A7D8B4; box-shadow:inset 0 0 0 1.5px #8FC49E;} }
+  /* ---------- Machine prise / mode musique ---------- */
+  .timer-later{display:block; margin:10px auto 0; padding:8px 14px; min-height:40px; border:1px dashed rgba(255,255,255,0.45); border-radius:999px; background:rgba(255,255,255,0.06); color:#fff; font-family:inherit; font-size:0.84rem; cursor:pointer;}
+  .timer-later[hidden]{display:none;}
+  .timer-later b{color:#E8C77A;}
+  .timer-music.on{background:#E8C77A !important; color:#1F4030 !important;}
+  .music-row{display:flex; gap:10px; align-items:flex-start; margin:10px 0 12px; padding:10px 12px; border-radius:12px; background:var(--chip); text-align:left; cursor:pointer;}
+  .music-row input{width:22px; height:22px; flex:none; margin-top:2px; accent-color:var(--forest);}
+  .music-row small{display:block; margin-top:3px; font-size:0.78rem; line-height:1.35; color:var(--stone);}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -3399,7 +3410,7 @@
     {id:'p2',detail:{start:"Debout, pieds sous les hanches.",exec:"Grand pas en avant, descendre jusqu'à un genou proche du sol, revenir.",error:"Le genou avant dépasse largement la pointe du pied."},name:"Fentes avant alternées",equipment:'poids_du_corps',zone:'bas',block:'principal',pattern:'squat',type:'temps',levels:['debutant','intermediaire','avance'],baseSets:3,baseSeconds:25,note:"Par jambe, buste gainé."},
     {id:'p3',detail:{start:"Position de planche, mains un peu plus larges que les épaules.",exec:"Descendre poitrine vers le sol coudes à 45°, repousser.",error:"Laisser le bassin s'affaisser ou remonter en pointe."},name:"Pompes",equipment:'poids_du_corps',zone:'haut',block:'principal',type:'temps',levels:['debutant','intermediaire','avance','senior'],baseSets:3,baseSeconds:25,note:"Sur genoux si besoin.",seniorAdapt:"Debout, mains contre un mur.",pattern:'push'},
     {id:'p4',detail:{start:"Appui sur les avant-bras et les pieds, corps aligné.",exec:"Maintenir la position, ventre gainé, respiration régulière.",error:"Creuser le bas du dos ou lever les fessiers."},name:"Gainage planche",equipment:'poids_du_corps',zone:'gainage',block:'principal',pattern:'core',type:'temps',levels:['debutant','intermediaire','avance','senior'],baseSets:3,baseSeconds:20,note:"Corps aligné, ventre gainé.",seniorAdapt:"Sur les genoux, dos plat."},
-    {id:'p5',detail:{start:"Allongé sur le ventre, bras tendus devant.",exec:"Lever simultanément bras et jambes opposés, mouvement lent.",error:"Utiliser l'élan au lieu d'un mouvement contrôlé."},name:"Superman — extension dorsale au sol",equipment:'poids_du_corps',zone:'gainage',block:'principal',pattern:'core',type:'temps',levels:['debutant','intermediaire','avance','senior'],baseSets:3,baseSeconds:30,note:"Levée simultanée bras et jambes opposés, mouvement lent."},
+    {id:'p5',detail:{start:"Allongé sur le ventre, bras tendus devant, regard vers le sol.",exec:"Décoller ensemble les deux bras et les deux jambes de quelques centimètres, tenir 2 secondes, puis redescendre lentement. Version plus facile : lever bras et jambe opposés en alternance.",error:"Utiliser l'élan, relever la tête ou cambrer fort le bas du dos."},name:"Superman — extension dorsale au sol",equipment:'poids_du_corps',zone:'gainage',block:'principal',pattern:'core',type:'temps',levels:['debutant','intermediaire','avance','senior'],baseSets:3,baseSeconds:30,note:"Bras et jambes décollés ensemble, sans élan ; en alternance bras-jambe opposés pour débuter."},
     {id:'p6',detail:{start:"Dos au mur, genoux à 90°.",exec:"Maintenir la position, cuisses parallèles au sol.",error:"Laisser les genoux dépasser les pointes de pieds."},name:"Chaise contre un mur",equipment:'poids_du_corps',zone:'bas',block:'principal',pattern:'squat',type:'temps',levels:['debutant','intermediaire','avance','senior'],baseSets:3,baseSeconds:20,note:"Genoux à 90°, dos plaqué au mur."},
     {id:'p7',detail:{start:"Mains sur le bord d'une chaise stable, jambes tendues devant.",exec:"Fléchir les coudes pour descendre, repousser jusqu'à tendre les bras.",error:"Écarter les coudes au lieu de les garder proches du corps."},name:"Dips sur chaise",equipment:'poids_du_corps',zone:'haut',block:'principal',type:'temps',levels:['debutant','intermediaire','avance'],baseSets:3,baseSeconds:25,note:"Mains sur le bord d'une chaise stable.",pattern:'push'},
     {id:'p8',detail:{start:"Allongé, genoux fléchis, pieds au sol.",exec:"Pousser les hanches vers le haut en serrant les fessiers, redescendre.",error:"Cambrer le bas du dos au lieu de gainer le ventre."},name:"Pont fessier",equipment:'poids_du_corps',zone:'bas',block:'principal',pattern:'hinge',type:'temps',levels:['debutant','intermediaire','avance','senior'],baseSets:3,baseSeconds:35,note:"Allongé, montée et descente contrôlées."},
@@ -4553,6 +4564,7 @@
   // Petit bip de repère (10 s restantes : double bip ; 3, 2, 1 : bip court), même voix coupée
   function cueTone(n){
     if(timerState.silent || timerState.calm || timerState.recup) return;
+    ecDuck(900);
     try{
       if(!timerState.audioCtx){ timerState.audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
       var ctx = timerState.audioCtx;
@@ -4560,13 +4572,23 @@
         var osc = ctx.createOscillator(), gain = ctx.createGain(), t0 = ctx.currentTime + k * 0.16;
         osc.frequency.value = n > 1 ? 740 : 620;
         osc.connect(gain); gain.connect(ctx.destination);
-        gain.gain.setValueAtTime(0.11, t0);
+        gain.gain.setValueAtTime(Math.min(0.8, 0.11 * ecGainK()), t0);
         osc.start(t0); osc.stop(t0 + 0.09);
       }
     }catch(e){}
   }
+  // Mode musique : bips plus forts et, quand le navigateur le permet (iPhone), la musique baisse pendant les annonces
+  function ecMusic(){ try{ return localStorage.getItem('ec_music_mode') === '1'; }catch(e){ return false; } }
+  function ecGainK(){ return ecMusic() ? 2.6 : 1; }
+  var ecDuckT = null;
+  function ecDuck(ms){
+    var AS = navigator.audioSession; if(!AS || !ecMusic()) return;
+    try{ if(AS.type !== 'transient') AS.type = 'transient'; }catch(e){}
+    clearTimeout(ecDuckT); ecDuckT = setTimeout(function(){ try{ AS.type = 'ambient'; }catch(e){} }, ms || 1500);
+  }
   function playBeep(){
     if(timerState.silent) return;
+    ecDuck(1400);
     try{
       if(!timerState.audioCtx){ timerState.audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
       var ctx = timerState.audioCtx;
@@ -4575,9 +4597,11 @@
       osc.frequency.value = 880;
       osc.connect(gain);
       gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.16, ctx.currentTime);
+      gain.gain.setValueAtTime(Math.min(0.9, 0.16 * ecGainK()), ctx.currentTime);
       osc.start();
-      osc.stop(ctx.currentTime + 0.18);
+      osc.stop(ctx.currentTime + (ecMusic() ? 0.32 : 0.18));
+      // En mode musique : un deuxième bip plus aigu, bien reconnaissable
+      if(ecMusic()){ var o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.frequency.value = 1320; o2.connect(g2); g2.connect(ctx.destination); g2.gain.setValueAtTime(0.4, ctx.currentTime + 0.38); o2.start(ctx.currentTime + 0.38); o2.stop(ctx.currentTime + 0.7); }
     }catch(e){}
     try{ if(navigator.vibrate) navigator.vibrate(120); }catch(e){}
   }
@@ -4708,6 +4732,7 @@
   function speak(text, opts){
     opts = opts || {};
     if(timerState.silent) return;
+    ecDuck(String(text || '').length * 75 + 1200);
     if(timerState.calmNoVoice && !opts.force) return;
     if((timerState.calm || timerState.recup) && /^(\d+|Plus que dix secondes\.|Mi-parcours\.|Reprise\.|Pause\.)$/.test(text)) return;
     if(!voice.supported || !voice.on || !text) return;
@@ -4745,13 +4770,24 @@
       if(step.type === 'work' && step.ex && step.ex.breath) speak(step.ex.breath[0].label, {rate:0.85});
       return;
     }
+    var tl0 = timerState.timeline, nws = null;
+    for(var q = i + 1; q < tl0.length; q++){ if(tl0[q].type === 'work'){ nws = tl0[q]; break; } }
+    var BLK = {'Échauffement':'Échauffement', 'Bloc cardio':'Début du bloc cardio', 'Corps de séance':'Début du corps de séance', 'Retour au calme':'Retour au calme'};
+    var END = {'Échauffement':'Échauffement terminé', 'Bloc cardio':'Bloc cardio terminé', 'Corps de séance':'Corps de séance terminé, bravo'};
+    function tourOf(st){ var m = st && st.blockLabel === 'Corps de séance' && /^Tour (\d+)\/(\d+)/.exec(st.sublabel || ''); return m && +m[2] > 1 ? {t:+m[1], n:+m[2]} : null; }
+    function tourWords(T){ return 'Tour ' + T.t + ' sur ' + T.n; }
     if(step.prep){
-      speak('Prépare-toi. ' + (nextEx ? 'Premier exercice : ' + nextEx.name + '.' : 'La séance va commencer.'));
+      speak('Prépare-toi. ' + (nws && BLK[nws.blockLabel] ? BLK[nws.blockLabel] + '. ' : '') + (nextEx ? 'Premier exercice : ' + nextEx.name + '.' : 'La séance va commencer.'));
+      return;
+    }
+    // Changement de partie (échauffement → corps de séance → retour au calme) annoncé pendant la transition
+    if(step.type === 'transition' && nws && nws.blockLabel && step.blockLabel && nws.blockLabel !== step.blockLabel && BLK[nws.blockLabel]){
+      speak((END[step.blockLabel] ? END[step.blockLabel] + '. ' : '') + BLK[nws.blockLabel] + '. ' + (nextEx ? 'Premier exercice : ' + nextEx.name + '.' : ''));
       return;
     }
     if(step.type === 'rest' && /^Tour (\d+)\/(\d+) terminé/.test(step.sublabel || '')){
       var tm = /^Tour (\d+)\/(\d+)/.exec(step.sublabel);
-      speak('Fin du tour ' + tm[1] + '. Récupération, ' + durationWords(step.duration) + '.' + (nextEx ? ' Ensuite, tour ' + (parseInt(tm[1], 10) + 1) + ' : ' + nextEx.name + '.' : ''));
+      speak('Fin du tour ' + tm[1] + '. Récupération, ' + durationWords(step.duration) + '.' + (nextEx ? ' Ensuite, tour ' + (parseInt(tm[1], 10) + 1) + ' sur ' + tm[2] + ' : ' + nextEx.name + '.' : ''));
       return;
     }
     if(step.type === 'work'){
@@ -4760,8 +4796,10 @@
         speak(step.ex.breath[0].label, {queue:true, rate:0.85});
         return;
       }
-      var parts = [step.label];
-      if(step.sublabel && step.sublabel !== 'Effort continu' && !/\b1\s*\/\s*1\b/.test(step.sublabel)) parts.push(step.sublabel);
+      var parts = [step.label], tw = tourOf(step);
+      // Premier exercice d'un tour : « Tour 2 sur 4 »
+      if(tw){ var firstOfTour = true; for(var b = i - 1; b >= 0; b--){ var sb = timerState.timeline[b]; if(sb.type === 'work'){ var tb2 = tourOf(sb); firstOfTour = !tb2 || tb2.t !== tw.t; break; } } var tl1 = timerState.timeline; if(firstOfTour && tl1.tourSaid !== tw.t){ tl1.tourSaid = tw.t; parts.unshift(tourWords(tw)); } }
+      else if(step.sublabel && step.sublabel !== 'Effort continu' && !/\b1\s*\/\s*1\b/.test(step.sublabel)) parts.push(step.sublabel.replace(/(\d+)\s*\/\s*(\d+)/g, '$1 sur $2'));
       parts.push(step.side ? (durationWords(step.side.secs) + ' par côté') : durationWords(step.duration));
       speak(parts.join('. ') + '.');
       var prev = timerState.timeline[i-1];
@@ -5252,7 +5290,7 @@
   (function(){
     var sc = document.createElement('script');
     sc.async = true;
-    sc.src = 'photos.js?v=eea68c52';
+    sc.src = 'photos.js?v=87a31871';
     sc.onload = function(){
       var P = window.EC_PHOTOS || {};
       Object.keys(P).forEach(function(k){ if(!(k in EXERCISE_PHOTOS)) EXERCISE_PHOTOS[k] = P[k]; });
@@ -10555,7 +10593,10 @@
     var LOADS_KEY = 'ec_loads_v1';
     function loads(){ var o = lsg(LOADS_KEY, {}); return o && typeof o === 'object' ? o : {}; }
     function lastLoad(id){ var l = loads()[id]; return l && l.length ? l[l.length - 1] : null; }
-    function loadTxt(x){ return x ? [x.r ? x.r + ' rép.' : '', x.kg ? String(x.kg).replace('.', ',') + ' kg' : ''].filter(Boolean).join(' · ') : ''; }
+    var EL_TXT = ['', 'élastique léger', 'élastique moyen', 'élastique fort', 'élastique très fort'];
+    function loadTxt(x){ return x ? [x.r ? x.r + ' rép.' : '', x.kg ? String(x.kg).replace('.', ',') + ' kg' : '', x.el ? EL_TXT[x.el] || '' : ''].filter(Boolean).join(' · ') : ''; }
+    function elastic(ex){ return eqHas(ex, 'elastiques'); }
+    function bodyweight(ex){ var e = [].concat(ex.equipment || []); return e.length === 1 && e[0] === 'poids_du_corps'; }
     function weighted(ex){ return eqHas(ex, 'kettlebell') || eqHas(ex, 'halteres') || (window.ecGymWeighted && window.ecGymWeighted(ex)); }
     function doneMainExercises(){
       var tl = timerState.timeline || [], seen = {}, out = [];
@@ -10574,27 +10615,31 @@
       var S = lastSession, list = (!isCalm() && S && !S.mob) ? doneMainExercises() : [];
       fbLoads.hidden = !list.length; fbLoads.open = false;
       if(!list.length){ fbLoads.innerHTML = ''; return; }
-      fbLoads.innerHTML = '<summary>📊 Noter mes répétitions et charges <small>(facultatif)</small></summary><p class="fbl-hint">Répétitions faites par série. Tu retrouveras ces chiffres la prochaine fois.</p>'
+      fbLoads.innerHTML = '<summary>📊 Noter mes répétitions et charges <small>(facultatif)</small></summary><p class="fbl-hint">Répétitions faites par série, charge utilisée (ou lest au poids du corps) et résistance de l’élastique. Tu retrouveras ces chiffres la prochaine fois.</p>'
         + list.map(function(ex){
           var l = lastLoad(ex.id), w = weighted(ex);
           return '<div class="fbl-row" data-id="' + esc(ex.id) + '"><div class="fbl-name">' + esc(ex.name) + (l ? '<small>Dernière fois : ' + esc(loadTxt(l)) + '</small>' : '') + '</div>'
             + '<label><input type="number" inputmode="numeric" min="0" max="999" data-k="r" placeholder="' + (l && l.r ? l.r : '–') + '"><span>rép.</span></label>'
-            + (w ? '<label><input type="number" inputmode="decimal" min="0" max="300" step="0.5" data-k="kg" placeholder="' + (l && l.kg ? l.kg : '–') + '"><span>kg</span></label>' : '') + '</div>';
+            + (w ? '<label><input type="number" inputmode="decimal" min="0" max="300" step="0.5" data-k="kg" placeholder="' + (l && l.kg ? l.kg : '–') + '"><span>kg</span></label>' : '')
+            + (!w && elastic(ex) ? '<label class="fbl-el"><select data-k="el" aria-label="Résistance de l’élastique"><option value="0">Élastique…</option>' + EL_TXT.slice(1).map(function(t, k){ return '<option value="' + (k + 1) + '"' + (l && l.el === k + 1 ? ' selected' : '') + '>' + t.replace('élastique ', '').replace(/^./, function(c){ return c.toUpperCase(); }) + '</option>'; }).join('') + '</select></label>' : '')
+            + (!w && !elastic(ex) && bodyweight(ex) ? '<label title="Charge ajoutée (gilet lesté, haltère, sac…)"><input type="number" inputmode="decimal" min="0" max="200" step="0.5" data-k="kg" placeholder="' + (l && l.kg ? l.kg : '+') + '"><span>kg<small class="fbl-opt">si lesté</small></span></label>' : '') + '</div>';
         }).join('');
     }
-    fbLoads.addEventListener('input', function(e){
-      var inp = e.target.closest('input[data-k]'); if(!inp) return;
+    function onLoadInput(e){
+      var inp = e.target.closest('input[data-k], select[data-k]'); if(!inp) return;
       var id = inp.closest('.fbl-row').getAttribute('data-id'), v = parseFloat(String(inp.value).replace(',', '.'));
       pending[id] = pending[id] || {};
-      if(v > 0) pending[id][inp.getAttribute('data-k')] = Math.round(v * 2) / 2; else delete pending[id][inp.getAttribute('data-k')];
+      if(v > 0) pending[id][inp.getAttribute('data-k')] = inp.getAttribute('data-k') === 'el' ? Math.round(v) : Math.round(v * 2) / 2; else delete pending[id][inp.getAttribute('data-k')];
       commitLoads();
       try{ refreshFeedbackLinks(); }catch(err){}
-    });
+    }
+    fbLoads.addEventListener('input', onLoadInput);
+    fbLoads.addEventListener('change', function(e){ if(e.target.tagName === 'SELECT') onLoadInput(e); });
     function commitLoads(){
       var all = loads(), hid = currentHistId || 0, mine = {};
       Object.keys(pending).forEach(function(id){
         var p = pending[id], arr = (all[id] || []).filter(function(x){ return x.h !== hid || !hid; });
-        if(p.r || p.kg){ arr.push({h:hid, at:Date.now(), r:p.r || 0, kg:p.kg || 0}); mine[id] = {r:p.r || 0, kg:p.kg || 0}; }
+        if(p.r || p.kg || p.el){ var rec = {h:hid, at:Date.now(), r:p.r || 0, kg:p.kg || 0}; if(p.el) rec.el = p.el; arr.push(rec); mine[id] = {r:p.r || 0, kg:p.kg || 0, el:p.el || 0}; }
         if(arr.length) all[id] = arr.slice(-12); else delete all[id];
       });
       lss(LOADS_KEY, all);
@@ -10603,7 +10648,7 @@
     var _fbMsg = feedbackMessage;
     feedbackMessage = function(){
       var m = _fbMsg.apply(this, arguments), parts = [];
-      Object.keys(pending).forEach(function(id){ var p = pending[id], ex = exById(id); if(ex && (p.r || p.kg)) parts.push(ex.name + ' : ' + loadTxt(p)); });
+      Object.keys(pending).forEach(function(id){ var p = pending[id], ex = exById(id); if(ex && (p.r || p.kg || p.el)) parts.push(ex.name + ' : ' + loadTxt(p)); });
       if(parts.length){ var lines = m.split('\n'), i = lines.findIndex(function(l){ return l.indexOf('💪') === 0; }); lines.splice(i < 0 ? lines.length : i, 0, '📊 ' + parts.join(' ; ')); m = lines.join('\n'); }
       return m;
     };
@@ -12429,6 +12474,83 @@
     });
     window.addEventListener('afterprint', function(){ document.querySelectorAll('.print-for').forEach(function(p){ p.remove(); }); });
   })();
+  // ---------- Machine prise : reporter l'exercice plus tard dans le tour ----------
+  (function(){
+    var bd = document.getElementById('timerBackdrop'), ctr = bd && bd.querySelector('.timer-controls');
+    if(!ctr) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'timer-later'; btn.id = 'timerLater'; btn.hidden = true;
+    btn.innerHTML = '↪ Machine prise ? <b>Plus tard dans le tour</b>';
+    ctr.parentNode.insertBefore(btn, ctr);
+    function tourKey(st){ return st && st.blockLabel === 'Corps de séance' && /^Tour \d+\/\d+/.test(st.sublabel || '') ? (/^Tour \d+\/\d+/.exec(st.sublabel)[0]) : null; }
+    // Dernier exercice du même tour situé après l'étape i (autre exercice)
+    function lastOfTour(i){
+      var tl = timerState.timeline, st = tl[i], k = tourKey(st), last = -1;
+      for(var j = i + 1; j < tl.length; j++){
+        var s = tl[j];
+        if(s.blockLabel !== 'Corps de séance') break;
+        if(s.type === 'rest' && /^Tour \d+\/\d+ terminé/.test(s.sublabel || '')) break;
+        if(s.type === 'work' && tourKey(s) === k && s.ex !== st.ex) last = j;
+      }
+      return last;
+    }
+    function eligible(){
+      var tl = timerState.timeline || [], i = timerState.index, st = tl[i];
+      if(!st || st.type !== 'work' || st.ft || !st.ex || !tourKey(st) || timerState.recup || timerState.calm) return false;
+      if(document.getElementById('timerBackdrop').classList.contains('feedback')) return false;
+      return lastOfTour(i) > -1;
+    }
+    function paint(){
+      var ok = eligible(); btn.hidden = !ok; if(!ok) return;
+      var ex = timerState.timeline[timerState.index].ex, bw = [].concat(ex.equipment || []).join() === 'poids_du_corps';
+      var h = bw ? '↪ Pas possible maintenant ? <b>Plus tard dans le tour</b>' : '↪ Machine prise ? <b>Plus tard dans le tour</b>';
+      if(btn.innerHTML !== h) btn.innerHTML = h;
+    }
+    var _shL = sideHook;
+    sideHook = function(){ var r = _shL.apply(this, arguments); try{ paint(); }catch(e){} return r; };
+    btn.addEventListener('click', function(){
+      var tl = timerState.timeline, i = timerState.index, st = tl[i];
+      if(!eligible()) return;
+      var last = lastOfTour(i);
+      // On retire l'exercice en cours ; la transition qui suit (vers le prochain exercice) devient l'étape en cours
+      tl.splice(i, 1); last--;
+      var hasT = tl[i] && tl[i].type === 'transition';
+      var tDur = transSec((lastSession && lastSession.level) || 'intermediaire') || 10;
+      timerState.totalRemaining -= timerState.remaining;
+      if(!hasT){ tl.splice(i, 0, {type:'transition', label:'Transition', sublabel:'Prochain exercice : ' + (tl[i] && tl[i].ex ? tl[i].ex.name : ''), duration:Math.max(10, tDur), ex:null, blockLabel:'Corps de séance'}); last++; timerState.totalRemaining += Math.max(10, tDur); timerState.totalDuration += Math.max(10, tDur); }
+      // Fin du tour : transition puis l'exercice reporté
+      var later = Object.assign({}, st, {deferred:(st.deferred || 0) + 1}); delete later.skipped;
+      var tr = {type:'transition', label:'Transition', sublabel:'Exercice reporté : ' + st.ex.name, duration:Math.max(15, tDur), ex:null, blockLabel:'Corps de séance'};
+      tl.splice(last + 1, 0, tr, later);
+      timerState.totalRemaining += later.duration + tr.duration; timerState.totalDuration += tr.duration;
+      loadStep(i);
+      try{ sideHook(false); }catch(e){}
+      showToast('↪ ' + st.ex.name + ' reporté à la fin du tour', false);
+    });
+  })();
+
+  // ---------- Mode musique : réglage dans le panneau de la voix et dans le chrono ----------
+  (function(){
+    function on(){ try{ return localStorage.getItem('ec_music_mode') === '1'; }catch(e){ return false; } }
+    function set(v){ try{ localStorage.setItem('ec_music_mode', v ? '1' : '0'); }catch(e){} paint(); }
+    var IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var TIP = IOS ? 'Sur iPhone, la musique baisse automatiquement pendant les annonces et les bips. Si besoin, baisse un peu le volume dans ton appli de musique (pas le volume général du téléphone).'
+                  : 'Les bips sont plus forts et doublés. Astuce : baisse un peu le volume dans ton appli de musique (pas le volume général du téléphone) pour que les annonces passent au-dessus.';
+    function rowHtml(){ return '<label class="music-row"><input type="checkbox" class="music-cb"' + (on() ? ' checked' : '') + '><span><b>🎵 Je m’entraîne en musique</b><small>Bips plus forts et doublés, annonces par-dessus la musique. ' + TIP + '</small></span></label>'; }
+    function paint(){ document.querySelectorAll('.music-cb').forEach(function(c){ c.checked = on(); }); }
+    document.addEventListener('change', function(e){ if(e.target.classList && e.target.classList.contains('music-cb')){ set(e.target.checked); if(e.target.checked){ try{ playBeep(); }catch(err){} } } });
+    var vs = document.querySelector('.vsheet .vsheet-ok');
+    if(vs){ var d = document.createElement('div'); d.innerHTML = rowHtml(); vs.parentNode.insertBefore(d.firstChild, vs); }
+    // Bouton rapide dans le chrono
+    var vb = document.getElementById('timerVoice');
+    if(vb){
+      var mb = document.createElement('button'); mb.type = 'button'; mb.className = vb.className + ' timer-music'; mb.id = 'timerMusic';
+      function pm(){ mb.textContent = on() ? '🎵 Musique' : '🎵'; mb.setAttribute('aria-pressed', on() ? 'true' : 'false'); mb.setAttribute('aria-label', on() ? 'Mode musique activé : bips plus forts' : 'Activer le mode musique (bips plus forts)'); mb.classList.toggle('on', on()); }
+      mb.addEventListener('click', function(){ set(!on()); pm(); try{ showToast(on() ? '🎵 Mode musique : bips plus forts, annonces par-dessus la musique' : 'Mode musique désactivé', false); if(on()) playBeep(); }catch(e){} });
+      vb.parentNode.insertBefore(mb, vb.nextSibling); pm();
+      var _p = paint; paint = function(){ _p(); pm(); };
+    }
+  })();
+
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
   // ajoute une entrée d'historique : le bouton retour la referme au lieu de
