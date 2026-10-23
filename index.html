@@ -3337,6 +3337,7 @@
   @media screen and (prefers-color-scheme: dark){ #testsView .tf-hero .tf-kpis span, #testsView .tf-go{background:#3A2C12 !important; color:#F2C46B !important;} }
   /* Suivi > Progrès : carte qui mène à la page */
   #suiviView .ec-tests{margin:0 0 12px;}
+  .ec-tests:not(.et-compact) .et-s{display:none !important;}
   .set-ver{margin:14px 0 2px; text-align:center; font-size:0.78rem; color:var(--stone); letter-spacing:0.02em;}
   .ec-tests{cursor:pointer;}
   .app-ver2{text-align:center; font-size:0.75rem; color:var(--stone); margin:18px 0 6px; letter-spacing:0.02em;}
@@ -12482,6 +12483,11 @@
       if(!S.main.length){ ecConfirm('Pas assez de matériel pour cette séance. Passe en mode 🏋️ Salle ou coche plus de matériel.', 'OK', function(){}, false, 'Fermer'); return; }
       if(window.ecShowView) window.ecShowView('renfo');
       displaySession(S, S.title);
+      // Défi en cours : affiché sur Aujourd'hui jusqu'à ce qu'il soit relevé
+      if(o && o.type === 'defi'){
+        if(o.ps != null){ var Pp = parc(); if(!Pp.started) Pp.started = Date.now(); lsS('ec_parcours_v1', Pp); try{ localStorage.removeItem('ec_defi_cur'); }catch(e){} }
+        else lsS('ec_defi_cur', {at:Date.now(), o:o, t:S.title});
+      }
       var res = document.getElementById('results'); if(res) setTimeout(function(){ res.scrollIntoView({behavior:'smooth', block:'start'}); }, 80);
     }
     // Affichage : le corps de séance devient la fiche du WOD
@@ -12545,7 +12551,8 @@
     window.ecParc = {
       info:function(){ var P = parc(), nx = parcNext(), n = Object.keys(P.done).length; return {n:n, total:PARC.length, next:nx, label:nx < 0 ? '' : 'Étape ' + (nx + 1) + ' · semaine ' + (Math.floor(nx / 4) + 1) + ' : ' + DFN[PARC[nx][0]] + ' ' + PARC[nx][1] + ' min'}; },
       go:function(){ var ni = parcNext(); if(ni < 0) return; generate({type:'defi', df:PARC[ni][0], d:PARC[ni][1], ps:ni}); },
-      stop:function(){ lsS('ec_parcours_v1', {done:{}}); }
+      stop:function(){ lsS('ec_parcours_v1', {done:{}}); },
+      gen:function(o){ generate(o); }
     };
     function parcHtml(){
       var P = parc(), nx = parcNext(), n = Object.keys(P.done).length, h = '<div class="dp-card"><div class="dp-h"><b>🗺️ Parcours 4 semaines</b><span>' + n + ' / ' + PARC.length + '</span></div><div class="dp-weeks">';
@@ -14277,9 +14284,18 @@
         if(prog && !prog.hidden && !prog.querySelector('.td-x')){
           var x = document.createElement('button'); x.type = 'button'; x.className = 'td-x'; x.setAttribute('aria-label', 'Arrêter le programme'); x.innerHTML = '&times;'; prog.appendChild(x);
         }
-        var P = window.ecParc ? window.ecParc.info() : null, on = !!(P && P.n > 0 && P.next >= 0);
-        pc.hidden = !on;
+        var P = window.ecParc ? window.ecParc.info() : null, started = false;
+        try{ started = !!(JSON.parse(localStorage.getItem('ec_parcours_v1') || '{}') || {}).started; }catch(e){}
+        var on = !!(P && (P.n > 0 || started) && P.next >= 0);
+        var cur = null; try{ cur = JSON.parse(localStorage.getItem('ec_defi_cur') || 'null'); }catch(e){}
+        if(cur){
+          var log = []; try{ log = JSON.parse(localStorage.getItem('ec_defi_log') || '[]'); }catch(e){}
+          var done = Array.isArray(log) && log.some(function(x){ return x && x.at > cur.at; });
+          if(done || Date.now() - cur.at > 14 * 86400000){ try{ localStorage.removeItem('ec_defi_cur'); }catch(e){} cur = null; }
+        }
+        pc.hidden = !(on || cur);
         if(on) pc.innerHTML = '<button type="button" class="td-x" data-pc="stop" aria-label="Arrêter le parcours de défis">&times;</button><span class="tp-k">Parcours défis en cours · ' + P.n + ' / ' + P.total + '</span><b class="tp-t">' + P.label + '</b><span class="pc-bar"><i style="width:' + Math.round(P.n / P.total * 100) + '%"></i></span><button type="button" class="tp-go" data-pc="go">▶ Lancer l’étape</button>';
+        else if(cur) pc.innerHTML = '<button type="button" class="td-x" data-pc="stopcur" aria-label="Retirer ce défi">&times;</button><span class="tp-k">Défi en cours</span><b class="tp-t">' + String(cur.t || 'Défi').replace(/[<>&]/g, '') + '</b><button type="button" class="tp-go" data-pc="gocur">▶ Relever le défi</button>';
         paintWeek();
       }
       if(prog) prog.addEventListener('click', function(e){
@@ -14290,6 +14306,8 @@
       pc.addEventListener('click', function(e){
         var b = e.target.closest('[data-pc]'); if(!b) return;
         if(b.getAttribute('data-pc') === 'go'){ if(window.ecParc) window.ecParc.go(); return; }
+        if(b.getAttribute('data-pc') === 'gocur'){ var c0 = null; try{ c0 = JSON.parse(localStorage.getItem('ec_defi_cur') || 'null'); }catch(e){} if(c0 && c0.o && window.ecParc && window.ecParc.gen) window.ecParc.gen(c0.o); return; }
+        if(b.getAttribute('data-pc') === 'stopcur'){ try{ localStorage.removeItem('ec_defi_cur'); }catch(e){} paint(); showToast('Défi retiré de l’accueil', false); return; }
         ecConfirm('Arrêter le parcours de défis ? Ta progression sera remise à zéro.', 'Arrêter', function(){ if(window.ecParc) window.ecParc.stop(); paint(); showToast('Parcours arrêté', false); }, true, 'Continuer');
       });
       // 3. Semaine : points colorés selon le type de séance, toucher = voir le calendrier
