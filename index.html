@@ -2694,6 +2694,26 @@
   .fb-body[hidden]{display:none;}
   .fb-wa{flex:none; display:flex; align-items:center; justify-content:center; width:34px; height:34px; color:#fff; background:#1F8A4C; border-radius:50%;}
   @media print{ .fb-card{display:none !important;} }
+  /* ---------- Défis : parcours et chrono ---------- */
+  .dp-card{margin:4px 0 12px; padding:12px; border-radius:14px; background:var(--sage-light); box-shadow:inset 0 0 0 1.5px var(--forest); text-align:left;}
+  .dp-h{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.95rem;}
+  .dp-h span{font-weight:700; color:var(--forest); font-size:0.85rem;}
+  .dp-weeks{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px 10px; margin:10px 0 6px;}
+  .dp-w{padding:5px 8px; border-radius:10px; background:var(--card);}
+  .dp-w{display:flex; align-items:center; gap:4px; justify-content:center;}
+  .dp-w small{font-size:0.7rem; font-weight:700; color:var(--stone); margin-right:auto; white-space:nowrap;}
+  .dp-dot{width:13px; height:13px; border-radius:50%; background:var(--card); box-shadow:inset 0 0 0 1.5px var(--ring-line);}
+  .dp-dot.on{background:var(--forest); box-shadow:none;}
+  .dp-dot.nx{box-shadow:inset 0 0 0 2.5px #E8A33A;}
+  .dp-txt{margin:6px 0 8px; font-size:0.8rem; line-height:1.35; color:var(--stone);}
+  .dp-go{width:100%; min-height:44px; border:none; border-radius:999px; background:var(--forest); color:#fff; font-family:inherit; font-weight:700; font-size:0.88rem; cursor:pointer; padding:8px 14px;}
+  .dp-go.ghost{background:var(--card); color:var(--forest); box-shadow:inset 0 0 0 1.5px var(--forest);}
+  .wod-box .pe-seg{flex-wrap:wrap;}
+  .ft-chrono{margin:2px auto 6px; padding:6px 12px; max-width:min(92vw, 420px); border-radius:12px; background:rgba(232,199,122,0.2); color:#fff; font-size:0.84rem; line-height:1.35; text-align:center;}
+  .ft-chrono[hidden]{display:none;}
+  .ft-chrono small{color:rgba(255,255,255,0.75);}
+  .timer-backdrop.ft-on #timerSkip{background:#E8C77A; color:#1F4030; font-weight:800;}
+  @media screen and (prefers-color-scheme: dark){ .dp-w{background:rgba(255,255,255,0.06);} .dp-card{background:#1E3528; box-shadow:inset 0 0 0 1.5px #8FC49E;} .dp-h span{color:#A7D8B4;} .dp-dot.on{background:#8FC49E;} .dp-go{background:#357D51;} .dp-go.ghost{background:transparent; color:#A7D8B4; box-shadow:inset 0 0 0 1.5px #8FC49E;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -3756,7 +3776,57 @@
     {id:"sb7",detail:{start:"Assis au centre du ballon, pieds au sol, dos droit.",exec:"Décoller un pied et tenir l'équilibre en gardant le dos droit, puis changer de pied.",error:"S'avachir ou bloquer la respiration."},name:"Équilibre assis sur swiss ball",equipment:"swissball",zone:"gainage",block:"principal",pattern:"balance",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"Assis bien droit, un pied décollé du sol.",seniorAdapt:"Près d'un mur ou d'une chaise, pieds au sol si besoin.",perSide:true,keepInGym:true},
     {id:"sb8",detail:{start:"Haut du dos sur le ballon, hanches en pont, bras tendus mains jointes vers le plafond (avec ou sans petite charge).",exec:"Tourner le buste et les bras d'un côté en roulant sur l'épaule, revenir au centre, puis de l'autre côté.",error:"Laisser les hanches tomber."},name:"Rotation du buste en pont sur swiss ball",equipment:"swissball",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Les hanches restent hautes pendant la rotation. Une petite charge tenue à deux mains rend l'exercice plus difficile."},
     {id:"sb9",detail:{start:"Haut du dos sur le ballon, pieds au sol, bassin bas.",exec:"Pousser les hanches vers le haut jusqu'à l'alignement épaules-genoux, puis redescendre en contrôlant.",error:"Cambrer le bas du dos en haut."},name:"Hip thrust épaules sur swiss ball",equipment:"swissball",zone:"bas",block:"principal",pattern:"hinge",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"Serrer les fessiers en haut, menton rentré.",seniorAdapt:"Petite amplitude, ballon calé contre un mur."},
-    {id:"sb10",detail:{start:"À genoux derrière le ballon, poitrine et ventre posés dessus, bras pendants.",exec:"Lever les bras tendus en Y devant soi jusqu'à l'alignement du corps, puis redescendre lentement.",error:"Hausser les épaules ou cambrer."},name:"Élévations en Y sur swiss ball",equipment:"swissball",zone:"haut",block:"principal",pattern:"pull",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Pouces vers le haut, épaules loin des oreilles."}
+    {id:"sb10",detail:{start:"À genoux derrière le ballon, poitrine et ventre posés dessus, bras pendants.",exec:"Lever les bras tendus en Y devant soi jusqu'à l'alignement du corps, puis redescendre lentement.",error:"Hausser les épaules ou cambrer."},name:"Élévations en Y sur swiss ball",equipment:"swissball",zone:"haut",block:"principal",pattern:"pull",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Pouces vers le haut, épaules loin des oreilles."},
+    // ---- Ajouts octobre 2026 (2) : gainage, abdos, pompes, fessiers, sauts, déplacements au sol ----
+    {id:"q1",detail:{start:"Assis, jambes tendues, mains posées au sol derrière les hanches, doigts vers les pieds.",exec:"Pousser dans les mains et les talons pour monter le bassin jusqu'à aligner épaules, hanches et chevilles. Tenir en respirant.",error:"Laisser tomber les fesses ou rentrer la tête dans les épaules."},name:"Planche inversée",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Le corps reste aligné des épaules aux talons, fessiers serrés.",hold:true},
+    {id:"q2",detail:{start:"En planche haute, mains sous les épaules, pieds écartés largeur de hanches.",exec:"Tendre un bras devant et la jambe opposée derrière, tenir 2 secondes, revenir, puis changer de côté.",error:"Faire pivoter le bassin ou creuser le bas du dos."},name:"Planche 1 bras 1 jambe levés",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Bras et jambe opposés : le bassin ne bascule pas."},
+    {id:"q3",detail:{start:"En planche haute, pieds joints.",exec:"Écarter puis rapprocher les pieds en petits sauts, comme un jumping jack, en gardant les hanches stables.",error:"Monter les fesses ou laisser le dos s'affaisser."},name:"Planche jacks",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Petits sauts des pieds, les épaules restent au-dessus des mains."},
+    {id:"q4",detail:{start:"En planche sur les avant-bras, pieds joints.",exec:"Faire pivoter le bassin pour approcher une hanche du sol, revenir au centre, puis descendre de l'autre côté.",error:"Poser la hanche au sol ou bouger les épaules."},name:"Planche twist (bascule des hanches)",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Mouvement contrôlé : les obliques travaillent, pas l'élan."},
+    {id:"q5",detail:{start:"En gainage latéral sur l'avant-bras, coude sous l'épaule, jambes tendues.",exec:"Descendre la hanche près du sol puis la remonter au-dessus de l'alignement, en rythme. Changer de côté.",error:"Laisser le buste tourner vers le sol."},name:"Gainage latéral dynamique",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Monter la hanche le plus haut possible à chaque répétition.",perSide:true},
+    {id:"q6",detail:{start:"En gainage latéral sur l'avant-bras, bras du dessus tendu vers le plafond.",exec:"Passer la main du dessus sous le buste en tournant les épaules vers le sol, puis réouvrir vers le plafond. Changer de côté.",error:"Laisser descendre la hanche pendant la rotation."},name:"Gainage latéral avec torsion",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Le regard suit la main qui passe sous le buste.",perSide:true},
+    {id:"q7",detail:{start:"Allongé sur le dos, bras tendus au-dessus de la tête.",exec:"Décoller épaules et jambes tendues du sol en forme de banane, bas du dos collé, et tenir en respirant.",error:"Laisser le bas du dos se creuser. Plier les genoux si c'est trop dur."},name:"Tenue en position hollow",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Bas du dos plaqué au sol : c'est la clé de l'exercice.",hold:true},
+    {id:"q8",detail:{start:"Allongé sur le dos, mains derrière la tête, épaules décollées, jambes levées genoux pliés.",exec:"Ramener un genou vers la poitrine en tournant le coude opposé vers lui, tendre l'autre jambe, puis alterner comme un pédalage.",error:"Tirer la tête avec les mains ou aller trop vite."},name:"Abdos bicyclette",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Coude vers le genou opposé, en tournant les épaules, sans tirer sur la nuque."},
+    {id:"q9",detail:{start:"Allongé sur le dos, bras le long du corps, jambes tendues à la verticale.",exec:"Décoller le bassin du sol en poussant les pieds vers le plafond, puis redescendre lentement vertèbre par vertèbre.",error:"Balancer les jambes vers la tête ou pousser fort dans la nuque."},name:"Abdos chandelle",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Monter le bassin avec les abdos, sans élan des jambes."},
+    {id:"q10",detail:{start:"Allongé sur le dos, bras en croix, jambes levées à la verticale.",exec:"Descendre les deux jambes ensemble d'un côté, sans les poser, remonter au centre, puis descendre de l'autre côté.",error:"Décoller l'épaule opposée ou laisser tomber les jambes."},name:"Essuie-glace",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Les épaules restent au sol, les jambes descendent seulement jusqu'où tu contrôles."},
+    {id:"q11",detail:{start:"Assis en appui sur les fesses, mains au sol derrière, jambes tendues décollées.",exec:"Ramener les genoux vers la poitrine en avançant le buste, puis tendre à nouveau les jambes sans les poser.",error:"S'affaler en arrière ou poser les pieds entre les répétitions."},name:"Abdos groupés",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Genoux et buste se rejoignent au centre."},
+    {id:"q12",detail:{start:"Allongé sur le dos, bras tendus au-dessus de la tête, jambes tendues.",exec:"Se redresser en ramenant les genoux vers la poitrine et les bras vers l'avant, puis se rallonger complètement.",error:"Retomber lourdement sur le dos."},name:"Abdos rameur",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Un mouvement fluide, comme un coup de rame."},
+    {id:"q13",detail:{start:"Allongé sur le dos, jambes tendues à la verticale, bras tendus vers le plafond.",exec:"Décoller les épaules pour aller toucher les pointes de pieds, puis redescendre lentement.",error:"Balancer les bras ou plier les jambes vers soi."},name:"Touche orteils",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Monter les épaules vers les pieds, pas la tête vers les genoux."},
+    {id:"q14",detail:{start:"Allongé sur le dos, genoux pliés, pieds au sol, épaules légèrement décollées, bras le long du corps.",exec:"Incliner le buste sur le côté pour toucher le talon, puis l'autre talon, en alternant.",error:"Reposer la tête au sol à chaque passage."},name:"Touche talons",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"Petites inclinaisons latérales, épaules décollées.",seniorAdapt:"Amplitude réduite, tête posée sur un coussin si besoin."},
+    {id:"q15",detail:{start:"Allongé sur le dos, bras tendus au-dessus de la tête, jambes tendues.",exec:"Monter une jambe tendue et le buste en même temps pour toucher le pied avec la main opposée, redescendre, puis alterner.",error:"Plier la jambe levée ou se laisser retomber."},name:"V-up alterné",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Une jambe à la fois : la main va chercher le pied opposé."},
+    {id:"q16",detail:{start:"En planche haute, mains très écartées, doigts légèrement tournés vers l'extérieur.",exec:"Descendre vers une main en pliant ce bras, l'autre bras restant tendu sur le côté, remonter, puis alterner.",error:"Laisser les hanches s'affaisser."},name:"Pompes archer",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Le poids passe sur un bras, l'autre reste presque tendu."},
+    {id:"q17",detail:{start:"En planche haute, mains écartées une fois et demie la largeur des épaules.",exec:"Descendre la poitrine vers le sol en ouvrant les coudes, puis pousser pour remonter.",error:"Monter les épaules vers les oreilles ou cambrer."},name:"Pompes prise large",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Mains plus écartées que les épaules : les pectoraux travaillent davantage."},
+    {id:"q18",detail:{start:"En chien tête en bas, mains et pieds écartés.",exec:"Plonger la poitrine vers l'avant en rasant le sol jusqu'en position de cobra, puis repousser les fesses vers l'arrière pour revenir.",error:"Bloquer la respiration ou forcer dans le bas du dos."},name:"Pompes hindu",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Un mouvement en vague, du chien tête en bas au cobra."},
+    {id:"q19",detail:{start:"En planche haute, mains sous les épaules.",exec:"Faire une pompe, puis pivoter sur le côté en levant un bras vers le plafond, revenir, et alterner le côté.",error:"Laisser la hanche tomber pendant la rotation."},name:"Pompes en T",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Après chaque pompe, ouvrir le buste et le bras vers le plafond."},
+    {id:"q20",detail:{start:"En planche haute, mains sous les épaules.",exec:"En descendant, ramener un genou vers le coude du même côté, remonter en reposant le pied, puis alterner.",error:"Ouvrir le bassin ou bâcler la pompe."},name:"Pompes spiderman",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Le genou vient vers le coude pendant la descente."},
+    {id:"q21",detail:{start:"En planche haute, mains sous les épaules.",exec:"Descendre, puis pousser fort pour décoller les mains et taper dans les mains avant de se réceptionner en souplesse.",error:"Se réceptionner bras tendus ou laisser le bassin tomber."},name:"Pompes claquées",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Explosif : réception bras légèrement fléchis."},
+    {id:"q22",detail:{start:"Assis, genoux pliés, pieds à plat, mains au sol derrière les hanches, doigts vers les pieds.",exec:"Pousser dans les mains et les pieds pour monter le bassin jusqu'à former une table, épaules au-dessus des mains, puis redescendre sans poser les fesses.",error:"Laisser la tête partir en arrière ou monter les épaules."},name:"Tables (pont bras tendus)",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"pull",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"Un tirage sans barre : on serre les omoplates et les fessiers.",seniorAdapt:"Monter le bassin de quelques centimètres seulement, en douceur."},
+    {id:"q23",detail:{start:"Allongé sur le ventre, front proche du sol, bras le long du corps, paumes vers le sol.",exec:"Décoller légèrement les bras et les faire glisser en grand arc de cercle jusqu'au-dessus de la tête, puis revenir, sans toucher le sol.",error:"Relever la tête ou cambrer fort le bas du dos."},name:"Reverse snow angel",equipment:"poids_du_corps",zone:"haut",block:"principal",pattern:"pull",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"Excellent pour le haut du dos et la posture : lent et contrôlé.",seniorAdapt:"Bras posés au sol, glissés sans les décoller."},
+    {id:"q24",detail:{start:"En appui bras tendus au-dessus d'une barre droite, barre au niveau des hanches.",exec:"Plier les coudes pour descendre la poitrine vers la barre, puis pousser pour revenir bras tendus.",error:"Laisser les épaules monter vers les oreilles."},name:"Dips sur barre fixe",equipment:"barre_traction",zone:"haut",block:"principal",pattern:"push",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Sur une barre droite, buste légèrement penché en avant."},
+    {id:"q25",detail:{start:"Allongé sur le dos, plantes de pieds collées près des fesses, genoux ouverts sur les côtés.",exec:"Pousser dans les bords des pieds pour monter le bassin en serrant les fessiers, puis redescendre sans poser les fesses.",error:"Cambrer le bas du dos au lieu de serrer les fessiers."},name:"Pont papillon (frog pump)",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"hinge",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"Plantes de pieds collées, genoux ouverts : les fessiers travaillent à fond."},
+    {id:"q26",detail:{start:"Allongé sur le dos, talons posés sur une chaise, genoux pliés à 90°.",exec:"Pousser dans les talons pour monter le bassin jusqu'à l'alignement, tenir une seconde, puis redescendre.",error:"Pousser avec la pointe des pieds ou cambrer."},name:"Pont fessier pieds surélevés",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"hinge",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Pieds sur une chaise ou un canapé : plus d'amplitude pour les ischios et les fessiers."},
+    {id:"q27",detail:{start:"Haut du dos appuyé contre le bord d'un canapé, pieds à plat au sol, genoux pliés.",exec:"Pousser dans les talons pour monter le bassin jusqu'à l'horizontale, serrer les fessiers, puis redescendre.",error:"Cambrer en haut ou pousser sur la pointe des pieds."},name:"Hip thrust épaules sur un canapé",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"hinge",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Le menton reste rentré, le regard suit le buste."},
+    {id:"q28",detail:{start:"À quatre pattes, mains sous les épaules, genoux sous les hanches.",exec:"Tendre une jambe en arrière et la monter jusqu'à l'horizontale en serrant le fessier, puis redescendre sans poser le genou.",error:"Cambrer le bas du dos ou tourner le bassin."},name:"Donkey kick jambe tendue",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"hinge",type:"temps",levels:["debutant", "intermediaire", "avance", "senior"],baseSets:3,baseSeconds:30,note:"La jambe monte sans que le dos se creuse.",seniorAdapt:"Même mouvement debout, mains en appui sur une chaise.",perSide:true},
+    {id:"q29",detail:{start:"Debout, pieds largeur de hanches.",exec:"Fléchir les jambes puis sauter en ramenant les genoux vers la poitrine, se réceptionner en souplesse et enchaîner.",error:"Se réceptionner jambes tendues ou genoux rentrés."},name:"Saut groupé (genoux-poitrine)",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"squat",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Réception souple sur l'avant du pied, genoux fléchis."},
+    {id:"q30",detail:{start:"Debout, pieds joints, à côté d'une ligne au sol.",exec:"Sauter pieds joints d'un côté à l'autre de la ligne, rapidement, en restant sur l'avant des pieds.",error:"Retomber lourdement ou genoux qui rentrent."},name:"Sauts latéraux",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"squat",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Petits sauts rapides par-dessus une ligne imaginaire."},
+    {id:"q31",detail:{start:"Debout, pieds joints, genoux fléchis, bras devant.",exec:"Sauter d'un côté à l'autre pieds joints en tournant légèrement les genoux, le buste restant face à l'avant.",error:"Tourner les épaules avec les jambes."},name:"Mogul jump",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"squat",type:"temps",levels:["intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Pieds joints, comme un skieur sur des bosses."},
+    {id:"q32",detail:{start:"Debout, pieds largeur d'épaules.",exec:"Descendre en squat, sauter en faisant un demi-tour, se réceptionner en squat, puis repartir dans l'autre sens.",error:"Se réceptionner genoux rentrés ou déséquilibré."},name:"Squat sauté 180°",equipment:"poids_du_corps",zone:"bas",block:"principal",pattern:"squat",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Rotation d'un demi-tour en l'air, réception stable."},
+    {id:"q33",detail:{start:"Assis, mains derrière les hanches, pieds à plat, fesses décollées du sol.",exec:"Avancer puis reculer en marchant sur les mains et les pieds, bassin haut.",error:"Laisser les fesses traîner au sol."},name:"Marche du crabe",equipment:"poids_du_corps",zone:"full",block:"principal",pattern:"full",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Les fesses restent décollées pendant tout le déplacement."},
+    {id:"q34",detail:{start:"En position de crabe, fesses décollées.",exec:"Lever une jambe tendue et venir la toucher avec la main opposée, revenir, puis alterner.",error:"S'asseoir entre les répétitions."},name:"Crabe main-pied",equipment:"poids_du_corps",zone:"full",block:"principal",pattern:"full",type:"temps",levels:["debutant", "intermediaire", "avance"],baseSets:3,baseSeconds:30,note:"Toucher le pied avec la main opposée en montant le bassin."},
+    {id:"q35",detail:{start:"En bas d'une pompe, poitrine proche du sol.",exec:"Avancer en restant bas, une main et le genou du même côté vers l'avant, puis l'autre côté, sur quelques pas, puis reculer.",error:"Remonter les fesses ou bloquer la respiration."},name:"Marche du crocodile",equipment:"poids_du_corps",zone:"full",block:"principal",pattern:"push",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Corps très bas, près du sol, comme un crocodile."},
+    {id:"q36",detail:{start:"Accroupi, mains à plat au sol largeur d'épaules, genoux posés à l'arrière des bras.",exec:"Basculer le poids vers l'avant jusqu'à décoller les pieds, en équilibre sur les mains, et tenir.",error:"Regarder sous soi ou basculer trop vite (coussin devant la tête au début)."},name:"Posture du corbeau",equipment:"poids_du_corps",zone:"gainage",block:"principal",pattern:"core",type:"temps",levels:["avance"],baseSets:3,baseSeconds:30,note:"Équilibre sur les mains : regard devant, pas vers les pieds.",hold:true},
+    // ---- Mobilité, étirements et auto-massage au rouleau ----
+    {id:"y1",detail:{start:"Debout face à une table, une barrière ou un dossier, mains posées dessus, pieds reculés.",exec:"Reculer les hanches et laisser descendre la poitrine vers le sol, bras tendus, dos long, jusqu'à sentir l'étirement sous les bras et dans le dos.",error:"Arrondir le dos ou bloquer les genoux."},name:"Étirement du dos mains sur un appui",equipment:'poids_du_corps',zone:"haut",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:30,note:"Parfait après une sortie : debout, sans aller au sol.",mob:{"k": "hold", "p": "debout", "o": 1, "z": ["dos", "haut"], "g": ["recup", "mobi", "yoga"]}},
+    {id:"y2",detail:{start:"Face à un mur, pointe d'un pied posée contre le mur, talon au sol, jambe tendue.",exec:"Avancer doucement le bassin vers le mur jusqu'à sentir l'étirement dans le mollet et sous le pied. Tenir, puis changer.",error:"Plier la jambe étirée ou pousser trop fort."},name:"Mollet pointe de pied contre le mur",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:30,perSide:true,note:"Étire le mollet et la voûte plantaire : idéal pour les coureurs.",mob:{"k": "hold", "p": "debout", "o": 1, "z": ["bas"], "g": ["recup", "mobi"]}},
+    {id:"y3",detail:{start:"Allongé sur le ventre, mains à plat sous les épaules, jambes allongées.",exec:"Pousser dans les mains pour soulever la poitrine en tendant les bras progressivement, épaules basses, bassin au sol. Tenir en respirant.",error:"Monter les épaules ou forcer en cas de gêne dans le bas du dos."},name:"Cobra bras tendus",equipment:'poids_du_corps',zone:"haut",block:'mobilite',type:'temps',levels:["intermediaire", "avance"],baseSeconds:30,note:"Version plus profonde du sphinx : à faire seulement si le dos est à l'aise.",mob:{"k": "hold", "p": "sol", "o": 2, "z": ["dos"], "g": ["recup", "yoga", "soir"]}},
+    {id:"y4",detail:{start:"Debout, un bâton tenu à deux mains devant les cuisses, prise très large.",exec:"Monter le bâton bras tendus au-dessus de la tête puis le passer derrière le dos, et revenir devant. Rapprocher les mains au fil des séances.",error:"Plier les coudes ou cambrer pour passer."},name:"Dislocations d'épaules au bâton",equipment:'poids_du_corps',zone:"haut",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance"],baseSeconds:30,note:"Avec un bâton, un manche à balai ou un élastique : prise large, bras tendus.",mob:{"k": "dyn", "p": "debout", "o": 1, "z": ["haut"], "g": ["mobi", "matin"]}},
+    {id:"y5",detail:{start:"En chien tête en bas, mains et pieds écartés largeur d'épaules.",exec:"Monter une jambe tendue vers l'arrière et le haut, dans l'alignement du buste, en gardant les hanches à niveau. Tenir, puis changer.",error:"Ouvrir la hanche sur le côté ou plier le bras."},name:"Chien tête en bas jambe levée",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["intermediaire", "avance"],baseSeconds:30,perSide:true,note:"Le bassin reste face au sol, la jambe monte dans le prolongement du dos.",mob:{"k": "hold", "p": "sol", "o": 2, "z": ["bas", "dos"], "g": ["yoga", "mobi"]}},
+    {id:"rl1",detail:{start:"Assis, rouleau sous un mollet, mains au sol derrière les hanches, fesses décollées.",exec:"Rouler lentement de la cheville au dessous du genou, en tournant un peu la jambe vers l'intérieur puis l'extérieur. Changer de jambe.",error:"Rouler vite ou passer sur l'arrière du genou."},name:"Rouleau : mollets",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:60,perSide:true,note:"Lentement, sans appuyer sur une zone douloureuse. Croiser les jambes pour plus de pression.",mob:{"k": "dyn", "p": "sol", "o": 2, "z": ["bas"], "g": ["roul"], "roll": 1}},
+    {id:"rl2",detail:{start:"Assis, rouleau sous l'arrière des cuisses, mains au sol derrière, fesses décollées.",exec:"Rouler lentement de la base des fesses jusqu'au-dessus des genoux, puis revenir.",error:"Passer derrière le genou."},name:"Rouleau : ischio-jambiers",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:60,note:"Arrière des cuisses, du pli de la fesse au-dessus du genou.",mob:{"k": "dyn", "p": "sol", "o": 2, "z": ["bas"], "g": ["roul"], "roll": 1}},
+    {id:"rl3",detail:{start:"Allongé sur le ventre, rouleau sous les cuisses, appui sur les avant-bras.",exec:"Rouler lentement du haut des cuisses jusqu'au-dessus des genoux, en tirant avec les bras.",error:"Cambrer le bas du dos ou rouler sur la rotule."},name:"Rouleau : quadriceps",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:60,note:"Sur les avant-bras, comme une planche, en gardant le ventre serré.",mob:{"k": "dyn", "p": "sol", "o": 2, "z": ["bas"], "g": ["roul"], "roll": 1}},
+    {id:"rl4",detail:{start:"Assis sur le rouleau, une cheville croisée sur le genou opposé, une main au sol derrière.",exec:"Se pencher du côté de la jambe croisée et rouler doucement sur le fessier par petits mouvements. Changer de côté.",error:"Rouler sur le bas du dos."},name:"Rouleau : fessiers",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:60,perSide:true,note:"Cheville posée sur le genou opposé pour cibler le fessier.",mob:{"k": "dyn", "p": "sol", "o": 2, "z": ["bas"], "g": ["roul"], "roll": 1}},
+    {id:"rl5",detail:{start:"Allongé sur le dos, rouleau sous les omoplates, mains derrière la tête, pieds au sol, fesses décollées.",exec:"Rouler lentement du bas des omoplates jusqu'en haut des épaules en poussant dans les pieds.",error:"Descendre le rouleau dans le bas du dos ou tirer sur la nuque."},name:"Rouleau : haut du dos",equipment:'poids_du_corps',zone:"haut",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:60,note:"Seulement le haut du dos, jamais le bas du dos.",mob:{"k": "dyn", "p": "sol", "o": 2, "z": ["dos"], "g": ["roul"], "roll": 1}},
+    {id:"rl6",detail:{start:"Debout (ou assis), une main sur un appui, une balle sous la plante d'un pied.",exec:"Rouler doucement la balle du talon aux orteils en appuyant légèrement. Changer de pied.",error:"Appuyer fort sur une zone douloureuse."},name:"Balle sous le pied",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance", "senior"],baseSeconds:60,perSide:true,note:"Une balle de tennis ou de massage : parfait pour la voûte plantaire des coureurs.",mob:{"k": "dyn", "p": "debout", "o": 1, "z": ["bas"], "g": ["roul", "recup"], "roll": 1}},
+    {id:"rl7",detail:{start:"Allongé sur le ventre en appui sur les avant-bras, une jambe ouverte sur le côté, genou plié, rouleau sous l'intérieur de la cuisse.",exec:"Rouler lentement de l'aine jusqu'au-dessus du genou en déplaçant le corps latéralement. Changer de côté.",error:"Rouler trop près de l'aine ou vite."},name:"Rouleau : adducteurs",equipment:'poids_du_corps',zone:"bas",block:'mobilite',type:'temps',levels:["debutant", "intermediaire", "avance"],baseSeconds:60,perSide:true,note:"Intérieur de la cuisse, jambe ouverte sur le côté.",mob:{"k": "dyn", "p": "sol", "o": 2, "z": ["bas"], "g": ["roul"], "roll": 1}}
   ];
 
   var DURATION_PLAN = {
@@ -3843,12 +3913,12 @@
   // Exercices privilégiés par sport (séance « préparation pour ton sport » et programmes).
   var SPORT_LABEL = {course:'Course et trail', velo:'Vélo', vtt:'VTT', kayak:'Canoë-kayak slalom'};
   var SPORT_PREFER = {
-    course: ['b7','b15','b9','b10','b6','b8','p2','p21','p22','p20','p19','p43','p47','p39','p44','p46','p11','p33','p34','p8','p37','p16','p17','p18','p9','p14','p15','p29','t3','t8','t12','t14','k1','k3','k9','k13','h10','e2','e3','e6','r6','n39','n41','n31','n4','n1','sb2','sb9','sb7'],
-    velo:   ['b9','b8','b7','b10','b2','b3','p2','p20','p21','p22','p8','p37','p6','p19','p9','p14','p15','p5','p38','p43','p47','t3','t8','t13','t14','t21','t11','t9','t19','k3','k9','k1','k13','h10','h5','k5','h9','v1','v2','e15','r6','sb2','sb9','n21','sb4'],
-    vtt:    ['x1','x2','x5','x8','b1','b3','b14','b10','b11','b4','p11','p33','p34','p22','p20','p21','p3','p36','p12','p32','p29','p9','p14','p31','t1','t4','t14','t11','t16','t17','t19','k1','k8','k7','k5','k13','k14','h5','h9','v2','e15','r6','n18','n32','n35','n41'],
+    course: ['b7','b15','b9','b10','b6','b8','p2','p21','p22','p20','p19','p43','p47','p39','p44','p46','p11','p33','p34','p8','p37','p16','p17','p18','p9','p14','p15','p29','t3','t8','t12','t14','k1','k3','k9','k13','h10','e2','e3','e6','r6','n39','n41','n31','n4','n1','sb2','sb9','sb7','q28','q25','q26','q5','q30','q23'],
+    velo:   ['b9','b8','b7','b10','b2','b3','p2','p20','p21','p22','p8','p37','p6','p19','p9','p14','p15','p5','p38','p43','p47','t3','t8','t13','t14','t21','t11','t9','t19','k3','k9','k1','k13','h10','h5','k5','h9','v1','v2','e15','r6','sb2','sb9','n21','sb4','q26','q27','q1','q22'],
+    vtt:    ['x1','x2','x5','x8','b1','b3','b14','b10','b11','b4','p11','p33','p34','p22','p20','p21','p3','p36','p12','p32','p29','p9','p14','p31','t1','t4','t14','t11','t16','t17','t19','k1','k8','k7','k5','k13','k14','h5','h9','v2','e15','r6','n18','n32','n35','n41','q16','q17','q22','q6'],
     // Slalom : manches courtes et intenses (~90-100 s), tirages et rotations explosifs,
     // tronc qui transmet la force, hanches et bassin actifs dans le bateau, épaules protégées.
-    kayak:  ['x3','x5','x7','x9','b12','b11','b10','b13','b14','b1','b3','b2','k1','k13','k8','t16','t1','k5','h9','h5','t17','p3','p36','t10','k12','k6','k10','p24','t11','p9','p29','p12','p26','p28','p27','p15','p14','t19','t9','v2','p38','p8','e1','e10','e13','e15','r6','n18','n21','n35','n26','sb8']
+    kayak:  ['x3','x5','x7','x9','b12','b11','b10','b13','b14','b1','b3','b2','k1','k13','k8','t16','t1','k5','h9','h5','t17','p3','p36','t10','k12','k6','k10','p24','t11','p9','p29','p12','p26','p28','p27','p15','p14','t19','t9','v2','p38','p8','e1','e10','e13','e15','r6','n18','n21','n35','n26','sb8','q23','q22','q6','q4']
   };
   var EQUIP_LABEL = {poids_du_corps:'Poids du corps',trx:'TRX',kettlebell:'Kettlebell',halteres:'Haltères',elastiques:'Élastiques',barre_traction:'Barre de traction',swissball:'Swiss ball',tapis:'Tapis de course',rameur:'Rameur',velo:'Vélo',elliptique:'Vélo elliptique',corde:'Corde à sauter'};
 
@@ -3866,11 +3936,11 @@
 
   // Exercices qui demandent de descendre au sol (allongé, assis au sol, à genoux,
   // à quatre pattes, planche, mains au sol). Écartés avec l'option « Sans passage au sol ».
-  var FLOOR_IDS = ['e7','e14','r4','p3','p4','p5','p8','p9','p10','p12','p14','p15','p16','p17','p18','p24','p25','p26','p27','p28','p29','p30','p31','p32','p34','p36','p37','p38','t5','t13','t18','t21','k10','k11','h3','b8','p48','b18','p49','n3','n7','n18','n22','n29','n32','n35','n38','n42','sb1','sb2','sb3','sb6','sb10'];
+  var FLOOR_IDS = ['e7','e14','r4','p3','p4','p5','p8','p9','p10','p12','p14','p15','p16','p17','p18','p24','p25','p26','p27','p28','p29','p30','p31','p32','p34','p36','p37','p38','t5','t13','t18','t21','k10','k11','h3','b8','p48','b18','p49','n3','n7','n18','n22','n29','n32','n35','n38','n42','sb1','sb2','sb3','sb6','sb10','q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12','q13','q14','q15','q16','q17','q18','q19','q20','q21','q22','q23','q25','q26','q28','q33','q34','q35','q36'];
   EX.forEach(function(ex){ ex.floor = FLOOR_IDS.indexOf(ex.id) !== -1 || !!ex.gymFloor; });
   function floorOk(ex, noFloor){ return !noFloor || !ex.floor; }
   // Option « Sans impact » : exercices avec sauts, rebonds, bonds ou course écartés
-  var IMPACT_IDS = ['e2','e3','e9','n4','cf24','p10','p11','p33','p34','t15','g58','cf10','cf22','cf25','cf26','cf38','n31','n41','c2','c3','c4','c14','c15','c16','c17','cf23'];
+  var IMPACT_IDS = ['e2','e3','e9','n4','cf24','p10','p11','p33','p34','t15','g58','cf10','cf22','cf25','cf26','cf38','n31','n41','c2','c3','c4','c14','c15','c16','c17','cf23','q3','q21','q29','q30','q31','q32'];
   EX.forEach(function(ex){ ex.impact = IMPACT_IDS.indexOf(ex.id) !== -1; });
   function impactOk(ex, noImpact){ return !noImpact || !ex.impact; }
 
@@ -3882,10 +3952,10 @@
   // Reprises : des mouvements de Mobilité (et deux du renfo) servent aussi à l'échauffement
   // et au retour au calme, avec leur visuel. Ils n'apparaissent qu'une fois dans la bibliothèque.
   (function(){
-    var WARM = [['w_m33','m33'],['w_m34','m34'],['w_m35','m35'],['w_m36','m36'],['w_m45','m45'],
+    var WARM = [['w_y4','y4'],['w_m33','m33'],['w_m34','m34'],['w_m35','m35'],['w_m36','m36'],['w_m45','m45'],
       ['w_p8','p8',"Pont fessier d'activation"],['w_p19','p19','Montées sur pointes de pieds (activation)'],
       ['w_m55','m55'],['w_m58','m58'],['w_m51','m51'],['w_m52','m52']];
-    var COOL = [['c_m9','m9'],['c_m29','m29'],['c_m30','m30'],['c_m32','m32'],['c_m48','m48'],['c_m46','m46'],['c_m28','m28'],['c_m31','m31'],
+    var COOL = [['c_y1','y1'],['c_y2','y2'],['c_m9','m9'],['c_m29','m29'],['c_m30','m30'],['c_m32','m32'],['c_m48','m48'],['c_m46','m46'],['c_m28','m28'],['c_m31','m31'],
       ['c_m7','m7'],['c_m2','m2'],['c_m3','m3'],['c_m13','m13'],['c_m14','m14'],['c_m6','m6'],
       ['c_m37','m37'],['c_m38','m38'],['c_m51','m51'],['c_m52','m52'],['c_m53','m53'],['c_m56','m56']];
     function make(row, block, secs){
@@ -5157,7 +5227,7 @@
   // disponibles hors connexion grâce à sw.js). En attendant, un cadre clair les remplace.
   var EXERCISE_PHOTOS = {};
   var PHOTO_IDS = {};
-  ["r1","r2","r3","r4","h9","h8","h6","h10","h3","h2","h1","k14","k13","k12","k11","cf1","cf10","cf11","cf12","cf13","cf14","cf15","cf16","cf17","cf18","cf19","cf20","cf21","cf22","cf23","cf24","cf25","cf26","cf27","cf28","cf29","cf3","cf30","cf31","cf32","cf33","cf34","cf35","cf36","cf37","cf38","cf39","cf40","cf41","cf5","cf6","cf7","cf8","cf9","g56","g1","g10","g11","g12","g13","g2","g3","g4","g5","g6","g7","g8","g9","g14","g15","g16","g17","g18","g19","g20","g21","g22","g23","g24","g25","g26","g27","g28","g29","g30","g31","g32","g33","g34","g35","g36","g37","g38","g39","g40","g41","g42","g43","g44","g45","g46","g47","g48","g49","g50","g51","g52","g53","g54","g55","g57","g58","g59","g60","g61","g62","k10","k8","k9","k7","k5","k6","k4","k3","k2","k1","t3","t9","t7","t6","t5","t8","t10","t11","t12","t14","t15","t16","t4","t20","t19","t2","t1","t18","t13","s22","s23","s21","s20","s19","s18","s17","s16","s14","s15","s13","s12","s11","s10","s9","s8","s7","s6","s5","s3","x1","x2","x3","x4","x5","x6","x7","x8","x9","x10","p48","b18","p49","k16","p50","s4","s1","s2","t21","t17","e5","e6","e7","e8","e9","e14","e13","e12","e11","e10","c1","c2","c3","c4","c5","c6","c7","c8","c9","c10","c11","c12","c13","c14","c15","c16","c17","p3","p5","p6","p7","p12","p11","p10","p8","p9","p13","p15","p14","p17","p16","p18","p19","p20","p22","p24","p28","p31","p30","p32","p33","p39","p37","p36","p2","p34","p40","p43","p41","p44","p46","p47","m46","m11","m58","m61","m35","m41","m44","m43","m42","m47","m48","m50","m49","m54","m51","m53","m52","m45","m55","m56","m62","m60","m59","m57","m22","m21","m23","m25","m27","m24","m26","m30","m28","m29","m34","m32","m33","m31","m40","m39","m37","m38","m36","m2","m3","m1","m5","m4","m6","m7","m8","m9","m10","m12","m13","m14","m17","m16","m15","m19","m18","m20","b13","b16","b17","b15","b14","b12","b11","b10","b9","b8","b7","b6","b4","b5","b3","b2","b1","v1","v2","e15","r6","e1","e2","e3","e4","k15","p29","p27","p35","p23","p26","p25","p38","p45","h4","h5","rc1","rc3","rc2","rc4","p1","p21","p4","pos_chaise","pos_sol","pos_debout","pos_diaph_debout","pos_diaph_allonge","pos_diaph_chaise","pos_cost_allonge","pos_cost_chaise","pos_cost_sol","pos_cost_debout","r5","h7","cf2","cf4","p42","n1","n3","n4","n7","n18","n21","n22","n23","n26","n29","n31","n32","n34","n35","n36","n38","n39","n41","n42","sb1","sb2","sb3","sb4","sb5","sb6","sb7","sb8","sb9","sb10"].forEach(function(k){ PHOTO_IDS[k] = 1; });
+  ["r1","r2","r3","r4","h9","h8","h6","h10","h3","h2","h1","k14","k13","k12","k11","cf1","cf10","cf11","cf12","cf13","cf14","cf15","cf16","cf17","cf18","cf19","cf20","cf21","cf22","cf23","cf24","cf25","cf26","cf27","cf28","cf29","cf3","cf30","cf31","cf32","cf33","cf34","cf35","cf36","cf37","cf38","cf39","cf40","cf41","cf5","cf6","cf7","cf8","cf9","g56","g1","g10","g11","g12","g13","g2","g3","g4","g5","g6","g7","g8","g9","g14","g15","g16","g17","g18","g19","g20","g21","g22","g23","g24","g25","g26","g27","g28","g29","g30","g31","g32","g33","g34","g35","g36","g37","g38","g39","g40","g41","g42","g43","g44","g45","g46","g47","g48","g49","g50","g51","g52","g53","g54","g55","g57","g58","g59","g60","g61","g62","k10","k8","k9","k7","k5","k6","k4","k3","k2","k1","t3","t9","t7","t6","t5","t8","t10","t11","t12","t14","t15","t16","t4","t20","t19","t2","t1","t18","t13","s22","s23","s21","s20","s19","s18","s17","s16","s14","s15","s13","s12","s11","s10","s9","s8","s7","s6","s5","s3","x1","x2","x3","x4","x5","x6","x7","x8","x9","x10","p48","b18","p49","k16","p50","s4","s1","s2","t21","t17","e5","e6","e7","e8","e9","e14","e13","e12","e11","e10","c1","c2","c3","c4","c5","c6","c7","c8","c9","c10","c11","c12","c13","c14","c15","c16","c17","p3","p5","p6","p7","p12","p11","p10","p8","p9","p13","p15","p14","p17","p16","p18","p19","p20","p22","p24","p28","p31","p30","p32","p33","p39","p37","p36","p2","p34","p40","p43","p41","p44","p46","p47","m46","m11","m58","m61","m35","m41","m44","m43","m42","m47","m48","m50","m49","m54","m51","m53","m52","m45","m55","m56","m62","m60","m59","m57","m22","m21","m23","m25","m27","m24","m26","m30","m28","m29","m34","m32","m33","m31","m40","m39","m37","m38","m36","m2","m3","m1","m5","m4","m6","m7","m8","m9","m10","m12","m13","m14","m17","m16","m15","m19","m18","m20","b13","b16","b17","b15","b14","b12","b11","b10","b9","b8","b7","b6","b4","b5","b3","b2","b1","v1","v2","e15","r6","e1","e2","e3","e4","k15","p29","p27","p35","p23","p26","p25","p38","p45","h4","h5","rc1","rc3","rc2","rc4","p1","p21","p4","pos_chaise","pos_sol","pos_debout","pos_diaph_debout","pos_diaph_allonge","pos_diaph_chaise","pos_cost_allonge","pos_cost_chaise","pos_cost_sol","pos_cost_debout","r5","h7","cf2","cf4","p42","n1","n3","n4","n7","n18","n21","n22","n23","n26","n29","n31","n32","n34","n35","n36","n38","n39","n41","n42","sb1","sb2","sb3","sb4","sb5","sb6","sb7","sb8","sb9","sb10","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","y1","y2","y3","y4","y5","rl1","rl2","rl3","rl4","rl5","rl6","rl7"].forEach(function(k){ PHOTO_IDS[k] = 1; });
   var PHOTOS_STATE = 'loading';
   window.ecPhotosState = function(){ return PHOTOS_STATE; };
   var PHOTO_WAIT = 'data:image/svg+xml,%3Csvg%20data-ec=%22';
@@ -5172,7 +5242,7 @@
   (function(){
     var sc = document.createElement('script');
     sc.async = true;
-    sc.src = 'photos.js?v=135ff0f2';
+    sc.src = 'photos.js?v=e26952fa';
     sc.onload = function(){
       var P = window.EC_PHOTOS || {};
       Object.keys(P).forEach(function(k){ if(!(k in EXERCISE_PHOTOS)) EXERCISE_PHOTOS[k] = P[k]; });
@@ -9854,6 +9924,9 @@
 
     function facts(h){
       var f = {total:h.length, breath:0, renfo:0, mins:0, early:0, late:0, full:0, bestWeek:0, bestStreak:0, chal:Object.keys(lsGet('ec_chal_done', {}) || {}).length};
+      var dl = lsGet('ec_defi_log', []); if(!Array.isArray(dl)) dl = [];
+      f.dl = dl.length; f.pyr = dl.filter(function(e){ return e.f === 'pyramide'; }).length; f.mont = dl.filter(function(e){ return e.f === 'montagne'; }).length;
+      f.rec = dl.filter(function(e){ return e.r; }).length; f.parc = Object.keys((lsGet('ec_parcours_v1', {}) || {}).done || {}).length;
       var perWeek = {};
       h.forEach(function(e){
         if(e.breath) f.breath++; else f.renfo++;
@@ -9883,7 +9956,13 @@
       {id:'early', ico:'🌅', n:'Lève-tôt', d:'une séance avant 8 h', v:function(f){ return f.early; }, goal:1},
       {id:'late', ico:'🌙', n:'Oiseau de nuit', d:'une séance après 21 h', v:function(f){ return f.late; }, goal:1},
       {id:'c1', ico:'🎯', n:'Premier défi réussi', v:function(f){ return f.chal; }, goal:1},
-      {id:'c3', ico:'🏆', n:'3 défis réussis', v:function(f){ return f.chal; }, goal:3}
+      {id:'c3', ico:'🏆', n:'3 défis réussis', v:function(f){ return f.chal; }, goal:3},
+      {id:'d1', ico:'🏁', n:'Première séance défi', v:function(f){ return f.dl; }, goal:1},
+      {id:'d10', ico:'⚡', n:'10 séances défi', v:function(f){ return f.dl; }, goal:10},
+      {id:'pyr', ico:'🔺', n:'Pyramide terminée', v:function(f){ return f.pyr; }, goal:1},
+      {id:'mont', ico:'⛰️', n:'Montagne conquise', v:function(f){ return f.mont; }, goal:1},
+      {id:'rec3', ico:'⏱️', n:'3 records battus', v:function(f){ return f.rec; }, goal:3},
+      {id:'parc', ico:'🗺️', n:'Parcours 4 semaines', v:function(f){ return f.parc; }, goal:16}
     ];
     function badges(h){
       var f = facts(h);
@@ -10016,7 +10095,8 @@
       mobi:{l:'Mobilité', d:'Avant une séance, ou pour gagner en amplitude : des mouvements contrôlés pour les hanches, le dos et les épaules.'},
       recup:{l:'Étirements', d:'Après une course ou une séance, ou pour gagner en souplesse : des étirements doux et tenus, pour relâcher les jambes et le dos.'},
       yoga:{l:'Yoga', d:'Des postures et des enchaînements au rythme du souffle : équilibre, ouverture et calme.'},
-      soir:{l:'Détente du soir', d:'Lent et au sol, pour relâcher les tensions et préparer le sommeil.'}
+      soir:{l:'Détente du soir', d:'Lent et au sol, pour relâcher les tensions et préparer le sommeil.'},
+      roul:{l:'Auto-massage', d:'Au rouleau de massage (et une balle) : relâcher mollets, cuisses, fessiers et haut du dos après l’effort. Lentement, sans appuyer sur une zone douloureuse.'}
     };
     var ZONES = {full:'Corps entier', bas:'Jambes & hanches', dos:'Dos', haut:'Épaules & nuque'};
     var POS = {sol:'Au sol', debout:'Debout', chaise:'Sur chaise'};
@@ -10036,7 +10116,8 @@
     function normZ(z){ var a = zs(z); return a.length ? a.join(',') : 'full'; }
     function zoneLabel(z){ var a = zs(z); return a.length ? a.map(function(k){ return ZONES[k]; }).join(' + ') : ZONES.full; }
     function zoneOk(x, z){ var a = zs(z); return !a.length || a.some(function(k){ return x.mob.z.indexOf(k) > -1; }); }
-    function pool(o, used){ return EX.filter(function(x){ return x.mob && !used[x.id] && !exBlocked(x.id) && posOk(x, o.p); }); }
+    function rollOk(x, o){ if(o.g === 'roul') return !!x.mob.roll; return !x.mob.roll || x.mob.g.indexOf(o.g) > -1; }
+    function pool(o, used){ return EX.filter(function(x){ return x.mob && !used[x.id] && !exBlocked(x.id) && (o.g === 'roul' || posOk(x, o.p)) && rollOk(x, o); }); }
     function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     function rank(list, o){
       return shuffle(list.slice()).map(function(x){ return {x:x, s:(x.mob.g.indexOf(o.g) > -1 ? 4 : 0) + (zs(o.z).length && zoneOk(x, o.z) ? 6 : 0) + (['recup','soir','yoga'].indexOf(o.g) > -1 && hasP(o.p, 's') && x.mob.p === 'sol' ? 5 : 0) + Math.random()}; })
@@ -10143,6 +10224,7 @@
       yoga:'<circle cx="12" cy="4.5" r="2"/><path d="M12 7.5v6M7 11l5-2 5 2M5 19c2-3 4.5-4.5 7-4.5s5 1.5 7 4.5M8 19h8"/>',
       matin:'<circle cx="12" cy="13" r="4"/><path d="M12 3.5v2.5M4.5 13H2.5M21.5 13h-2M6.3 7.3 4.9 5.9M17.7 7.3l1.4-1.4M3 19.5h18"/>',
       soir:'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/>',
+      roul:'<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M8 8v8M12 8v8M16 8v8M3 20h18"/>',
       full:'<circle cx="12" cy="4" r="2"/><path d="M12 7v7.5M12 9.5l-5 2.5M12 9.5l5 2.5M12 14.5l-3 6M12 14.5l3 6"/>',
       bas:'<path d="M9 3v7l-1.5 10.5M15 3v7l1.5 10.5M7.5 20.5h3M13.5 20.5h3M9 10h6"/>',
       dos:'<path d="M12 3v18"/><rect x="9.5" y="4.5" width="5" height="3" rx="1"/><rect x="9.5" y="10.5" width="5" height="3" rx="1"/><rect x="9.5" y="16.5" width="5" height="3" rx="1"/>',
@@ -11355,6 +11437,75 @@
     var CF_MONO = ['cf1','cf3','c6','c14','cf10','p11','cf26','cf38','c17','cf4','cf2'];
     function pickFrom(ids, n, used){ var out = []; shuffle(ids).forEach(function(id){ var e = X(id); if(out.length < n && e && okEq(e) && !used[id] && (e.wodLevels || e.levels || []).indexOf(state.level === 'senior' ? 'debutant' : state.level) > -1){ out.push(e); used[id] = 1; } }); return out; }
     var CF_BW = ['p10','p11','p12','p3','p21','p4','k1','c14','p2'];
+    // ----- Défis au poids du corps (chrono, pyramide, montagne, sandwich cardio, Tabata en blocs)
+    var DF = {
+      bas:['p1','p2','p23','p21','q30','p33','p11','n31','q29','q31','p22','p20','s6','q32'],
+      push:['p3','q17','p31','p7','n34','q18','q19','q20','p30','q16','p36','q21'],
+      core:['p12','q8','q11','q12','q13','q14','p24','p25','p26','q15','p28','cf35','q4','q5','n32','p15','q3','q9'],
+      pull:['q22','q23','n35','p5','p38','p8','q25','q26'],
+      full:['p10','cf26','q34']
+    };
+    var DF_BASE = {push:15, bas:20, core:20, pull:15, full:10}, DF_ONE = {p12:30, q34:12, cf35:15};
+    var DF_MUL = {push:0.75, bas:1, core:1, pull:0.75, full:0.5};
+    var DF_SPR = {push:3, bas:2.5, core:2.5, pull:3, full:4};
+    var DF_FILL = ['c14','e9','p12','e3','n4','e2'];
+    function lvK(){ return LV(); }
+    function dItems(n, used){
+      var ord = ['bas','push','core','pull','full'], out = [];
+      for(var i = 0; out.length < n && i < n + 10; i++){
+        var c = ord[i % ord.length], e = pickFrom(DF[c], 1, used);
+        for(var j = 0; !e.length && j < ord.length; j++){ e = pickFrom(DF[ord[j]], 1, used); if(e.length) c = ord[j]; }
+        if(e.length) out.push({ex:e[0], c:c});
+      }
+      return out;
+    }
+    function nRep(ex, base){ var v = Math.max(4, Math.round(base * F[lvK()])); if(ex.perSide) v = Math.max(3, Math.round(v / 2)); return v; }
+    function rStr(ex, v){ return v + (ex.perSide ? ' / côté' : ''); }
+    function scTxt(sc){ return sc.map(function(sv){ return Math.max(2, Math.round(sv * F[lvK()])); }).join('-'); }
+    function secOf(v, side){ return Math.max(15, Math.round(v * 3 * (side ? 2 : 1) / 5) * 5); }
+    function rungN(it, sv){ var v = Math.max(2, Math.round(sv * (+it.reps || 1) * F[lvK()])); if(it.ex.perSide) v = Math.max(2, Math.round(v / 2)); return v; }
+    function defiBuild(o, warm, cool, used){
+      var lv = lvK(), W = Math.max(6, Math.round((o.d * 60 - ovh(warm, cool)) / 60)), f = o.df || 'fortime', part, title;
+      if(f === 'fortime'){
+        var n = W < 12 ? 3 : (W < 25 ? 4 : (W < 35 ? 5 : 6)), it = dItems(n, used), est = 0;
+        it.forEach(function(x){ var v = nRep(x.ex, DF_ONE[x.ex.id] || DF_BASE[x.c]); x.reps = rStr(x.ex, v); est += secOf(v, x.ex.perSide); });
+        var R = Math.max(2, Math.min(12, Math.round(W * 60 / Math.max(60, est))));
+        part = {kind:'ft', n:R, items:it.map(function(x){ return {ex:x.ex, reps:x.reps}; })};
+        title = 'Défi chrono · ' + R + ' tours';
+      } else if(f === 'pyramide' || f === 'montagne'){
+        var SCH = f === 'pyramide' ? [[10,8,6,4,2],[15,12,9,6,3],[20,15,10,5],[25,20,15,10,5],[30,25,20,15,10,5]]
+                                   : [[5,10,15,20,15,10,5],[10,20,30,40,30,20,10],[10,20,30,40,50,40,30,20,10]];
+        var cand = dItems(6, used), best = null;
+        cand.forEach(function(x){ x.reps = DF_MUL[x.c] * (DF_ONE[x.ex.id] ? DF_ONE[x.ex.id] / DF_BASE[x.c] : 1); });
+        SCH.forEach(function(sc0){
+          for(var k = f === 'pyramide' ? 3 : 2; k <= Math.min(cand.length, f === 'pyramide' ? 6 : 4); k++){
+            var e = 0; sc0.forEach(function(sv){ cand.slice(0, k).forEach(function(x){ e += secOf(rungN(x, sv), x.ex.perSide); }); });
+            for(var ps = 1; ps <= 2; ps++){
+              var gap = Math.abs(e * ps + (ps - 1) * 120 - W * 60) + (e * ps > W * 60 ? 60 : 0) + (ps - 1) * 90;
+              if(!best || gap < best.g) best = {g:gap, k:k, sc:sc0, n:ps};
+            }
+          }
+        });
+        var sc = best ? best.sc : SCH[1], sel = cand.slice(0, best ? best.k : 3);
+        part = {kind:'ladder', f:f, sc:sc, n:best && best.n > 1 ? best.n : 0, items:sel.map(function(x){ return {ex:x.ex, reps:Math.round(x.reps * 100) / 100}; })};
+        title = (part.n ? part.n + ' × ' : '') + (f === 'pyramide' ? 'Pyramide ' : 'Montagne ') + scTxt(sc);
+      } else if(f === 'sandwich'){
+        var WR = {debutant:[35,25], intermediaire:[40,20], avance:[45,15]}[lv];
+        var fill = [], fu = {};
+        DF_FILL.forEach(function(id){ var e = X(id); if(fill.length < 2 && e && okEq(e) && (e.levels || []).indexOf(lv) > -1){ fill.push({ex:e, reps:''}); fu[id] = 1; } });
+        if(!fill.length){ var pe = X('p12'); if(pe) fill.push({ex:pe, reps:''}); }
+        Object.keys(fu).forEach(function(k){ used[k] = 1; });
+        var slots = Math.floor(W / 2), it2 = dItems(Math.max(2, Math.min(6, slots)), used);
+        part = {kind:'sandwich', min:W, work:WR[0], rest:WR[1], fill:fill, items:it2.map(function(x){ return {ex:x.ex, reps:''}; })};
+        title = 'Sandwich cardio · ' + W + ' min';
+      } else {
+        var rest = {debutant:20, intermediaire:15, avance:10}[lv], bl = 8 * 20 + 7 * rest;
+        var nb = Math.max(1, Math.min(8, Math.floor((W * 60 + 60) / (bl + 60))));
+        part = {kind:'tblocs', rest:rest, items:dItems(nb, used).map(function(x){ return {ex:x.ex, reps:''}; })};
+        title = 'Tabata en blocs · ' + part.items.length + ' × 8 tours';
+      }
+      return {parts:[part], title:title};
+    }
     function pick1(ids, used){ var o = pickFrom(ids, 1, used); if(!o.length) o = pickFrom(CF_LOAD.concat(CF_GYM, CF_MONO), 1, used); if(!o.length) o = pickFrom(CF_BW, 1, used); return o; }
     function trio(used){ return pick1(CF_LOAD, used).concat(pick1(CF_GYM, used), pick1(CF_MONO, used)); }
     function ovh(warm, cool){ var t = 0; _bti({warm:warm, cardio:[], main:[], cool:cool, level:state.level, theme:'endurance_force', rounds:1, equip:state.equip, zone:'full'}).forEach(function(st){ t += st.duration || 0; }); return t + 2 * transSec(state.level); }
@@ -11393,6 +11544,8 @@
         }
         parts.push({kind:'hyrox', blocks:blocks, rest:lv === 'avance' ? 10 : (lv === 'intermediaire' ? 25 : 45)});
         title = full ? 'Simulation HYROX complète' : 'HYROX · ' + (dist ? 'course ' + (dist >= 1000 ? '1 km' : dist + ' m') + ' + stations' : 'stations');
+      } else if(o.type === 'defi'){
+        var DB = defiBuild(o, warm, cool, used); parts = DB.parts; title = DB.title;
       } else {
         var W = Math.max(8, Math.round((D * 60 - ovh(warm, cool)) / 60)), fmt = o.fmt;
         if(fmt === 'mixte'){ var a = Math.round(W * 0.45); parts.push({kind:'emom', min:a, items:trio(used)}); parts.push({kind:'amrap', min:W - a - 1, items:trio(used)}); title = 'CrossFit · EMOM + AMRAP'; }
@@ -11401,7 +11554,7 @@
         else if(W > 25){ var a2 = Math.round((W - 2) / 2); parts.push({kind:'amrap', min:a2, items:trio(used)}); parts.push({kind:'amrap', min:W - 2 - a2, items:trio(used)}); title = 'CrossFit · 2 AMRAP'; }
         else { parts.push({kind:'amrap', min:W, items:trio(used)}); title = 'CrossFit · AMRAP ' + W + ' min'; }
       }
-      parts.forEach(function(p){ (p.items || []).forEach(function(it, k){ p.items[k] = {ex:it, reps:reps(it)}; }); });
+      parts.forEach(function(p){ (p.items || []).forEach(function(it, k){ if(!it.ex) p.items[k] = {ex:it, reps:reps(it)}; }); });
       var main = [];
       parts.forEach(function(p){ (p.items || []).forEach(function(it){ main.push(it.ex); }); (p.blocks || []).forEach(function(b){ main.push(b.st.ex); }); });
       return {warm:warm, cardio:[], main:main, cool:cool, level:state.level, theme:'endurance_force', rounds:1, durationMinutes:D === 'full' ? 90 : D,
@@ -11423,6 +11576,26 @@
             for(var i = 1; i <= 8; i++){ push({type:'work', label:it.ex.name, sublabel:'Tabata ' + i + '/8 · 20 s à fond', duration:20, ex:it.ex, side:null}); if(i < 8) push({type:'rest', label:'Récupération', sublabel:'10 s', duration:10, ex:it.ex}); }
             if(k < p.items.length - 1) push({type:'rest', label:'Récupération', sublabel:'Prochain : ' + p.items[k + 1].ex.name, duration:60, ex:null});
           });
+        } else if(p.kind === 'ft'){
+          for(var t2 = 1; t2 <= p.n; t2++) p.items.forEach(function(it){ push(ftStep(it.ex, it.reps, 'Tour ' + t2 + '/' + p.n)); });
+        } else if(p.kind === 'ladder'){
+          var np = p.n || 1;
+          for(var pz = 1; pz <= np; pz++){
+            if(pz > 1) push({type:'rest', label:'Récupération', sublabel:'Avant le passage ' + pz + '/' + np, duration:120, ex:null});
+            p.sc.forEach(function(sv, ri){ p.items.forEach(function(it){ push(ftStep(it.ex, rStr(it.ex, rungN(it, sv)), (np > 1 ? 'Passage ' + pz + '/' + np + ' · ' : '') + 'Palier ' + (ri + 1) + '/' + p.sc.length)); }); });
+          }
+        } else if(p.kind === 'sandwich'){
+          var si = 0, seq = [];
+          for(var m2 = 0; m2 < p.min; m2++) seq.push(m2 % 2 === 0 ? {c:1, it:p.fill[(m2 / 2) % p.fill.length]} : {c:0, it:p.items[si++ % p.items.length]});
+          seq.forEach(function(q, k){
+            push({type:'work', label:q.it.ex.name, sublabel:(q.c ? 'Cardio' : 'Renfo') + ' · ' + p.work + ' s · intervalle ' + (k + 1) + '/' + seq.length, duration:p.work, ex:q.it.ex, side:null});
+            if(k < seq.length - 1) push({type:'rest', label:'Récupération', sublabel:'Prochain : ' + seq[k + 1].it.ex.name, duration:p.rest, ex:q.it.ex});
+          });
+        } else if(p.kind === 'tblocs'){
+          p.items.forEach(function(it, k){
+            for(var i = 1; i <= 8; i++){ push({type:'work', label:it.ex.name, sublabel:'Bloc ' + (k + 1) + '/' + p.items.length + ' · tour ' + i + '/8 · 20 s', duration:20, ex:it.ex, side:null}); if(i < 8) push({type:'rest', label:'Récupération', sublabel:p.rest + ' s', duration:p.rest, ex:it.ex}); }
+            if(k < p.items.length - 1) push({type:'rest', label:'Récupération', sublabel:'Prochain bloc : ' + p.items[k + 1].ex.name, duration:60, ex:null});
+          });
         } else if(p.kind === 'hyrox'){
           p.blocks.forEach(function(b, k){
             if(b.run){ push({type:'work', label:b.run.ex.name, sublabel:'Bloc ' + (k + 1) + '/' + p.blocks.length + ' · ≈ ' + fmtDose(b.run.secs), duration:b.run.secs, ex:b.run.ex, side:null}); push({type:'transition', label:'Transition', sublabel:'Rejoins la station : ' + b.st.label, duration:15, ex:null}); }
@@ -11431,7 +11604,19 @@
           });
         }
       });
+      if(S.wod.o && S.wod.o.type === 'defi'){ var dd = {f:S.wod.o.df || 'fortime', sig:defiSig(S), ps:S.wod.o.ps, t:S.title}; out.forEach(function(st){ st.defi = dd; }); }
       return out;
+    }
+    function ftStep(ex, rr, lab){
+      // Durée prévue = estimation (≈ 3 s par répétition) ; au-delà, le chrono continue jusqu'à un temps limite
+      var n = parseInt(rr, 10) || 10, side = /côté/.test(String(rr)), est = secOf(n, side);
+      return {type:'work', ft:true, label:ex.name, sublabel:lab + ' · ' + n + ' rép.' + (side ? ' / côté' : ''), duration:est, extra:Math.max(60, Math.round(est * 1.5)), ex:ex, side:null};
+    }
+    function defiSig(S){
+      var a = [S.wod.o.df, S.level];
+      S.wod.parts.forEach(function(p){ a.push(p.kind, p.n || '', (p.sc || []).join('-')); (p.items || []).forEach(function(it){ a.push(it.ex.id, it.reps); }); });
+      var str = a.join('|'), h = 5381; for(var i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+      return h.toString(36);
     }
     var _bti = buildTimelineInner;
     buildTimelineInner = function(S){
@@ -11453,6 +11638,11 @@
         if(p.min) q.m = p.min;
         if(p.rest != null) q.r = p.rest;
         if(p.items) q.it = p.items.map(function(it){ return [it.ex.id, it.reps]; });
+        if(p.n) q.n = p.n;
+        if(p.sc) q.sc = p.sc.slice();
+        if(p.work) q.w = p.work;
+        if(p.f) q.lf = p.f;
+        if(p.fill) q.f = p.fill.map(function(it){ return it.ex.id; });
         if(p.blocks) q.b = p.blocks.map(function(b){ return [b.run ? b.run.dist : 0, b.run ? b.run.secs : 0, b.st.ex.id, b.st.label, b.st.dose || '', b.st.secs]; });
         return q;
       })};
@@ -11465,6 +11655,11 @@
         if(q.m) p.min = +q.m;
         if(q.r != null) p.rest = +q.r;
         if(q.it) p.items = q.it.map(function(a){ var e = X(a[0]); return e ? {ex:e, reps:a[1]} : null; }).filter(Boolean);
+        if(q.n) p.n = +q.n;
+        if(q.sc) p.sc = q.sc.map(Number);
+        if(q.w) p.work = +q.w;
+        if(q.lf) p.f = String(q.lf);
+        if(q.f) p.fill = q.f.map(function(id){ var e = X(id); return e ? {ex:e, reps:''} : null; }).filter(Boolean);
         if(q.b) p.blocks = q.b.map(function(a){ var e = X(a[2]); if(!e) return null; return {run:a[0] ? {ex:runEx(+a[0]), secs:+a[1], dist:+a[0]} : null, st:{ex:e, label:String(a[3]), dose:a[4] || null, secs:+a[5]}}; }).filter(Boolean);
         if((p.items && p.items.length) || (p.blocks && p.blocks.length)) parts.push(p);
       });
@@ -11517,16 +11712,18 @@
         if(!S || !S.wod){ var cur = document.getElementById('regenBtn'); if(origRg && cur && cur !== origRg) cur.parentNode.replaceChild(origRg, cur); return r; }
         if(!res) return r;
         var lv = LEVEL_LABEL[S.level] || '', meta = res.querySelector('.session-meta'), tot = meta && /⏱ Durée totale [^·]+/.exec(meta.textContent);
-        if(meta) meta.textContent = (S.wod.o.type === 'hyrox' ? 'HYROX' : 'CrossFit') + ' · ' + lv + (tot ? ' · ' + tot[0].trim() : '');
-        var tags = res.querySelector('.sh-tags'); if(tags) tags.innerHTML = [(S.wod.o.type === 'hyrox' ? '🏟️ HYROX' : '🔥 CrossFit'), lv, tot ? tot[0].trim() : ''].filter(Boolean).map(function(x){ return '<span>' + escapeHtml(x) + '</span>'; }).join('');
+        if(meta) meta.textContent = (S.wod.o.type === 'hyrox' ? 'HYROX' : (S.wod.o.type === 'defi' ? 'Défi' : 'CrossFit')) + ' · ' + lv + (tot ? ' · ' + tot[0].trim() : '');
+        var tags = res.querySelector('.sh-tags'); if(tags) tags.innerHTML = [(S.wod.o.type === 'hyrox' ? '🏟️ HYROX' : (S.wod.o.type === 'defi' ? '🏁 Défi' : '🔥 CrossFit')), lv, tot ? tot[0].trim() : ''].filter(Boolean).map(function(x){ return '<span>' + escapeHtml(x) + '</span>'; }).join('');
         var blk = res.querySelector('.block.principal');
         if(blk){
-          var html = '<div class="block-title"><span class="swatch"></span>Le WOD</div><div class="wod-card">';
+          var html = '<div class="block-title"><span class="swatch"></span>' + (S.wod.o.type === 'defi' ? 'Le défi' : 'Le WOD') + '</div><div class="wod-card">';
           S.wod.parts.forEach(function(p, pi){
-            var head = p.kind === 'emom' ? 'EMOM ' + p.min + ' min' : (p.kind === 'amrap' ? 'AMRAP ' + p.min + ' min' : (p.kind === 'tabata' ? 'Tabata · ' + p.items.length + ' × 4 min' : (S.wod.o.d === 'full' ? 'Simulation complète' : p.blocks.length + ' blocs')));
+            var head = p.kind === 'emom' ? 'EMOM ' + p.min + ' min' : (p.kind === 'amrap' ? 'AMRAP ' + p.min + ' min' : (p.kind === 'tabata' ? 'Tabata · ' + p.items.length + ' × 4 min' : (S.wod.o.d === 'full' ? 'Simulation complète' : (p.blocks || []).length + ' blocs')));
             var how = p.kind === 'emom' ? 'Au début de chaque minute, fais les répétitions puis récupère le reste de la minute. Les exercices tournent.' : (p.kind === 'amrap' ? 'Le plus de tours possible dans le temps. Compte tes tours.' : (p.kind === 'tabata' ? '8 × (20 s à fond, 10 s de récup) par exercice, 1 min entre chaque.' : (S.wod.o.run ? 'Course, puis station, sans t’arrêter. Le chrono de la course est indicatif.' : 'Les stations s’enchaînent avec une courte récupération.')));
+            var dh = defiHead(p); if(dh){ head = dh[0]; how = dh[1]; }
             html += '<div class="wod-part"><div class="wod-h"><b>' + (S.wod.parts.length > 1 ? 'Partie ' + 'AB'[pi] + ' · ' : '') + escapeHtml(head) + '</b><span>' + escapeHtml(how) + '</span></div><ol>';
-            if(p.items) p.items.forEach(function(it){ html += '<li data-ex-id="' + escapeHtml(it.ex.id) + '"><b>' + escapeHtml(String(it.reps)) + '</b> ' + escapeHtml(it.ex.name) + '</li>'; });
+            if(p.fill) p.fill.forEach(function(it){ html += '<li data-ex-id="' + escapeHtml(it.ex.id) + '"><b>Cardio</b> ' + escapeHtml(it.ex.name) + '</li>'; });
+            if(p.items) p.items.forEach(function(it){ html += '<li data-ex-id="' + escapeHtml(it.ex.id) + '"><b>' + escapeHtml(String(defiRep(p, it))) + '</b> ' + escapeHtml(it.ex.name) + '</li>'; });
             if(p.blocks) p.blocks.forEach(function(b){ html += '<li data-ex-id="' + escapeHtml(b.st.ex.id) + '">' + (b.run ? '<b>' + escapeHtml(b.run.ex.name.replace('🏃 ', '🏃 ')) + '</b> → ' : '') + escapeHtml(b.st.label) + (b.st.ex.name.toLowerCase() !== b.st.label.toLowerCase() ? ' <small>(' + escapeHtml(b.st.ex.name) + ')</small>' : '') + (b.st.dose ? ' · ' + escapeHtml(b.st.dose) : ' · ' + fmtDose(b.st.secs)) + '</li>'; });
             html += '</ol></div>';
           });
@@ -11539,17 +11736,137 @@
       }catch(e){}
       return r;
     };
+    function defiHead(p){
+      if(p.kind === 'ft') return ['Chrono · ' + p.n + ' tours', 'Enchaîne les tours le plus vite possible, sans pause imposée. Touche « ✓ Fini » dès qu’un exercice est fait : ton temps est enregistré pour battre ton record.'];
+      if(p.kind === 'ladder') return [(p.n > 1 ? p.n + ' × ' : '') + (p.f === 'montagne' ? 'Montagne ' : 'Pyramide ') + scTxt(p.sc), (p.f === 'montagne' ? 'On monte puis on redescend : ' : 'De moins en moins de répétitions à chaque palier : ') + 'fais chaque exercice avec les répétitions du palier, puis passe au suivant' + (p.n > 1 ? ' ; ' + p.n + ' passages avec 2 min de récup entre les deux' : '') + '. Au chrono, touche « ✓ Fini » à chaque exercice.'];
+      if(p.kind === 'sandwich') return ['Sandwich cardio · ' + p.work + ' / ' + p.rest + ' s', 'Un exercice cardio entre chaque exercice de renfo : ' + p.work + ' s d’effort, ' + p.rest + ' s de récup, ' + p.min + ' intervalles.'];
+      if(p.kind === 'tblocs') return ['Tabata en blocs · ' + p.items.length + ' × 8 tours', '8 × (20 s d’effort, ' + p.rest + ' s de récup) sur le même exercice, puis 1 min de récup avant le bloc suivant.'];
+      return null;
+    }
+    function defiRep(p, it){
+      if(p.kind === 'ladder') return p.sc.map(function(sv){ return rungN(it, sv); }).join('-') + (it.ex.perSide ? ' / côté' : '');
+      if(p.kind === 'tblocs') return '8 × 20 s';
+      if(p.kind === 'sandwich') return 'Renfo';
+      return it.reps;
+    }
+    // ----- Parcours 4 semaines (4 séances par semaine)
+    var PARC = [['tblocs',12],['sandwich',15],['fortime',12],['tblocs',15],
+                ['sandwich',20],['pyramide',15],['tblocs',20],['fortime',15],
+                ['montagne',20],['sandwich',25],['pyramide',20],['tblocs',25],
+                ['fortime',20],['montagne',25],['sandwich',30],['pyramide',30]];
+    var DFN = {fortime:'Chrono', pyramide:'Pyramide', montagne:'Montagne', sandwich:'Sandwich cardio', tblocs:'Tabata en blocs'};
+    function lsG(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+    function lsS(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+    function parc(){ var P = lsG('ec_parcours_v1', null); if(!P || typeof P !== 'object' || !P.done) P = {done:{}}; return P; }
+    function parcNext(){ var P = parc(); for(var i = 0; i < PARC.length; i++) if(!P.done[i]) return i; return -1; }
+    function parcHtml(){
+      var P = parc(), nx = parcNext(), n = Object.keys(P.done).length, h = '<div class="dp-card"><div class="dp-h"><b>🗺️ Parcours 4 semaines</b><span>' + n + ' / ' + PARC.length + '</span></div><div class="dp-weeks">';
+      for(var w = 0; w < 4; w++){
+        h += '<div class="dp-w"><small>Sem. ' + (w + 1) + '</small>';
+        for(var k = 0; k < 4; k++){ var i = w * 4 + k; h += '<span class="dp-dot' + (P.done[i] ? ' on' : '') + (i === nx ? ' nx' : '') + '" title="' + escapeHtml(DFN[PARC[i][0]] + ' ' + PARC[i][1] + ' min') + '"></span>'; }
+        h += '</div>';
+      }
+      h += '</div>';
+      if(nx < 0) h += '<p class="dp-txt">🏅 Parcours terminé, bravo ! Tu peux le recommencer à ton niveau actuel ou au niveau au-dessus.</p><button type="button" class="dp-go ghost" data-a="parcreset">Recommencer le parcours</button>';
+      else h += '<p class="dp-txt">4 séances par semaine pendant 4 semaines, de plus en plus longues. Une étape est validée quand tu vas au bout de la séance.</p><button type="button" class="dp-go" data-a="parc">▶ Étape ' + (nx + 1) + ' · semaine ' + (Math.floor(nx / 4) + 1) + ' : ' + DFN[PARC[nx][0]] + ' ' + PARC[nx][1] + ' min</button>';
+      return h + '</div>';
+    }
+    // ----- Pendant la séance : chrono qui monte, bouton « ✓ Fini », temps limite
+    function ftShow(){
+      var tl = timerState.timeline || [], cur = tl[timerState.index], sk = document.getElementById('timerSkip'), cd = document.getElementById('timerCountdown');
+      var el = document.getElementById('ftChrono');
+      if(!el && cd){ var anchor = cd.closest('.tc-ring') || cd; el = document.createElement('div'); el.id = 'ftChrono'; el.className = 'ft-chrono'; anchor.parentNode.insertBefore(el, anchor.nextSibling); }
+      var on = !!(cur && cur.ft && timerState.index < tl.length && !document.getElementById('timerBackdrop').classList.contains('feedback'));
+      if(el) el.hidden = !on;
+      if(sk && sk.textContent !== (on ? '✓ Fini' : 'Passer ▶')) sk.textContent = on ? '✓ Fini' : 'Passer ▶';
+      document.getElementById('timerBackdrop').classList.toggle('ft-on', on);
+      if(!on) return;
+      if(cd) cd.textContent = fmtTime(tl.ftSec || 0);
+      if(el) el.innerHTML = '<b>⏱ Au chrono</b> · touche « ✓ Fini » dès que c’est fait<br><small>Temps limite pour cet exercice : ' + fmtTime(Math.max(0, timerState.remaining + (cur.extra || 0) - (cur.over || 0))) + '</small>';
+    }
+    var _t1 = tickOne;
+    tickOne = function(){
+      var tl = timerState.timeline, cur = tl && tl[timerState.index];
+      if(!timerState.running || !cur || !cur.ft) return _t1.apply(this, arguments);
+      tl.ftSec = (tl.ftSec || 0) + 1;
+      // Temps prévu dépassé : on reste sur l'exercice (le chrono tourne) jusqu'au temps limite
+      if(timerState.remaining <= 1){
+        cur.over = (cur.over || 0) + 1;
+        if(cur.over < cur.extra) return;
+        cur.capped = true;
+      }
+      var sl = timerState.silent; timerState.silent = true;
+      try{ return _t1.apply(this, arguments); } finally { timerState.silent = sl; }
+    };
+    var _shd = sideHook;
+    sideHook = function(){ var r = _shd.apply(this, arguments); try{ ftShow(); }catch(e){} return r; };
+    document.addEventListener('click', function(e){
+      if(!e.target.closest || !e.target.closest('#timerSkip')) return;
+      var cur = (timerState.timeline || [])[timerState.index]; if(cur && cur.ft) cur.ftDone = true;
+    }, true);
+    // ----- Fin de séance : temps, record, étape du parcours
+    function defiEnd(){
+      timerState.defiRes = null;
+      var tl = timerState.timeline || [], d = null;
+      tl.forEach(function(st){ if(st.ftDone) st.skipped = false; if(!d && st.defi) d = st.defi; });
+      if(!d) return;
+      var fts = tl.filter(function(st){ return st.ft; }), capped = fts.some(function(st){ return st.capped && !st.ftDone; });
+      var res = {f:d.f, sec:tl.ftSec || 0, beat:false, prev:null, first:false, ps:null}, parts = [];
+      if(timerState.stopped){ timerState.defiRes = {txt:'défi arrêté avant la fin'}; return; }
+      if(fts.length){
+        parts.push('⏱ ' + fmtTime(res.sec) + (capped ? ' (temps limite atteint)' : ''));
+        if(!capped){
+          var R = lsG('ec_defi_rec', {}) || {}; res.prev = R[d.sig] || null;
+          if(!res.prev){ res.first = true; R[d.sig] = res.sec; parts.push('premier chrono enregistré'); }
+          else if(res.sec < res.prev){ res.beat = true; R[d.sig] = res.sec; parts.push('🏆 nouveau record ! (avant ' + fmtTime(res.prev) + ')'); }
+          else parts.push('record : ' + fmtTime(res.prev));
+          lsS('ec_defi_rec', R);
+        }
+      } else parts.push(DFN[d.f] + ' terminé');
+      var ws = tl.filter(function(st){ return st.defi && st.type === 'work'; }), ok = ws.filter(function(st){ return !st.skipped; }).length >= ws.length / 2;
+      if(d.ps != null && PARC[d.ps] && !ok) parts.push('étape du parcours non validée (moins de la moitié des exercices faits)');
+      if(d.ps != null && PARC[d.ps] && ok){ var P = parc(); if(!P.done[d.ps]){ P.done[d.ps] = Date.now(); lsS('ec_parcours_v1', P); } res.ps = d.ps; parts.push('parcours : étape ' + (d.ps + 1) + '/' + PARC.length + ' validée ✓'); }
+      var log = lsG('ec_defi_log', []); if(!Array.isArray(log)) log = [];
+      log.push({at:Date.now(), f:d.f, s:fts.length ? res.sec : 0, r:res.beat ? 1 : 0}); if(log.length > 300) log = log.slice(-300);
+      lsS('ec_defi_log', log);
+      timerState.defiRes = {txt:parts.join(' · '), beat:res.beat};
+    }
+    var _of = openFeedback;
+    openFeedback = function(){
+      try{ defiEnd(); }catch(e){}
+      var r = _of.apply(this, arguments);
+      try{ ftShow(); var sm = document.getElementById('fbSummary'); if(sm && timerState.defiRes) sm.textContent += ' · ' + timerState.defiRes.txt; refreshFeedbackLinks(); }catch(e){}
+      return r;
+    };
+    var _fm = feedbackMessage;
+    feedbackMessage = function(){
+      var m = _fm.apply(this, arguments);
+      try{ if(timerState.defiRes){ var L = m.split('\n'), i = L.findIndex(function(x){ return /^⏱ /.test(x); }); L.splice(i > -1 ? i + 1 : L.length, 0, '🏁 Défi : ' + timerState.defiRes.txt); m = L.join('\n'); } }catch(e){}
+      return m;
+    };
     // Fenêtre de réglage
-    var O = {type:'hyrox', run:true, dist:1000, d:45, fmt:'amrap'};
+    var O = {type:'hyrox', run:true, dist:1000, d:45, fmt:'amrap', df:'fortime'};
     try{ var sv = JSON.parse(localStorage.getItem('ec_wod_v1') || 'null'); if(sv) O = Object.assign(O, sv); }catch(e){}
     function seg(name, vals, cur){ return '<div class="pe-seg" data-name="' + name + '">' + vals.map(function(v){ return '<button type="button" data-v="' + v[0] + '" class="' + (String(v[0]) === String(cur) ? 'on' : '') + '">' + v[1] + '</button>'; }).join('') + '</div>'; }
     function openWod(){
       var o = Object.assign({}, O);
       var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop'; wrap.id = 'wodDialog';
       function body(){
-        var h = '<p class="ec-dialog-msg">⚡ Séance CrossFit / HYROX</p>'
-          + seg('type', [['hyrox','🏟️ HYROX'],['crossfit','🔥 CrossFit']], o.type);
-        if(o.type === 'hyrox'){
+        var h = '<p class="ec-dialog-msg">⚡ CrossFit · HYROX · Défis</p>'
+          + seg('type', [['hyrox','🏟️ HYROX'],['crossfit','🔥 CrossFit'],['defi','🏁 Défis']], o.type);
+        if(o.type === 'defi'){
+          if(!DFN[o.df]) o.df = 'fortime';
+          if([10,15,20,30,45].indexOf(o.d) < 0) o.d = 20;
+          h += parcHtml();
+          h += '<div class="pe-l">Ou un défi libre</div>' + seg('df', [['fortime','⏱ Chrono'],['pyramide','🔺 Pyramide'],['montagne','⛰️ Montagne'],['sandwich','🥪 Sandwich cardio'],['tblocs','🧱 Tabata blocs']], o.df);
+          h += '<p class="pe-note">' + ({fortime:'Chrono : des tours à faire le plus vite possible. Touche « ✓ Fini » à chaque exercice : ton temps est enregistré. Garde la séance en favori pour la refaire et battre ton record.',
+            pyramide:'Pyramide descendante : les mêmes exercices avec de moins en moins de répétitions à chaque palier (par ex. 20-15-10-5), au chrono.',
+            montagne:'Montagne : on monte puis on redescend (10-20-30-40-30-20-10 répétitions, adapté à ton niveau), au chrono.',
+            sandwich:'Sandwich cardio : un exercice cardio entre chaque exercice de renfo. Effort / récup selon ton niveau : 35/25 s (débutant), 40/20 s (intermédiaire), 45/15 s (avancé).',
+            tblocs:'Tabata en blocs : 8 tours de 20 s sur le même exercice, récup de 20 s (débutant), 15 s (intermédiaire) ou 10 s (avancé), 1 min entre les blocs.'})[o.df] + '</p>';
+          h += '<div class="pe-l">Durée</div>' + seg('d', [[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min']], o.d);
+        } else if(o.type === 'hyrox'){
+          if([30,45,60,'full'].indexOf(o.d) < 0) o.d = 45;
           h += '<label class="gym-it gym-prio wod-run"><input type="checkbox" id="wodRun"' + (o.run ? ' checked' : '') + '><span>🏃 Ajouter la course à pied <small>(une course avant chaque station, comme en compétition)</small></span></label>';
           if(o.run) h += '<div class="pe-l">Distance de chaque course</div>' + seg('dist', [[250,'250 m'],[500,'500 m'],[1000,'1 km']], o.dist);
           h += '<div class="pe-l">Durée</div>' + seg('d', [[30,'30 min'],[45,'45 min'],[60,'60 min'],['full','Simulation']], o.d);
@@ -11557,10 +11874,10 @@
         } else {
           h += '<div class="pe-l">Format</div>' + seg('fmt', [['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata'],['mixte','EMOM + AMRAP']], o.fmt);
           h += '<p class="pe-note">' + ({amrap:'AMRAP : le plus de tours possible dans le temps donné.', emom:'EMOM : un exercice au début de chaque minute, récup le reste de la minute.', tabata:'Tabata : 8 × (20 s à fond, 10 s de récup) par exercice.', mixte:'Une partie EMOM puis une partie AMRAP.'})[o.fmt] + '</p>';
-          if(o.d === 'full') o.d = 45;
+          if([20,30,45,60].indexOf(o.d) < 0) o.d = o.d === 10 || o.d === 15 ? 20 : 45;
           h += '<div class="pe-l">Durée</div>' + seg('d', [[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'60 min']], o.d);
         }
-        h += '<p class="pe-note">Matériel utilisé : ' + escapeHtml((document.querySelector('.place-switch .on') || {}).textContent || 'Maison') + ' · niveau ' + escapeHtml(LEVEL_LABEL[state.level] || '') + '. Les stations sans matériel sont remplacées par un exercice équivalent.</p>'
+        h += '<p class="pe-note">Matériel utilisé : ' + escapeHtml((document.querySelector('.place-switch .on') || {}).textContent || 'Maison') + ' · niveau ' + escapeHtml(LEVEL_LABEL[state.level] || '') + '. ' + (o.type === 'defi' ? 'Défis au poids du corps, adaptés à ton niveau et à tes options (sans sol, sans impact).' : 'Les stations sans matériel sont remplacées par un exercice équivalent.') + '</p>'
           + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-a="close">Annuler</button><button type="button" class="ec-dialog-ok" data-a="go">Générer la séance</button></div>';
         wrap.querySelector('.ec-dialog').innerHTML = h;
       }
@@ -11572,6 +11889,8 @@
         if(b){ var k = b.closest('.pe-seg').getAttribute('data-name'), v = b.getAttribute('data-v'); o[k] = /^\d+$/.test(v) ? +v : v; if(k === 'type' && o.type === 'crossfit' && o.d === 'full') o.d = 45; body(); return; }
         var a = e.target.closest('[data-a]'); if(!a){ if(e.target === wrap) wrap.remove(); return; }
         if(a.getAttribute('data-a') === 'close'){ wrap.remove(); return; }
+        if(a.getAttribute('data-a') === 'parcreset'){ lsS('ec_parcours_v1', {done:{}}); body(); return; }
+        if(a.getAttribute('data-a') === 'parc'){ var ni = parcNext(); if(ni < 0) return; O = o; try{ localStorage.setItem('ec_wod_v1', JSON.stringify(O)); }catch(err){} wrap.remove(); generate({type:'defi', df:PARC[ni][0], d:PARC[ni][1], ps:ni}); return; }
         O = o; try{ localStorage.setItem('ec_wod_v1', JSON.stringify(O)); }catch(err){}
         wrap.remove(); generate(o);
       });
@@ -11580,7 +11899,7 @@
     // Séance WOD ouverte depuis un lien avant le chargement de ce module
     try{ if(lastSession && lastSession.wodData && !lastSession.wod) displaySession(lastSession, lastSession.title, false); }catch(e){}
     var heroRow = document.querySelector('#renfoView > .intro .hero-row');
-    if(heroRow){ var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'hero-stat hero-tests hero-wod'; hb.textContent = '⚡ CrossFit / HYROX'; hb.addEventListener('click', openWod); heroRow.appendChild(hb); }
+    if(heroRow){ var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'hero-stat hero-tests hero-wod'; hb.textContent = '⚡ CrossFit · HYROX · Défis'; hb.addEventListener('click', openWod); heroRow.appendChild(hb); }
   })();
   // ---------- Séance mixte : renfo + course à pied entre les tours ----------
   (function(){
