@@ -3205,6 +3205,89 @@
   #renfoView .ec-tests{margin:12px 0 0;}
   html.ec-p2 #renfoView.cr-sub .ec-tests{display:none !important;}
   @media screen and (prefers-color-scheme: dark){ .ec-tests .et-badge{background:#3A2C12; color:#F2C46B;} .ec-tests .et-see{color:#F2C46B;} }
+  /* ---------- iPad grand écran : barre « Démarrer » au-dessus de la barre flottante ---------- */
+  @media screen and (min-width:861px){ .ec-startbar{bottom:calc(var(--bnav-h, 62px) + 46px + env(safe-area-inset-bottom, 0px)) !important;} }
+  /* ---------- Téléphone : Aujourd'hui et Créer tiennent sur un écran ---------- */
+  .tc-ad{display:none;}
+  .td-duo{display:contents;}
+  @media (max-width:600px){
+    html.ec-p2 #todayView .td-intro{padding:14px 16px 12px !important; border-radius:22px; margin-bottom:10px;}
+    html.ec-p2 #todayView .td-date{font-size:0.76rem;}
+    html.ec-p2 #todayView .td-hello{font-size:1.45rem !important; margin:0; line-height:1.15;}
+    html.ec-p2 #todayView .td-stat{position:absolute; top:14px; right:14px; margin:0; padding:5px 10px; font-size:0.72rem; z-index:2;}
+    html.ec-p2 #todayView .td-intro .td-week{margin-top:10px; padding:6px 4px; border-radius:14px;}
+    html.ec-p2 #todayView .tw-d{gap:3px;} html.ec-p2 #todayView .tw-l{font-size:0.64rem;}
+    html.ec-p2 #todayView .tw-dot{width:24px; height:24px;} html.ec-p2 #todayView .tw-dot svg{width:12px; height:12px;}
+    html.ec-p2 #todayView .today-card{padding:14px 14px 12px; margin:0 0 10px; border-radius:22px;}
+    html.ec-p2 #todayView .today-card .tc-kicker{font-size:0.64rem; padding:3px 9px;}
+    html.ec-p2 #todayView .today-card .tc-title{font-size:1.18rem; margin-top:6px; line-height:1.2;}
+    html.ec-p2 #todayView .today-card .tc-why{font-size:0.82rem; margin:4px 0 10px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;}
+    html.ec-p2 #todayView .today-card .tc-btns{display:grid; grid-template-columns:1fr 1fr auto; gap:8px;}
+    html.ec-p2 #todayView .today-card .tc-btns button{min-height:46px; font-size:0.95rem;}
+    html.ec-p2 #todayView .today-card .card-x{top:8px; right:8px; width:32px; height:32px;}
+    html.ec-p2 #todayView .tc-ad{display:grid; place-items:center; width:46px; padding:0; border:none !important; background:var(--chip, #F1F4EF) !important; color:var(--ink); flex:none;}
+    html.ec-p2 #todayView .tc-ad svg{width:20px; height:20px;}
+    html.ec-p2 #todayView .td-adapt{display:none !important;}
+    html.ec-p2 #todayView .td-prog{padding:12px 14px; margin:0 0 10px; gap:4px;}
+    html.ec-p2 #todayView .tp-t{font-size:1.1rem;} html.ec-p2 #todayView .tp-go{min-height:44px; margin-top:4px;}
+    html.ec-p2 #todayView .td-more{margin:4px 0 0;}
+    html.ec-p2 #todayView .td-more h2{font-size:1rem; margin:0 2px 8px;}
+    html.ec-p2 #todayView .td-more-sub{display:none;}
+    html.ec-p2 #todayView .td-more-grid{grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px;}
+    html.ec-p2 #todayView .tq{min-height:0; padding:10px 8px 9px; border-radius:16px; gap:0;}
+    html.ec-p2 #todayView .tq-ico{width:30px; height:30px; border-radius:10px; margin-bottom:0;}
+    html.ec-p2 #todayView .tq-ico svg{width:17px; height:17px;}
+    html.ec-p2 #todayView .tq b{font-size:0.98rem; margin-top:6px; white-space:nowrap;}
+    html.ec-p2 #todayView .tq span:not(.tq-ico){font-size:0.7rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+    html.ec-p2 #todayView .td-duo{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0 8px;}
+    html.ec-p2 #todayView .td-duo .ec-tests, html.ec-p2 #todayView .td-duo .td-create{margin:0 !important;}
+    html.ec-p2 .ec-tests.et-compact{padding:10px 12px; gap:10px; border-radius:18px; cursor:pointer; flex-wrap:nowrap;}
+    html.ec-p2 .ec-tests.et-compact .et-ico{width:34px; height:34px; border-radius:11px;}
+    html.ec-p2 .ec-tests.et-compact .et-ico svg{width:18px; height:18px;}
+    html.ec-p2 .ec-tests.et-compact .et-txt b{display:block;}
+    html.ec-p2 .ec-tests.et-compact .et-badge{font-size:0.58rem; padding:2px 6px;}
+    html.ec-p2 .ec-tests.et-compact .et-txt small{font-size:0.7rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+    html.ec-p2 .ec-tests.et-compact .et-acts{display:none;}
+    html.ec-p2 #todayView .td-duo .tc2{height:100%; box-sizing:border-box; padding:10px 12px; border-radius:18px; cursor:pointer; display:flex; align-items:center; gap:10px;}
+    html.ec-p2 #todayView .td-duo .tc2::before{content:''; flex:none; width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,0.2) url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222.2%22 stroke-linecap=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%228.5%22/%3E%3Cpath d=%22M12 8v8M8 12h8%22/%3E%3C/svg%3E') no-repeat center / 20px;}
+    html.ec-p2 #todayView .td-duo .tc2-row, html.ec-p2 #todayView .td-duo .tc2-all{display:none !important;}
+    html.ec-p2 #todayView .td-duo .tc2-top{display:none !important;}
+    .tc2-mini, .et-s{display:none;}
+    html.ec-p2 #todayView .td-duo .tc2-mini{display:flex; flex-direction:column; min-width:0; position:relative;}
+    .tc2-mini b, html.ec-p2 .ec-tests.et-compact .et-txt b{font-family:'Bricolage Grotesque',sans-serif; font-size:0.95rem; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .tc2-mini small, html.ec-p2 .ec-tests.et-compact .et-s{display:block; font-style:normal; font-size:0.72rem; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .tc2-mini small{color:rgba(255,255,255,0.8);}
+    html.ec-p2 .ec-tests.et-compact .et-s{color:#8A5A0F; font-weight:700;}
+    html.ec-p2 .ec-tests.et-compact .et-badge, html.ec-p2 .ec-tests.et-compact .et-txt small{display:none !important;}
+    html.ec-p2 #todayView .td-duo > *{min-height:60px; min-width:0; box-sizing:border-box;}
+    html.ec-p2 #todayView .td-duo .tc2{width:100%; overflow:hidden; padding-right:8px !important;}
+    @media (max-width:360px){ html.ec-p2 #todayView .td-stat{display:none;} }
+    /* Première visite : 4 choix en 2 × 2 */
+    html.ec-p2 #todayView .td-first{margin:0 0 4px;}
+    html.ec-p2 #todayView .td-first h2{font-size:1.1rem; margin:0 2px 2px;}
+    html.ec-p2 #todayView .td-first > p{font-size:0.78rem; margin:0 2px 10px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;}
+    html.ec-p2 #todayView .tf-grid{grid-template-columns:1fr 1fr; gap:8px;}
+    html.ec-p2 #todayView .tf-op{flex-direction:column; align-items:flex-start; gap:6px; padding:12px; border-radius:18px;}
+    html.ec-p2 #todayView .tf-op .tf-ico{width:34px; height:34px; border-radius:11px;}
+    html.ec-p2 #todayView .tf-op .tf-ico svg{width:19px; height:19px;}
+    html.ec-p2 #todayView .tf-op .tf-txt b{font-size:0.95rem; line-height:1.15;}
+    html.ec-p2 #todayView .tf-op .tf-txt small{display:none;}
+    html.ec-p2 #todayView .tf-op .tf-dur{position:absolute; top:12px; right:10px; font-size:0.72rem; padding:3px 8px;}
+    html.ec-p2 #todayView .tf-op .tf-reco{top:auto; bottom:-8px; right:10px; font-size:0.6rem; padding:2px 7px;}
+    /* Créer */
+    html.ec-p2 #renfoView:not(.cr-sub) > .intro{padding:14px 16px !important; margin-bottom:10px !important; border-radius:22px;}
+    html.ec-p2 #renfoView:not(.cr-sub) > .intro .hero-hello{font-size:0.76rem; margin-bottom:2px;}
+    html.ec-p2 #renfoView:not(.cr-sub) > .intro h1{font-size:1.35rem !important;}
+    html.ec-p2 #renfoView:not(.cr-sub) > .intro .hero-row{margin-top:8px;}
+    html.ec-p2 #renfoView .want h2{font-size:1.05rem; margin:2px 2px 8px;}
+    html.ec-p2 #renfoView .want-it{min-height:92px; padding:12px; gap:2px; border-radius:18px;}
+    html.ec-p2 #renfoView .want-it .w-ico{width:36px; height:36px; border-radius:12px;}
+    html.ec-p2 #renfoView .want-it b{font-size:0.98rem;}
+    html.ec-p2 #renfoView .want-it small{font-size:0.72rem; line-height:1.25;}
+    html.ec-p2 #renfoView.pick-wait .want::after{margin-top:8px; font-size:0.78rem;}
+    html.ec-p2 #renfoView .ec-tests.et-compact{margin-top:10px;}
+  }
+  @media (max-width:600px) and (prefers-color-scheme: dark){ html.ec-p2 #todayView .tc-ad{background:rgba(255,255,255,0.08) !important;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -13492,10 +13575,10 @@
       + '<section class="td-prog" hidden></section>'
       + '<button type="button" class="td-adapt">' + svg(I.tune, 20) + '<span><b>Adapter ma séance</b><small>Peu de temps, pas de matériel, courbatures…</small></span><span class="td-chev" aria-hidden="true">›</span></button>'
       + '<section class="td-more"><h2>Envie d’autre chose ?</h2><p class="td-more-sub">En plus de ta séance du jour, ou à la place.</p><div class="td-more-grid">'
-      +   '<button type="button" data-q="r10" class="tq tq-renfo"><b>10 min</b><span>Renfo express</span></button>'
+      +   '<button type="button" data-q="r10" class="tq tq-renfo"><b>10 min</b><span>Renfo</span></button>'
       +   '<button type="button" data-q="s15" class="tq tq-recup"><b>15 min</b><span>Étirements</span></button>'
       +   '<button type="button" data-q="br5" class="tq tq-breath"><b>5 min</b><span>Respiration</span></button>'
-      +   '<button type="button" data-q="defi" class="tq tq-defi"><b>Défi</b><span>Au chrono</span></button>'
+      +   '<button type="button" data-q="defi" class="tq tq-defi"><b>Défi</b><span>Chrono</span></button>'
       + '</div></section>'
       + '<section class="td-create"><button type="button" data-q="create">' + svg(I.plus, 20) + '<span><b>Créer une autre séance</b><small>Renfo, Récup, Défis ou Programme</small></span><span class="td-chev" aria-hidden="true">›</span></button></section>';
     if(lib) lib.parentNode.insertBefore(tv, lib);
@@ -13969,6 +14052,37 @@
     var _sv = window.ecShowView; window.ecShowView = function(){ var r = _sv.apply(this, arguments); try{ paint(); }catch(e){} return r; };
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) paint(); });
     paint();
+  })();
+  // ---------- Téléphone : tout sur un écran (Aujourd'hui, Créer) ----------
+  (function(){
+    var mq = window.matchMedia ? window.matchMedia('(max-width:600px)') : {matches:false};
+    var tv = document.getElementById('todayView');
+    // Tests + « Crée ta séance » côte à côte
+    if(tv){
+      var t = tv.querySelector('.ec-tests'), c = tv.querySelector('.td-create');
+      if(t && c){ var duo = document.createElement('div'); duo.className = 'td-duo'; t.parentNode.insertBefore(duo, t); duo.appendChild(t); duo.appendChild(c); }
+      var tc2 = tv.querySelector('.tc2');
+      if(tc2 && !tc2.querySelector('.tc2-mini')) tc2.insertAdjacentHTML('beforeend', '<span class="tc2-mini"><b>Créer</b><small>Ta séance sur mesure</small></span>');
+      if(tc2) tc2.addEventListener('click', function(e){ if(!mq.matches || e.target.closest('[data-cq]')) return; e.stopPropagation(); if(window.ecGoHub) window.ecGoHub(); else window.ecShowView('renfo'); });
+      // Bouton « Adapter » dans la carte du jour
+      var card = document.getElementById('todayCard');
+      var AD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>';
+      function addAd(){ var bt = card && card.querySelector('.tc-btns'); if(bt && !bt.querySelector('.tc-ad')){ var b = document.createElement('button'); b.type = 'button'; b.className = 'tc-ad'; b.setAttribute('aria-label', 'Adapter ma séance'); b.title = 'Adapter ma séance'; b.innerHTML = AD; bt.appendChild(b); } }
+      if(card){ new MutationObserver(addAd).observe(card, {childList:true}); addAd();
+        card.addEventListener('click', function(e){ if(e.target.closest('.tc-ad')){ e.stopPropagation(); if(window.ecOpenAdapt) window.ecOpenAdapt(); } }, true); }
+    }
+    // Carte « Tests de forme » compacte : toucher = faire les tests (ou voir les résultats si à jour)
+    function compact(){ document.querySelectorAll('.ec-tests').forEach(function(x){ x.classList.toggle('et-compact', mq.matches); }); }
+    document.querySelectorAll('.ec-tests').forEach(function(x){
+      x.addEventListener('click', function(e){
+        if(!mq.matches || e.target.closest('[data-et]') || !window.ecTests) return;
+        var i = window.ecTests.info(); if(!i.last || i.due) window.ecTests.runAll(); else window.ecTests.results();
+      });
+    });
+    function shortTxt(){ if(!window.ecTests) return; var i = window.ecTests.info(), t = !i.last ? 'À faire · ≈ ' + (i.n * 2) + ' min' : (i.due ? 'À refaire' : 'Prochains dans ≈ ' + Math.max(1, 42 - i.days) + ' j');
+      document.querySelectorAll('.ec-tests .et-txt').forEach(function(x){ var e = x.querySelector('.et-s'); if(!e){ e = document.createElement('em'); e.className = 'et-s'; x.appendChild(e); } e.textContent = t; }); }
+    document.querySelectorAll('.ec-tests').forEach(function(x){ new MutationObserver(function(){ if(!x.querySelector('.et-s')) shortTxt(); }).observe(x, {childList:true}); });
+    shortTxt(); compact(); if(mq.addEventListener) mq.addEventListener('change', compact);
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
