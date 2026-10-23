@@ -2738,6 +2738,24 @@
   .cp-acts{display:flex; gap:8px; flex-wrap:wrap;}
   .current-program button.cp-stop{background:transparent; color:#A0412A; box-shadow:inset 0 0 0 1.5px #D9A08F;}
   @media screen and (prefers-color-scheme: dark){ .picker-cats button.on{background:#357D51;} .picker-cat{background:#1E3528; color:#A7D8B4;} .picker-warn{color:#F0B48A;} .current-program button.cp-stop{color:#F09A8A; box-shadow:inset 0 0 0 1.5px #7A4A3F;} }
+  /* ---------- Onglet programme : résultat masqué, catalogue en carrousel ---------- */
+  .results.res-off, #results.res-off{display:none !important;}
+  .cat-sec.cat-rail{margin:0 0 6px; padding:12px 12px 10px; border-radius:18px; background:linear-gradient(135deg, var(--sage-light), var(--card)); box-shadow:inset 0 0 0 1.5px var(--ring-line);}
+  .cat-rail .cat-head h3{font-size:1.02rem;}
+  .cat-rail .cat-head span{display:block; margin-top:2px; font-size:0.78rem; line-height:1.35;}
+  .cat-filters{display:flex; gap:6px; overflow-x:auto; padding:8px 0 8px; scrollbar-width:none;}
+  .cat-filters::-webkit-scrollbar{display:none;}
+  .cat-filters button{flex:none; min-height:34px; padding:5px 12px; border:none; border-radius:999px; background:var(--card); box-shadow:inset 0 0 0 1px var(--ring-line); color:var(--ink); font-family:inherit; font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;}
+  .cat-filters button.on{background:var(--forest); color:#fff; box-shadow:none;}
+  .cat-rail .cat-list{flex-direction:row; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; padding:2px 2px 8px; margin:0 -2px; -webkit-overflow-scrolling:touch;}
+  .cat-rail .cat-item{flex:0 0 190px; align-self:flex-start; flex-direction:column; align-items:flex-start; gap:6px; padding:12px; scroll-snap-align:start; min-height:0;}
+  .cat-rail .cat-item[hidden]{display:none;}
+  .cat-rail .ci-ico{width:auto; font-size:1.5rem;}
+  .cat-rail .ci-txt b{font-size:0.92rem;}
+  .cat-rail .ci-pitch{-webkit-line-clamp:3; font-size:0.78rem;}
+  .cat-rail .ci-chev{display:none;}
+  .cat-rail .cat-or{margin:10px 0 0;}
+  @media screen and (prefers-color-scheme: dark){ .cat-sec.cat-rail{background:linear-gradient(135deg, #1E3528, var(--card));} .cat-filters button.on{background:#357D51;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -12703,6 +12721,77 @@
       }catch(e){}
       return r;
     };
+  })();
+
+  // ---------- Onglet « Un programme » : la séance générée ne reste pas affichée ; catalogue en carrousel ----------
+  (function(){
+    var res = document.getElementById('results');
+    function hideRes(on){ if(res) res.classList.toggle('res-off', !!on); }
+    var _sm = setMode;
+    setMode = function(mode){
+      var r = _sm.apply(this, arguments);
+      try{
+        if(mode === 'program'){
+          // Programme en cours : on l'affiche ; sinon la zone de résultat est masquée
+          if(res.classList.contains('prog-view') && currentProgram) hideRes(false);
+          else if(currentProgram){ hideRes(false); showProgram(false); }
+          else hideRes(true);
+        } else {
+          if(res && res.classList.contains('prog-view')){
+            if(lastSession && !lastSession.programRef && !lastSession.wod){ hideRes(false); displaySession(lastSession, lastSession.title, false); }
+            else hideRes(true);
+          } else hideRes(false);
+        }
+      }catch(e){}
+      return r;
+    };
+    var _dsP = displaySession;
+    displaySession = function(){ hideRes(false); if(res) res.classList.remove('prog-view'); return _dsP.apply(this, arguments); };
+    var _spP = showProgram;
+    showProgram = function(){ hideRes(false); return _spP.apply(this, arguments); };
+    // Catalogue : filtres + défilement horizontal
+    var cat = document.getElementById('progCatalog'); if(!cat) return;
+    cat.classList.add('cat-rail');
+    var KIND = {trail6:'sport', route10:'sport', semi8:'sport', ultra10:'sport', raid6:'sport', velo6:'sport', vtt6:'sport', kayak6:'sport', hyrox8:'salle', crossfit6:'salle', yoga4:'mob', mobi4:'mob', dos4:'forme', forme8:'forme', senior8:'forme', gainage4:'forme', force4:'forme', endu6:'forme'};
+    cat.querySelectorAll('.cat-item[data-start]').forEach(function(b){ b.setAttribute('data-k', KIND[b.getAttribute('data-start')] || 'forme'); });
+    var head = cat.querySelector('.cat-head');
+    if(head){ head.innerHTML = '<h3>Programmes tout prêts</h3><span>Fais défiler et touche un programme pour le lancer. 🏁 = il se cale sur la date de ta course.</span>'; }
+    var F = [['all','Tous'],['sport','Sport & course'],['forme','Forme & santé'],['mob','Mobilité & yoga'],['salle','Salle']];
+    var bar = document.createElement('div'); bar.className = 'cat-filters';
+    bar.innerHTML = F.map(function(f, i){ return '<button type="button" data-f="' + f[0] + '"' + (i ? '' : ' class="on"') + '>' + f[1] + '</button>'; }).join('');
+    var list = cat.querySelector('.cat-list'); if(list) list.parentNode.insertBefore(bar, list);
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('[data-f]'); if(!b) return;
+      var f = b.getAttribute('data-f');
+      bar.querySelectorAll('[data-f]').forEach(function(x){ x.classList.toggle('on', x === b); });
+      cat.querySelectorAll('.cat-item[data-k]').forEach(function(it){ it.hidden = f !== 'all' && it.getAttribute('data-k') !== f; });
+      if(list) list.scrollLeft = 0;
+    });
+    var or = cat.querySelector('.cat-or'); if(or) or.innerHTML = '<span>ou compose ton programme sur mesure ci-dessous</span>';
+  })();
+
+  // ---------- Après une génération : la page se place en haut de la séance (titre et infos) ----------
+  (function(){
+    var res = document.getElementById('results'); if(!res) return;
+    var t1 = null, t2 = null;
+    function target(){
+      var top = res.getBoundingClientRect().top + window.scrollY - 12;
+      var hd = document.querySelector('.site-header, header');
+      if(hd && /sticky|fixed/.test(getComputedStyle(hd).position)) top -= hd.offsetHeight;
+      return Math.max(0, Math.round(top));
+    }
+    function scrollRes(){
+      clearTimeout(t1); clearTimeout(t2);
+      // On attend la mise en page (iPad : colonnes, cartes repliées) avant de défiler, puis on corrige si besoin
+      t1 = setTimeout(function(){ if(res.offsetHeight) window.scrollTo({top:target(), behavior:'smooth'}); }, 140);
+      t2 = setTimeout(function(){ if(res.offsetHeight && Math.abs(res.getBoundingClientRect().top - 12) > 40) window.scrollTo({top:target(), behavior:'auto'}); }, 950);
+    }
+    window.ecScrollToResults = scrollRes;
+    res.scrollIntoView = function(){ scrollRes(); };
+    var _spS = showProgram;
+    showProgram = function(scrollTop){ var r = _spS.apply(this, arguments); if(scrollTop) scrollRes(); return r; };
+    var _gpS = generateProgram;
+    generateProgram = function(){ var before = currentProgram, r = _gpS.apply(this, arguments); if(currentProgram && currentProgram !== before) scrollRes(); return r; };
   })();
 
   // ---------- Bouton retour du téléphone ----------
