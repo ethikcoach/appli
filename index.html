@@ -3337,6 +3337,10 @@
   @media screen and (prefers-color-scheme: dark){ #testsView .tf-hero .tf-kpis span, #testsView .tf-go{background:#3A2C12 !important; color:#F2C46B !important;} }
   /* Suivi > Progrès : carte qui mène à la page */
   #suiviView .ec-tests{margin:0 0 12px;}
+  .set-ver{margin:14px 0 2px; text-align:center; font-size:0.78rem; color:var(--stone); letter-spacing:0.02em;}
+  .ec-tests{cursor:pointer;}
+  .app-ver2{text-align:center; font-size:0.75rem; color:var(--stone); margin:18px 0 6px; letter-spacing:0.02em;}
+  @media (max-width:600px){ html.ec-p2 .ec-tests.et-compact .et-txt b{white-space:normal;} html.ec-p2 #todayView .td-duo .ec-tests .et-s{white-space:normal;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -13463,7 +13467,7 @@
       +   '<button type="button" class="set-row set-link" data-set="install">Installer sur l’écran d’accueil<span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="data">Mes données et sauvegarde<span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="help">Aide et mode d’emploi<span aria-hidden="true">›</span></button>'
-      + '</div></div>';
+      + '</div><p class="set-ver">' + ((document.getElementById('appVersion') || {}).textContent || '') + '</p></div>';
     document.body.appendChild(sh);
     function paintSet(){
       var lv = +(lsg('ec_textsize') || 0);
@@ -14112,7 +14116,7 @@
       var t = tv.querySelector('.ec-tests'), c = tv.querySelector('.td-create');
       if(t && c){ var duo = document.createElement('div'); duo.className = 'td-duo'; t.parentNode.insertBefore(duo, t); duo.appendChild(t); duo.appendChild(c); }
       var tc2 = tv.querySelector('.tc2');
-      if(tc2 && !tc2.querySelector('.tc2-mini')) tc2.insertAdjacentHTML('beforeend', '<span class="tc2-mini"><b>Créer</b><small>Ta séance sur mesure</small></span>');
+      if(tc2 && !tc2.querySelector('.tc2-mini')) tc2.insertAdjacentHTML('beforeend', '<span class="tc2-mini"><b>Créer</b><small>Sur mesure</small></span>');
       if(tc2) tc2.addEventListener('click', function(e){ if(!mq.matches || e.target.closest('[data-cq]')) return; e.stopPropagation(); if(window.ecGoHub) window.ecGoHub(); else window.ecShowView('renfo'); });
       // Bouton « Adapter » dans la carte du jour
       var card = document.getElementById('todayCard');
@@ -14129,7 +14133,7 @@
         window.ecTests.results();
       });
     });
-    function shortTxt(){ if(!window.ecTests) return; var i = window.ecTests.info(), t = !i.last ? 'À faire · ≈ ' + (i.n * 2) + ' min' : (i.due ? 'À refaire' : 'Prochains dans ≈ ' + Math.max(1, 42 - i.days) + ' j');
+    function shortTxt(){ if(!window.ecTests) return; var i = window.ecTests.info(), t = !i.last ? 'À faire · 8 min' : (i.due ? 'À refaire' : 'Dans ' + Math.max(1, 42 - i.days) + ' jours');
       document.querySelectorAll('.ec-tests .et-txt').forEach(function(x){ var e = x.querySelector('.et-s'); if(!e){ e = document.createElement('em'); e.className = 'et-s'; x.appendChild(e); } e.textContent = t; }); }
     document.querySelectorAll('.ec-tests').forEach(function(x){ new MutationObserver(function(){ if(!x.querySelector('.et-s')) shortTxt(); }).observe(x, {childList:true}); });
     shortTxt(); compact(); if(mq.addEventListener) mq.addEventListener('change', compact);
@@ -14162,6 +14166,20 @@
     }
     // Le bouton « Tests de forme » de l'ancien bandeau ouvre aussi la page
     document.addEventListener('click', function(e){ var b = e.target.closest('.hero-tests:not(.hero-progs)'); if(b){ e.preventDefault(); e.stopImmediatePropagation(); open(); } }, true);
+  })();
+  // ---------- Cartes Tests cliquables partout · version visible ----------
+  (function(){
+    document.querySelectorAll('#todayView .ec-tests, #renfoView .ec-tests').forEach(function(x){
+      x.addEventListener('click', function(e){
+        if(e.target.closest('[data-et]') || (x.classList.contains('et-compact'))) return;
+        if(window.ecTests && window.ecTests.results) window.ecTests.results();
+      });
+    });
+    var ver = (document.getElementById('appVersion') || {}).textContent || '';
+    ['suiviView', 'coachTools', 'todayView'].forEach(function(id){
+      var v = document.getElementById(id); if(!v || !ver) return;
+      var p = document.createElement('p'); p.className = 'app-ver2'; p.textContent = ver; v.appendChild(p);
+    });
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
