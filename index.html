@@ -3288,6 +3288,43 @@
     html.ec-p2 #renfoView .ec-tests.et-compact{margin-top:10px;}
   }
   @media (max-width:600px) and (prefers-color-scheme: dark){ html.ec-p2 #todayView .tc-ad{background:rgba(255,255,255,0.08) !important;} }
+  /* ================= Version 10 : couleur « nuit » pour Aujourd'hui, Suivi, Mon coach, Espace coach ; page Tests ================= */
+  html[data-pg="today"], html[data-pg="suivi"], html[data-pg="espace"], html[data-pg="moncoach"]{--paper:#E8EDF2; --pg-a:#34536F; --pg-band:linear-gradient(135deg, #172636 0%, #263F58 55%, #4A6F8F 100%);}
+  html[data-pg="tests"]{--paper:#F5EEDF; --pg-a:#A86E14; --pg-band:linear-gradient(135deg, #7A4A0C 0%, #B7791F 55%, #E0A93B 100%);}
+  @media screen and (prefers-color-scheme: dark){
+    html[data-pg="today"], html[data-pg="suivi"], html[data-pg="espace"], html[data-pg="moncoach"]{--paper:#0C1218; --pg-a:#7FA6C9;}
+    html[data-pg="tests"]{--paper:#17120A; --pg-a:#E0A93B;}
+  }
+  html[data-pg="suivi"] #suiviView, html[data-pg="espace"] #coachTools, html[data-pg="moncoach"] #moncoachView{--forest:var(--pg-a); --sage:#6F8CA6; --sage-light:#DCE5EE; --hero-renfo:var(--pg-band);}
+  html[data-pg="tests"] #testsView{--forest:var(--pg-a); --sage:#C99A4A; --sage-light:#F3E4C6;}
+  @media screen and (prefers-color-scheme: dark){ html[data-pg="suivi"] #suiviView, html[data-pg="espace"] #coachTools, html[data-pg="moncoach"] #moncoachView{--sage-light:rgba(255,255,255,0.08);} html[data-pg="tests"] #testsView{--sage-light:rgba(255,255,255,0.08);} }
+  html.ec-p2[data-pg="today"] #todayView .td-intro, html[data-pg="suivi"] #suiviView > .intro, html[data-pg="moncoach"] #moncoachView > .intro, html[data-pg="espace"] #coachTools .ct-hero, html[data-pg="tests"] #testsView > .intro{background:var(--pg-band) !important;}
+  html[data-pg="moncoach"] #moncoachView .mc-card{background:linear-gradient(140deg, #263F58, #3B5E7E) !important; box-shadow:0 10px 30px rgba(38,63,88,0.28) !important;}
+  html[data-pg="suivi"] .sv-tabs button.on, html[data-pg="espace"] #coachTools button.on, html[data-pg="espace"] #coachTools .active{background:var(--pg-a) !important; color:#fff !important;}
+  html.ec-p2[data-pg="today"] #todayView .td-intro .tw-dot{color:#263F58;}
+  /* Page Tests de forme */
+  #testsView > .intro{display:grid !important; grid-template-columns:auto 1fr; column-gap:12px; align-items:center; padding:18px !important;}
+  #testsView > .intro .pg-k{display:block; grid-column:2;}
+  #testsView > .intro h1{grid-column:2; margin:0 !important; font-size:1.5rem !important;}
+  #testsView > .intro p{grid-column:1 / -1; margin:10px 0 0 !important;}
+  #testsView > .intro .pg-back{grid-row:1 / span 2;}
+  #testsView .tf-card{margin:12px 0; border-radius:22px;}
+  #testsView .tf-hero{background:var(--card) !important; color:var(--ink) !important; border-bottom:1px solid var(--stone-light);}
+  #testsView .tf-hero h2{display:none;}
+  #testsView .tf-hero p, #testsView .tf-hero .tf-kpis{color:var(--ink) !important;}
+  #testsView .tf-hero .tf-kpis span{background:#F3E4C6 !important; color:#6B4509 !important;}
+  #testsView .tf-hero-ico{background:linear-gradient(135deg, #B7791F, #E0A93B) !important; color:#fff; border-radius:14px; display:grid; place-items:center;}
+  @media screen and (prefers-color-scheme: dark){ html[data-pg="suivi"] .sv-tabs button.on, html[data-pg="espace"] #coachTools button.on, html[data-pg="espace"] #coachTools .active{color:#0C1218 !important;} }
+  #testsView .tf-all{background:linear-gradient(135deg, #B7791F, #D69A2D) !important; color:#fff !important; border:none !important;}
+  #testsView .tf-go{background:#F3E4C6 !important; color:#6B4509 !important; border:none !important;}
+  #testsView .tf-spark polyline{stroke:#B7791F !important;} #testsView .tf-spark circle{fill:#B7791F !important;}
+  .ts-how{margin:12px 0 20px; padding:16px; border-radius:20px; background:var(--card); box-shadow:var(--shadow-1);}
+  .ts-how h2{margin:0 0 8px; font-family:'Bricolage Grotesque',sans-serif; font-size:1.05rem; color:var(--ink);}
+  .ts-how ol{margin:0; padding-left:20px; color:var(--stone); font-size:0.9rem; line-height:1.5;}
+  @media (min-width:861px){ #testsView{max-width:900px; margin:0 auto;} }
+  @media screen and (prefers-color-scheme: dark){ #testsView .tf-hero .tf-kpis span, #testsView .tf-go{background:#3A2C12 !important; color:#F2C46B !important;} }
+  /* Suivi > Progrès : carte qui mène à la page */
+  #suiviView .ec-tests{margin:0 0 12px;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -3739,7 +3776,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 9.9 · mise à jour du 23 octobre 2026</p>
+  <p class="app-version" id="appVersion">Version 10 · mise à jour du 23 octobre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -8828,7 +8865,7 @@
     function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 
     // ===== Navigation entre les pages =====
-    var EXTRA = {wod:'wodView', today:'todayView', lib:'libView', suivi:'suiviView', espace:'coachTools', moncoach:'moncoachView'};
+    var EXTRA = {wod:'wodView', today:'todayView', lib:'libView', suivi:'suiviView', espace:'coachTools', moncoach:'moncoachView', tests:'testsView'};
     window.__ecView = 'renfo';
     function hideExtra(){ Object.keys(EXTRA).forEach(function(k){ var v = document.getElementById(EXTRA[k]); if(v) v.style.display = 'none'; }); }
     ['tabRenfoBtn', 'tabBreathBtn'].forEach(function(id){
@@ -11441,6 +11478,7 @@
       var b = e.target.closest('[data-t]'); if(!b || !P) return;
       var t = b.getAttribute('data-t');
       if(t === 'close'){ try{ localStorage.setItem('ec_today_hide', new Date().toDateString()); }catch(err){} today.hidden = true; return; }
+      if(t === 'tests' && window.ecTests && window.ecTests.results){ window.ecTests.results(); return; }
       if(t === 'tests'){ if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('prog'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); return; }
       var start = t === 'go';
       if(P.type === 'mob'){
@@ -13559,7 +13597,7 @@
     }
     function fixNav(){
       var v = window.__ecView;
-      if(nav) nav.querySelectorAll('[data-bn]').forEach(function(b){ var k = b.getAttribute('data-bn'); b.classList.toggle('active', k === v || (v === 'breath' && k === 'renfo')); });
+      if(nav) nav.querySelectorAll('[data-bn]').forEach(function(b){ var k = b.getAttribute('data-bn'); b.classList.toggle('active', k === v || (v === 'breath' && k === 'renfo') || (v === 'tests' && k === 'suivi')); });
     }
     var _sv = window.ecShowView;
     window.ecShowView = function(k){ var r = _sv.apply(this, arguments); fixNav(); if(k === 'today') renderToday(); return r; };
@@ -14028,7 +14066,7 @@
     if(!window.ecTests) return;
     var IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1.2" fill="currentColor"></circle></svg>';
     function make(){ var d = document.createElement('div'); d.className = 'ec-tests'; d.setAttribute('role', 'group'); d.setAttribute('aria-label', 'Tests de forme'); return d; }
-    var boxes = [];
+    var boxes = window.ecTestBoxes = [];
     var tv = document.getElementById('todayView'), cr = tv && tv.querySelector('.td-create');
     if(cr){ var a = make(); cr.parentNode.insertBefore(a, cr); boxes.push(a); }
     var want = document.querySelector('#renfoView .want');
@@ -14076,13 +14114,42 @@
     document.querySelectorAll('.ec-tests').forEach(function(x){
       x.addEventListener('click', function(e){
         if(!mq.matches || e.target.closest('[data-et]') || !window.ecTests) return;
-        var i = window.ecTests.info(); if(!i.last || i.due) window.ecTests.runAll(); else window.ecTests.results();
+        window.ecTests.results();
       });
     });
     function shortTxt(){ if(!window.ecTests) return; var i = window.ecTests.info(), t = !i.last ? 'À faire · ≈ ' + (i.n * 2) + ' min' : (i.due ? 'À refaire' : 'Prochains dans ≈ ' + Math.max(1, 42 - i.days) + ' j');
       document.querySelectorAll('.ec-tests .et-txt').forEach(function(x){ var e = x.querySelector('.et-s'); if(!e){ e = document.createElement('em'); e.className = 'et-s'; x.appendChild(e); } e.textContent = t; }); }
     document.querySelectorAll('.ec-tests').forEach(function(x){ new MutationObserver(function(){ if(!x.querySelector('.et-s')) shortTxt(); }).observe(x, {childList:true}); });
     shortTxt(); compact(); if(mq.addEventListener) mq.addEventListener('change', compact);
+  })();
+  // ---------- Version 10 : page « Tests de forme » ----------
+  (function(){
+    var card = document.getElementById('svTestsCard'), lib = document.getElementById('libView');
+    if(!card || !lib || !window.ecTests) return;
+    var CHEV = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>';
+    var v = document.createElement('main'); v.className = 'app xview'; v.id = 'testsView'; v.style.display = 'none';
+    v.innerHTML = '<div class="intro"><button type="button" class="pg-back" aria-label="Retour">' + CHEV + '</button><span class="pg-k">Suivi</span><h1>Tests de forme</h1><p>4 tests simples, toutes les 4 à 6 semaines, pour voir tes progrès en chiffres.</p></div>';
+    lib.parentNode.insertBefore(v, lib);
+    card.removeAttribute('data-tab'); v.appendChild(card);
+    var how = document.createElement('section'); how.className = 'ts-how';
+    how.innerHTML = '<h2>Comment bien faire ses tests</h2><ol><li>Échauffe-toi 5 minutes avant de commencer.</li><li>Garde les mêmes conditions d’un test à l’autre : même moment de la journée, même version de l’exercice.</li><li>Note ton résultat honnêtement : c’est ta référence, pas une compétition.</li><li>Refais-les toutes les 4 à 6 semaines : l’appli te prévient quand c’est le moment.</li></ol>';
+    v.appendChild(how);
+    var from = 'today';
+    function open(){ if(window.__ecView && window.__ecView !== 'tests') from = window.__ecView; window.ecShowView('tests'); window.scrollTo(0, 0); }
+    function back(){ window.ecShowView(from === 'tests' ? 'today' : from); window.scrollTo(0, 0); }
+    window.ecTests.results = open; window.ecTests.page = open; window.ecTestsBack = back;
+    v.querySelector('.pg-back').addEventListener('click', back);
+    // Suivi > Progrès : une carte « Tests de forme » qui ouvre la page
+    var sv = document.getElementById('suiviView'), chal = document.getElementById('svChalCard');
+    if(sv && window.ecTestBoxes){
+      var box = document.createElement('section'); box.className = 'ec-tests'; box.setAttribute('data-tab', 'prog');
+      if(chal) chal.parentNode.insertBefore(box, chal); else sv.appendChild(box);
+      window.ecTestBoxes.push(box);
+      box.addEventListener('click', function(e){ var b = e.target.closest('[data-et]'); if(b && b.getAttribute('data-et') === 'go') window.ecTests.runAll(); else open(); });
+      if(window.ecTestsPaint) window.ecTestsPaint();
+    }
+    // Le bouton « Tests de forme » de l'ancien bandeau ouvre aussi la page
+    document.addEventListener('click', function(e){ var b = e.target.closest('.hero-tests:not(.hero-progs)'); if(b){ e.preventDefault(); e.stopImmediatePropagation(); open(); } }, true);
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
@@ -14094,6 +14161,7 @@
     var LAYERS = [
       {k:'renfoRes', open:function(){ var v = q('#renfoView'); return !!(v && v.classList.contains('collapsed')); },
         close:function(){ var b = q('#renfoView .ps-edit'); if(b) b.click(); }},
+      {k:'testsv', open:function(){ return window.__ecView === 'tests'; }, close:function(){ if(window.ecTestsBack) window.ecTestsBack(); }},
       {k:'xview', open:function(){ return window.__ecView === 'lib' || window.__ecView === 'suivi' || window.__ecView === 'espace'; },
         close:function(){ window.ecShowView('renfo'); window.scrollTo(0, 0); }},
       {k:'ob', open:function(){ var o = document.getElementById('obBackdrop'); return !!(o && !o.hidden); },
