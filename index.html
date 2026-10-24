@@ -3693,6 +3693,14 @@
   @media (max-width:380px){ .hd-title{font-size:0.92rem;} html body > header.site .site-logo{height:34px !important;} }
   @media (min-width:861px){ html body > header.site .site-logo{height:50px !important;} html body > header.site.hd-on .site-logo{height:40px !important;} html body > header.site .help-btn-head{width:46px !important; height:46px !important;} }
   @media screen and (prefers-color-scheme: dark){ html body > header.site .help-btn-head{box-shadow:0 4px 14px rgba(0,0,0,.3) !important;} html body > header.site.hd-on{box-shadow:0 8px 24px rgba(0,0,0,.35);} }
+  #mobGuideGroup{display:grid !important; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px;}
+  #mobGuideGroup .chip{justify-content:center; text-align:center;}
+  .mob-guide .voice-link{margin-top:10px;}
+  .mg-explain{display:flex; align-items:center; gap:10px; margin-top:10px; padding:10px 12px; border-radius:14px; background:var(--chip, #F1F4EF); cursor:pointer;}
+  .mg-explain[hidden], .mob-guide .voice-link[hidden]{display:none !important;}
+  .mg-explain input{width:22px; height:22px; accent-color:var(--acc, #1E7A78); flex:none;}
+  .mg-explain span{display:flex; flex-direction:column;} .mg-explain b{font-size:0.9rem;} .mg-explain small{font-size:0.76rem; color:var(--stone);}
+  .mob-guide .field-hint{margin-top:8px; font-size:0.78rem; color:var(--stone);}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -14902,6 +14910,58 @@
     window.addEventListener('scroll', upd, {passive:true});
     new MutationObserver(name).observe(document.documentElement, {attributes:true, attributeFilter:['data-pg']});
     name(); upd();
+  })();
+  // ---------- Postures guidées : « Guidage pendant la séance » (voix, sons doux, vibrations), quel que soit l'objectif ----------
+  (function(){
+    var panel = document.getElementById('mobPanel'), row = panel && panel.querySelector('.gen-row'); if(!panel || !row) return;
+    var KEY = 'ec_mob_guide';
+    function G(){ var g = null; try{ g = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){} if(!g || typeof g !== 'object') g = {voice:true, sound:true, vibe:false}; return g; }
+    function save(g){ try{ localStorage.setItem(KEY, JSON.stringify(g)); }catch(e){} }
+    var f = document.createElement('div'); f.className = 'field mob-guide';
+    var ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"></path></svg>';
+    f.innerHTML = '<span class="field-label">Guidage pendant la séance</span>'
+      + '<div class="chip-group" id="mobGuideGroup"><button type="button" class="chip chip-toggle" data-mg="voice">Voix</button><button type="button" class="chip chip-toggle" data-mg="sound">Sons doux</button><button type="button" class="chip chip-toggle" data-mg="vibe">Vibrations</button></div>'
+      + '<button type="button" class="voice-link mg-voice">' + ICON + '<span class="vl-txt"></span><span class="vl-go">Changer</span></button>'
+      + '<label class="mg-explain"><input type="checkbox"><span><b>Explications des postures</b><small>La voix décrit la mise en place et le mouvement</small></span></label>'
+      + '<div class="field-hint">Sans la voix : des sons doux ou des vibrations marquent le début et la fin de chaque posture, pratique les yeux fermés.</div>';
+    panel.insertBefore(f, row);
+    var grp = f.querySelector('#mobGuideGroup'), ex = f.querySelector('.mg-explain'), exIn = ex.querySelector('input');
+    function paint(){
+      var g = G();
+      grp.querySelectorAll('[data-mg]').forEach(function(c){ var on = !!g[c.getAttribute('data-mg')]; c.classList.toggle('active', on); c.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      ex.hidden = !g.voice;
+      exIn.checked = !window.ecRecupExplain || window.ecRecupExplain();
+      var n = ''; try{ n = window.ecVoiceCurrent ? window.ecVoiceCurrent() : ''; }catch(e){} var vt = f.querySelector('.vl-txt'); if(vt && (n || !vt.textContent)) vt.textContent = 'Voix : ' + (n ? String(n).replace(/\s*\(.*\)$/, '') : 'du téléphone');
+      f.querySelector('.mg-voice').hidden = !g.voice;
+    }
+    grp.addEventListener('click', function(e){
+      var b = e.target.closest('[data-mg]'); if(!b) return;
+      var g = G(), k = b.getAttribute('data-mg'); g[k] = !g[k];
+      if(!g.voice && !g.sound && !g.vibe) g.sound = true;
+      save(g); paint();
+    });
+    exIn.addEventListener('change', function(){ try{ localStorage.setItem('ec_recup_explain', exIn.checked ? '1' : '0'); }catch(e){} document.querySelectorAll('.rx-cb, .rx-cb2').forEach(function(c){ c.checked = exIn.checked; }); });
+    f.querySelector('.mg-voice').addEventListener('click', function(){ if(window.ecOpenVoice) window.ecOpenVoice(); });
+    paint(); if(window.speechSynthesis) try{ speechSynthesis.addEventListener('voiceschanged', function(){ setTimeout(paint, 300); }); }catch(e){}
+    document.addEventListener('click', function(e){ if(e.target.closest('[data-w=recup]')) setTimeout(paint, 50); });
+    // Pendant une séance de postures : on applique le guidage choisi
+    function recup(){ try{ return !!timerState.recup && !timerState.calm; }catch(e){ return false; } }
+    var _speak = speak;
+    speak = function(text, opts){ if(recup() && !G().voice && !(opts && opts.force)){ return; } return _speak.apply(this, arguments); };
+    function soft(freq, dur){
+      try{ if(!timerState.audioCtx) timerState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var ctx = timerState.audioCtx, o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+        o.type = 'sine'; o.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.min(0.5, 0.12 * (typeof ecGainK === 'function' ? ecGainK() : 1)), t + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + 0.05); }catch(e){}
+    }
+    var _beep = playBeep;
+    playBeep = function(){
+      if(!recup()) return _beep.apply(this, arguments);
+      if(timerState.silent) return;
+      var g = G();
+      if(g.sound){ soft(523, 0.55); setTimeout(function(){ soft(659, 0.7); }, 160); }
+      if(g.vibe){ try{ if(navigator.vibrate) navigator.vibrate([90, 60, 90]); }catch(e){} }
+    };
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
