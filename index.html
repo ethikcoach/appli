@@ -3472,6 +3472,16 @@
   html.ec-p2 #todayView .tq .tq-ico{color:#fff !important;}
   @media (min-width:601px){ html.ec-p2 #todayView .td-more-grid.has-eq{grid-template-columns:repeat(5, minmax(0,1fr));} }
   @media (max-width:600px){ html.ec-p2 #todayView .td-more-grid.has-eq{gap:6px;} html.ec-p2 #todayView .td-more-grid.has-eq .tq{padding:9px 6px 8px;} html.ec-p2 #todayView .td-more-grid.has-eq .tq b{font-size:0.9rem;} html.ec-p2 #todayView .td-more-grid.has-eq .tq span:not(.tq-ico){font-size:0.66rem;} }
+  .my-saved{display:flex; align-items:center; gap:12px; width:100%; margin:10px 0 0; padding:12px 14px; border:none; border-radius:18px; background:var(--card); box-shadow:var(--shadow-1); color:var(--ink); font-family:'Inter',sans-serif; text-align:left; cursor:pointer;}
+  .my-saved .ms-ico{flex:none; width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:var(--acc-soft); color:var(--acc-txt);}
+  .my-saved .ms-txt{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .my-saved .ms-txt b{font-size:0.95rem;} .my-saved .ms-txt small{font-size:0.76rem; color:var(--stone);}
+  .my-saved .ms-chev{color:var(--stone); font-size:1.4rem;}
+  html.ec-p2 #renfoView.cr-sub .my-saved{display:none;}
+  @media (max-width:600px){ html.ec-p2 #renfoView.pick-wait .want::after{display:none !important;} }
+  .sv-fav-ren{display:grid; place-items:center; color:var(--acc-txt) !important; background:var(--acc-soft) !important;}
+  #svFav .sv-fav .sv-fav-x{flex:none; width:36px; height:36px; min-height:0; padding:0; margin-left:6px; border:none !important; border-radius:50% !important; box-shadow:none !important;}
+  #svFav .sv-fav .sv-fav-x:not(.sv-fav-ren){background:var(--chip, #F1F4EF) !important; color:var(--stone) !important; font-size:1.3rem;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -3780,7 +3790,7 @@
     <div id="svBlocked"></div>
   </section>
   <section class="sv-card" id="svFavCard">
-    <h2>Mes favoris</h2>
+    <h2>Mes séances et programmes</h2>
     <div id="svFav"></div>
   </section>
   <section class="sv-card">
@@ -9215,15 +9225,31 @@
           rows.push('<div class="sv-fav"><div class="sv-ico">' + p[1] + '</div><div class="info"><div class="t">' + esc(n.textContent) + '</div><div class="d">' + esc(m ? m.textContent : '') + '</div></div><button type="button" data-fav="' + p[0] + '|' + i + '">Ouvrir</button></div>');
         });
       });
-      $('#svFav').innerHTML = rows.length ? rows.join('') : '<p class="sv-empty">Aucun favori. Après avoir généré une séance, appuie sur « ☆ Favori » pour la retrouver ici.</p>';
-      $('#svFav').querySelectorAll('.sv-fav [data-fav]').forEach(function(b){ var x = document.createElement('button'); x.type = 'button'; x.className = 'sv-fav-x'; x.setAttribute('data-favx', b.getAttribute('data-fav')); x.setAttribute('aria-label', 'Retirer des favoris'); x.innerHTML = '&times;'; b.parentNode.appendChild(x); });
+      $('#svFav').innerHTML = rows.length ? rows.join('') : '<p class="sv-empty">Rien d’enregistré pour l’instant. Sur une séance, touche « ☆ Favori » ; sur un programme, « Enregistrer ». Ce que tu composes toi-même s’enregistre tout seul ici.</p>';
+      $('#svFav').querySelectorAll('.sv-fav [data-fav]').forEach(function(b){ var x = document.createElement('button'); x.type = 'button'; x.className = 'sv-fav-x'; x.setAttribute('data-favx', b.getAttribute('data-fav')); x.setAttribute('aria-label', 'Retirer des favoris'); x.innerHTML = '&times;';
+        var rn = document.createElement('button'); rn.type = 'button'; rn.className = 'sv-fav-x sv-fav-ren'; rn.setAttribute('data-favren', b.getAttribute('data-fav')); rn.setAttribute('aria-label', 'Renommer'); rn.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"></path><path d="M13.5 6.5l4 4"></path></svg>';
+        b.parentNode.appendChild(rn); b.parentNode.appendChild(x); });
     }
     $('#svFav').addEventListener('click', function(e){
+      var rn = e.target.closest('[data-favren]');
+      if(rn){
+        var q2 = rn.getAttribute('data-favren').split('|'), it2 = document.querySelectorAll(q2[0] + ' .saved-item')[+q2[1]]; if(!it2) return;
+        var isProg = q2[0] === '#savedProgramsList';
+        var id = isProg ? ((it2.querySelector('[data-prog-load]') || {}).getAttribute ? it2.querySelector('[data-prog-load]').getAttribute('data-prog-load') : null) : it2.getAttribute('data-id');
+        var cur = (it2.querySelector('.saved-item-name') || {}).textContent || '';
+        ecPrompt(isProg ? 'Renommer ce programme :' : 'Renommer cette séance :', cur, function(name){
+          name = String(name || '').replace(/[<>]/g, '').trim().slice(0, 80); if(!name) return;
+          if(isProg){ var lp = loadSavedPrograms(); lp.forEach(function(r){ if(String(r.id) === String(id)) r.name = name; }); storeSavedPrograms(lp); renderSavedProgramsList(); }
+          else { var ls = loadSavedList(); ls.forEach(function(r){ if(String(r.id) === String(id)) r.name = name; }); persistSavedList(ls); renderSavedSessionsList(); }
+          setTimeout(function(){ renderFav(); showToast('Renommé', false); }, 60);
+        });
+        return;
+      }
       var x = e.target.closest('[data-favx]');
       if(x){
         var q = x.getAttribute('data-favx').split('|'), item = document.querySelectorAll(q[0] + ' .saved-item')[+q[1]];
         var nm = item && item.querySelector('.saved-item-name') ? item.querySelector('.saved-item-name').textContent : 'ce favori';
-        ecConfirm('Retirer « ' + nm + ' » de tes favoris ?', 'Retirer', function(){ var del = item && item.querySelector('.saved-delete'); if(del) del.click(); setTimeout(function(){ renderFav(); showToast('Retiré des favoris', false); }, 80); }, true, 'Garder');
+        ecConfirm('Retirer « ' + nm + ' » de tes séances et programmes ?', 'Retirer', function(){ var del = item && item.querySelector('.saved-delete'); if(del) del.click(); setTimeout(function(){ renderFav(); showToast('Retiré de tes séances et programmes', false); }, 80); }, true, 'Garder');
         return;
       }
       var b = e.target.closest('[data-fav]'); if(!b) return;
@@ -10309,7 +10335,8 @@
           equip:state.equip.slice(), noFloor:false, chair:false, athlete:'', blocks:[slots], done:{}};
         if(window.ecShowView) window.ecShowView('renfo');
         saveProgram(); showProgram(true);
-        showToast('Ouvre la séance A, puis B… pour y ajouter tes exercices. Elles reviennent chaque semaine.', false);
+        try{ saveProgramNamed(currentProgram, null, title); }catch(e){}
+        setTimeout(function(){ showToast('Programme enregistré dans « Mes séances et programmes ». Ouvre la séance A, puis B… pour y ajouter tes exercices.', false); }, 1600);
       });
       setTimeout(function(){ var t = $('#cpTitle'); if(t){ t.focus(); t.select(); } }, 40);
     }
@@ -14445,6 +14472,44 @@
     var _rf = window.ecRenderFirst; window.ecRenderFirst = function(){ if(_rf) _rf(); try{ paint(); }catch(e){} };
     var lv = document.getElementById('levelGroup'); if(lv) lv.addEventListener('click', function(){ setTimeout(paint, 0); });
     paint();
+  })();
+  // ---------- Mes séances et programmes : séances composées enregistrées toutes seules + raccourci dans Créer ----------
+  (function(){
+    // Séance composée : enregistrée (et mise à jour) dès qu'elle contient des exercices
+    var tAuto = 0;
+    var _dsA = displaySession;
+    displaySession = function(session, title){
+      var r = _dsA.apply(this, arguments);
+      try{
+        if(session && session.composed){
+          clearTimeout(tAuto);
+          tAuto = setTimeout(function(){
+            if(lastSession !== session) return;
+            var n = (session.warm || []).length + (session.main || []).length + (session.cool || []).length + (session.cardio || []).length;
+            if(!n) return;
+            var name = String(session.title || title || 'Ma séance').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, '’').trim().slice(0, 80);
+            var list = loadSavedList(), had = !!session._favId;
+            if(session._favId) list = list.filter(function(x){ return String(x.id) !== String(session._favId); });
+            persistSavedList(list);
+            saveFavoriteNamed(name);
+            var nl = loadSavedList(); session._favId = nl.length ? nl[nl.length - 1].id : null;
+            if(!had) showToast('Séance enregistrée dans « Mes séances et programmes »', false);
+          }, 700);
+        }
+      }catch(e){}
+      return r;
+    };
+    // Raccourci dans « Créer une séance »
+    var want = document.querySelector('#renfoView .want');
+    if(want){
+      var a = document.createElement('button'); a.type = 'button'; a.className = 'my-saved';
+      want.appendChild(a);
+      function count(){ var n = 0; try{ n = loadSavedList().length + loadSavedPrograms().length; }catch(e){} return n; }
+      function paint(){ var n = count(); a.innerHTML = '<span class="ms-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path></svg></span><span class="ms-txt"><b>Mes séances et programmes</b><small>' + (n ? n + ' enregistré' + (n > 1 ? 's' : '') + ' · à refaire en un toucher' : 'Ce que tu enregistres ou composes arrive ici') + '</small></span><span class="ms-chev" aria-hidden="true">›</span>'; }
+      a.addEventListener('click', function(){ window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('mine'); window.scrollTo(0, 0); });
+      var _sv = window.ecShowView; window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'renfo') try{ paint(); }catch(e){} return r; };
+      paint();
+    }
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
