@@ -3399,6 +3399,79 @@
   #wodView .wod-box > .ec-dialog-actions .ec-dialog-cancel{border:1.5px solid var(--stone-light) !important;}
   #wodView .wod-box > .ec-dialog-actions .ec-dialog-cancel::before{content:'‹ '; font-size:1.2rem; line-height:0;}
   @media (max-width:640px){ #wodView .wod-box > .ec-dialog-actions{position:sticky; bottom:calc(var(--bnav-h, 0px) + 10px + env(safe-area-inset-bottom,0px)); z-index:5; border-radius:20px; box-shadow:0 0 0 8px var(--paper); background:var(--paper);} }
+  /* ================= Harmonisation complète des couleurs (clair + sombre) ================= */
+  html, html[data-pg="today"], html[data-pg="hub"], html[data-pg="lib"], html[data-pg="suivi"], html[data-pg="espace"], html[data-pg="moncoach"]{--acc:#263F58; --acc-soft:#DCE5EE; --acc-ink:#263F58; --acc-txt:#34536F;}
+  html[data-pg="renfo"]{--acc:#2E7D4F; --acc-soft:#E2F1E6; --acc-ink:#1F5A3A; --acc-txt:#2E7D4F;}
+  html[data-pg="prog"]{--acc:#5B4BA6; --acc-soft:#E6E1F6; --acc-ink:#3F3285; --acc-txt:#5B4BA6;}
+  html[data-pg="mob"]{--acc:#1E7A78; --acc-soft:#D6EDEC; --acc-ink:#145856; --acc-txt:#1E7A78;}
+  html[data-pg="breath"]{--acc:#2F6DB5; --acc-soft:#DCE8F7; --acc-ink:#1F4F8A; --acc-txt:#2F6DB5;}
+  html[data-pg="wod"]{--acc:#C2661B; --acc-soft:#F8E3D0; --acc-ink:#8A4512; --acc-txt:#B35A16;}
+  html[data-pg="tests"]{--acc:#B7791F; --acc-soft:#F3E4C6; --acc-ink:#6B4509; --acc-txt:#8A5A0F;}
+  @media screen and (prefers-color-scheme: dark){
+    html, html[data-pg="today"], html[data-pg="hub"], html[data-pg="lib"], html[data-pg="suivi"], html[data-pg="espace"], html[data-pg="moncoach"]{--acc:#3B5E7E; --acc-soft:rgba(127,166,201,0.16); --acc-ink:#B5D0E8; --acc-txt:#9FC0DD; --paper:#0C1218; --card:#16202A; --chip:#1E2A36;}
+    html[data-pg="renfo"]{--acc:#357D51; --acc-soft:rgba(127,200,150,0.15); --acc-ink:#A7D8B4; --acc-txt:#8FC49E;}
+    html[data-pg="prog"]{--acc:#6A5AC0; --acc-soft:rgba(183,170,240,0.16); --acc-ink:#CFC6F7; --acc-txt:#B7AAF0; --paper:#12101E; --card:#1C1930; --chip:#252140;}
+    html[data-pg="mob"]{--acc:#1E7A78; --acc-soft:rgba(134,208,203,0.15); --acc-ink:#A9E0DC; --acc-txt:#86D0CB; --paper:#0B1716; --card:#142322; --chip:#1B2E2D;}
+    html[data-pg="breath"]{--acc:#3A78C2; --acc-soft:rgba(158,193,239,0.15); --acc-ink:#C3D9F5; --acc-txt:#9EC1EF; --paper:#0C131D; --card:#152030; --chip:#1C2A3D;}
+    html[data-pg="wod"]{--acc:#C2661B; --acc-soft:rgba(242,178,122,0.15); --acc-ink:#F6CDA6; --acc-txt:#F2B27A; --paper:#19110B; --card:#241A12; --chip:#2F2318;}
+    html[data-pg="tests"]{--acc:#B7791F; --acc-soft:rgba(242,196,107,0.15); --acc-ink:#F5DCA3; --acc-txt:#F2C46B; --paper:#17120A; --card:#231C11; --chip:#2E2517;}
+  }
+  /* Réglages et Aide : toujours bleu nuit, comme Aujourd'hui */
+  .set-sheet, #helpSheet{--acc:#263F58; --acc-soft:#DCE5EE; --acc-ink:#263F58; --acc-txt:#34536F; --forest:#263F58; --sage-light:#DCE5EE;}
+  @media screen and (prefers-color-scheme: dark){ .set-sheet, #helpSheet{--acc:#3B5E7E; --acc-soft:rgba(127,166,201,0.16); --acc-ink:#B5D0E8; --acc-txt:#9FC0DD; --forest:#9FC0DD; --sage-light:rgba(127,166,201,0.16); --card:#16202A; --chip:#1E2A36; --paper:#0C1218;} }
+  .set-sheet .set-ts button.on{background:var(--acc) !important; color:#fff !important;}
+  .set-sheet .set-btn2{color:var(--acc-txt) !important; border-color:var(--acc-txt) !important; background:transparent !important;}
+  .set-sheet .set-x, #helpSheet .help-close{background:var(--acc-soft) !important; color:var(--acc-txt) !important;}
+  .set-sheet input[type=checkbox]{accent-color:var(--acc);}
+  #helpSheet h3, #helpSheet h4, #helpSheet .help-fn b{color:var(--acc-txt) !important;}
+  #helpSheet .help-btn:not(.ghost){background:var(--acc) !important; color:#fff !important;}
+  #helpSheet .help-btn.ghost{color:var(--acc-txt) !important; border-color:var(--acc-txt) !important;}
+  #helpSheet .fb-ico{background:var(--acc-soft) !important; color:var(--acc-txt) !important;}
+  /* En-tête : ? et réglages à la couleur de la page */
+  header.site .help-btn-head{color:var(--acc-txt) !important; background:var(--acc-soft) !important; border-color:transparent !important; transition:background-color .3s ease, color .3s ease;}
+  /* Séances (toutes) : numéros, durées, démarrer */
+  .exercise .ex-num{background:var(--acc) !important; color:#fff !important;}
+  .exercise .ex-dose, .bt-dur{background:var(--acc-soft) !important; color:var(--acc-ink) !important;}
+  .exercise .ex-rhythm{color:var(--acc-txt) !important;}
+  .ec-startbar button{background:var(--pg-band, var(--acc)) !important; color:#fff !important;}
+  .btn-start{color:var(--acc, #1F4030) !important;}
+  .fold-sum{color:var(--acc-txt) !important;}
+  .breath-install{background:var(--acc-soft) !important;}
+  .results .sh-total{color:inherit;}
+  /* Suivi */
+  .sv-stat b{color:var(--acc-txt) !important;}
+  #svExport{background:var(--acc) !important; color:#fff !important;}
+  .sv-btn.ghost{color:var(--acc-txt) !important; border-color:var(--acc-soft) !important;}
+  .sv-day.has{background:var(--acc-soft) !important; color:var(--acc-ink) !important;}
+  .sv-day.today{color:var(--acc-txt) !important; box-shadow:inset 0 0 0 2px var(--acc-txt) !important;}
+  .sv-nav{color:var(--acc-txt) !important;}
+  .sv-link{color:var(--acc-txt) !important;}
+  /* Bibliothèque */
+  #libView .chip.active{background:var(--acc) !important; color:#fff !important; border-color:var(--acc) !important; box-shadow:none !important;}
+  #libView .lib-no{background:var(--acc) !important; color:#fff !important;}
+  /* Espace coach et Mon coach */
+  #coachTools .ct-btn:not(.ghost), #coachTools .send, #coachTools .ct-gnew, #chSave, .compose-btn{background:var(--acc) !important; color:#fff !important; border-color:var(--acc) !important;}
+  #coachTools .ct-btn.ghost{color:var(--acc-txt) !important;}
+  #coachTools .ct-tabs button.on, #coachTools .ct-tabs .active{background:var(--acc) !important; color:#fff !important;}
+  #coachTools .ct-x{background:var(--acc-soft) !important; color:var(--acc-txt) !important;}
+  #moncoachView .mc-av{background:var(--acc-soft) !important; color:var(--acc-txt) !important;}
+  /* Onglets actifs Suivi : couleur pleine, texte blanc (lisible en sombre) */
+  html .sv-tabs button.on{background:var(--acc) !important; color:#fff !important;}
+  .panel-summary .ps-edit{color:var(--acc-txt) !important; border-color:var(--acc-txt) !important;}
+  .panel-summary .ps-tags span{background:var(--acc-soft) !important; color:var(--acc-ink) !important;}
+  .sh-tags .sh-total{color:var(--acc) !important;}
+  @media screen and (prefers-color-scheme: dark){ .sh-tags .sh-total{color:#16202A !important;} }
+  #coachTools .ct-row-acts button:not(.send):not(.del), #ctNetSave, #ctNetForget, #coachTools .ct-net a{color:var(--acc-txt) !important;}
+  #ctNetSave{border-color:var(--acc-txt) !important;}
+  /* Formulaires de toutes les pages : retour */
+  .gen-back{color:var(--acc-txt) !important;}
+
+  #zoneGroup{grid-template-columns:repeat(5, minmax(0,1fr)) !important;}
+  @media (max-width:600px){ #zoneGroup{grid-template-columns:repeat(3, minmax(0,1fr)) !important;} }
+  html.ec-p2 #todayView .td-more-grid.has-eq{grid-template-columns:repeat(5, minmax(0,1fr));}
+  html.ec-p2 #todayView .tq .tq-ico{color:#fff !important;}
+  @media (min-width:601px){ html.ec-p2 #todayView .td-more-grid.has-eq{grid-template-columns:repeat(5, minmax(0,1fr));} }
+  @media (max-width:600px){ html.ec-p2 #todayView .td-more-grid.has-eq{gap:6px;} html.ec-p2 #todayView .td-more-grid.has-eq .tq{padding:9px 6px 8px;} html.ec-p2 #todayView .td-more-grid.has-eq .tq b{font-size:0.9rem;} html.ec-p2 #todayView .td-more-grid.has-eq .tq span:not(.tq-ico){font-size:0.66rem;} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -3569,6 +3642,7 @@
         <button type="button" class="chip" data-zone="haut">Haut du corps</button>
         <button type="button" class="chip" data-zone="bas">Bas du corps</button>
         <button type="button" class="chip" data-zone="gainage">Gainage</button>
+        <button type="button" class="chip" data-zone="equilibre">Équilibre</button>
       </div>
     </div>
 
@@ -4532,7 +4606,7 @@
   };
 
   var LEVEL_LABEL = {debutant:'Débutant',intermediaire:'Intermédiaire',avance:'Avancé',senior:'Senior · adapté APA'};
-  var ZONE_LABEL = {full:'Corps complet',haut:'Haut du corps',bas:'Bas du corps',gainage:'Gainage',haut_g:'Haut du corps + gainage',bas_g:'Bas du corps + gainage'};
+  var ZONE_LABEL = {equilibre:'Équilibre & prévention des chutes',full:'Corps complet',haut:'Haut du corps',bas:'Bas du corps',gainage:'Gainage',haut_g:'Haut du corps + gainage',bas_g:'Bas du corps + gainage'};
   // Zone choisie / zone de l'exercice (les combinaisons « + gainage » acceptent les deux)
   var ZONE_PARTS = {haut_g:['haut','gainage'], bas_g:['bas','gainage']};
   function blockedIds(){ try{ var b = JSON.parse(localStorage.getItem('ec_ex_blocked') || '[]'); return Array.isArray(b) ? b : []; }catch(e){ return []; } }
@@ -4573,7 +4647,10 @@
     try{ localStorage.setItem('ec_ex_blocked', JSON.stringify(b)); }catch(e){}
     if(window.ecRenderBlocked) window.ecRenderBlocked();
   }
-  function zoneMatch(zone, exZone){ if(zone === 'full' || exZone === 'full' || zone === exZone) return true; var p = ZONE_PARTS[zone]; return !!(p && p.indexOf(exZone) > -1); }
+  // Équilibre : exercices d'équilibre + jambes et pieds qui aident à rester stable (senior APA, prévention des chutes, proprioception)
+  var BAL_EXTRA = ['s6','p50','p48','k16','s7','s11'];
+  function balanceEx(ex){ return ex.pattern === 'balance' || BAL_EXTRA.indexOf(ex.id) > -1; }
+  function zoneMatch(zone, exZone){ if(zone === 'equilibre') return exZone === 'bas' || exZone === 'gainage' || exZone === 'full'; if(zone === 'full' || exZone === 'full' || zone === exZone) return true; var p = ZONE_PARTS[zone]; return !!(p && p.indexOf(exZone) > -1); }
   var WORK_FACTOR = 1;
   // Temps réglés à la main sur une séance : w = secondes ajoutées à l'effort du corps de séance,
   // t = transition / récup entre deux exercices, r = récup entre deux tours
@@ -4737,6 +4814,7 @@
     document.querySelectorAll('#zoneGroup .chip').forEach(function(c){ c.classList.toggle('active', parts.indexOf(c.dataset.zone) > -1); });
   }
   function pickZone(z){
+    if(z === 'equilibre'){ state.zone = 'equilibre'; syncZoneChips(); return; }
     var cur = state.zone, g = cur === 'gainage' || cur === 'haut_g' || cur === 'bas_g';
     var base = cur === 'haut' || cur === 'haut_g' ? 'haut' : (cur === 'bas' || cur === 'bas_g' ? 'bas' : null);
     if(z === 'full') state.zone = 'full';
@@ -6376,7 +6454,7 @@
         && floorOk(ex, state.noFloor)
         && impactOk(ex, state.noImpact)
         && chairOk(ex, state.chair)
-        && zoneMatch(state.zone, ex.zone)
+        && (state.zone === 'equilibre' ? balanceEx(ex) : zoneMatch(state.zone, ex.zone))
         && !exBlocked(ex.id);
     });
     if(!silent){
@@ -10549,7 +10627,7 @@
     // Zone de travail
     var zg = document.getElementById('zoneGroup');
     if(zg){ var zf = zg.closest('.field'), zl = zf && zf.querySelector('.field-label'); if(zl && !zl.querySelector('.field-label-hint')) zl.insertAdjacentHTML('beforeend', ' <span class="field-label-hint">(Gainage se cumule avec Haut ou Bas)</span>'); }
-    if(zg){ grid(zg); zg.querySelectorAll('[data-zone]').forEach(function(b){ tile(b, b.getAttribute('data-zone')); }); }
+    if(zg){ grid(zg); zg.querySelectorAll('[data-zone]').forEach(function(b){ var z = b.getAttribute('data-zone'); tile(b, z === 'equilibre' ? 'p_autonomie' : z); }); }
     // Objectif du renforcement (et préparation pour ton sport)
     var tg = document.getElementById('themeGroup');
     if(tg){
@@ -14354,6 +14432,19 @@
     }).observe(shBd, {attributes:true, attributeFilter:['class']});
     ['results', 'breathResults'].forEach(function(id){ var r = document.getElementById(id); if(r) new MutationObserver(relabel).observe(r, {childList:true, subtree:true}); });
     relabel();
+  })();
+  // ---------- Aujourd'hui : tuile « Équilibre 20 min » pour le profil senior ----------
+  (function(){
+    var tv = document.getElementById('todayView'), grid = tv && tv.querySelector('.td-more-grid'); if(!grid) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'tq tq-renfo tq-eq'; b.setAttribute('data-q', 'eq20');
+    b.innerHTML = '<span class="tq-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="4" r="1.8"></circle><path d="M10 6.5 9 13l-2.5 7M9 13l3 7M10 8l4 2.5M14 10.5V20.5M14 10.5c0-1.5 2.5-1.5 2.5 0"></path></svg></span><b>20 min</b><span>Équilibre</span>';
+    var first = grid.firstChild; grid.insertBefore(b, first ? first.nextSibling : null);
+    function paint(){ var on = false; try{ on = state.level === 'senior'; }catch(e){} b.hidden = !on; b.style.display = on ? '' : 'none'; grid.classList.toggle('has-eq', on);
+      var br = grid.querySelector('[data-q="br5"] span:not(.tq-ico)'); if(br) br.textContent = on && window.matchMedia && window.matchMedia('(max-width:600px)').matches ? 'Respi' : 'Respiration'; }
+    b.addEventListener('click', function(e){ e.stopPropagation(); if(window.ecAdhoc) window.ecAdhoc({dur:20, zone:'equilibre'}); });
+    var _rf = window.ecRenderFirst; window.ecRenderFirst = function(){ if(_rf) _rf(); try{ paint(); }catch(e){} };
+    var lv = document.getElementById('levelGroup'); if(lv) lv.addEventListener('click', function(){ setTimeout(paint, 0); });
+    paint();
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
