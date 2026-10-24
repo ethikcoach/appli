@@ -3701,6 +3701,58 @@
   .mg-explain input{width:22px; height:22px; accent-color:var(--acc, #1E7A78); flex:none;}
   .mg-explain span{display:flex; flex-direction:column;} .mg-explain b{font-size:0.9rem;} .mg-explain small{font-size:0.76rem; color:var(--stone);}
   .mob-guide .field-hint{margin-top:8px; font-size:0.78rem; color:var(--stone);}
+  /* ================= Créer (choix du type) : design de la page Aujourd'hui ================= */
+  html.ec-p2[data-pg="hub"] #renfoView{position:relative; isolation:isolate; row-gap:4px !important;}
+  html.ec-p2[data-pg="hub"] #renfoView .want{margin-top:0 !important;}
+  html.ec-p2[data-pg="hub"] #renfoView::before{content:''; position:absolute; left:-16px; right:-16px; top:-90px; height:440px; z-index:-1; pointer-events:none;
+    background:radial-gradient(circle at 0% 10%, rgba(46,125,79,.13), transparent 42%), radial-gradient(circle at 100% 0%, rgba(194,102,27,.12), transparent 40%), radial-gradient(circle at 60% 70%, rgba(91,75,166,.07), transparent 40%);}
+  @media screen and (prefers-color-scheme: dark){ html.ec-p2[data-pg="hub"] #renfoView::before{background:radial-gradient(circle at 0% 10%, rgba(46,125,79,.35), transparent 42%), radial-gradient(circle at 100% 0%, rgba(194,102,27,.28), transparent 40%), radial-gradient(circle at 60% 70%, rgba(91,75,166,.2), transparent 40%);} }
+  .cr-head{display:none;}
+  html.ec-p2[data-pg="hub"] #renfoView > .intro{background:none !important; box-shadow:none !important; padding:4px 2px 0 !important; border-radius:0 !important; overflow:visible !important; color:var(--ink) !important; margin-bottom:6px !important;}
+  html.ec-p2[data-pg="hub"] #renfoView > .intro::before, html.ec-p2[data-pg="hub"] #renfoView > .intro::after{display:none !important;}
+  html.ec-p2[data-pg="hub"] #renfoView > .intro > :not(.cr-head){display:none !important;}
+  html.ec-p2[data-pg="hub"] .cr-head{display:block;}
+  .cr-k{display:block; color:var(--stone); font-size:0.82rem; letter-spacing:0.02em;}
+  .cr-title{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:2rem; line-height:1.06; letter-spacing:-0.02em; color:var(--ink); margin-top:2px;}
+  .cr-leg{display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:10px; font-size:0.78rem; color:var(--stone);}
+  .cr-leg span{display:inline-flex; align-items:center;} .cr-leg b{color:var(--ink);} .cr-leg i{width:8px; height:8px; border-radius:50%; margin-right:6px; display:inline-block;}
+  /* Cartes photo */
+  html.ec-p2[data-pg="hub"] #renfoView .want{background:none !important; box-shadow:none !important; padding:0 !important; border:none !important;}
+  html.ec-p2[data-pg="hub"] #renfoView .want > h2{display:none !important;}
+  html.ec-p2[data-pg="hub"] #renfoView .want-grid{display:grid !important; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;}
+  html.ec-p2 #renfoView .want-it.cw{position:relative; display:flex !important; flex-direction:column; align-items:stretch; text-align:left; padding:0 !important; min-height:0 !important; border:none !important; border-radius:24px !important; overflow:hidden; color:#fff !important; box-shadow:0 12px 28px rgba(20,30,25,.18) !important; transition:transform .2s ease, box-shadow .2s ease;}
+  html.ec-p2 #renfoView .want-it.cw:active{transform:scale(.97);}
+  @media (hover:hover){ html.ec-p2 #renfoView .want-it.cw:hover{transform:translateY(-3px); box-shadow:0 18px 36px rgba(20,30,25,.24) !important;} }
+  html.ec-p2 #renfoView .want-it.w-renfo.cw{background:linear-gradient(150deg, #173726 0%, #2C6446 100%) !important;}
+  html.ec-p2 #renfoView .want-it.w-recup.cw{background:linear-gradient(150deg, #0D3534 0%, #1E7A78 100%) !important;}
+  html.ec-p2 #renfoView .want-it.w-defi.cw{background:linear-gradient(150deg, #5A2A0C 0%, #C2661B 100%) !important;}
+  html.ec-p2 #renfoView .want-it.w-prog.cw{background:linear-gradient(150deg, #27204F 0%, #5B4BA6 100%) !important;}
+  .cw-ph{position:relative; display:block; height:108px; background:var(--cw-bg, #FFFFFF) center 60% / contain no-repeat; flex:none;}
+  html.ec-p2[data-pg="hub"] #renfoView.pick-wait .want::after{display:none !important;}
+  .cw-ph::after{content:''; position:absolute; left:0; right:0; bottom:0; height:26px; background:linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.05));}
+  .cw-tag{position:absolute; left:10px; top:10px; padding:4px 9px; border-radius:999px; background:rgba(15,25,20,.78); color:#fff; font-size:0.68rem; font-weight:700; letter-spacing:0.02em; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+  html.ec-p2 #renfoView .want-it.cw .w-ico{position:absolute; left:12px; top:88px; width:40px !important; height:40px !important; border-radius:13px !important; display:grid; place-items:center; box-shadow:0 6px 14px rgba(0,0,0,.25); border:2px solid rgba(255,255,255,.9); margin:0 !important; z-index:1;}
+  html.ec-p2 #renfoView .want-it.cw .w-ico svg{width:20px; height:20px;}
+  html.ec-p2 #renfoView .want-it.cw b{display:block; padding:28px 14px 0; font-family:'Bricolage Grotesque',sans-serif; font-size:1.08rem !important; line-height:1.15; color:#fff !important;}
+  html.ec-p2 #renfoView .want-it.cw small{display:block; padding:3px 44px 14px 14px; font-size:0.76rem !important; line-height:1.3; color:rgba(255,255,255,.78) !important;}
+  .cw-go{position:absolute; right:10px; bottom:12px; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.16); color:#fff;}
+  /* Tests et « Mes séances » comme sur Aujourd'hui */
+  html.ec-p2[data-pg="hub"] #renfoView .want .ec-tests{margin-top:14px !important; border:none !important; border-radius:22px !important; background:linear-gradient(100deg, #FBF0DA, #F5E1B8) !important; box-shadow:0 8px 22px rgba(168,110,20,.14) !important;}
+  html.ec-p2[data-pg="hub"] #renfoView .want .my-saved{margin-top:12px !important; border:none !important; border-radius:22px !important; background:var(--card) !important; box-shadow:0 8px 22px rgba(20,30,25,.08) !important;}
+  html.ec-p2[data-pg="hub"] #renfoView .want .my-saved .ms-ico{background:linear-gradient(135deg, #7A68D8, #5B4BA6) !important; color:#fff !important;}
+  @media screen and (prefers-color-scheme: dark){
+    html.ec-p2 #renfoView .want-it.cw{box-shadow:0 12px 28px rgba(0,0,0,.45) !important;}
+    html.ec-p2[data-pg="hub"] #renfoView .want .ec-tests{background:linear-gradient(100deg, #2E2410, #3D2E12) !important; box-shadow:none !important;}
+    html.ec-p2[data-pg="hub"] #renfoView .want .my-saved{box-shadow:none !important;}
+  }
+  @media (max-width:380px){ .cw-ph{height:92px;} html.ec-p2 #renfoView .want-it.cw .w-ico{top:72px;} .cr-title{font-size:1.7rem;} }
+  @media (min-width:601px){
+    .cr-title{font-size:2.4rem;}
+    html.ec-p2[data-pg="hub"] #renfoView .want-grid{gap:16px;}
+    .cw-ph{height:150px;} html.ec-p2 #renfoView .want-it.cw .w-ico{top:128px; width:46px !important; height:46px !important;}
+    html.ec-p2 #renfoView .want-it.cw b{font-size:1.25rem !important; padding-top:32px;} html.ec-p2 #renfoView .want-it.cw small{font-size:0.85rem !important;}
+  }
+  @media (min-width:1000px){ html.ec-p2[data-pg="hub"] #renfoView .want-grid{grid-template-columns:repeat(4, 1fr);} }
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -14962,6 +15014,47 @@
       if(g.sound){ soft(523, 0.55); setTimeout(function(){ soft(659, 0.7); }, 160); }
       if(g.vibe){ try{ if(navigator.vibrate) navigator.vibrate([90, 60, 90]); }catch(e){} }
     };
+  })();
+  // ---------- Créer : même design que la page Aujourd'hui (en-tête sans bandeau, cartes photo) ----------
+  (function(){
+    var rv = document.getElementById('renfoView'), intro = rv && rv.querySelector(':scope > .intro'), want = rv && rv.querySelector('.want');
+    if(!rv || !intro || !want) return;
+    var head = document.createElement('div'); head.className = 'cr-head';
+    intro.appendChild(head);
+    var CARDS = {renfo:{ph:'p2', c:'renfo', k:'Renfo', t:'Me renforcer', s:'Poids du corps, haltères, kettlebell, salle', d:'10 à 60 min'},
+      recup:{ph:'m5', c:'recup', k:'Récup', t:'Récupérer & m’étirer', s:'Étirements, yoga, massage, respiration', d:'5 à 45 min'},
+      defi:{ph:'cf5', c:'defi', k:'Défis', t:'Relever un défi', s:'Chrono, CrossFit, HYROX', d:'Au chrono'},
+      prog:{ph:'k13', c:'prog', k:'Programme', t:'Suivre un programme', s:'Plusieurs semaines, pas à pas', d:'2 à 12 sem.'}};
+    var ARROW = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>';
+    want.querySelectorAll('.want-it').forEach(function(b){
+      var C = CARDS[b.getAttribute('data-w')]; if(!C || b.querySelector('.cw-ph')) return;
+      b.classList.add('cw');
+      var ph = document.createElement('span'); ph.className = 'cw-ph'; ph.setAttribute('aria-hidden', 'true'); b.insertBefore(ph, b.firstChild);
+      var tag = document.createElement('span'); tag.className = 'cw-tag'; tag.textContent = C.d; ph.appendChild(tag);
+      var bb = b.querySelector('b'), sm = b.querySelector('small');
+      if(bb) bb.setAttribute('data-short', bb.textContent);
+      if(sm) sm.setAttribute('data-short', sm.textContent);
+      var go = document.createElement('span'); go.className = 'cw-go'; go.innerHTML = ARROW; b.appendChild(go);
+    });
+    function photos(){
+      var ok = false;
+      want.querySelectorAll('.want-it.cw').forEach(function(b){ var C = CARDS[b.getAttribute('data-w')], src = null; try{ src = EXERCISE_PHOTOS[C.ph]; }catch(e){} if(src){ b.querySelector('.cw-ph').style.backgroundImage = 'url("' + src + '")'; ok = true; } });
+      if(!ok && window.ecPhotosState && window.ecPhotosState() === 'loading') setTimeout(photos, 700);
+    }
+    function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function paint(){
+      var nm = ''; var tn = document.querySelector('#todayView .td-name'); if(tn) nm = tn.textContent.trim();
+      var n = 0, mins = 0; try{ var h = JSON.parse(localStorage.getItem('ec_history_v1') || '[]'), now = new Date(); now.setHours(0,0,0,0); var mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() + 6) % 7); h.forEach(function(e){ if(e.at >= mon.getTime()){ n++; mins += (+e.minutes || +e.min || 0); } }); }catch(e){}
+      var saved = 0; try{ saved = (JSON.parse(localStorage.getItem('ethikcoach_renfo_saved_sessions') || '[]') || []).length; }catch(e){}
+      head.innerHTML = '<span class="cr-k">Créer une séance</span>'
+        + '<div class="cr-title">Envie de quoi' + (nm ? ', <span class="td-name">' + esc(nm) + '</span>' : '') + '&nbsp;?</div>'
+        + '<div class="cr-leg"><span><i style="background:#2E9E5E"></i><b>' + n + '</b>&nbsp;' + (n > 1 ? 'séances' : 'séance') + ' cette semaine</span>'
+        + '<span><i style="background:#E08F45"></i><b>' + mins + '</b>&nbsp;min</span>'
+        + '<span><i style="background:#7A68D8"></i><b>' + saved + '</b>&nbsp;' + (saved > 1 ? 'enregistrées' : 'enregistrée') + '</span></div>';
+    }
+    var _sv = window.ecShowView; window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'renfo') setTimeout(function(){ try{ paint(); photos(); }catch(e){} }, 30); return r; };
+    var _gh = window.ecGoHub; if(_gh) window.ecGoHub = function(){ var r = _gh.apply(this, arguments); try{ paint(); }catch(e){} return r; };
+    paint(); photos();
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
