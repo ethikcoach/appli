@@ -13795,9 +13795,8 @@
     function on(){ try{ return localStorage.getItem('ec_music_mode') === '1'; }catch(e){ return false; } }
     function set(v){ try{ localStorage.setItem('ec_music_mode', v ? '1' : '0'); }catch(e){} try{ ecMusicSession(); }catch(e){} paint(); }
     var IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var TIP = IOS ? 'La musique baisse automatiquement pendant les annonces, même sans ce mode. Si besoin, baisse un peu le volume dans ton appli de musique (pas le volume général du téléphone).'
-                  : 'Les bips sont plus forts et doublés. Astuce : baisse un peu le volume dans ton appli de musique (pas le volume général du téléphone) pour que les annonces passent au-dessus.';
-    function rowHtml(){ return '<label class="music-row"><input type="checkbox" class="music-cb"' + (on() ? ' checked' : '') + '><span><b>🎵 Je m’entraîne en musique</b><small>Bips plus forts et doublés, compte à rebours en bips plutôt qu’à la voix. ' + TIP + '</small></span></label>'; }
+    var TIP = 'Astuce : si la voix ne passe pas assez, baisse un peu le volume dans ton appli de musique (pas le volume général du téléphone).';
+    function rowHtml(){ return '<label class="music-row"><input type="checkbox" class="music-cb"' + (on() ? ' checked' : '') + '><span><b>🎵 Je m’entraîne en musique</b><small><b>Ce qui change :</b> bips plus forts et doublés, voix poussée au maximum, et le compte à rebours (« 3, 2, 1 », « plus que dix secondes », « mi‑parcours », « pause », « reprise ») passe en bips au lieu de la voix.<br><b>Toujours annoncés :</b> le nom et la durée de chaque exercice, le suivant, les tours, les récupérations et la fin de séance.<br>' + TIP + '</small></span></label>'; }
     function paint(){ document.querySelectorAll('.music-cb').forEach(function(c){ c.checked = on(); }); }
     document.addEventListener('change', function(e){ if(e.target.classList && e.target.classList.contains('music-cb')){ set(e.target.checked); if(e.target.checked){ try{ playBeep(); }catch(err){} } } });
     var vs = document.querySelector('.vsheet .vsheet-ok');
@@ -13806,8 +13805,8 @@
     var vb = document.getElementById('timerVoice');
     if(vb){
       var mb = document.createElement('button'); mb.type = 'button'; mb.className = vb.className + ' timer-music'; mb.id = 'timerMusic';
-      function pm(){ mb.textContent = on() ? '🎵 Musique' : '🎵'; mb.setAttribute('aria-pressed', on() ? 'true' : 'false'); mb.setAttribute('aria-label', on() ? 'Mode musique activé : bips plus forts' : 'Activer le mode musique (bips plus forts)'); mb.classList.toggle('on', on()); }
-      mb.addEventListener('click', function(){ set(!on()); pm(); try{ showToast(on() ? '🎵 Mode musique : bips plus forts, annonces par-dessus la musique' : 'Mode musique désactivé', false); if(on()) playBeep(); }catch(e){} });
+      function pm(){ mb.textContent = on() ? '🎵 Musique' : '🎵'; mb.setAttribute('aria-pressed', on() ? 'true' : 'false'); mb.setAttribute('aria-label', on() ? 'Mode musique activé : bips plus forts, voix au maximum, compte à rebours en bips' : 'Activer le mode musique : bips plus forts, voix au maximum, compte à rebours en bips'); mb.classList.toggle('on', on()); }
+      mb.addEventListener('click', function(){ set(!on()); pm(); try{ showToast(on() ? '🎵 Mode musique : bips plus forts, voix au maximum, compte à rebours en bips. Les exercices restent annoncés.' : 'Mode musique désactivé : compte à rebours de nouveau à la voix', false); if(on()) playBeep(); }catch(e){} });
       vb.parentNode.insertBefore(mb, vb.nextSibling); pm();
       var _p = paint; paint = function(){ _p(); pm(); };
     }
@@ -14023,7 +14022,7 @@
       + '<div class="set-sec">Son pendant la séance</div>'
       + '<div class="set-box">'
       +   '<div class="set-row"><span class="set-l">Voix du coach<small class="set-vname"></small></span><button type="button" class="set-btn2" data-set="voice">Changer</button></div>'
-      +   '<label class="set-row"><span class="set-l">Je m’entraîne en musique<small>Bips plus forts, moins d’annonces vocales</small></span><input type="checkbox" class="music-cb"></label>'
+      +   '<label class="set-row"><span class="set-l">Je m’entraîne en musique<small>Bips plus forts et voix au maximum. Le compte à rebours (3, 2, 1, mi-parcours…) passe en bips ; les exercices, durées, tours et récupérations restent annoncés.</small></span><input type="checkbox" class="music-cb"></label>'
       +   '<label class="set-row"><span class="set-l">Explications audio en Récup<small>La voix décrit chaque posture</small></span><input type="checkbox" class="rx-cb2"></label>'
       + '</div>'
       + '<div class="set-sec">Appli</div>'
