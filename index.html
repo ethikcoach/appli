@@ -3768,6 +3768,23 @@
     .sc-bk{background:linear-gradient(100deg, #15243A, #1A2D47);} .sc-inst{background:linear-gradient(100deg, #12291B, #173322);}
     .sc-ico, .sc-later{background:rgba(255,255,255,.08);} .sc-bk .sc-go{background:#4F86C0;} .sc-inst .sc-go{background:#2E9E5E;}
   }
+  .timer-swap{display:block; margin:8px auto 0; padding:8px 14px; min-height:40px; border:1px dashed rgba(255,255,255,0.45); border-radius:999px; background:rgba(255,255,255,0.06); color:#fff; font-family:inherit; font-size:0.84rem; cursor:pointer;}
+  .timer-swap[hidden]{display:none;}
+  .timer-swap b{color:#9FD8B4;}
+  .tsw-wrap{position:fixed; inset:0; z-index:400; background:rgba(5,12,9,0.62); display:flex; align-items:flex-end; justify-content:center; padding:16px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .tsw-card{width:100%; max-width:520px; background:var(--card, #fff); color:var(--ink); border-radius:24px; padding:18px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow:0 20px 50px rgba(0,0,0,.35); text-align:left;}
+  .tsw-head b{display:block; font-family:'Bricolage Grotesque',sans-serif; font-size:1.1rem;} .tsw-head small{display:block; color:var(--stone); font-size:0.8rem; margin-top:2px;}
+  .tsw-list{display:flex; flex-direction:column; gap:8px; margin:14px 0 12px;}
+  .tsw-it{display:flex; align-items:center; gap:12px; width:100%; padding:8px; border-radius:16px; border:1px solid var(--stone-light, #E3E6E1); background:var(--paper, #F5F7F3); color:var(--ink); text-align:left; font-family:inherit; cursor:pointer;}
+  .tsw-it:active{transform:scale(.98);}
+  .tsw-ph{flex:none; width:84px; height:56px; border-radius:10px; background:#fff; overflow:hidden; display:grid; place-items:center;} .tsw-ph img{width:100%; height:100%; object-fit:contain;}
+  .tsw-tx{display:flex; flex-direction:column; gap:3px; min-width:0;} .tsw-tx b{font-size:0.95rem;} .tsw-tx small{font-size:0.75rem; color:var(--stone); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .tsw-tx em{font-style:normal; align-self:flex-start; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:999px; background:#DCEFE2; color:#1F5A36;}
+  .tsw-acts{display:flex; gap:8px;} .tsw-acts button{flex:1; min-height:46px; border-radius:999px; font-family:inherit; font-weight:700; font-size:0.9rem; cursor:pointer;}
+  .tsw-more{border:1px solid var(--stone-light, #E3E6E1); background:transparent; color:var(--ink);} .tsw-cancel{border:none; background:#1F4030; color:#fff;}
+  @media screen and (prefers-color-scheme: dark){ .tsw-tx em{background:#1D3A28; color:#9FD8B4;} .tsw-ph{background:#F4F6F3;} .tsw-cancel{background:#2E9E5E;} }
+  .vs-settings{display:block; margin:10px 0; padding:11px 14px; border-radius:14px; background:#1F4030; color:#fff !important; font-weight:700; text-align:center; text-decoration:none;}
+  .vsheet-tip small{display:block; margin-top:6px; opacity:.8;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -5263,7 +5280,8 @@
     var m = Math.floor(secs / 60), r = secs % 60;
     return m + ' min' + (r ? ' ' + (r < 10 ? '0' : '') + r : '');
   }
-  var TIME_STEPS = [20, 30, 45, 60];
+  // Renfo : 30 s minimum par exercice (mieux vaut moins d'exercices, mais le temps de bien les faire)
+  var TIME_STEPS = [30, 45, 60];
   function snapIdx(v){ var b = 0, d = 1e9; TIME_STEPS.forEach(function(t, i){ var dd = Math.abs(t - v); if(dd < d){ d = dd; b = i; } }); return b; }
   function stepAt(i){ return TIME_STEPS[Math.max(0, Math.min(TIME_STEPS.length - 1, i))]; }
   function scaleTempsRaw(ex, level, theme){
@@ -10797,7 +10815,7 @@
         + '<div class="ta-step"><button type="button" data-k="' + k + '" data-d="-1" aria-label="Moins">−</button><output id="ta_' + k + '"></output><button type="button" data-k="' + k + '" data-d="1" aria-label="Plus">＋</button></div></div>'; }
       wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Régler les temps">'
         + '<p class="ec-dialog-msg">⏱ Régler les temps</p>'
-        + row('w', 'Temps d’effort', 'paliers 20 s, 30 s, 45 s, 1 min<span id="ta_ex"></span>')
+        + row('w', 'Temps d’effort', 'paliers 30 s, 45 s, 1 min<span id="ta_ex"></span>')
         + row('t', 'Transition entre exercices', 'standard ' + fmtDose(transSec(lv)) + ', à rallonger si besoin')
         + (S.rounds > 1 ? row('r', 'Récup entre tours', 'après chaque tour complet') : '')
         + '<p class="ta-total" id="ta_total"></p>'
@@ -11286,7 +11304,36 @@
         .sort(function(a, b){ return b.s - a.s; }).map(function(r){ return r.x; });
     }
     function usedOf(S){ var u = {}; ['warm','main','cool'].forEach(function(k){ (S[k] || []).forEach(function(x){ u[x.id] = 1; }); }); return u; }
-    function sortMain(S){ S.main.sort(function(a, b){ return (a.mob ? a.mob.o : 1) - (b.mob ? b.mob.o : 1); }); }
+    // Ordre des postures : on descend progressivement (chaise, debout, à genoux / 4 pattes, sur le ventre, assis, sur le côté, sur le dos)
+    // et, dans chaque position, les enchaînements logiques (fente basse puis demi-grand écart, chien tête en bas puis jambe levée…)
+    var POS_RANK = {
+      m23:1.00, e1:1.02, e11:1.02, e13:1.03, e15:1.04, y4:1.02, m33:1.05, m34:1.05, m35:1.04, m28:1.06, m26:1.07, m41:1.08, m43:1.09,
+      m39:1.20, m42:1.21, m24:1.22, m25:1.23, m36:1.24, m45:1.24, m47:1.25, m40:1.26, r6:1.20, m29:1.10, m46:1.11, m30:1.12, m31:1.12, m32:1.12, m44:1.12, m49:1.13, m50:1.13, m9:1.14, y2:1.14, m48:1.15,
+      y1:1.30, m27:1.31, m12:1.40,
+      e14:2.00, m20:2.02, m62:2.03, m10:2.04, m22:2.10, m8:2.11, y5:2.12, m5:2.20, m17:2.21, m1:2.30,
+      m15:2.50, y3:2.51, m7:2.60,
+      m11:3.00, m4:3.02, m16:3.03, m59:3.04,
+      m21:3.50, m6:3.51,
+      m60:4.00, m61:4.01, m14:4.02, m2:4.03, m3:4.04, m18:4.05, m13:4.10, m19:4.20
+    };
+    function posRank(x){ if(!x || !x.mob) return 1.5; if(POS_RANK[x.id] != null) return POS_RANK[x.id]; var o = x.mob.o; return o == null ? 1.5 : (o === 4 ? 4.03 : o + 0.15); }
+    function sortMain(S){
+      // Réveil : on part du sol (comme au sortir du lit) pour finir debout, en gardant les enchaînements de chaque position
+      var up = S.mob && S.mob.g === 'matin';
+      function key(x){ var k = posRank(x), g = Math.floor(k); if(!up || g < 1) return k; if(k >= 2.5 && k < 3) return 7.5 + (k - 2.5); return g >= 3 ? 10 - k : (10 - g) + (k - g); }
+      S.main.sort(function(a, b){ return key(a) - key(b); });
+    }
+    // Postures qui partent d'une autre : on ajoute celle de départ juste avant (ou on retire la posture si c'est impossible)
+    var NEEDS = {m17:['m5'], y5:['m8','m22']};
+    function fixChains(S){
+      Object.keys(NEEDS).forEach(function(id){
+        var i = S.main.map(function(x){ return x.id; }).indexOf(id); if(i < 0) return;
+        var have = NEEDS[id].some(function(n){ return S.main.some(function(x){ return x.id === n; }); }); if(have) return;
+        var add = null; NEEDS[id].some(function(n){ var e = exById(n); if(e && !exBlocked(n) && e.levels.indexOf(S.level) > -1){ add = e; return true; } return false; });
+        if(add) S.main.splice(i, 0, add); else S.main.splice(i, 1);
+      });
+      sortMain(S);
+    }
     function mainCands(S, o){
       var holdGoal = ['recup','soup','soir','yoga'].indexOf(o.g) > -1;
       var r = rank(pool(o, usedOf(S)).filter(function(x){ return x.mob.k !== 'dyn' || !holdGoal || normP(o.p) === 'c'; }), o);
@@ -11302,6 +11349,7 @@
       var target = S.durationMinutes * 60, c = mainCands(S, o), keepA = SESSION_ADJ; SESSION_ADJ = adjFor(S);
       S.rounds = 1;
       while(c.length && sessionSeconds(S) < target - 25){ S.main.push(c.shift()); sortMain(S); }
+      fixChains(S);
       // Pas assez de postures différentes (debout, chaise…) : on refait un ou plusieurs passages
       if(S.main.length >= 2) for(var r = 2; r <= 4 && sessionSeconds(S) < target - 90; r++) S.rounds = r;
       while(S.main.length > 2 && sessionSeconds(S) > target + 75){ S.main.pop(); }
@@ -11364,9 +11412,29 @@
       var o = {g:S.mob.g, z:all ? 'full' : normZ(S.mob.z), p:S.mob.p};
       return pool(o, usedOf(S)).filter(function(x){ return key !== 'warm' || x.mob.k === 'dyn'; }).sort(function(a, b){ return a.name.localeCompare(b.name); });
     };
+    // Plusieurs passages : un passage sur deux se fait dans l'ordre inverse, pour enchaîner sans se relever
+    var MOB_ALT = false, _bct = buildCircuitTimeline;
+    // Ordre inverse, mais les postures enchaînées restent dans le bon sens (fente basse puis demi-grand écart, chien puis jambe levée…)
+    var LINK = {m5:['m17'], m22:['m8','y5'], m8:['y5']};
+    function revChain(list){
+      var chunks = [];
+      list.forEach(function(x){ var last = chunks[chunks.length - 1], prev = last && last[last.length - 1]; if(prev && LINK[prev.id] && LINK[prev.id].indexOf(x.id) > -1) last.push(x); else chunks.push([x]); });
+      return [].concat.apply([], chunks.reverse());
+    }
+    buildCircuitTimeline = function(list, level, theme, rounds){
+      if(!MOB_ALT || rounds < 2) return _bct.apply(this, arguments);
+      var out = [];
+      for(var t = 1; t <= rounds; t++){
+        var seg = _bct(t % 2 === 0 ? revChain(list) : list, level, theme, 1);
+        seg.forEach(function(st){ if(st.sublabel === 'Tour 1/1') st.sublabel = 'Tour ' + t + '/' + rounds; });
+        out = out.concat(seg);
+        if(t < rounds) out.push({type:'rest', label:'Récupération entre tours', sublabel:'Tour ' + t + '/' + rounds + ' terminé', duration:roundRestSec(theme, level), ex:null, blockLabel:'Corps de séance'});
+      }
+      return out;
+    };
     var _bti = buildTimelineInner;
     buildTimelineInner = function(S){
-      var t = _bti(S);
+      MOB_ALT = !!(S && S.mob); var t; try{ t = _bti(S); } finally { MOB_ALT = false; }
       if(S && S.mob) t.forEach(function(st){
         st.recup = true;
         if(st.type === 'transition' && !st.prep){ st.duration = Math.max(10, st.duration || 0); st.label = 'Respire profondément'; }
@@ -13475,11 +13543,12 @@
       try{ var sy = window.speechSynthesis; sy.cancel(); var u = new SpeechSynthesisUtterance('Bonjour. Installe-toi confortablement, et respire profondément.'); u.lang = v && v.lang || 'fr-FR'; if(v) u.voice = v; u.rate = 0.9; u.pitch = 0.97; sy.speak(u); }catch(e){}
     }
     var ANDROID = /Android/i.test(navigator.userAgent);
-    var ANDROID_TIP = '<b>Sur Android, la voix se choisit dans les réglages du téléphone</b> (l’appli utilise la voix française réglée par défaut) :<br>'
-      + '1. Paramètres › cherche « <b>Synthèse vocale</b> » (souvent dans Accessibilité, ou Gestion globale › Langue).<br>'
-      + '2. Moteur préféré : <b>Services vocaux Google</b> (sur Samsung, remplace « Samsung TTS »).<br>'
-      + '3. Touche ⚙ à côté du moteur › Installer les données vocales › <b>Français (France)</b> › touche la voix qui te plaît (écoute-la, puis choisis-la).<br>'
-      + '4. <b>Ferme complètement Chrome et l’appli</b> (glisse-les hors des applis récentes), puis rouvre.';
+    var ANDROID_TIP = '<b>Sur Android, c’est le téléphone qui choisit la voix</b> : Chrome ne montre aux applis qu’une seule voix française, celle du moteur réglé par défaut. Pour utiliser la voix Google ou Samsung que tu as installée :<br>'
+      + '<a class="vs-settings" href="intent:#Intent;action=com.android.settings.TTS_SETTINGS;end">⚙ Ouvrir les réglages de synthèse vocale</a>'
+      + '1. <b>Moteur préféré</b> : choisis <b>Services vocaux Google</b> ou <b>Samsung TTS</b> (celui dont tu veux la voix).<br>'
+      + '2. Touche ⚙ à côté du moteur › <b>Français (France)</b> › choisis la voix (Voix I, II, III… ou Femme/Homme), écoute-la et valide.<br>'
+      + '3. <b>Ferme complètement Chrome et l’appli</b> (glisse-les hors des applis récentes), puis rouvre : la nouvelle voix est utilisée partout.<br>'
+      + '<small>Si le bouton ne s’ouvre pas : Paramètres › cherche « Synthèse vocale » (souvent dans Accessibilité ou Gestion globale › Langue).</small>';
     function fill(){
       var vs = window.ecVoiceList ? window.ecVoiceList() : [], cur = window.ecVoiceCurrent ? window.ecVoiceCurrent() : null;
       sh.querySelector('.vsheet-sub').textContent = ANDROID ? 'Touche une voix pour l’écouter. Sur Android, chaque ligne correspond à une langue : le timbre (femme, homme, plus doux) se règle dans le téléphone, voir plus bas.' : 'Touche une voix pour l’écouter : elle est aussitôt choisie pour toutes tes séances.';
@@ -15176,6 +15245,92 @@
     // Sécurité : tant que le chrono est ouvert, l'écran reste allumé
     var bd = document.getElementById('timerBackdrop');
     if(bd) new MutationObserver(function(){ if(bd.classList.contains('open') && !keep){ keep = true; acquire(); } }).observe(bd, {attributes:true, attributeFilter:['class']});
+  })();
+  // ---------- Pendant la séance : changer un exercice trop difficile ou qui ne passe pas aujourd'hui ----------
+  (function(){
+    var bd = document.getElementById('timerBackdrop'), later = document.getElementById('timerLater');
+    if(!bd || !later) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'timer-swap'; btn.id = 'timerSwap'; btn.hidden = true;
+    btn.innerHTML = '⇄ Trop dur ou pas aujourd’hui ? <b>Changer d’exercice</b>';
+    later.parentNode.insertBefore(btn, later.nextSibling);
+    var LV = {senior:0, debutant:0, intermediaire:1, avance:2};
+    function minLv(x){ return Math.min.apply(null, (x.levels || ['avance']).map(function(l){ return LV[l] != null ? LV[l] : 2; })); }
+    // L'exercice concerné : celui en cours, ou celui qui arrive pendant une transition / récup
+    function target(){
+      var tl = timerState.timeline || [], i = timerState.index, st = tl[i];
+      if(!st || timerState.recup || timerState.calm || !lastSession || lastSession.wod) return null;
+      if(bd.classList.contains('feedback')) return null;
+      var ex = st.ex;
+      if(!ex || st.type !== 'work'){ ex = null; for(var j = i + 1; j < tl.length; j++){ if(tl[j].type === 'work'){ ex = tl[j].ex; break; } } }
+      if(!ex || st.ft || (ex.breath && ex.breath.length) || ex.block === 'cardio') return null;
+      return ex;
+    }
+    function cands(ex){
+      var list = []; try{ list = replacementCandidates(lastSession, ex); }catch(e){ return []; }
+      var lo = minLv(ex);
+      return list.map(function(x){
+        var sc = 0;
+        if(minLv(x) < lo) sc += 4;
+        if(x.pattern && x.pattern === ex.pattern) sc += 3;
+        if(!!x.perSide === !!ex.perSide) sc += 2;
+        if(minLv(x) > lo) sc -= 4;
+        if(x.impact && !ex.impact) sc -= 3;
+        return {x:x, sc:sc + Math.random() * 1.5, easier:minLv(x) < lo};
+      }).sort(function(a, b){ return b.sc - a.sc; });
+    }
+    function paint(){ var ok = !!target() && bd.classList.contains('open'); btn.hidden = !ok; }
+    var _sh = sideHook; sideHook = function(){ var r = _sh.apply(this, arguments); try{ paint(); }catch(e){} return r; };
+    var _ls = loadStep; loadStep = function(){ var r = _ls.apply(this, arguments); try{ paint(); }catch(e){} return r; };
+    function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    var sheet = null, wasRunning = false, page = 0, cur = null, list = [];
+    function close(resume){
+      if(sheet){ sheet.remove(); sheet = null; }
+      if(resume && wasRunning && !timerState.running){ try{ pauseResumeWorkout(); }catch(e){} }
+    }
+    function render(){
+      var show = list.slice(page * 3, page * 3 + 3);
+      if(!show.length && list.length){ page = 0; show = list.slice(0, 3); }
+      var h = '<div class="tsw-card" role="dialog" aria-label="Changer d’exercice"><div class="tsw-head"><b>Remplacer « ' + esc(cur.name) + ' »</b><small>Pour la suite de la séance, avec le même temps d’effort.</small></div><div class="tsw-list">';
+      show.forEach(function(o, k){
+        var ph = ''; try{ ph = getExercisePhoto(o.x) || ''; }catch(e){}
+        h += '<button type="button" class="tsw-it" data-k="' + (page * 3 + k) + '"><span class="tsw-ph">' + (ph ? '<img src="' + ph + '" alt="">' : '') + '</span><span class="tsw-tx"><b>' + esc(o.x.name) + '</b>' + (o.easier ? '<em>Plus facile</em>' : (o.x.note ? '<small>' + esc(o.x.note) + '</small>' : '')) + '</span></button>';
+      });
+      h += '</div><div class="tsw-acts">' + (list.length > 3 ? '<button type="button" class="tsw-more">Autres idées</button>' : '') + '<button type="button" class="tsw-cancel">Garder l’exercice</button></div></div>';
+      sheet.innerHTML = h;
+    }
+    function open(){
+      cur = target(); if(!cur) return;
+      list = cands(cur);
+      if(!list.length){ showToast('Pas d’autre exercice disponible avec ce matériel et ce niveau.', false); return; }
+      wasRunning = !!timerState.running; if(wasRunning){ try{ pauseResumeWorkout(); }catch(e){} }
+      page = 0; sheet = document.createElement('div'); sheet.className = 'tsw-wrap'; bd.appendChild(sheet); render();
+      sheet.addEventListener('click', function(e){
+        if(e.target === sheet || e.target.closest('.tsw-cancel')){ close(true); return; }
+        if(e.target.closest('.tsw-more')){ page++; render(); return; }
+        var it = e.target.closest('.tsw-it'); if(!it) return;
+        apply(cur, list[+it.getAttribute('data-k')].x);
+      });
+    }
+    function apply(oldEx, nx){
+      var tl = timerState.timeline, i = timerState.index;
+      for(var j = i; j < tl.length; j++){
+        var st = tl[j]; if(st.ex !== oldEx) continue;
+        st.ex = nx;
+        if(st.type === 'work'){
+          st.label = nx.name;
+          if(nx.perSide && st.duration >= 30) st.side = {secs:Math.round((st.duration - SIDE_SWITCH_SEC) / 2), sw:SIDE_SWITCH_SEC}; else st.side = null;
+        } else if(st.sublabel === oldEx.name) st.sublabel = nx.name;
+      }
+      ['warm', 'main', 'cool'].forEach(function(k){ var a = lastSession[k] || []; var p = a.indexOf(oldEx); if(p > -1) a[p] = nx; });
+      lastSession.swapped = (lastSession.swapped || []).concat([{from:oldEx.name, to:nx.name}]);
+      close(false);
+      try{ if(tl[i].ex === nx && tl[i].type === 'work') loadStep(i); else loadStep(i); }catch(e){}
+      if(wasRunning && !timerState.running){ try{ pauseResumeWorkout(); }catch(e){} }
+      showToast('« ' + oldEx.name + ' » remplacé par « ' + nx.name + ' »', false);
+      paint();
+    }
+    btn.addEventListener('click', open);
+    new MutationObserver(function(){ if(!bd.classList.contains('open')) close(false); paint(); }).observe(bd, {attributes:true, attributeFilter:['class']});
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
