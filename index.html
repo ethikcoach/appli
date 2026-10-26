@@ -15345,15 +15345,13 @@
     var SS = window.speechSynthesis; if(!SS || !SS.speak) return;
     var VER = '1';
     var VOICES = [
-      {id:'v1', n:'Vivienne', d:'Douce et posée', g:'Femme'},
-      {id:'v2', n:'Vivienne', d:'Naturelle', g:'Femme'},
-      {id:'v3', n:'Denise', d:'Douce', g:'Femme'},
+      {id:'v3', n:'Denise', d:'Douce et posée', g:'Femme'},
       {id:'h1', n:'Henri', d:'Très doux', g:'Homme'},
       {id:'h2', n:'Henri', d:'Zen, idéal détente', g:'Homme'}
     ];
     var ANDROID = /Android/i.test(navigator.userAgent);
     function byId(v){ return VOICES.filter(function(x){ return x.id === v; })[0] || null; }
-    function cur(){ var v = null; try{ v = localStorage.getItem('ec_rec_voice'); }catch(e){} if(v === null) v = 'v1'; return byId(v) ? v : ''; }
+    function cur(){ var v = null; try{ v = localStorage.getItem('ec_rec_voice'); }catch(e){} if(v === null || v === 'v1' || v === 'v2') v = 'v3'; return byId(v) ? v : ''; }
     function setCur(v){ try{ localStorage.setItem('ec_rec_voice', v || ''); }catch(e){} if(v) loadIndex(v); paintUi(); }
     window.ecRecVoice = function(){ return cur(); };
     // --- Chargement (gardé en mémoire et sur l'appareil pour fonctionner hors connexion)
@@ -15405,11 +15403,14 @@
     }
     var outNode = null;
     function out(ac){
-      if(outNode && outNode.context === ac) return outNode;
-      // Voix un peu plus forte, sans saturer, pour passer au-dessus de la musique
-      var g = ac.createGain(); g.gain.value = 1.6;
-      var cp = ac.createDynamicsCompressor(); cp.threshold.value = -14; cp.knee.value = 10; cp.ratio.value = 4; cp.attack.value = 0.005; cp.release.value = 0.2;
-      g.connect(cp); cp.connect(ac.destination); outNode = g; return g;
+      // Voix nettement plus forte (encore plus en mode musique), compressée pour ne pas saturer
+      var mus = typeof ecMusic === 'function' && ecMusic();
+      if(outNode && outNode.context === ac && outNode._mus === mus) return outNode;
+      if(outNode && outNode.context === ac){ try{ outNode.disconnect(); }catch(e){} }
+      var g = ac.createGain(); g.gain.value = mus ? 5 : 3.2; g._mus = mus;
+      var cp = ac.createDynamicsCompressor(); cp.threshold.value = -10; cp.knee.value = mus ? 3 : 4; cp.ratio.value = mus ? 20 : 6; cp.attack.value = 0.003; cp.release.value = 0.15;
+      var mk = ac.createGain(); mk.gain.value = mus ? 0.95 : 1;
+      g.connect(cp); cp.connect(mk); mk.connect(ac.destination); outNode = g; return g;
     }
     var decoded = {}, curSrc = null;
     function decode(ac, c, ok, ko){
@@ -15500,7 +15501,7 @@
       var sh = document.querySelector('.vsheet'), list = sh && sh.querySelector('.vsheet-list'); if(!list || box) return;
       box = document.createElement('div'); box.className = 'vr-box';
       box.innerHTML = '<p class="vr-h"><b>Voix Ethik’Coach</b><small>Enregistrées : la même voix douce sur tous les téléphones</small></p>'
-        + VOICES.map(function(v){ return '<button type="button" class="vs-row vr-row" role="radio" data-rv="' + v.id + '"><span class="vs-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span><span class="vs-main"><span class="vs-name">' + v.n + (v.id === 'v1' ? ' <em>conseillée</em>' : '') + '</span><span class="vs-tags">' + v.g + ' · ' + v.d + '</span></span><span class="vs-check" aria-hidden="true"></span></button>'; }).join('')
+        + VOICES.map(function(v){ return '<button type="button" class="vs-row vr-row" role="radio" data-rv="' + v.id + '"><span class="vs-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span><span class="vs-main"><span class="vs-name">' + v.n + (v.id === 'v3' ? ' <em>conseillée</em>' : '') + '</span><span class="vs-tags">' + v.g + ' · ' + v.d + '</span></span><span class="vs-check" aria-hidden="true"></span></button>'; }).join('')
         + '<p class="vr-h vr-h2"><b>Voix du téléphone</b></p>';
       list.parentNode.insertBefore(box, list);
       box.addEventListener('click', function(e){ var r = e.target.closest('.vr-row'); if(!r) return; var v = r.getAttribute('data-rv'); unlock(); setCur(v); sample(v); });
