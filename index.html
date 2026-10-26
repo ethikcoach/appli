@@ -3783,8 +3783,15 @@
   .tsw-acts{display:flex; gap:8px;} .tsw-acts button{flex:1; min-height:46px; border-radius:999px; font-family:inherit; font-weight:700; font-size:0.9rem; cursor:pointer;}
   .tsw-more{border:1px solid var(--stone-light, #E3E6E1); background:transparent; color:var(--ink);} .tsw-cancel{border:none; background:#1F4030; color:#fff;}
   @media screen and (prefers-color-scheme: dark){ .tsw-tx em{background:#1D3A28; color:#9FD8B4;} .tsw-ph{background:#F4F6F3;} .tsw-cancel{background:#2E9E5E;} }
-  .vs-settings{display:block; margin:10px 0; padding:11px 14px; border-radius:14px; background:#1F4030; color:#fff !important; font-weight:700; text-align:center; text-decoration:none;}
+  .vs-path{display:block; margin:8px 0; padding:9px 12px; border-radius:12px; background:rgba(31,64,48,.08); line-height:1.4;}
+  @media screen and (prefers-color-scheme: dark){ .vs-path{background:rgba(255,255,255,.07);} }
   .vsheet-tip small{display:block; margin-top:6px; opacity:.8;}
+  .vr-box{display:flex; flex-direction:column; gap:8px; margin:0 0 8px;}
+  .vr-h{margin:6px 2px 2px; display:flex; flex-direction:column;} .vr-h b{font-size:0.95rem; color:var(--ink);} .vr-h small{font-size:0.78rem; color:var(--stone);}
+  .vr-h2{margin-top:14px;}
+  .vsheet.rec-on .vsheet-list .vs-row.on{border-color:var(--stone-light); box-shadow:none;}
+  .vsheet.rec-on .vsheet-list .vs-row.on .vs-check{background:none; border-color:var(--stone-light);}
+  .vsheet.rec-on .vsheet-tip{display:none !important;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -13544,11 +13551,11 @@
     }
     var ANDROID = /Android/i.test(navigator.userAgent);
     var ANDROID_TIP = '<b>Sur Android, c’est le téléphone qui choisit la voix</b> : Chrome ne montre aux applis qu’une seule voix française, celle du moteur réglé par défaut. Pour utiliser la voix Google ou Samsung que tu as installée :<br>'
-      + '<a class="vs-settings" href="intent:#Intent;action=com.android.settings.TTS_SETTINGS;end">⚙ Ouvrir les réglages de synthèse vocale</a>'
+      + '<span class="vs-path"><b>Samsung</b> : Paramètres › Gestion globale › Langue › <b>Synthèse vocale</b></span>'
+      + '<span class="vs-path"><b>Autres Android</b> : Paramètres › Système › Langues › <b>Synthèse vocale</b> (ou tape « synthèse » dans la recherche des Paramètres)</span>'
       + '1. <b>Moteur préféré</b> : choisis <b>Services vocaux Google</b> ou <b>Samsung TTS</b> (celui dont tu veux la voix).<br>'
       + '2. Touche ⚙ à côté du moteur › <b>Français (France)</b> › choisis la voix (Voix I, II, III… ou Femme/Homme), écoute-la et valide.<br>'
-      + '3. <b>Ferme complètement Chrome et l’appli</b> (glisse-les hors des applis récentes), puis rouvre : la nouvelle voix est utilisée partout.<br>'
-      + '<small>Si le bouton ne s’ouvre pas : Paramètres › cherche « Synthèse vocale » (souvent dans Accessibilité ou Gestion globale › Langue).</small>';
+      + '3. <b>Ferme complètement Chrome et l’appli</b> (glisse-les hors des applis récentes), puis rouvre : la nouvelle voix est utilisée partout.';
     function fill(){
       var vs = window.ecVoiceList ? window.ecVoiceList() : [], cur = window.ecVoiceCurrent ? window.ecVoiceCurrent() : null;
       sh.querySelector('.vsheet-sub').textContent = ANDROID ? 'Touche une voix pour l’écouter. Sur Android, chaque ligne correspond à une langue : le timbre (femme, homme, plus doux) se règle dans le téléphone, voir plus bas.' : 'Touche une voix pour l’écouter : elle est aussitôt choisie pour toutes tes séances.';
@@ -15331,6 +15338,156 @@
     }
     btn.addEventListener('click', open);
     new MutationObserver(function(){ if(!bd.classList.contains('open')) close(false); paint(); }).observe(bd, {attributes:true, attributeFilter:['class']});
+  })();
+  // ---------- Voix Ethik'Coach : annonces enregistrées (même voix douce sur Android et iPhone) ----------
+  (function(){
+    var SS = window.speechSynthesis; if(!SS || !SS.speak) return;
+    var VER = '1';
+    var VOICES = [
+      {id:'v1', n:'Vivienne', d:'Douce et posée', g:'Femme'},
+      {id:'v2', n:'Vivienne', d:'Naturelle', g:'Femme'},
+      {id:'v3', n:'Denise', d:'Douce', g:'Femme'},
+      {id:'h1', n:'Henri', d:'Très doux', g:'Homme'},
+      {id:'h2', n:'Henri', d:'Zen, idéal détente', g:'Homme'}
+    ];
+    var ANDROID = /Android/i.test(navigator.userAgent);
+    function byId(v){ return VOICES.filter(function(x){ return x.id === v; })[0] || null; }
+    function cur(){ var v = null; try{ v = localStorage.getItem('ec_rec_voice'); }catch(e){} if(v === null) v = ANDROID ? 'v1' : ''; return byId(v) ? v : ''; }
+    function setCur(v){ try{ localStorage.setItem('ec_rec_voice', v || ''); }catch(e){} if(v) loadIndex(v); paintUi(); }
+    window.ecRecVoice = function(){ return cur(); };
+    // --- Chargement (gardé en mémoire et sur l'appareil pour fonctionner hors connexion)
+    var mem = {}, pend = {}, IDX = {};
+    function get(f){
+      var u = f + '?v=' + VER;
+      if(mem[u]) return Promise.resolve(mem[u]);
+      if(pend[u]) return pend[u];
+      var fromNet = function(){ return fetch(u).then(function(r){ if(!r.ok) throw new Error('voix'); return r; }); };
+      var p = (window.caches ? caches.open('ec-voix').then(function(c){ return c.match(u).then(function(hit){ return hit || fromNet().then(function(r){ try{ c.put(u, r.clone()); }catch(e){} return r; }); }); }).catch(fromNet) : fromNet())
+        .then(function(r){ return r.arrayBuffer(); })
+        .then(function(b){ mem[u] = b; delete pend[u]; return b; }, function(e){ delete pend[u]; throw e; });
+      pend[u] = p; return p;
+    }
+    function has(f){ return !!mem[f + '?v=' + VER]; }
+    function buf(f){ return mem[f + '?v=' + VER]; }
+    function loadIndex(v){
+      if(IDX[v]) return Promise.resolve(IDX[v]);
+      return get('vx-' + v + '.json').then(function(b){ IDX[v] = JSON.parse(new TextDecoder().decode(b)); get('vx-' + v + '-c.bin').catch(function(){}); return IDX[v]; });
+    }
+    // --- Découpage des annonces en morceaux enregistrés
+    function key(s){ return String(s).trim().replace(/[\s.:,;!?…]+$/, '').trim().toLowerCase().replace(/’/g, "'"); }
+    function sentences(t){ return (String(t).match(/[^.!?…]+[.!?…]*/g) || []).map(function(s){ return s.trim(); }).filter(Boolean); }
+    function pieces(t){ var out = []; sentences(t).forEach(function(s){ s.split(/\s*:\s+/).forEach(function(p){ if(p.trim()) out.push(p.trim()); }); }); return out; }
+    function look(ix, k){ return ix.k[k] || null; }
+    function resolve(v, text){
+      var ix = IDX[v]; if(!ix) return null;
+      var out = [], miss = false;
+      pieces(text).forEach(function(p){
+        if(miss) return;
+        var k = key(p), e = look(ix, k);
+        if(e){ out.push(e); return; }
+        // « Récupération, 45 secondes » : on essaie morceau par morceau
+        var parts = p.split(/,\s+/);
+        if(parts.length > 1 && parts.every(function(q){ return look(ix, key(q)); })){ parts.forEach(function(q){ out.push(look(ix, key(q))); }); return; }
+        miss = true;
+      });
+      if(miss || !out.length) return null;
+      var files = out.map(function(e){ return 'vx-' + v + '-' + ix.b[e[0]] + '.bin'; });
+      var miss2 = files.filter(function(f){ return !has(f); });
+      if(miss2.length) return {need:miss2};
+      return {clips:out.map(function(e, i){ return {f:files[i], o:e[1], l:e[2]}; })};
+    }
+    // --- Lecture
+    var au = new Audio(); au.preload = 'auto';
+    var SIL = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAABwAAA2AAVVVVVVVVVVVVVVVVVVVxcXFxcXFxcXFxcXFxcY6Ojo6Ojo6Ojo6Ojo6Oqqqqqqqqqqqqqqqqqqqqx8fHx8fHx8fHx8fHx8fj4+Pj4+Pj4+Pj4+Pj4///////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQEIAAAAAAAAANgmVBi7QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+    var queue = [], playing = false, gapT = null, curUrl = null;
+    function next(){
+      clearTimeout(gapT);
+      var item = queue[0]; if(!item){ playing = false; return; }
+      playing = true;
+      if(item.wait){ return; }
+      var c = item.clips.shift();
+      if(!c){ queue.shift(); gapT = setTimeout(next, 160); return; }
+      if(curUrl){ try{ URL.revokeObjectURL(curUrl); }catch(e){} }
+      curUrl = URL.createObjectURL(new Blob([buf(c.f).slice(c.o, c.o + c.l)], {type:'audio/mpeg'}));
+      au.onended = au.onerror = function(){ gapT = setTimeout(next, 70); };
+      au.src = curUrl;
+      try{ au.playbackRate = item.rate; au.preservesPitch = true; au.webkitPreservesPitch = true; }catch(e){}
+      var pr = au.play(); if(pr && pr.catch) pr.catch(function(){ gapT = setTimeout(next, 70); });
+    }
+    function stopAll(){ queue.forEach(function(q){ q.dead = true; }); queue = []; clearTimeout(gapT); playing = false; try{ au.pause(); }catch(e){} }
+    function unlock(){ try{ au.src = SIL; var p = au.play(); if(p && p.catch) p.catch(function(){}); }catch(e){} }
+    var _speak = SS.speak.bind(SS), _cancel = SS.cancel.bind(SS);
+    SS.speak = function(u){
+      var v = cur();
+      if(v && u && u.text){
+        var rs = resolve(v, u.text), rate = (u.rate && u.rate < 0.95) ? 0.93 : 1;
+        if(rs && rs.clips){ queue.push({clips:rs.clips, rate:rate}); if(!playing) next(); return; }
+        // Morceaux pas encore chargés : on attend un court instant, sinon la voix du téléphone prend le relais
+        if(rs && rs.need){
+          var item = {clips:[], rate:rate, wait:true}; queue.push(item); playing = true;
+          var done = false, fin = function(ok){ if(done || item.dead) return; done = true; item.wait = false;
+            var r2 = ok ? resolve(v, u.text) : null;
+            if(r2 && r2.clips) item.clips = r2.clips; else { var k = queue.indexOf(item); if(k > -1) queue.splice(k, 1); _speak(u); }
+            if(queue[0] === item || !queue.length || (queue[0] && !queue[0].wait)) next(); };
+          Promise.all(rs.need.map(get)).then(function(){ fin(true); }, function(){ fin(false); });
+          setTimeout(function(){ fin(false); }, 1800);
+          return;
+        }
+      }
+      return _speak(u);
+    };
+    SS.cancel = function(){ stopAll(); return _cancel(); };
+    // --- Au démarrage d'une séance : on charge les morceaux utiles (noms des exercices, consignes)
+    var _sw = startWorkout;
+    startWorkout = function(){
+      var v = cur(); if(v) unlock();
+      var r = _sw.apply(this, arguments);
+      if(v) loadIndex(v).then(function(ix){
+        var need = {}; need['c'] = 1;
+        (timerState.timeline || []).forEach(function(st){
+          [st.label, st.ex && st.ex.name].forEach(function(n){ var e = n && ix.k[key(n)]; if(e) need[ix.b[e[0]]] = 1; });
+          var d = st.ex && st.ex.detail; if(d && timerState.recup){ pieces((d.start || '') + ' ' + (d.exec || '')).forEach(function(p){ var e = ix.k[key(p)]; if(e) need[ix.b[e[0]]] = 1; }); }
+        });
+        Object.keys(need).forEach(function(b){ get('vx-' + v + '-' + b + '.bin').catch(function(){}); });
+        // Le reste des annonces courantes (tours, durées longues…) arrive tranquillement en arrière-plan
+        setTimeout(function(){ ix.b.forEach(function(b){ if(/^x/.test(b)) get('vx-' + v + '-' + b + '.bin').catch(function(){}); }); }, 12000);
+      }).catch(function(){});
+      return r;
+    };
+    // La voix choisie s'affiche partout (« Voix : … »)
+    var _vc = window.ecVoiceCurrent;
+    window.ecVoiceCurrent = function(){ var v = byId(cur()); return v ? {name:v.n + ' (' + v.d.toLowerCase() + ')', voiceURI:'rec:' + v.id, lang:'fr-FR', rec:true} : (_vc ? _vc() : null); };
+    // --- Choix dans le panneau « Choisir la voix »
+    var box = null;
+    function sample(v){
+      loadIndex(v).then(function(){ return get('vx-' + v + '-c.bin'); }).then(function(){
+        stopAll(); _cancel();
+        var rs = resolve(v, 'Bonjour. Installe-toi confortablement, et respire profondément.');
+        if(rs && rs.clips){ queue.push({clips:rs.clips, rate:1}); next(); }
+      }).catch(function(){ try{ showToast('Voix indisponible pour le moment : vérifie ta connexion.', false); }catch(e){} });
+    }
+    function paintUi(){
+      var sh = document.querySelector('.vsheet'); if(!sh) return;
+      var on = cur();
+      sh.classList.toggle('rec-on', !!on);
+      if(box) box.querySelectorAll('.vr-row').forEach(function(r){ var me = r.getAttribute('data-rv') === on; r.classList.toggle('on', me); r.setAttribute('aria-checked', me ? 'true' : 'false'); });
+      document.querySelectorAll('.voice-link .vl-txt').forEach(function(t){ var c = window.ecVoiceCurrent(); if(c && c.name) t.textContent = 'Voix : ' + String(c.name).replace(/\s*\(.*\)$/, ''); });
+    }
+    function mount(){
+      var sh = document.querySelector('.vsheet'), list = sh && sh.querySelector('.vsheet-list'); if(!list || box) return;
+      box = document.createElement('div'); box.className = 'vr-box';
+      box.innerHTML = '<p class="vr-h"><b>Voix Ethik’Coach</b><small>Enregistrées : la même voix douce sur tous les téléphones</small></p>'
+        + VOICES.map(function(v){ return '<button type="button" class="vs-row vr-row" role="radio" data-rv="' + v.id + '"><span class="vs-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span><span class="vs-main"><span class="vs-name">' + v.n + (v.id === 'v1' ? ' <em>conseillée</em>' : '') + '</span><span class="vs-tags">' + v.g + ' · ' + v.d + '</span></span><span class="vs-check" aria-hidden="true"></span></button>'; }).join('')
+        + '<p class="vr-h vr-h2"><b>Voix du téléphone</b></p>';
+      list.parentNode.insertBefore(box, list);
+      box.addEventListener('click', function(e){ var r = e.target.closest('.vr-row'); if(!r) return; var v = r.getAttribute('data-rv'); setCur(v); sample(v); });
+      list.addEventListener('click', function(e){ if(e.target.closest('.vs-row')){ try{ localStorage.setItem('ec_rec_voice', ''); }catch(err){} setTimeout(paintUi, 0); } }, true);
+      paintUi();
+    }
+    var _ov = window.ecOpenVoice;
+    if(_ov) window.ecOpenVoice = function(){ mount(); var r = _ov.apply(this, arguments); paintUi(); return r; };
+    document.addEventListener('ec-voice', function(){ setTimeout(paintUi, 0); });
+    setTimeout(function(){ mount(); paintUi(); var v = cur(); if(v) loadIndex(v).catch(function(){}); }, 1500);
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
