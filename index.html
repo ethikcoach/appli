@@ -5660,6 +5660,7 @@
   var ecDuckT = null;
   function ecDuck(ms){
     var AS = navigator.audioSession; if(!AS) return;
+    if(window.ecRecVoice && window.ecRecVoice()){ try{ if(AS.type !== 'ambient') AS.type = 'ambient'; }catch(e){} return; }
     try{ if(AS.type !== 'transient') AS.type = 'transient'; }catch(e){}
     clearTimeout(ecDuckT); ecDuckT = setTimeout(function(){ try{ AS.type = 'ambient'; }catch(e){} }, ms || 1500);
   }
@@ -15352,11 +15353,11 @@
     ];
     var ANDROID = /Android/i.test(navigator.userAgent);
     function byId(v){ return VOICES.filter(function(x){ return x.id === v; })[0] || null; }
-    function cur(){ var v = null; try{ v = localStorage.getItem('ec_rec_voice'); }catch(e){} if(v === null) v = ANDROID ? 'v1' : ''; return byId(v) ? v : ''; }
+    function cur(){ var v = null; try{ v = localStorage.getItem('ec_rec_voice'); }catch(e){} if(v === null) v = 'v1'; return byId(v) ? v : ''; }
     function setCur(v){ try{ localStorage.setItem('ec_rec_voice', v || ''); }catch(e){} if(v) loadIndex(v); paintUi(); }
     window.ecRecVoice = function(){ return cur(); };
     // --- Chargement (gardé en mémoire et sur l'appareil pour fonctionner hors connexion)
-    var mem = {}, pend = {}, IDX = {};
+    var mem = {}, pend = {}, IDX = {}, failAt = 0;
     function get(f){
       var u = f + '?v=' + VER;
       if(mem[u]) return Promise.resolve(mem[u]);
@@ -15371,7 +15372,7 @@
     function buf(f){ return mem[f + '?v=' + VER]; }
     function loadIndex(v){
       if(IDX[v]) return Promise.resolve(IDX[v]);
-      return get('vx-' + v + '.json').then(function(b){ IDX[v] = JSON.parse(new TextDecoder().decode(b)); get('vx-' + v + '-c.bin').catch(function(){}); return IDX[v]; });
+      return get('vx-' + v + '.json').then(function(b){ IDX[v] = JSON.parse(new TextDecoder().decode(b)); get('vx-' + v + '-c.bin').catch(function(){}); return IDX[v]; }, function(e){ failAt = Date.now(); throw e; });
     }
     // --- Découpage des annonces en morceaux enregistrés
     function key(s){ return String(s).trim().replace(/[\s.:,;!?…]+$/, '').trim().toLowerCase().replace(/’/g, "'"); }
@@ -15396,10 +15397,28 @@
       if(miss2.length) return {need:miss2};
       return {clips:out.map(function(e, i){ return {f:files[i], o:e[1], l:e[2]}; })};
     }
-    // --- Lecture
-    var au = new Audio(); au.preload = 'auto';
-    var SIL = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAABwAAA2AAVVVVVVVVVVVVVVVVVVVxcXFxcXFxcXFxcXFxcY6Ojo6Ojo6Ojo6Ojo6Oqqqqqqqqqqqqqqqqqqqqx8fHx8fHx8fHx8fHx8fj4+Pj4+Pj4+Pj4+Pj4///////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQEIAAAAAAAAANgmVBi7QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExFMAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKYAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMu//NExKwAAANIAAAAADEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NExKwAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-    var queue = [], playing = false, gapT = null, curUrl = null;
+    // --- Lecture par le moteur audio de la page (Web Audio) : il se mélange à la musique
+    // des autres applis au lieu de la mettre en pause (iPhone comme Android)
+    function ctx(){
+      try{ if(!timerState.audioCtx) timerState.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; }
+      return timerState.audioCtx;
+    }
+    var outNode = null;
+    function out(ac){
+      if(outNode && outNode.context === ac) return outNode;
+      // Voix un peu plus forte, sans saturer, pour passer au-dessus de la musique
+      var g = ac.createGain(); g.gain.value = 1.6;
+      var cp = ac.createDynamicsCompressor(); cp.threshold.value = -14; cp.knee.value = 10; cp.ratio.value = 4; cp.attack.value = 0.005; cp.release.value = 0.2;
+      g.connect(cp); cp.connect(ac.destination); outNode = g; return g;
+    }
+    var decoded = {}, curSrc = null;
+    function decode(ac, c, ok, ko){
+      var k = c.f + '@' + c.o; if(decoded[k]) return ok(decoded[k]);
+      var data = buf(c.f).slice(c.o, c.o + c.l), done = false;
+      var res = function(ab){ if(done) return; done = true; decoded[k] = ab; ok(ab); }, rej = function(){ if(done) return; done = true; ko(); };
+      try{ var p = ac.decodeAudioData(data, res, rej); if(p && p.then) p.then(res, rej); }catch(e){ rej(); }
+    }
+    var queue = [], playing = false, gapT = null;
     function next(){
       clearTimeout(gapT);
       var item = queue[0]; if(!item){ playing = false; return; }
@@ -15407,15 +15426,17 @@
       if(item.wait){ return; }
       var c = item.clips.shift();
       if(!c){ queue.shift(); gapT = setTimeout(next, 160); return; }
-      if(curUrl){ try{ URL.revokeObjectURL(curUrl); }catch(e){} }
-      curUrl = URL.createObjectURL(new Blob([buf(c.f).slice(c.o, c.o + c.l)], {type:'audio/mpeg'}));
-      au.onended = au.onerror = function(){ gapT = setTimeout(next, 70); };
-      au.src = curUrl;
-      try{ au.playbackRate = item.rate; au.preservesPitch = true; au.webkitPreservesPitch = true; }catch(e){}
-      var pr = au.play(); if(pr && pr.catch) pr.catch(function(){ gapT = setTimeout(next, 70); });
+      var ac = ctx(); if(!ac){ gapT = setTimeout(next, 70); return; }
+      if(ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+      decode(ac, c, function(ab){
+        if(item.dead) return;
+        var src = ac.createBufferSource(); src.buffer = ab; src.connect(out(ac)); curSrc = src;
+        src.onended = function(){ if(curSrc === src) curSrc = null; if(!item.dead) gapT = setTimeout(next, 70); };
+        try{ src.start(); }catch(e){ gapT = setTimeout(next, 70); }
+      }, function(){ gapT = setTimeout(next, 70); });
     }
-    function stopAll(){ queue.forEach(function(q){ q.dead = true; }); queue = []; clearTimeout(gapT); playing = false; try{ au.pause(); }catch(e){} }
-    function unlock(){ try{ au.src = SIL; var p = au.play(); if(p && p.catch) p.catch(function(){}); }catch(e){} }
+    function stopAll(){ queue.forEach(function(q){ q.dead = true; }); queue = []; clearTimeout(gapT); playing = false; try{ if(curSrc){ curSrc.onended = null; curSrc.stop(); } }catch(e){} curSrc = null; }
+    function unlock(){ var ac = ctx(); if(!ac) return; try{ if(ac.state === 'suspended') ac.resume(); var b = ac.createBuffer(1, 1, 22050), s0 = ac.createBufferSource(); s0.buffer = b; s0.connect(ac.destination); s0.start(); }catch(e){} }
     var _speak = SS.speak.bind(SS), _cancel = SS.cancel.bind(SS);
     SS.speak = function(u){
       var v = cur();
@@ -15423,13 +15444,15 @@
         var rs = resolve(v, u.text), rate = (u.rate && u.rate < 0.95) ? 0.93 : 1;
         if(rs && rs.clips){ queue.push({clips:rs.clips, rate:rate}); if(!playing) next(); return; }
         // Morceaux pas encore chargés : on attend un court instant, sinon la voix du téléphone prend le relais
-        if(rs && rs.need){
+        // Fichiers de voix introuvables (pas encore en ligne, pas de réseau) : voix du téléphone directement
+        if(!IDX[v] && Date.now() - failAt < 60000) return _speak(u);
+        if(!IDX[v] || (rs && rs.need)){
           var item = {clips:[], rate:rate, wait:true}; queue.push(item); playing = true;
           var done = false, fin = function(ok){ if(done || item.dead) return; done = true; item.wait = false;
             var r2 = ok ? resolve(v, u.text) : null;
             if(r2 && r2.clips) item.clips = r2.clips; else { var k = queue.indexOf(item); if(k > -1) queue.splice(k, 1); _speak(u); }
             if(queue[0] === item || !queue.length || (queue[0] && !queue[0].wait)) next(); };
-          Promise.all(rs.need.map(get)).then(function(){ fin(true); }, function(){ fin(false); });
+          loadIndex(v).then(function(){ var r1 = resolve(v, u.text); return r1 && r1.need ? Promise.all(r1.need.map(get)) : null; }).then(function(){ fin(true); }, function(){ fin(false); });
           setTimeout(function(){ fin(false); }, 1800);
           return;
         }
@@ -15480,7 +15503,7 @@
         + VOICES.map(function(v){ return '<button type="button" class="vs-row vr-row" role="radio" data-rv="' + v.id + '"><span class="vs-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span><span class="vs-main"><span class="vs-name">' + v.n + (v.id === 'v1' ? ' <em>conseillée</em>' : '') + '</span><span class="vs-tags">' + v.g + ' · ' + v.d + '</span></span><span class="vs-check" aria-hidden="true"></span></button>'; }).join('')
         + '<p class="vr-h vr-h2"><b>Voix du téléphone</b></p>';
       list.parentNode.insertBefore(box, list);
-      box.addEventListener('click', function(e){ var r = e.target.closest('.vr-row'); if(!r) return; var v = r.getAttribute('data-rv'); setCur(v); sample(v); });
+      box.addEventListener('click', function(e){ var r = e.target.closest('.vr-row'); if(!r) return; var v = r.getAttribute('data-rv'); unlock(); setCur(v); sample(v); });
       list.addEventListener('click', function(e){ if(e.target.closest('.vs-row')){ try{ localStorage.setItem('ec_rec_voice', ''); }catch(err){} setTimeout(paintUi, 0); } }, true);
       paintUi();
     }
