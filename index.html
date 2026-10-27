@@ -15649,6 +15649,16 @@
     }
     setTimeout(helpBtn, 1200); document.addEventListener('click', function(){ setTimeout(helpBtn, 50); });
   })();
+  // ---------- Pause : la voix s'arrête net (bouton Pause ou toucher l'écran) ----------
+  (function(){
+    var _pr = pauseResumeWorkout;
+    pauseResumeWorkout = function(){
+      var willPause = !!timerState.running;
+      if(willPause){ try{ stopSpeech(); }catch(e){} try{ window.speechSynthesis.cancel(); }catch(e){} }
+      return _pr.apply(this, arguments);
+    };
+  })();
+
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
   // ajoute une entrée d'historique : le bouton retour la referme au lieu de
