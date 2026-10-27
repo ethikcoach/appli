@@ -3792,6 +3792,33 @@
   .vsheet.rec-on .vsheet-list .vs-row.on{border-color:var(--stone-light); box-shadow:none;}
   .vsheet.rec-on .vsheet-list .vs-row.on .vs-check{background:none; border-color:var(--stone-light);}
   .vsheet.rec-on .vsheet-tip{display:none !important;}
+  /* Visite guidée */
+  .tr-wrap{position:fixed; inset:0; z-index:600; display:flex; align-items:center; justify-content:center; padding:max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    background:radial-gradient(circle at 15% 10%, rgba(46,158,94,.45), transparent 45%), radial-gradient(circle at 90% 85%, rgba(30,154,150,.35), transparent 45%), #0B1712; opacity:0; transition:opacity .25s ease;}
+  .tr-wrap.show{opacity:1;}
+  .tr-card{width:100%; max-width:480px; height:100%; max-height:860px; display:flex; flex-direction:column; color:#EAF3EE;}
+  .tr-top{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 2px 10px;}
+  .tr-dots{display:flex; gap:5px; flex-wrap:wrap;} .tr-dots i{width:7px; height:7px; border-radius:99px; background:rgba(255,255,255,.22); transition:all .2s;} .tr-dots i.done{background:rgba(52,201,120,.55);} .tr-dots i.on{width:20px; background:#34C978;}
+  .tr-skip{border:none; background:rgba(255,255,255,.1); color:#EAF3EE; border-radius:999px; padding:8px 14px; font:inherit; font-size:0.85rem; cursor:pointer;}
+  .tr-body{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px 2px 10px;}
+  .tr-shot{display:flex; justify-content:center; margin:2px 0 14px;}
+  .tr-shot img{display:block; max-width:100%; max-height:42vh; width:auto; border-radius:22px; box-shadow:0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08);}
+  .tr-noimg{padding:40px 20px; border-radius:22px; background:rgba(255,255,255,.06); font-size:.85rem; opacity:.8;}
+  .tr-hero{display:flex; justify-content:center; padding:7vh 0 18px;} .tr-hero img{width:150px; height:auto; filter:drop-shadow(0 10px 30px rgba(52,201,120,.35));}
+  .tr-body h2{margin:0 0 10px; font-family:'Bricolage Grotesque',sans-serif; font-size:1.55rem; line-height:1.15; color:#fff;}
+  .tr-intro{margin:0; font-size:1rem; line-height:1.5; color:rgba(234,243,238,.85);}
+  .tr-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px;}
+  .tr-list li{display:flex; gap:10px; align-items:flex-start; font-size:0.92rem; line-height:1.4; color:rgba(234,243,238,.88);} .tr-list b{color:#fff;}
+  .tr-n{flex:none; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:#1F4030; border:2px solid #fff; color:#fff; font-weight:800; font-size:0.78rem; margin-top:-1px;}
+  .tr-foot{margin:12px 0 0; padding:10px 12px; border-radius:14px; background:rgba(52,201,120,.12); font-size:0.85rem; line-height:1.45; color:rgba(234,243,238,.9);}
+  .tr-nav{display:flex; gap:10px; padding-top:10px;}
+  .tr-prev{flex:0 0 auto; border:none; background:transparent; color:rgba(234,243,238,.8); font:inherit; font-size:0.92rem; padding:0 10px; cursor:pointer;}
+  .tr-next{flex:1; min-height:52px; border:none; border-radius:999px; background:linear-gradient(135deg, #34C978, #1E9A96); color:#06150D; font:inherit; font-weight:800; font-size:1.02rem; cursor:pointer; box-shadow:0 10px 26px rgba(52,201,120,.35);}
+  .sc-tour{background:linear-gradient(100deg, #EAF5EE, #D9EEE6);} .sc-tour .sc-go{background:#1F4030;}
+  .sc-tour[hidden]{display:none !important;}
+  @media screen and (prefers-color-scheme: dark){ .sc-tour{background:linear-gradient(100deg, #12291B, #123330);} .sc-tour .sc-go{background:#2E9E5E;} }
+  .tr-help{display:flex; align-items:center; gap:12px; width:100%; margin:0 0 14px; padding:12px 14px; border:none; border-radius:16px; background:var(--acc-soft, #DCE5EE); color:var(--ink); font:inherit; text-align:left; cursor:pointer;}
+  .tr-help > span:first-child{font-size:1.3rem;} .tr-help > span:nth-child(2){flex:1; display:flex; flex-direction:column;} .tr-help small{color:var(--stone); font-size:0.8rem;} .tr-help > span:last-child{font-size:1.3rem; color:var(--stone);}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -14371,7 +14398,7 @@
       }catch(e){}
       window.ecShowView('today'); window.scrollTo(0, 0);
       if(window.ecConfetti) setTimeout(window.ecConfetti, 450);
-      setTimeout(function(){ if(typeof showToast === 'function') showToast('C’est parti ! Choisis ta première séance 👇', false); }, 400);
+      setTimeout(function(){ if(window.ecTour) window.ecTour(0); else if(typeof showToast === 'function') showToast('C’est parti ! Choisis ta première séance 👇', false); }, 1500);
     }
     Q.addEventListener('click', function(e){
       if(e.target.closest('.q-skip')){ qFinish(false); return; }
@@ -15512,6 +15539,85 @@
     if(_ov) window.ecOpenVoice = function(){ mount(); var r = _ov.apply(this, arguments); paintUi(); return r; };
     document.addEventListener('ec-voice', function(){ setTimeout(paintUi, 0); });
     setTimeout(function(){ mount(); paintUi(); var v = cur(); if(v) loadIndex(v).catch(function(){}); }, 1500);
+  })();
+  // ---------- Visite guidée de l'appli (après les questions de départ, et depuis l'aide) ----------
+  (function(){
+    var VER = 'b0f010af';
+    var SL = [
+      {t:'Bienvenue dans ton appli', i:null, intro:'En 1 minute, découvre comment créer ta séance, l’adapter et te laisser guider. Tu pourras revoir cette visite à tout moment avec le bouton <b>?</b> en haut.', b:[]},
+      {t:'Ta page Aujourd’hui', i:'s1', b:[['Démarrer', 'lance tout de suite la séance proposée pour aujourd’hui.'], ['Voir la séance', 'le détail des exercices avant de commencer.'], ['Adapter', 'change la durée, le matériel ou la zone en un geste.'], ['Envie d’autre chose ?', 'des séances express : renfo, étirements, respiration…']]},
+      {t:'Créer une séance', i:'s2', b:[['Choisis le type', '<b>Renfo</b> sur mesure, <b>Récup</b> (étirements, yoga, mobilité, massage, respiration), <b>Défis & WOD</b> au chrono, ou un <b>Programme</b> sur plusieurs semaines.'], ['Mes séances et programmes', 'tout ce que tu enregistres ou composes est rangé ici.']]},
+      {t:'Règle-la en quelques touches', i:'s3', b:[['Combien de temps ?', 'de 10 à 60 minutes.'], ['Que veux-tu travailler ?', 'corps complet, haut, bas, gainage ou équilibre. Plus bas : ton matériel et ton niveau.'], ['Générer ma séance', 'ta séance est prête en un clic. « Retour » te ramène au choix du type.']]},
+      {t:'Ta séance est prête', i:'s4', b:[['Démarrer la séance', 'lance le chrono guidé.'], ['Régler les temps', 'temps d’effort, récupérations et transitions, plus ou moins longs.'], ['Ajuster', 'change, retire ou ajoute des exercices.'], ['Favori', 'garde la séance pour la refaire plus tard.'], ['Envoyer', 'partage-la par message.']]},
+      {t:'Modifie chaque exercice', i:'s4b', b:[['Remplacer', 'un autre exercice de la même zone, avec ton matériel.'], ['Retirer', 'l’enlève de la séance.'], ['Temps', 'touche le temps pour l’allonger ou le raccourcir.']], foot:'Touche la photo d’un exercice pour voir sa fiche : départ, mouvement, erreurs à éviter et vidéo.'},
+      {t:'Pendant la séance', i:'s5', b:[['Pause / Reprendre', 'ou touche simplement l’écran.'], ['Passer', 'va directement à l’étape suivante.'], ['Changer d’exercice', 'trop dur ou pas aujourd’hui ? 3 remplaçants te sont proposés.']], foot:'En haut de l’écran : <b>Voix</b> pour choisir ou couper la voix, et <b>🎵</b> pour le mode musique (bips plus forts, voix au maximum). Les consignes s’affichent pendant l’effort et ton téléphone reste allumé jusqu’à la fin.'},
+      {t:'Choisis ta voix', i:'s6', b:[['Voix Ethik’Coach', 'Denise, Clara ou Henri : douces, posées, et la même sur tous les téléphones. Touche une voix pour l’écouter.']], foot:'Ta musique continue pendant les annonces. Sur iPhone, pense à désactiver l’interrupteur silencieux.'},
+      {t:'Suis tes progrès', i:'s7', b:[['Tes chiffres', 'séances de la semaine, semaines d’affilée, total.'], ['Activité, Progrès, Mes séances', 'ton historique, tes courbes et tes tests de forme.'], ['Calendrier', 'chaque séance faite apparaît sur son jour.']]},
+      {t:'Tous les exercices', i:'s8', b:[['Recherche', 'trouve un exercice par son nom.'], ['Filtres', 'par zone du corps et par matériel.'], ['Fiches', 'photo, consignes et vidéo de démonstration.']]},
+      {t:'À toi de jouer !', i:null, intro:'Ta première séance t’attend sur la page Aujourd’hui. Bonne séance 💪', b:[], last:true}
+    ];
+    var loaded = false, loading = null;
+    function load(){
+      if(window.EC_TOUR) return Promise.resolve();
+      if(loading) return loading;
+      loading = new Promise(function(res){ var s = document.createElement('script'); s.src = 'tour.js?v=' + VER; s.onload = s.onerror = function(){ res(); }; document.head.appendChild(s); });
+      return loading;
+    }
+    var W = null, k = 0;
+    function esc(t){ return String(t); }
+    function render(){
+      var s = SL[k], img = s.i && window.EC_TOUR && window.EC_TOUR[s.i];
+      W.querySelector('.tr-dots').innerHTML = SL.map(function(_, j){ return '<i class="' + (j === k ? 'on' : (j < k ? 'done' : '')) + '"></i>'; }).join('');
+      var h = '';
+      if(s.i){ h += '<div class="tr-shot">' + (img ? '<img src="' + img + '" alt="">' : '<div class="tr-noimg">Aperçu indisponible hors connexion</div>') + '</div>'; }
+      else h += '<div class="tr-hero"><img src="' + (document.querySelector('.site-logo') || document.getElementById('ecLogo') || {}).src + '" alt="" onerror="this.remove()"></div>';
+      h += '<h2>' + s.t + '</h2>';
+      if(s.intro) h += '<p class="tr-intro">' + s.intro + '</p>';
+      if(s.b.length) h += '<ol class="tr-list">' + s.b.map(function(x, j){ return '<li><span class="tr-n">' + (j + 1) + '</span><span><b>' + x[0] + '</b> : ' + x[1] + '</span></li>'; }).join('') + '</ol>';
+      if(s.foot) h += '<p class="tr-foot">' + s.foot + '</p>';
+      var body = W.querySelector('.tr-body'); body.innerHTML = h; body.scrollTop = 0;
+      W.querySelector('.tr-prev').style.visibility = k === 0 ? 'hidden' : 'visible';
+      W.querySelector('.tr-next').textContent = k === 0 ? 'C’est parti' : (s.last ? 'Commencer' : 'Suivant');
+      W.querySelector('.tr-skip').style.visibility = s.last ? 'hidden' : 'visible';
+      W.querySelector('.tr-skip').textContent = k === 0 ? 'Plus tard' : 'Passer';
+    }
+    function close(){ try{ localStorage.setItem('ec_tour_seen', '1'); }catch(e){} if(W){ W.classList.remove('show'); var w = W; setTimeout(function(){ w.remove(); }, 250); W = null; } paintCard(); }
+    function open(start){
+      if(W) return;
+      W = document.createElement('div'); W.className = 'tr-wrap'; W.setAttribute('role', 'dialog'); W.setAttribute('aria-label', 'Visite guidée');
+      W.innerHTML = '<div class="tr-card"><div class="tr-top"><div class="tr-dots"></div><button type="button" class="tr-skip">Passer</button></div><div class="tr-body"></div>'
+        + '<div class="tr-nav"><button type="button" class="tr-prev">‹ Précédent</button><button type="button" class="tr-next">Suivant</button></div></div>';
+      document.body.appendChild(W);
+      k = start || 0; render(); requestAnimationFrame(function(){ if(W) W.classList.add('show'); });
+      load().then(function(){ if(W) render(); });
+      W.querySelector('.tr-skip').addEventListener('click', close);
+      W.querySelector('.tr-prev').addEventListener('click', function(){ if(k > 0){ k--; render(); } });
+      W.querySelector('.tr-next').addEventListener('click', function(){ if(SL[k].last){ close(); try{ window.ecShowView('today'); window.scrollTo(0, 0); }catch(e){} return; } k++; render(); });
+      var x0 = null;
+      W.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+      W.addEventListener('touchend', function(e){ if(x0 === null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null; if(Math.abs(dx) < 60) return; if(dx < 0 && !SL[k].last){ k++; render(); } else if(dx > 0 && k > 0){ k--; render(); } }, {passive:true});
+    }
+    window.ecTour = open;
+    // Carte sur Aujourd'hui pour ceux qui ne l'ont pas encore vue (testeurs déjà inscrits)
+    var card = null;
+    function seen(){ try{ return localStorage.getItem('ec_tour_seen') === '1'; }catch(e){ return true; } }
+    function paintCard(){
+      var tc = document.getElementById('todayCard'); if(!tc) return;
+      if(!card){ card = document.createElement('div'); card.className = 'safe-card sc-tour'; card.innerHTML = '<span class="sc-ico">🎬</span><span class="sc-txt"><b>Visite guidée de l’appli</b><small>1 minute pour découvrir toutes les fonctions.</small></span><span class="sc-acts"><button type="button" class="sc-go" data-tr="go">Voir</button><button type="button" class="sc-later" data-tr="x" aria-label="Plus tard">✕</button></span>';
+        tc.parentNode.insertBefore(card, tc.nextSibling);
+        card.addEventListener('click', function(e){ var b = e.target.closest('[data-tr]'); if(!b) return; if(b.getAttribute('data-tr') === 'go') open(1); else { try{ localStorage.setItem('ec_tour_seen', '1'); }catch(err){} paintCard(); } }); }
+      var on = false; try{ on = !!localStorage.getItem('ec_onboard_v1') && !seen(); }catch(e){}
+      card.hidden = !on;
+    }
+    setTimeout(paintCard, 800);
+    // Dans l'aide : « Revoir la visite guidée »
+    function helpBtn(){
+      var hs = document.querySelector('#helpSheet .help-scroll'); if(!hs || hs.querySelector('.tr-help')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'tr-help'; b.innerHTML = '<span>🎬</span><span><b>Visite guidée de l’appli</b><small>Revoir les fonctions en images</small></span><span aria-hidden="true">›</span>';
+      hs.insertBefore(b, hs.firstChild);
+      b.addEventListener('click', function(){ var x = document.querySelector('#helpSheet .help-close'); if(x) x.click(); setTimeout(function(){ open(1); }, 250); });
+    }
+    setTimeout(helpBtn, 1200); document.addEventListener('click', function(){ setTimeout(helpBtn, 50); });
   })();
   // ---------- Bouton retour du téléphone ----------
   // Chaque « couche » ouverte (résultats, onglet respiration, fenêtres, chrono)
