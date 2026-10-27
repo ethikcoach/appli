@@ -3819,6 +3819,46 @@
   @media screen and (prefers-color-scheme: dark){ .sc-tour{background:linear-gradient(100deg, #12291B, #123330);} .sc-tour .sc-go{background:#2E9E5E;} }
   .tr-help{display:flex; align-items:center; gap:12px; width:100%; margin:0 0 14px; padding:12px 14px; border:none; border-radius:16px; background:var(--acc-soft, #DCE5EE); color:var(--ink); font:inherit; text-align:left; cursor:pointer;}
   .tr-help > span:first-child{font-size:1.3rem;} .tr-help > span:nth-child(2){flex:1; display:flex; flex-direction:column;} .tr-help small{color:var(--stone); font-size:0.8rem;} .tr-help > span:last-child{font-size:1.3rem; color:var(--stone);}
+  /* ---------- Séance lancée : fond à la couleur de la famille (Renfo vert, Défis orange, Programme violet, Récup sarcelle) ---------- */
+  .timer-backdrop[data-fam="renfo"], .timer-backdrop[data-fam="renfo"][data-kind="work"], .timer-backdrop[data-fam="renfo"][data-kind="done"]{background:#1F5A3A;}
+  .timer-backdrop[data-fam="renfo"][data-kind="transition"]{background:#18452D;}
+  .timer-backdrop[data-fam="renfo"][data-kind="rest"]{background:#173E30;}
+  .timer-backdrop[data-fam="renfo"][data-kind="prep"]{background:#123323;}
+  .timer-backdrop[data-fam="defi"], .timer-backdrop[data-fam="defi"][data-kind="work"], .timer-backdrop[data-fam="defi"][data-kind="done"]{background:#9A4A10;}
+  .timer-backdrop[data-fam="defi"][data-kind="transition"]{background:#733812;}
+  .timer-backdrop[data-fam="defi"][data-kind="rest"]{background:#6A3418;}
+  .timer-backdrop[data-fam="defi"][data-kind="prep"]{background:#55290C;}
+  .timer-backdrop[data-fam="prog"], .timer-backdrop[data-fam="prog"][data-kind="work"], .timer-backdrop[data-fam="prog"][data-kind="done"]{background:#4A3C8C;}
+  .timer-backdrop[data-fam="prog"][data-kind="transition"]{background:#382D6B;}
+  .timer-backdrop[data-fam="prog"][data-kind="rest"]{background:#33295F;}
+  .timer-backdrop[data-fam="prog"][data-kind="prep"]{background:#2A2150;}
+  .timer-backdrop[data-fam="recup"], .timer-backdrop[data-fam="recup"][data-kind="work"], .timer-backdrop[data-fam="recup"][data-kind="done"]{background:#17605E;}
+  .timer-backdrop[data-fam="recup"][data-kind="transition"]{background:#124A48;}
+  .timer-backdrop[data-fam="recup"][data-kind="rest"]{background:#11403F;}
+  .timer-backdrop[data-fam="recup"][data-kind="prep"]{background:#0E3433;}
+  .timer-backdrop.calm[data-fam="recup"], .timer-backdrop.calm[data-fam="recup"][data-kind]{background:#0E3433;}
+  .timer-backdrop[data-fam="defi"] .timer-kind.work, .timer-backdrop[data-fam="defi"] .timer-tips b, .timer-backdrop[data-fam="defi"] .timer-swap b, .timer-backdrop[data-fam="defi"][data-kind="prep"] .timer-countdown{color:#FFD9B0;}
+  .timer-backdrop[data-fam="defi"] .timer-block-label, .timer-backdrop[data-fam="defi"] .timer-next-cap{color:#F2B27A;}
+  .timer-backdrop[data-fam="defi"] .timer-remaining-session, .timer-backdrop[data-fam="defi"] .timer-exsublabel{color:rgba(255,255,255,0.8);}
+  .timer-backdrop[data-fam="defi"] .timer-progressbar-fill{background:#F2B27A;}
+  .timer-backdrop[data-fam="defi"][data-kind="work"] .tc-ring .tc-bar{stroke:#FFD9B0;}
+  .timer-backdrop[data-fam="defi"] .timer-btn-main{background:#FFD9B0; color:#4A2408;}
+  .timer-backdrop[data-fam="defi"] .fb-advice{border-left-color:#FFD9B0;} .timer-backdrop[data-fam="defi"] .fb-advice button{background:#FFD9B0; color:#4A2408;}
+  .timer-backdrop[data-fam="prog"] .timer-kind.work, .timer-backdrop[data-fam="prog"] .timer-tips b, .timer-backdrop[data-fam="prog"] .timer-swap b, .timer-backdrop[data-fam="prog"][data-kind="prep"] .timer-countdown{color:#DCD3FF;}
+  .timer-backdrop[data-fam="prog"] .timer-block-label, .timer-backdrop[data-fam="prog"] .timer-next-cap{color:#B9ACF5;}
+  .timer-backdrop[data-fam="prog"] .timer-remaining-session, .timer-backdrop[data-fam="prog"] .timer-exsublabel{color:rgba(255,255,255,0.8);}
+  .timer-backdrop[data-fam="prog"] .timer-progressbar-fill{background:#B9ACF5;}
+  .timer-backdrop[data-fam="prog"][data-kind="work"] .tc-ring .tc-bar{stroke:#DCD3FF;}
+  .timer-backdrop[data-fam="prog"] .timer-btn-main{background:#DCD3FF; color:#241A4D;}
+  .timer-backdrop[data-fam="prog"] .fb-advice{border-left-color:#DCD3FF;} .timer-backdrop[data-fam="prog"] .fb-advice button{background:#DCD3FF; color:#241A4D;}
+  .timer-backdrop[data-fam="recup"] .timer-kind.work, .timer-backdrop[data-fam="recup"] .timer-tips b, .timer-backdrop[data-fam="recup"] .timer-swap b, .timer-backdrop[data-fam="recup"][data-kind="prep"] .timer-countdown{color:#B5EDE6;}
+  .timer-backdrop[data-fam="recup"] .timer-block-label, .timer-backdrop[data-fam="recup"] .timer-next-cap{color:#8FD3CA;}
+  .timer-backdrop[data-fam="recup"] .timer-remaining-session, .timer-backdrop[data-fam="recup"] .timer-exsublabel{color:rgba(255,255,255,0.8);}
+  .timer-backdrop[data-fam="recup"] .timer-progressbar-fill{background:#8FD3CA;}
+  .timer-backdrop[data-fam="recup"][data-kind="work"] .tc-ring .tc-bar{stroke:#B5EDE6;}
+  .timer-backdrop[data-fam="recup"] .timer-btn-main{background:#B5EDE6; color:#0B2F2D;}
+  .timer-backdrop[data-fam="recup"] .fb-advice{border-left-color:#B5EDE6;} .timer-backdrop[data-fam="recup"] .fb-advice button{background:#B5EDE6; color:#0B2F2D;}
+
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -5116,8 +5156,8 @@
   var SET_REST_SECONDS = 15;
   var THEME_TIME_MULT = {equilibre:1, force:0.65, endurance_force:1.6, stabilite:1.15};
   var THEME_LABEL = {equilibre:'Équilibré', force:'Force', endurance_force:'Endurance de force', stabilite:'Stabilité & gainage'};
-  // Transition entre deux exercices (hors circuit) : 5 s, pas plus
-  var TRANSITION_SECONDS = {debutant:5, intermediaire:5, avance:5, senior:15};
+  // Transition entre deux exercices : 10 s (15 s en senior), le temps de lire l'exercice suivant et de s'installer
+  var TRANSITION_SECONDS = {debutant:10, intermediaire:10, avance:10, senior:15};
   // Récupération entre deux exercices du circuit (corps de séance), selon l'objectif et le niveau
   // Entre deux exercices du circuit : simple transition (5 s, 15 s en senior), pas de récupération.
   // La récupération se fait entre deux tours (REST_SECONDS_BY_THEME).
@@ -5527,7 +5567,7 @@
     var v = REST_SECONDS_BY_THEME[theme][level];
     return SHORT_SESSION ? Math.min(v, theme === 'force' ? 90 : 45) : v;
   }
-  function transSec(level){ return TRANSITION_SECONDS[level] || 5; }
+  function transSec(level){ return TRANSITION_SECONDS[level] || 10; }
   // Conseil sur le choix de la charge (haltères, kettlebell) et de l'inclinaison (TRX)
   function eqHas(ex, k){ var e = ex && ex.equipment; return Array.isArray(e) ? e.indexOf(k) > -1 : e === k; }
   var LOAD_TIP_W = 'Prends une charge avec laquelle tu pourrais tenir <b>5 secondes de plus</b> que le temps indiqué, sans perdre la technique. Trop facile ? Prends plus lourd. Impossible de finir proprement ? Allège.';
@@ -15692,6 +15732,35 @@
       }
       return r;
     };
+  })();
+
+  // ---------- Séance lancée : la couleur de fond suit la famille de la séance ----------
+  (function(){
+    var bd = document.getElementById('timerBackdrop'); if(!bd) return;
+    var THEME = {renfo:'#1F5A3A', defi:'#9A4A10', prog:'#4A3C8C', recup:'#17605E'};
+    var meta = document.querySelector('meta[name="theme-color"]'), theme0 = meta ? meta.getAttribute('content') : null;
+    function famOf(tl){
+      var S = lastSession, v = window.__ecView;
+      if(tl){
+        if(lastBreathSession && tl === lastBreathSession.timeline) return 'recup';
+        var saved = null; try{ saved = localStorage.getItem('ec_run_fam'); }catch(e){}
+        if(saved) return saved;
+      }
+      if(timerState.recup || (S && S.mob) || v === 'breath') return 'recup';
+      if(S && S.programRef) return 'prog';
+      if((S && S.wod) || v === 'wod' || v === 'tests') return 'defi';
+      return 'renfo';
+    }
+    var _sw = startWorkout;
+    startWorkout = function(tl){
+      var r = _sw.apply(this, arguments);
+      var f = famOf(tl); bd.setAttribute('data-fam', f);
+      try{ localStorage.setItem('ec_run_fam', f); }catch(e){}
+      if(meta && bd.classList.contains('open')) meta.setAttribute('content', THEME[f]);
+      return r;
+    };
+    new MutationObserver(function(){ if(!bd.classList.contains('open') && meta && theme0) meta.setAttribute('content', theme0); })
+      .observe(bd, {attributes:true, attributeFilter:['class']});
   })();
 
   // ---------- Bouton retour du téléphone ----------
