@@ -13426,6 +13426,9 @@
       var r = window.ecRunMix();
       if(S && r && !S.wod && S.main && S.main.length){
         var maxD = S.durationMinutes <= 10 ? 200 : S.durationMinutes <= 20 ? 400 : (S.durationMinutes <= 30 ? 800 : 1000);
+        // La course ne prend pas plus d'environ 30 % de la séance : il reste assez de temps pour un vrai circuit de renfo
+        var N = S.rounds || 1, pace = PACE[S.level] || 330, budget = S.durationMinutes * 60 * (S.durationMinutes <= 30 ? 0.2 : 0.3);
+        while(maxD > 200 && N * pace * maxD / 1000 > budget){ var di = DISTS.indexOf(maxD); maxD = di > 0 ? DISTS[di - 1] : 200; }
         S.run = r.d > maxD ? {d:maxD, cut:r.d} : r;
         var jog = exById('cf24');
         if(jog && S.durationMinutes > 10 && S.warm.indexOf(jog) < 0) S.warm = [jog].concat(S.warm.slice(0, Math.max(1, S.warm.length - 1)));
@@ -13461,7 +13464,7 @@
           var blk = res.querySelector('.block.principal');
           if(blk && !blk.querySelector('.rm-note')){
             var n = document.createElement('div'); n.className = 'rm-note';
-            n.innerHTML = '🏃 <b>Séance mixte</b> : course de ' + distTxt(S.run.d) + ' (≈ ' + fmtDose(runSecs(S)) + ') avant chaque tour, à la place de la récupération.' + (S.run.cut ? ' <small>(' + distTxt(S.run.cut) + ' ramené à ' + distTxt(S.run.d) + ' pour tenir en ' + S.durationMinutes + ' min)</small>' : '');
+            n.innerHTML = '🏃 <b>Séance mixte</b> : course de ' + distTxt(S.run.d) + ' (≈ ' + fmtDose(runSecs(S)) + ') avant chaque tour, à la place de la récupération.' + (S.run.cut ? ' <small>(' + distTxt(S.run.cut) + ' ramené à ' + distTxt(S.run.d) + ' pour garder assez d\u2019exercices de renfo en ' + S.durationMinutes + ' min et ' + (S.rounds || 1) + ' tour' + ((S.rounds || 1) > 1 ? 's' : '') + ')</small>' : '');
             var t = blk.querySelector('.block-title'); if(t && t.nextSibling) blk.insertBefore(n, t.nextSibling); else blk.appendChild(n);
           }
           var tags = res.querySelector('.sh-tags'); if(tags && !tags.querySelector('.rm-tag')){ var sp = document.createElement('span'); sp.className = 'rm-tag'; sp.textContent = '🏃 + course ' + distTxt(S.run.d); tags.appendChild(sp); }
