@@ -11541,6 +11541,8 @@
     function syncForm(){
       panel.querySelectorAll('[data-mf]').forEach(function(g){ var k = g.getAttribute('data-mf'); g.querySelectorAll('[data-v]').forEach(function(b){ var v = b.getAttribute('data-v'), on = k === 'p' ? hasP(mob.p, PL[v]) : (k === 'z' ? (v === 'full' ? normZ(mob.z) === 'full' : zs(mob.z).indexOf(v) > -1) : String(mob[k]) === v); b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); });
       document.getElementById('mobGoalNote').textContent = GOALS[mob.g].d;
+      var gb = document.getElementById('mobGenerateBtn'), GB = {matin:'ma routine réveil', mobi:'ma séance de mobilité', recup:'ma séance d’étirements', yoga:'ma séance de yoga', soir:'ma séance détente', roul:'ma séance d’auto-massage', pist:'ma séance d’auto-massage'};
+      if(gb) gb.textContent = 'Générer ' + (GB[mob.g] || 'ma séance');
     }
     panel.addEventListener('click', function(e){
       var b = e.target.closest('[data-v]'), g = b && b.closest('[data-mf]'); if(!g) return;
@@ -15651,11 +15653,23 @@
   })();
   // ---------- Pause : la voix s'arrête net (bouton Pause ou toucher l'écran) ----------
   (function(){
+    // On garde la dernière phrase dite : si la pause la coupe, elle est redite à la reprise
+    var last = null, cut = null, _spk = speak;
+    speak = function(text, opts){ if(text && !/^(Pause|Reprise)\.?$/.test(String(text).trim())) last = {t:String(text), o:opts, at:Date.now()}; return _spk.apply(this, arguments); };
+    function stillTalking(l){ if(!l) return false; var w = l.t.split(/\s+/).length, sec = w / (2.3 * ((l.o && l.o.rate) || 1)) + 1.5; return (Date.now() - l.at) / 1000 < sec; }
     var _pr = pauseResumeWorkout;
     pauseResumeWorkout = function(){
       var willPause = !!timerState.running;
-      if(willPause){ try{ stopSpeech(); }catch(e){} try{ window.speechSynthesis.cancel(); }catch(e){} }
-      return _pr.apply(this, arguments);
+      if(willPause){
+        cut = (last && last.t.length > 25 && stillTalking(last)) ? {t:last.t, o:last.o, i:timerState.index} : null;
+        try{ stopSpeech(); }catch(e){} try{ window.speechSynthesis.cancel(); }catch(e){}
+      }
+      var r = _pr.apply(this, arguments);
+      if(!willPause && timerState.running && cut){
+        var c = cut; cut = null;
+        setTimeout(function(){ if(timerState.running && timerState.index === c.i) speak(c.t, c.o); }, 1100);
+      }
+      return r;
     };
   })();
 
