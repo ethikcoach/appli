@@ -3819,45 +3819,52 @@
   @media screen and (prefers-color-scheme: dark){ .sc-tour{background:linear-gradient(100deg, #12291B, #123330);} .sc-tour .sc-go{background:#2E9E5E;} }
   .tr-help{display:flex; align-items:center; gap:12px; width:100%; margin:0 0 14px; padding:12px 14px; border:none; border-radius:16px; background:var(--acc-soft, #DCE5EE); color:var(--ink); font:inherit; text-align:left; cursor:pointer;}
   .tr-help > span:first-child{font-size:1.3rem;} .tr-help > span:nth-child(2){flex:1; display:flex; flex-direction:column;} .tr-help small{color:var(--stone); font-size:0.8rem;} .tr-help > span:last-child{font-size:1.3rem; color:var(--stone);}
-  /* ---------- Séance lancée : fond à la couleur de la famille (Renfo vert, Défis orange, Programme violet, Récup sarcelle) ---------- */
-  .timer-backdrop[data-fam="renfo"], .timer-backdrop[data-fam="renfo"][data-kind="work"], .timer-backdrop[data-fam="renfo"][data-kind="done"]{background:#1F5A3A;}
-  .timer-backdrop[data-fam="renfo"][data-kind="transition"]{background:#18452D;}
-  .timer-backdrop[data-fam="renfo"][data-kind="rest"]{background:#173E30;}
-  .timer-backdrop[data-fam="renfo"][data-kind="prep"]{background:#123323;}
-  .timer-backdrop[data-fam="defi"], .timer-backdrop[data-fam="defi"][data-kind="work"], .timer-backdrop[data-fam="defi"][data-kind="done"]{background:#9A4A10;}
-  .timer-backdrop[data-fam="defi"][data-kind="transition"]{background:#733812;}
-  .timer-backdrop[data-fam="defi"][data-kind="rest"]{background:#6A3418;}
-  .timer-backdrop[data-fam="defi"][data-kind="prep"]{background:#55290C;}
-  .timer-backdrop[data-fam="prog"], .timer-backdrop[data-fam="prog"][data-kind="work"], .timer-backdrop[data-fam="prog"][data-kind="done"]{background:#4A3C8C;}
-  .timer-backdrop[data-fam="prog"][data-kind="transition"]{background:#382D6B;}
-  .timer-backdrop[data-fam="prog"][data-kind="rest"]{background:#33295F;}
-  .timer-backdrop[data-fam="prog"][data-kind="prep"]{background:#2A2150;}
-  .timer-backdrop[data-fam="recup"], .timer-backdrop[data-fam="recup"][data-kind="work"], .timer-backdrop[data-fam="recup"][data-kind="done"]{background:#17605E;}
-  .timer-backdrop[data-fam="recup"][data-kind="transition"]{background:#124A48;}
-  .timer-backdrop[data-fam="recup"][data-kind="rest"]{background:#11403F;}
-  .timer-backdrop[data-fam="recup"][data-kind="prep"]{background:#0E3433;}
-  .timer-backdrop.calm[data-fam="recup"], .timer-backdrop.calm[data-fam="recup"][data-kind]{background:#0E3433;}
-  .timer-backdrop[data-fam="defi"] .timer-kind.work, .timer-backdrop[data-fam="defi"] .timer-tips b, .timer-backdrop[data-fam="defi"] .timer-swap b, .timer-backdrop[data-fam="defi"][data-kind="prep"] .timer-countdown{color:#FFD9B0;}
-  .timer-backdrop[data-fam="defi"] .timer-block-label, .timer-backdrop[data-fam="defi"] .timer-next-cap{color:#F2B27A;}
-  .timer-backdrop[data-fam="defi"] .timer-remaining-session, .timer-backdrop[data-fam="defi"] .timer-exsublabel{color:rgba(255,255,255,0.8);}
-  .timer-backdrop[data-fam="defi"] .timer-progressbar-fill{background:#F2B27A;}
-  .timer-backdrop[data-fam="defi"][data-kind="work"] .tc-ring .tc-bar{stroke:#FFD9B0;}
-  .timer-backdrop[data-fam="defi"] .timer-btn-main{background:#FFD9B0; color:#4A2408;}
-  .timer-backdrop[data-fam="defi"] .fb-advice{border-left-color:#FFD9B0;} .timer-backdrop[data-fam="defi"] .fb-advice button{background:#FFD9B0; color:#4A2408;}
+  /* ---------- Séance lancée : couleur de la famille (Renfo vert, Défis orange, Programme violet, Récup sarcelle) ---------- */
+  /* Fond sombre teinté + halo de la couleur en haut : la famille se reconnaît et tout reste bien lisible */
+  .timer-backdrop[data-fam="renfo"], .timer-backdrop[data-fam="renfo"][data-kind="work"], .timer-backdrop[data-fam="renfo"][data-kind="done"], .timer-backdrop[data-fam="renfo"].calm, .timer-backdrop[data-fam="renfo"].calm[data-kind]{background:radial-gradient(130% 55% at 50% 0%, rgba(46,125,79,0.6) 0%, rgba(46,125,79,0) 100%), #0F2A1C;}
+  .timer-backdrop[data-fam="renfo"][data-kind="transition"], .timer-backdrop[data-fam="renfo"][data-kind="rest"]{background:radial-gradient(130% 55% at 50% 0%, rgba(46,125,79,0.4) 0%, rgba(46,125,79,0) 100%), #0F2A1C;}
+  .timer-backdrop[data-fam="renfo"][data-kind="prep"]{background:radial-gradient(130% 55% at 50% 0%, rgba(46,125,79,0.28) 0%, rgba(46,125,79,0) 100%), #0F2A1C;}
+  .timer-backdrop[data-fam="renfo"] .timer-kind.work, .timer-backdrop[data-fam="renfo"] .timer-tips b, .timer-backdrop[data-fam="renfo"] .timer-swap b, .timer-backdrop[data-fam="renfo"][data-kind="prep"] .timer-countdown{color:#BEE6C8;}
+  .timer-backdrop[data-fam="renfo"] .timer-block-label, .timer-backdrop[data-fam="renfo"] .timer-next-cap{color:#FFFFFF; } .timer-backdrop[data-fam="renfo"] .timer-next-cap{color:#9ED1AE;}
+  .timer-backdrop[data-fam="renfo"] .timer-remaining-session, .timer-backdrop[data-fam="renfo"] .timer-exsublabel{color:rgba(255,255,255,0.85);}
+  .timer-backdrop[data-fam="renfo"] .timer-tip{color:rgba(255,255,255,0.7);}
+  .timer-backdrop[data-fam="renfo"] .timer-progressbar-fill{background:#9ED1AE;}
+  .timer-backdrop[data-fam="renfo"][data-kind="work"] .tc-ring .tc-bar{stroke:#BEE6C8;}
+  .timer-backdrop[data-fam="renfo"] .timer-btn-main{background:#BEE6C8; color:#0E2216;}
+  .timer-backdrop[data-fam="renfo"] .fb-advice{border-left-color:#BEE6C8;} .timer-backdrop[data-fam="renfo"] .fb-advice button{background:#BEE6C8; color:#0E2216;}
+  .timer-backdrop[data-fam="defi"], .timer-backdrop[data-fam="defi"][data-kind="work"], .timer-backdrop[data-fam="defi"][data-kind="done"], .timer-backdrop[data-fam="defi"].calm, .timer-backdrop[data-fam="defi"].calm[data-kind]{background:radial-gradient(130% 55% at 50% 0%, rgba(226,121,38,0.6) 0%, rgba(226,121,38,0) 100%), #3A1D0C;}
+  .timer-backdrop[data-fam="defi"][data-kind="transition"], .timer-backdrop[data-fam="defi"][data-kind="rest"]{background:radial-gradient(130% 55% at 50% 0%, rgba(226,121,38,0.4) 0%, rgba(226,121,38,0) 100%), #3A1D0C;}
+  .timer-backdrop[data-fam="defi"][data-kind="prep"]{background:radial-gradient(130% 55% at 50% 0%, rgba(226,121,38,0.28) 0%, rgba(226,121,38,0) 100%), #3A1D0C;}
+  .timer-backdrop[data-fam="defi"] .timer-kind.work, .timer-backdrop[data-fam="defi"] .timer-tips b, .timer-backdrop[data-fam="defi"] .timer-swap b, .timer-backdrop[data-fam="defi"][data-kind="prep"] .timer-countdown{color:#FFD2A8;}
+  .timer-backdrop[data-fam="defi"] .timer-block-label, .timer-backdrop[data-fam="defi"] .timer-next-cap{color:#FFFFFF; } .timer-backdrop[data-fam="defi"] .timer-next-cap{color:#F7B57E;}
+  .timer-backdrop[data-fam="defi"] .timer-remaining-session, .timer-backdrop[data-fam="defi"] .timer-exsublabel{color:rgba(255,255,255,0.85);}
+  .timer-backdrop[data-fam="defi"] .timer-tip{color:rgba(255,255,255,0.7);}
+  .timer-backdrop[data-fam="defi"] .timer-progressbar-fill{background:#F7B57E;}
+  .timer-backdrop[data-fam="defi"][data-kind="work"] .tc-ring .tc-bar{stroke:#FFD2A8;}
+  .timer-backdrop[data-fam="defi"] .timer-btn-main{background:#FFD2A8; color:#3A1A06;}
+  .timer-backdrop[data-fam="defi"] .fb-advice{border-left-color:#FFD2A8;} .timer-backdrop[data-fam="defi"] .fb-advice button{background:#FFD2A8; color:#3A1A06;}
+  .timer-backdrop[data-fam="prog"], .timer-backdrop[data-fam="prog"][data-kind="work"], .timer-backdrop[data-fam="prog"][data-kind="done"], .timer-backdrop[data-fam="prog"].calm, .timer-backdrop[data-fam="prog"].calm[data-kind]{background:radial-gradient(130% 55% at 50% 0%, rgba(118,98,214,0.6) 0%, rgba(118,98,214,0) 100%), #1D1740;}
+  .timer-backdrop[data-fam="prog"][data-kind="transition"], .timer-backdrop[data-fam="prog"][data-kind="rest"]{background:radial-gradient(130% 55% at 50% 0%, rgba(118,98,214,0.4) 0%, rgba(118,98,214,0) 100%), #1D1740;}
+  .timer-backdrop[data-fam="prog"][data-kind="prep"]{background:radial-gradient(130% 55% at 50% 0%, rgba(118,98,214,0.28) 0%, rgba(118,98,214,0) 100%), #1D1740;}
   .timer-backdrop[data-fam="prog"] .timer-kind.work, .timer-backdrop[data-fam="prog"] .timer-tips b, .timer-backdrop[data-fam="prog"] .timer-swap b, .timer-backdrop[data-fam="prog"][data-kind="prep"] .timer-countdown{color:#DCD3FF;}
-  .timer-backdrop[data-fam="prog"] .timer-block-label, .timer-backdrop[data-fam="prog"] .timer-next-cap{color:#B9ACF5;}
-  .timer-backdrop[data-fam="prog"] .timer-remaining-session, .timer-backdrop[data-fam="prog"] .timer-exsublabel{color:rgba(255,255,255,0.8);}
-  .timer-backdrop[data-fam="prog"] .timer-progressbar-fill{background:#B9ACF5;}
+  .timer-backdrop[data-fam="prog"] .timer-block-label, .timer-backdrop[data-fam="prog"] .timer-next-cap{color:#FFFFFF; } .timer-backdrop[data-fam="prog"] .timer-next-cap{color:#BDB0F7;}
+  .timer-backdrop[data-fam="prog"] .timer-remaining-session, .timer-backdrop[data-fam="prog"] .timer-exsublabel{color:rgba(255,255,255,0.85);}
+  .timer-backdrop[data-fam="prog"] .timer-tip{color:rgba(255,255,255,0.7);}
+  .timer-backdrop[data-fam="prog"] .timer-progressbar-fill{background:#BDB0F7;}
   .timer-backdrop[data-fam="prog"][data-kind="work"] .tc-ring .tc-bar{stroke:#DCD3FF;}
-  .timer-backdrop[data-fam="prog"] .timer-btn-main{background:#DCD3FF; color:#241A4D;}
-  .timer-backdrop[data-fam="prog"] .fb-advice{border-left-color:#DCD3FF;} .timer-backdrop[data-fam="prog"] .fb-advice button{background:#DCD3FF; color:#241A4D;}
+  .timer-backdrop[data-fam="prog"] .timer-btn-main{background:#DCD3FF; color:#1E1640;}
+  .timer-backdrop[data-fam="prog"] .fb-advice{border-left-color:#DCD3FF;} .timer-backdrop[data-fam="prog"] .fb-advice button{background:#DCD3FF; color:#1E1640;}
+  .timer-backdrop[data-fam="recup"], .timer-backdrop[data-fam="recup"][data-kind="work"], .timer-backdrop[data-fam="recup"][data-kind="done"], .timer-backdrop[data-fam="recup"].calm, .timer-backdrop[data-fam="recup"].calm[data-kind]{background:radial-gradient(130% 55% at 50% 0%, rgba(40,160,155,0.6) 0%, rgba(40,160,155,0) 100%), #0B2A2A;}
+  .timer-backdrop[data-fam="recup"][data-kind="transition"], .timer-backdrop[data-fam="recup"][data-kind="rest"]{background:radial-gradient(130% 55% at 50% 0%, rgba(40,160,155,0.4) 0%, rgba(40,160,155,0) 100%), #0B2A2A;}
+  .timer-backdrop[data-fam="recup"][data-kind="prep"]{background:radial-gradient(130% 55% at 50% 0%, rgba(40,160,155,0.28) 0%, rgba(40,160,155,0) 100%), #0B2A2A;}
   .timer-backdrop[data-fam="recup"] .timer-kind.work, .timer-backdrop[data-fam="recup"] .timer-tips b, .timer-backdrop[data-fam="recup"] .timer-swap b, .timer-backdrop[data-fam="recup"][data-kind="prep"] .timer-countdown{color:#B5EDE6;}
-  .timer-backdrop[data-fam="recup"] .timer-block-label, .timer-backdrop[data-fam="recup"] .timer-next-cap{color:#8FD3CA;}
-  .timer-backdrop[data-fam="recup"] .timer-remaining-session, .timer-backdrop[data-fam="recup"] .timer-exsublabel{color:rgba(255,255,255,0.8);}
+  .timer-backdrop[data-fam="recup"] .timer-block-label, .timer-backdrop[data-fam="recup"] .timer-next-cap{color:#FFFFFF; } .timer-backdrop[data-fam="recup"] .timer-next-cap{color:#8FD3CA;}
+  .timer-backdrop[data-fam="recup"] .timer-remaining-session, .timer-backdrop[data-fam="recup"] .timer-exsublabel{color:rgba(255,255,255,0.85);}
+  .timer-backdrop[data-fam="recup"] .timer-tip{color:rgba(255,255,255,0.7);}
   .timer-backdrop[data-fam="recup"] .timer-progressbar-fill{background:#8FD3CA;}
   .timer-backdrop[data-fam="recup"][data-kind="work"] .tc-ring .tc-bar{stroke:#B5EDE6;}
-  .timer-backdrop[data-fam="recup"] .timer-btn-main{background:#B5EDE6; color:#0B2F2D;}
-  .timer-backdrop[data-fam="recup"] .fb-advice{border-left-color:#B5EDE6;} .timer-backdrop[data-fam="recup"] .fb-advice button{background:#B5EDE6; color:#0B2F2D;}
+  .timer-backdrop[data-fam="recup"] .timer-btn-main{background:#B5EDE6; color:#0A2827;}
+  .timer-backdrop[data-fam="recup"] .fb-advice{border-left-color:#B5EDE6;} .timer-backdrop[data-fam="recup"] .fb-advice button{background:#B5EDE6; color:#0A2827;}
 
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
@@ -15737,7 +15744,7 @@
   // ---------- Séance lancée : la couleur de fond suit la famille de la séance ----------
   (function(){
     var bd = document.getElementById('timerBackdrop'); if(!bd) return;
-    var THEME = {renfo:'#1F5A3A', defi:'#9A4A10', prog:'#4A3C8C', recup:'#17605E'};
+    var THEME = {renfo:'#225C3B', defi:'#9F541C', prog:'#52449A', recup:'#1C716E'};
     var meta = document.querySelector('meta[name="theme-color"]'), theme0 = meta ? meta.getAttribute('content') : null;
     function famOf(tl){
       var S = lastSession, v = window.__ecView;
