@@ -11472,6 +11472,11 @@
       MOB_ALT = !!(S && S.mob); var t; try{ t = _bti(S); } finally { MOB_ALT = false; }
       if(S && S.mob) t.forEach(function(st){
         st.recup = true;
+        // Postures tenues : un nombre entier de respirations (cycle de 8 s), pour que le décompte tombe juste
+        if(st.type === 'work' && st.ex && st.ex.mob && st.ex.mob.k !== 'dyn' && !st.ex.breath){
+          if(st.side){ var a8 = Math.max(16, Math.round(st.side.secs / 8) * 8); st.side = {secs:a8, sw:st.side.sw}; st.duration = 2 * a8 + st.side.sw; }
+          else st.duration = Math.max(16, Math.round(st.duration / 8) * 8);
+        }
         if(st.type === 'transition' && !st.prep){ st.duration = Math.max(10, st.duration || 0); st.label = 'Respire profondément'; }
         if(st.label === 'Récupération entre tours'){ st.duration = 10; st.label = 'Nouveau passage'; st.sublabel = 'On reprend les postures'; }
         else if(/^Tour \d+\/\d+$/.test(st.sublabel || '') && S.rounds > 1) st.sublabel = st.sublabel.replace('Tour', 'Passage');
@@ -11481,7 +11486,7 @@
         var seenX = {};
         t.forEach(function(st, k){
           if(st.type !== 'transition' || st.prep) return;
-          for(var j = k + 1; j < t.length; j++){ var w = t[j]; if(w.type === 'work'){ if(w.ex && !w.ex.breath && w.ex.detail && w.ex.detail.start && !seenX[w.ex.id]){ seenX[w.ex.id] = 1; st.duration = Math.max(st.duration || 0, Math.min(28, Math.ceil(w.ex.detail.start.length / 12) + 6)); st.explain = 1; } break; } }
+          for(var j = k + 1; j < t.length; j++){ var w = t[j]; if(w.type === 'work'){ if(w.ex && !w.ex.breath && w.ex.detail && w.ex.detail.start && !seenX[w.ex.id]){ seenX[w.ex.id] = 1; var wn = (w.ex.detail.start + ' ' + (w.ex.detail.exec || '') + ' ' + w.ex.name).split(/\s+/).length; st.duration = Math.max(st.duration || 0, Math.min(55, Math.ceil(wn / 1.8) + 9)); st.explain = 1; } break; } }
         });
       }
       if(S && S.mob) t.forEach(function(st){ if(st.sublabel === 'Tour 1/1') st.sublabel = st.ex && st.ex.mob ? (st.ex.mob.k === 'dyn' ? 'Mouvement lent et contrôlé' : (st.ex.mob.k === 'flow' ? 'Au rythme de ta respiration' : 'Tiens la posture, respire calmement')) : ''; });
@@ -13480,7 +13485,15 @@
       var r = _sw.apply(this, arguments);
       // Le « Prépare-toi » ajouté au départ reste dans l'ambiance Récup
       var t0 = timerState.timeline && timerState.timeline[0];
-      if(timerState.recup && t0 && t0.prep && !t0.calm){ t0.recup = true; t0.label = 'Installe-toi'; }
+      if(timerState.recup && t0 && t0.prep && !t0.calm){ t0.recup = true; t0.label = 'Installe-toi';
+        var w0 = null; for(var q = 1; q < timerState.timeline.length; q++){ if(timerState.timeline[q].type === 'work'){ w0 = timerState.timeline[q]; break; } }
+        var d0 = w0 && w0.ex && !w0.ex.breath && w0.ex.detail;
+        if(d0 && d0.start && window.ecRecupExplain && window.ecRecupExplain()){
+          var words = (d0.start + ' ' + (d0.exec || '') + ' ' + w0.ex.name).split(/\s+/).length;
+          var need = Math.min(55, Math.ceil(words / 1.8) + 9);
+          if(need > t0.duration){ var add = need - t0.duration; t0.duration = need; if(timerState.index === 0) timerState.remaining += add; timerState.totalRemaining = (timerState.totalRemaining || 0) + add; }
+        }
+      }
       return r;
     };
     function holdStep(st){ return !!(timerState.recup && st && st.type === 'work' && st.ex && !st.ex.breath && st.ex.mob && st.ex.mob.k !== 'dyn'); }
@@ -13493,9 +13506,22 @@
       var EXP = window.ecRecupExplain && window.ecRecupExplain(), tlx = timerState.timeline; tlx.explained = tlx.explained || {};
       function dt(ex){ return ex && !ex.breath && ex.detail ? ex.detail : null; }
       function clean(t){ return String(t || '').replace(/\s+/g, ' ').trim().replace(/([^.!?])$/, '$1.'); }
+      function exOf(ex){ var d = dt(ex); return d && d.exec ? clean(String(d.exec).replace(/,?\s*puis changer de (côté|jambe|bras|pied)\.?/gi, '.').replace(/\s*Changer de (côté|jambe|bras|pied)\.?/gi, '')) : ''; }
+      function holdEx(ex){ return !!(ex && !ex.breath && ex.mob && ex.mob.k !== 'dyn'); }
+      // Toute l'explication (mise en place + mouvement + rythme) est dite AVANT la posture, pendant le temps d'installation :
+      // la posture commence ensuite directement sur les respirations, sans que la voix morde dessus
+      function explainNext(head){
+        var ex = nx, txt = head + ' Mise en place : ' + clean(dt(ex).start) + (exOf(ex) ? ' ' + exOf(ex) : '');
+        if(holdEx(ex) && !timerState.recupRythme){ timerState.recupRythme = true; txt += ' Inspire sur ' + IN + ' secondes, expire sur ' + (CYCLE - IN) + '.'; }
+        tlx.explained['s' + ex.id] = 1; tlx.explained['e' + ex.id] = 1;
+        speak(txt, {rate:0.85});
+      }
       if(EXP && (st.type === 'transition' || st.type === 'rest') && !st.prep && nx && dt(nx) && !tlx.explained['s' + nx.id]){
-        tlx.explained['s' + nx.id] = 1;
-        speak('Respire profondément. Ensuite : ' + nx.name + '. Mise en place : ' + clean(dt(nx).start), {rate:0.85});
+        explainNext('Respire profondément. Ensuite : ' + nx.name + '.');
+        return;
+      }
+      if(EXP && st.prep && nx && dt(nx) && !tlx.explained['s' + nx.id]){
+        explainNext('Installe-toi confortablement. Première posture : ' + nx.name + '.');
         return;
       }
       if(EXP && st.type === 'work' && dt(st.ex) && dt(st.ex).exec && !tlx.explained['e' + st.ex.id]){
@@ -13539,7 +13565,8 @@
         else if(el < a + sw){ return; }
         else { left = st.duration - el; inPhase = el - a - sw; side = 'Côté 2/2 · '; }
       }
-      var n = Math.max(1, Math.ceil(left / CYCLE));
+      var span = st.side ? st.side.secs : st.duration, tot = Math.max(1, Math.round(span / CYCLE));
+      var n = Math.max(1, Math.min(tot, tot - Math.floor(inPhase / CYCLE)));
       cd.textContent = String(n); cd.classList.add('cycles');
       lbl.textContent = n > 1 ? 'respirations' : 'respiration'; lbl.hidden = false;
       var ph = inPhase % CYCLE, isIn = ph < IN, rem = isIn ? IN - ph : CYCLE - ph;
