@@ -13536,6 +13536,9 @@
         }
         return;
       }
+      // Exercice de respiration : le nom a déjà été annoncé juste avant (« Ensuite : … » / « Première posture : … »),
+      // on laisse donc le premier « Inspire » sonner seul, sans le recouvrir
+      if(st.type === 'work' && st.ex && st.ex.breath){ var pv = timerState.timeline[i - 1]; if(pv && (pv.type === 'transition' || pv.type === 'rest' || pv.prep)){ var b0 = st.ex.breath[0]; speak(b0 && b0.label ? b0.label : 'Inspire'); return; } }
       if(st.prep){ speak('Installe-toi confortablement. ' + (nx ? 'Première posture : ' + nx.name + '.' : '')); return; }
       if(st.type === 'transition' || st.type === 'rest'){ speak('Respire profondément.' + (nx ? ' Ensuite : ' + nx.name + '.' : '')); return; }
       if(holdStep(st)){
@@ -15147,7 +15150,7 @@
       grp.querySelectorAll('[data-mg]').forEach(function(c){ var on = !!g[c.getAttribute('data-mg')]; c.classList.toggle('active', on); c.setAttribute('aria-pressed', on ? 'true' : 'false'); });
       ex.hidden = !g.voice;
       exIn.checked = !window.ecRecupExplain || window.ecRecupExplain();
-      var n = ''; try{ n = window.ecVoiceCurrent ? window.ecVoiceCurrent() : ''; }catch(e){} var vt = f.querySelector('.vl-txt'); if(vt && (n || !vt.textContent)) vt.textContent = 'Voix : ' + (n ? String(n).replace(/\s*\(.*\)$/, '') : 'du téléphone');
+      var n = ''; try{ n = window.ecVoiceCurrent ? window.ecVoiceCurrent() : ''; }catch(e){} var vt = f.querySelector('.vl-txt'); if(vt && (n || !vt.textContent)) vt.textContent = 'Voix : ' + (n ? String(n && n.name ? n.name : n).replace(/\s*\(.*\)$/, '').replace(/^Microsoft |^Google /, '') : 'du téléphone');
       f.querySelector('.mg-voice').hidden = !g.voice;
     }
     grp.addEventListener('click', function(e){
