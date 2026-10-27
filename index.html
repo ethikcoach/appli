@@ -15486,34 +15486,55 @@
       if(item.wait){ return; }
       var c = item.clips.shift();
       if(!c){ queue.shift(); gapT = setTimeout(next, 160); return; }
-      var ac = ctx(); if(!ac){ gapT = setTimeout(next, 70); return; }
-      if(ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+      var ac = ctx(); if(!ac){ fallback(item); return; }
+      if(ac.state !== 'running'){
+        try{ var pr = ac.resume(); if(pr && pr.catch) pr.catch(function(){}); }catch(e){}
+        item.tries = (item.tries || 0) + 1;
+        if(item.tries > 8){ fallback(item); return; }
+        item.clips.unshift(c); gapT = setTimeout(next, 100); return;
+      }
       decode(ac, c, function(ab){
         if(item.dead) return;
         var src = ac.createBufferSource(); src.buffer = ab; src.connect(out(ac)); curSrc = src;
-        src.onended = function(){ if(curSrc === src) curSrc = null; if(!item.dead) gapT = setTimeout(next, 70); };
-        try{ src.start(); }catch(e){ gapT = setTimeout(next, 70); }
+        var ended = false, go = function(){ if(ended) return; ended = true; clearTimeout(wd); if(curSrc === src) curSrc = null; if(!item.dead) gapT = setTimeout(next, 70); };
+        // Sécurité : si la fin du morceau n'est jamais signalée, on passe quand même à la suite
+        var wd = setTimeout(go, ab.duration * 1000 + 900);
+        src.onended = go;
+        try{ src.start(); }catch(e){ go(); }
       }, function(){ gapT = setTimeout(next, 70); });
     }
+    // Lecture impossible avec la voix enregistrée : on dit le reste de la phrase avec la voix du téléphone
+    function fallback(item){
+      var k = queue.indexOf(item); if(k > -1) queue.splice(k, 1);
+      if(item.u && !item.dead){ try{ _speak(item.u); }catch(e){} }
+      gapT = setTimeout(next, 70);
+    }
     function stopAll(){ queue.forEach(function(q){ q.dead = true; }); queue = []; clearTimeout(gapT); playing = false; try{ if(curSrc){ curSrc.onended = null; curSrc.stop(); } }catch(e){} curSrc = null; }
-    function unlock(){ var ac = ctx(); if(!ac) return; try{ if(ac.state === 'suspended') ac.resume(); var b = ac.createBuffer(1, 1, 22050), s0 = ac.createBufferSource(); s0.buffer = b; s0.connect(ac.destination); s0.start(); }catch(e){} }
-    var _speak = SS.speak.bind(SS), _cancel = SS.cancel.bind(SS);
+    function unlock(){ var ac = ctx(); if(!ac) return; try{ if(ac.state !== 'running'){ var pr = ac.resume(); if(pr && pr.catch) pr.catch(function(){}); } var b = ac.createBuffer(1, 1, 22050), s0 = ac.createBufferSource(); s0.buffer = b; s0.connect(ac.destination); s0.start(); }catch(e){} }
+    var _speak = SS.speak.bind(SS), _cancel = SS.cancel.bind(SS), primed = false;
+    function primeTts(){ if(primed) return; primed = true; try{ var p = new SpeechSynthesisUtterance(' '); p.volume = 0; _speak(p); }catch(e){} }
+    ['touchend', 'click'].forEach(function(t){ document.addEventListener(t, function(){
+      if(!cur()) return; var bd = document.getElementById('timerBackdrop'); if(!bd || !bd.classList.contains('open')) return;
+      var ac = timerState.audioCtx; if(ac && ac.state !== 'running') unlock();
+    }, true); });
+    // Les fichiers de la voix sont chargés dès l'ouverture de l'appli, pour être prêts au lancement de la séance
+    setTimeout(function(){ var v = cur(); if(v) loadIndex(v).then(function(){ return get('vx-' + v + '-c.bin'); }).catch(function(){}); }, 2500);
     SS.speak = function(u){
       var v = cur();
       if(v && u && u.text){
         var rs = resolve(v, u.text), rate = (u.rate && u.rate < 0.95) ? 0.93 : 1;
-        if(rs && rs.clips){ queue.push({clips:rs.clips, rate:rate}); if(!playing) next(); return; }
+        if(rs && rs.clips){ queue.push({clips:rs.clips, rate:rate, u:u}); if(!playing) next(); return; }
         // Morceaux pas encore chargés : on attend un court instant, sinon la voix du téléphone prend le relais
         // Fichiers de voix introuvables (pas encore en ligne, pas de réseau) : voix du téléphone directement
         if(!IDX[v] && Date.now() - failAt < 60000) return _speak(u);
         if(!IDX[v] || (rs && rs.need)){
-          var item = {clips:[], rate:rate, wait:true}; queue.push(item); playing = true;
+          var item = {clips:[], rate:rate, wait:true, u:u}; queue.push(item); playing = true;
           var done = false, fin = function(ok){ if(done || item.dead) return; done = true; item.wait = false;
             var r2 = ok ? resolve(v, u.text) : null;
             if(r2 && r2.clips) item.clips = r2.clips; else { var k = queue.indexOf(item); if(k > -1) queue.splice(k, 1); _speak(u); }
             if(queue[0] === item || !queue.length || (queue[0] && !queue[0].wait)) next(); };
           loadIndex(v).then(function(){ var r1 = resolve(v, u.text); return r1 && r1.need ? Promise.all(r1.need.map(get)) : null; }).then(function(){ fin(true); }, function(){ fin(false); });
-          setTimeout(function(){ fin(false); }, 1800);
+          setTimeout(function(){ fin(false); }, 3500);
           return;
         }
       }
@@ -15523,7 +15544,7 @@
     // --- Au démarrage d'une séance : on charge les morceaux utiles (noms des exercices, consignes)
     var _sw = startWorkout;
     startWorkout = function(){
-      var v = cur(); if(v) unlock();
+      var v = cur(); if(v){ unlock(); primeTts(); }
       var r = _sw.apply(this, arguments);
       if(v) loadIndex(v).then(function(ix){
         var need = {}; need['c'] = 1;
