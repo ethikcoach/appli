@@ -5110,6 +5110,7 @@
   var ROUNDS_PREF = 0; try{ ROUNDS_PREF = parseInt(localStorage.getItem('ec_rounds_pref'), 10) || 0; }catch(e){}
   if(ROUNDS_PREF < 2 || ROUNDS_PREF > 6) ROUNDS_PREF = 0;
   // Auto : 4 tours pour les séances de 30 et 45 min (hors senior), sinon calcul selon le niveau et la durée
+  var PROG_ROUNDS = false; // vrai pendant la création d'un programme : les tours choisis servent de base
   function roundsWanted(st){ if(ROUNDS_PREF) return ROUNDS_PREF; return (st.duration === 30 || st.duration === 45) && st.level !== 'senior' ? 4 : 0; }
   var state = {equip:['poids_du_corps'], level:'intermediaire', zone:'full', theme:'equilibre', duration:30, noFloor:false, chair:false, noImpact:false};
 
@@ -6970,7 +6971,7 @@
 
     var mainAvgSec = avgTempsSeconds(mainPool, state.level, state.theme);
     var stationsRounds = mainPool.length > 0
-      ? computeStationsAndRounds(state.duration, state.level, state.theme, warmSec, cardioSec, coolSec, mainAvgSec, restSecForLevel, circuitRestSec(state.theme, state.level), mainPool.length, silent ? 0 : roundsWanted(state))
+      ? computeStationsAndRounds(state.duration, state.level, state.theme, warmSec, cardioSec, coolSec, mainAvgSec, restSecForLevel, circuitRestSec(state.theme, state.level), mainPool.length, (silent && !PROG_ROUNDS) ? 0 : roundsWanted(state))
       : {n:0, rounds:0};
     var rounds = stationsRounds.rounds;
     var mainCount = stationsRounds.n;
@@ -7008,7 +7009,7 @@
     if(!silent && state.sport) title = 'Prépa ' + SPORT_LABEL[state.sport].toLowerCase().replace('vtt','VTT') + ' — ' + ZONE_LABEL[state.zone] + ' · ' + equipLabels;
     if(main.length === 0) rounds = 0;
 
-    var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, roundsFixed:silent ? 0 : roundsWanted(state), durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, noImpact:!!state.noImpact, sport:(!silent && state.sport) || null};
+    var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, roundsFixed:(silent && !PROG_ROUNDS) ? 0 : roundsWanted(state), durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, noImpact:!!state.noImpact, sport:(!silent && state.sport) || null};
     ensureWarmup(session);
     ensureCooldown(session);
     if(silent){ session.title = title; return session; }
@@ -7859,9 +7860,10 @@
       var tpls = [];
       for(var sl=0; sl<progForm.spw; sl++){
         var theme = obj.themes[sl % obj.themes.length];
-        var t = buildTemplate(zones[sl], theme, obj.prefer || null);
+        PROG_ROUNDS = true; var t; try{ t = buildTemplate(zones[sl], theme, obj.prefer || null); } finally { PROG_ROUNDS = false; }
         if(!t){ msg.textContent = "Pas assez d'exercices pour ce matériel et ce niveau. Ajoute du matériel ou retire l'option sans passage au sol."; return; }
-        calibrateRounds(t);
+        // Tours choisis (ou 4 tours en Auto pour 30-45 min) : base du programme, seul le nombre d'exercices s'ajuste
+        if(t.roundsFixed){ fitSession(t); } else calibrateRounds(t);
         tpls.push(t);
       }
       blocks.push(tpls);
@@ -9279,7 +9281,8 @@
       $id('roundsNote').textContent = ROUNDS_PREF ? ROUNDS_PREF + ' tour' + (ROUNDS_PREF > 1 ? 's' : '') + ' : le nombre d\u2019exercices s\u2019adapte pour tenir dans la durée choisie.' : 'Auto : 4 tours en 30 et 45 min, sinon calculés selon ton niveau et la durée.';
       var d = state.duration, warn = (ROUNDS_PREF >= 4 && d <= 10 ? ' En 10 min, ' + ROUNDS_PREF + ' tours feront déborder un peu la séance.' : '');
       if(warn) $id('roundsNote').textContent += warn;
-      var prog = typeof uiMode !== 'undefined' && uiMode === 'program'; f.hidden = prog;
+      var prog = typeof uiMode !== 'undefined' && uiMode === 'program'; f.hidden = false;
+      if(prog){ var R = roundsWanted(state); $id('roundsNote').textContent = R ? 'Programme : base de ' + R + ' tours, 1 tour de plus en semaine de charge et 1 de moins en semaine allégée. Le nombre d\u2019exercices s\u2019adapte à la durée.' : 'Auto : tours calculés selon ton niveau et la durée, puis ils progressent au fil des semaines.'; }
     }
     f.addEventListener('click', function(e){
       var b = e.target.closest('[data-rounds]'); if(!b) return;
@@ -9288,6 +9291,21 @@
       paint();
     });
     sel.addEventListener('change', function(){ setTimeout(paint, 0); });
+    // Programme avec tours choisis : la progression (tour ou palier en plus) se fait à durée constante,
+    // en retirant un exercice si la séance dépasse de plus de 10 % la durée prévue
+    if(typeof sessionFromTemplate === 'function'){
+      var _sft0 = sessionFromTemplate;
+      sessionFromTemplate = function(tpl){
+        var ses = _sft0.apply(this, arguments);
+        try{
+          if(tpl && tpl.roundsFixed && currentProgram && ses.main){
+            var lim = (currentProgram.duration || 30) * 1.1;
+            while(ses.main.length > 3 && minutesWithFactor(ses) > lim) ses.main = ses.main.slice(0, -1);
+          }
+        }catch(e){}
+        return ses;
+      };
+    }
     if(typeof setMode === 'function'){ var _sm = setMode; setMode = function(){ var r = _sm.apply(this, arguments); paint(); return r; }; }
     // La durée est déplacée plus tard sous le niveau : on garde « Nombre de tours » juste en dessous
     paint();
