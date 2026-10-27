@@ -3866,6 +3866,10 @@
   .timer-backdrop[data-fam="recup"] .timer-btn-main{background:#B5EDE6; color:#0A2827;}
   .timer-backdrop[data-fam="recup"] .fb-advice{border-left-color:#B5EDE6;} .timer-backdrop[data-fam="recup"] .fb-advice button{background:#B5EDE6; color:#0A2827;}
 
+  .rounds-sub{margin-top:16px; padding-top:14px; border-top:1px solid var(--stone-light, rgba(0,0,0,.08));}
+  .rounds-lbl{display:block; margin-bottom:10px; font-weight:700; font-size:0.95rem; color:var(--ink);}
+  .rounds-note{margin-top:8px; font-size:0.82rem; color:var(--stone); line-height:1.35;}
+  .rounds-chips .chip{min-width:0;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
@@ -5102,6 +5106,11 @@
   }
 
   // ---------- State ----------
+  // Nombre de tours imposé par l'utilisateur (0 = automatique selon le niveau et la durée)
+  var ROUNDS_PREF = 0; try{ ROUNDS_PREF = parseInt(localStorage.getItem('ec_rounds_pref'), 10) || 0; }catch(e){}
+  if(ROUNDS_PREF < 2 || ROUNDS_PREF > 6) ROUNDS_PREF = 0;
+  // Auto : 4 tours pour les séances de 30 et 45 min (hors senior), sinon calcul selon le niveau et la durée
+  function roundsWanted(st){ if(ROUNDS_PREF) return ROUNDS_PREF; return (st.duration === 30 || st.duration === 45) && st.level !== 'senior' ? 4 : 0; }
   var state = {equip:['poids_du_corps'], level:'intermediaire', zone:'full', theme:'equilibre', duration:30, noFloor:false, chair:false, noImpact:false};
 
   // Exercices qui demandent de descendre au sol (allongé, assis au sol, à genoux,
@@ -5521,9 +5530,16 @@
   // nécessaires pour remplir le temps avec CE nombre de tours. Seulement si
   // le nombre de stations obtenu doit être plafonné (affichage ou pool trop
   // petit) on augmente les tours pour compenser le temps manquant.
-  function computeStationsAndRounds(targetMinutes, level, theme, warmSec, cardioSec, coolSec, mainAvgSec, restSec, transSec, poolSize){
+  function computeStationsAndRounds(targetMinutes, level, theme, warmSec, cardioSec, coolSec, mainAvgSec, restSec, transSec, poolSize, forcedRounds){
     var targetSec = targetMinutes * 60;
     var remaining = Math.max(targetSec - warmSec - cardioSec - coolSec, mainAvgSec * 2);
+    // Nombre de tours choisi par l'utilisateur : on garde ces tours et on calcule le nombre d'exercices qui remplit le temps
+    if(forcedRounds){
+      var fr = forcedRounds, fn = (remaining - (fr - 1) * restSec + fr * transSec) / (fr * (mainAvgSec + transSec));
+      fn = Math.max(2, Math.min(14, Math.round(fn)));
+      if(poolSize > 0) fn = Math.min(fn, poolSize);
+      return {n: fn, rounds: fr};
+    }
     var baseRounds = circuitRoundsFor(level, theme);
 
     var perStation = baseRounds * (mainAvgSec + transSec);
@@ -6954,7 +6970,7 @@
 
     var mainAvgSec = avgTempsSeconds(mainPool, state.level, state.theme);
     var stationsRounds = mainPool.length > 0
-      ? computeStationsAndRounds(state.duration, state.level, state.theme, warmSec, cardioSec, coolSec, mainAvgSec, restSecForLevel, circuitRestSec(state.theme, state.level), mainPool.length)
+      ? computeStationsAndRounds(state.duration, state.level, state.theme, warmSec, cardioSec, coolSec, mainAvgSec, restSecForLevel, circuitRestSec(state.theme, state.level), mainPool.length, silent ? 0 : roundsWanted(state))
       : {n:0, rounds:0};
     var rounds = stationsRounds.rounds;
     var mainCount = stationsRounds.n;
@@ -6992,12 +7008,13 @@
     if(!silent && state.sport) title = 'Prépa ' + SPORT_LABEL[state.sport].toLowerCase().replace('vtt','VTT') + ' — ' + ZONE_LABEL[state.zone] + ' · ' + equipLabels;
     if(main.length === 0) rounds = 0;
 
-    var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, noImpact:!!state.noImpact, sport:(!silent && state.sport) || null};
+    var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, roundsFixed:silent ? 0 : roundsWanted(state), durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, noImpact:!!state.noImpact, sport:(!silent && state.sport) || null};
     ensureWarmup(session);
     ensureCooldown(session);
     if(silent){ session.title = title; return session; }
     if(window.ecAutoAdapt) window.ecAutoAdapt(session);
     fitSession(session);
+    if(session.roundsFixed) fitFixedRounds(session);
     rememberSession(session);
     displaySession(session, title);
   }
@@ -7060,7 +7077,7 @@
     var r0 = S.rounds, main0 = S.main.slice(), n0 = main0.length;
     if(!S._fitExtra){
       var ex0 = main0[main0.length - 1], extra = [], tmp = {warm:S.warm, cardio:S.cardio, main:main0.slice(), cool:S.cool, equip:S.equip, zone:S.zone, level:S.level, noFloor:S.noFloor, chair:S.chair, noImpact:S.noImpact};
-      for(var i = 0; i < 2; i++){
+      for(var i = 0; i < (S.roundsFixed ? 4 : 2); i++){
         var cands = replacementCandidates(tmp, ex0).filter(function(x){ return x.type === 'temps'; });
         if(!cands.length) break;
         var pick = cands[Math.floor(Math.random() * cands.length)]; extra.push(pick); tmp.main.push(pick);
@@ -7070,11 +7087,11 @@
     var extraNow = S._fitExtra.filter(function(x){ return main0.indexOf(x) < 0; });
     function secsFor(r, list){ S.rounds = r; S.main = list; SESSION_ADJ = adjFor(S); return sessionSeconds(S); }
     var best = null;
-    for(var k = Math.max(-6, 2 - n0); k <= 2; k++){
+    for(var k = Math.max(-6, 2 - n0); k <= (S.roundsFixed ? 4 : 2); k++){
       var list = k < 0 ? (n0 + k >= 2 ? main0.slice(0, n0 + k) : null) : (k > 0 ? (extraNow.length >= k ? main0.concat(extraNow.slice(0, k)) : null) : main0);
       if(!list) continue;
-      for(var r = Math.max(1, r0 - 2); r <= Math.min(6, r0 + 2); r++){
-        var sec = secsFor(r, list), score = Math.abs(sec - target) + 25 * Math.abs(r - r0) + 45 * Math.abs(k) + (r === 1 ? 120 : 0) + (list.length < 3 ? 120 : 0);
+      for(var r = S.roundsFixed ? r0 : Math.max(1, r0 - 2); r <= (S.roundsFixed ? r0 : Math.min(6, r0 + 2)); r++){
+        var sec = secsFor(r, list), score = Math.abs(sec - target) + 25 * Math.abs(r - r0) + (S.roundsFixed ? 20 : 45) * Math.abs(k) + (r === 1 && !S.roundsFixed ? 120 : 0) + (list.length < (S.roundsFixed ? 2 : 3) ? 120 : 0);
         if(!best || score < best.score) best = {score:score, r:r, list:list, k:k, sec:sec};
       }
     }
@@ -7090,6 +7107,18 @@
     if(res.k > 0) parts.push(res.k + ' exercice' + (res.k > 1 ? 's' : '') + ' en plus');
     if(res.k < 0) parts.push(-res.k + ' exercice' + (res.k < -1 ? 's' : '') + ' en moins');
     return 'Séance remaniée pour rester proche de ' + S.durationMinutes + ' min : ' + parts.join(', ') + '.';
+  }
+  // Tours imposés : en plus du nombre d'exercices, on peut allonger ou raccourcir d'un palier le temps d'effort
+  function fitFixedRounds(S){
+    var target = S.durationMinutes * 60, main0 = S.main.slice(), keepW = WORK_FACTOR, best = null;
+    [1, 1.1, 0.8].forEach(function(wf){
+      S.main = main0.slice(); S.workFactor = wf; fitSession(S);
+      WORK_FACTOR = wf; SESSION_ADJ = adjFor(S);
+      var sec = sessionSeconds(S), score = Math.abs(sec - target) + (wf === 1 ? 0 : 60);
+      if(!best || score < best.score) best = {score:score, wf:wf, main:S.main.slice()};
+    });
+    S.main = best.main; S.workFactor = best.wf === 1 ? undefined : best.wf;
+    WORK_FACTOR = keepW; SESSION_ADJ = adjFor(S);
   }
   // Durée totale exacte de la séance, telle que le chrono la déroule (échauffement, efforts, récups, transitions)
   function sessionSeconds(session){ return buildTimeline(session).reduce(function(sum, st){ return sum + st.duration; }, 0); }
@@ -9235,6 +9264,33 @@
     function syncDurChips(){ row.querySelectorAll('[data-dur]').forEach(function(b){ b.classList.toggle('active', b.dataset.dur === sel.value); }); }
     sel.addEventListener('change', syncDurChips);
     syncDurChips();
+  })();
+  // Nombre de tours : Auto ou imposé (1 à 6), la séance s'ajuste à la durée choisie
+  (function(){
+    var sel = $id('durationSelect'), df = sel && sel.closest('.field'); if(!df) return;
+    var f = document.createElement('div'); f.className = 'rounds-sub'; f.id = 'roundsField';
+    var opts = [[0,'Auto'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6']];
+    f.innerHTML = '<span class="rounds-lbl">Nombre de tours</span><div class="chip-group dur-chips num-row rounds-chips" id="roundsChips">'
+      + opts.map(function(o){ return '<button type="button" class="chip" data-rounds="' + o[0] + '">' + (o[0] ? '<b>' + o[1] + '</b>' : o[1]) + '</button>'; }).join('') + '</div>'
+      + '<div class="rounds-note" id="roundsNote"></div>';
+    df.appendChild(f);
+    function paint(){
+      f.querySelectorAll('[data-rounds]').forEach(function(b){ var on = +b.getAttribute('data-rounds') === ROUNDS_PREF; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      $id('roundsNote').textContent = ROUNDS_PREF ? ROUNDS_PREF + ' tour' + (ROUNDS_PREF > 1 ? 's' : '') + ' : le nombre d\u2019exercices s\u2019adapte pour tenir dans la durée choisie.' : 'Auto : 4 tours en 30 et 45 min, sinon calculés selon ton niveau et la durée.';
+      var d = state.duration, warn = (ROUNDS_PREF >= 4 && d <= 10 ? ' En 10 min, ' + ROUNDS_PREF + ' tours feront déborder un peu la séance.' : '');
+      if(warn) $id('roundsNote').textContent += warn;
+      var prog = typeof uiMode !== 'undefined' && uiMode === 'program'; f.hidden = prog;
+    }
+    f.addEventListener('click', function(e){
+      var b = e.target.closest('[data-rounds]'); if(!b) return;
+      ROUNDS_PREF = +b.getAttribute('data-rounds') || 0;
+      try{ localStorage.setItem('ec_rounds_pref', String(ROUNDS_PREF)); }catch(e){}
+      paint();
+    });
+    sel.addEventListener('change', function(){ setTimeout(paint, 0); });
+    if(typeof setMode === 'function'){ var _sm = setMode; setMode = function(){ var r = _sm.apply(this, arguments); paint(); return r; }; }
+    // La durée est déplacée plus tard sous le niveau : on garde « Nombre de tours » juste en dessous
+    paint();
   })();
   var _syncSettingsUI = syncSettingsUI;
   syncSettingsUI = function(){ _syncSettingsUI(); if(window.__syncDurChips) window.__syncDurChips(); };
