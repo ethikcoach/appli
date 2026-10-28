@@ -3872,6 +3872,8 @@
   .rounds-chips .chip{min-width:0;}
   .timer-tips p.opt b{color:#E8C77A;}
   #mobPanel #mobMatField .tile-grid{grid-template-columns:1fr 1fr !important;}
+  /* Carte « séance du jour » fermée par la croix : elle disparaît vraiment (jusqu'au lendemain) */
+  #todayCard[hidden], html.ec-p2 #todayView .today-card[hidden]{display:none !important;}
   /* ---------- Premier lancement ---------- */
   .ob-backdrop{position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,15,0.6);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
