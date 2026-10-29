@@ -1488,12 +1488,21 @@
   // Le verrou s'applique sur le site en ligne (ethikcoach.fr, netlify.app), pas dans l'aperçu de travail.
   var EC_LOCK_ON = /(^|\.)ethikcoach\.fr$|\.netlify\.app$|\.github\.io$/i.test(location.hostname);
   var EC_USER = null;
+  // Abonnés (paiement Stripe) : clé « ab-… » vérifiée en ligne par le serveur d'abonnement,
+  // puis gardée 7 jours sur le téléphone pour fonctionner hors connexion
+  var EC_SUB_API = 'https://ethikcoach-abonnement.ethikcoach.workers.dev';
+  var EC_SUB_RE = /^ab-[a-z0-9]{16}$/, EC_SUB_PENDING = null, EC_SUB_GRACE = 7 * 86400000;
+  function ecSubCache(){ try{ return JSON.parse(localStorage.getItem('ec_sub') || 'null'); }catch(e){ return null; } }
+  function ecSubHit(k){ var c = ecSubCache(); return (k && c && c.k === k && c.ok && Date.now() - c.at < EC_SUB_GRACE) ? {h:'sub', n:'', label:'Abonnement', sub:true, info:c} : null; }
   (function(){
     var key = null;
     try{ key = new URLSearchParams(location.search).get('acces'); }catch(e){}
     var stored = null; try{ stored = localStorage.getItem('ec_access'); }catch(e){}
-    var hit = ecFindKey(key);
-    if(hit){ try{ localStorage.setItem('ec_access', key.trim().toLowerCase()); }catch(e){} }
+    var kn = key ? String(key).trim().toLowerCase() : '', sn = stored ? String(stored).trim().toLowerCase() : '', subK = null;
+    if(EC_SUB_RE.test(kn)) subK = kn; else if(!ecFindKey(kn) && EC_SUB_RE.test(sn)) subK = sn;
+    var hit = subK ? ecSubHit(subK) : ecFindKey(key);
+    if(subK){ if(hit){ key = subK; try{ localStorage.setItem('ec_access', subK); }catch(e){} } else { key = null; EC_SUB_PENDING = subK; } }
+    else if(hit){ try{ localStorage.setItem('ec_access', key.trim().toLowerCase()); }catch(e){} }
     else { hit = ecFindKey(stored); key = hit ? stored : null; }
     EC_KEY = hit ? key : null;
     if(hit && hit.blocked){
@@ -1508,6 +1517,8 @@
       EC_USER = hit;
       // La clé reste dans l'adresse : l'appli installée sur l'écran d'accueil (iPhone) la garde
       try{ var u = new URL(location.href); if(u.searchParams.get('acces') !== key){ u.searchParams.set('acces', key); history.replaceState(null, '', u.toString()); } }catch(e){}
+    } else if(EC_LOCK_ON && EC_SUB_PENDING){
+      document.documentElement.classList.add('ec-locked', 'ec-subcheck');
     } else if(EC_LOCK_ON && EC_GUEST){
       document.documentElement.classList.add('ec-guest');
     } else if(EC_LOCK_ON){
@@ -1536,6 +1547,26 @@
   .ecl-err{min-height:1.2em; margin-top:6px; font-size:0.84rem; color:#A8442E;}
   .ecl-wa{display:block; margin-top:18px; font-size:0.88rem; color:#1F4030;}
   @media (prefers-color-scheme: dark){ #ecLock{background:#111713; color:#E4EAE1;} .ecl-box h1{color:#8FC49E;} .ecl-box p{color:#BAC2B5;} .ecl-box img{background:#F3F5F0; padding:6px 10px; border-radius:8px;} .ecl-main{background:#357D51;} .ecl-row input{background:#19211C; color:#E4EAE1; border-color:#323E36;} .ecl-row button{background:transparent; color:#8FC49E; border-color:#8FC49E;} .ecl-wa{color:#8FC49E;} }
+  /* ===== Abonnement : écran d'accueil ===== */
+  #ecLock{align-items:flex-start !important; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  #ecLock .ecl-box{margin:auto 0;}
+  .ecl-sub{display:flex; flex-direction:column; gap:10px; margin:0 0 6px;}
+  .ecl-sub[hidden]{display:none;}
+  .ecl-plan{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:58px; padding:10px 16px; border-radius:14px; text-decoration:none; font-weight:700; font-size:1rem; border:1.5px solid #1F4030; color:#1F4030; background:#fff; text-align:left;}
+  .ecl-plan small{display:block; font-weight:500; font-size:0.78rem; color:#65685F; margin-top:2px;}
+  .ecl-plan b{white-space:nowrap; font-size:1.05rem;}
+  .ecl-plan.main{background:#1F4030; color:#fff; border-color:#1F4030;}
+  .ecl-plan.main small{color:rgba(255,255,255,0.8);}
+  .ecl-subnote{font-size:0.8rem; color:#65685F; margin:2px 0 0; line-height:1.4;}
+  .ecl-mail{margin-top:18px; text-align:left;}
+  .ecl-mail summary{cursor:pointer; font-size:0.88rem; font-weight:600; color:#1F4030; list-style:none;}
+  .ecl-mail summary::-webkit-details-marker{display:none;}
+  .ecl-mail .ecl-row{margin-top:8px;}
+  .ecl-ok{min-height:1.2em; margin-top:6px; font-size:0.84rem; color:#2E7D4F;}
+  html.ec-subcheck .ecl-code, html.ec-subcheck .ecl-wa, html.ec-subcheck #ecLockSite, html.ec-subcheck .ecl-mail, html.ec-subcheck .ecl-sub{display:none !important;}
+  .ecl-spin{width:34px; height:34px; margin:6px auto 0; border-radius:50%; border:3px solid #D9D9D2; border-top-color:#1F4030; animation:eclspin 0.9s linear infinite;}
+  @keyframes eclspin{to{transform:rotate(360deg);}}
+  @media (prefers-color-scheme: dark){ .ecl-plan{background:#18211B; color:#E4EAE1; border-color:#8FC49E;} .ecl-plan small, .ecl-subnote{color:#BAC2B5;} .ecl-plan.main{background:#357D51; border-color:#357D51; color:#fff;} .ecl-mail summary{color:#8FC49E;} }
   .access-line{text-align:center; margin:0; padding:12px 16px 0; font-size:0.84rem; font-weight:600; color:var(--forest);}
   .access-line.soon{color:#A8442E;}
   .access-line + .app-version{padding-top:4px;}
@@ -16108,6 +16139,102 @@
         var now = k ? JSON.stringify(ecFindKey(k)) : 'null';
         if(was !== now) location.reload();
       }).catch(function(){});
+    }
+  })();
+</script>
+<script>
+  // ---------- Abonnement : vérification, écran d'accueil « S'abonner », gestion ----------
+  (function(){
+    var LAUNCH = Date.parse('2026-12-01T00:00:00+01:00'), FIN_OFFRE = Date.parse('2027-01-01T00:00:00+01:00');
+    var test = false; try{ test = /[?&]abotest=1/.test(location.search) || localStorage.getItem('ec_abotest') === '1'; if(/[?&]abotest=1/.test(location.search)) localStorage.setItem('ec_abotest', '1'); }catch(e){}
+    var OPEN = Date.now() >= LAUNCH || test;
+    var $ = function(id){ return document.getElementById(id); };
+    var lancement = Date.now() < FIN_OFFRE;
+    var PM = lancement ? '6,90 €' : '9,90 €', PA = lancement ? '69 €' : '89 €';
+    function fdate(ms){ return ms ? new Date(ms).toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) : ''; }
+    // Écran d'accueil : formules + lien perdu
+    var box = document.querySelector('#ecLock .ecl-box'), site = $('ecLockSite');
+    var sub = document.createElement('div'); sub.className = 'ecl-sub'; sub.id = 'ecLockSub'; sub.hidden = !OPEN;
+    sub.innerHTML = '<a class="ecl-plan main" href="' + EC_SUB_API + '/abonnement?plan=mensuel"><span>Mensuel<small>7 jours gratuits, sans engagement</small></span><b>' + PM + ' / mois</b></a>'
+      + '<a class="ecl-plan" href="' + EC_SUB_API + '/abonnement?plan=annuel"><span>Annuel<small>7 jours gratuits, ' + (lancement ? '2' : '3') + ' mois offerts</small></span><b>' + PA + ' / an</b></a>'
+      + '<p class="ecl-subnote">' + (lancement ? 'Offre de lancement jusqu’au 31 décembre : ton prix reste bloqué à vie. ' : '') + 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.</p>';
+    if(box && site) box.insertBefore(sub, site);
+    var mailBox = document.createElement('details'); mailBox.className = 'ecl-mail'; mailBox.hidden = !OPEN;
+    mailBox.innerHTML = '<summary>Déjà abonné ? Recevoir mon lien par e-mail</summary><div class="ecl-row"><input id="ecMailIn" type="email" autocomplete="email" placeholder="ton e-mail"><button type="button" id="ecMailBtn">Envoyer</button></div><div class="ecl-ok" id="ecMailOk" aria-live="polite"></div>';
+    var code = document.querySelector('#ecLock .ecl-code'); if(box && code) box.insertBefore(mailBox, code);
+    if(OPEN && !EC_EXPIRED && !EC_BLOCKED){
+      $('ecLockTitle').textContent = 'Ton coach dans ta poche';
+      $('ecLockText').textContent = 'Renfo sur mesure, étirements, yoga, respiration : des séances guidées à la voix, adaptées à ton niveau et à ton matériel.';
+      if(site) site.style.display = 'none';
+      var wa = $('ecLockWa'); if(wa) wa.textContent = 'Une question ? Écris à Benoît';
+    }
+    $('ecMailBtn').addEventListener('click', function(){
+      var v = $('ecMailIn').value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ $('ecMailOk').textContent = 'Vérifie ton adresse e-mail.'; return; }
+      $('ecMailOk').textContent = 'Envoi…';
+      fetch(EC_SUB_API + '/renvoyer', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({email:v})})
+        .then(function(){ $('ecMailOk').textContent = 'Si un abonnement existe avec cette adresse, ton lien vient de partir. Pense à regarder tes spams.'; })
+        .catch(function(){ $('ecMailOk').textContent = 'Pas de connexion : réessaie dans un instant.'; });
+    });
+    // Un code d'abonné tapé à la main : on le vérifie
+    var btn = $('ecLockBtn'), inp = $('ecLockInput');
+    function trySub(e){
+      var v = inp.value.trim().toLowerCase(); if(!EC_SUB_RE.test(v)) return;
+      e.stopImmediatePropagation(); if(e.preventDefault) e.preventDefault();
+      verify(v, true);
+    }
+    btn.addEventListener('click', trySub, true);
+    inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') trySub(e); }, true);
+
+    function save(k, r){ try{ localStorage.setItem('ec_sub', JSON.stringify({k:k, ok:!!r.ok, at:Date.now(), statut:r.statut || null, fin:r.fin || null, essai:r.essai || null, resilie:!!r.resilie, formule:r.formule || null})); }catch(e){} }
+    function showLocked(title, text){
+      document.documentElement.classList.remove('ec-subcheck'); document.documentElement.classList.add('ec-locked');
+      $('ecLockTitle').textContent = title; $('ecLockText').textContent = text;
+      sub.hidden = false; mailBox.hidden = false; if(site) site.style.display = 'none';
+      var sp = document.querySelector('#ecLock .ecl-spin'); if(sp) sp.remove();
+    }
+    function verify(k, fromCode){
+      if(fromCode) $('ecLockErr').textContent = 'Vérification…';
+      return fetch(EC_SUB_API + '/check?k=' + encodeURIComponent(k), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(r){
+        save(k, r);
+        if(r.ok){
+          try{ localStorage.setItem('ec_access', k); }catch(e){}
+          if(!EC_USER || !EC_USER.sub || fromCode || EC_SUB_PENDING){ var u = new URL(location.href); u.searchParams.set('acces', k); location.replace(u.toString()); }
+          return;
+        }
+        try{ localStorage.removeItem('ec_access'); }catch(e){}
+        if(fromCode){ $('ecLockErr').textContent = r.raison === 'inconnu' || r.raison === 'format' ? 'Code non reconnu. Vérifie-le ou demande ton lien par e-mail.' : 'Cet abonnement n’est plus actif.'; return; }
+        showLocked(r.raison === 'inconnu' ? 'Accès non reconnu' : 'Ton abonnement est terminé', r.raison === 'inconnu' ? 'Ce lien ne correspond à aucun abonnement. Demande ton lien par e-mail ou abonne-toi.' : 'Tu peux le reprendre quand tu veux : 1 minute, et tu retrouves toutes tes séances et ton suivi.');
+      }).catch(function(){
+        if(fromCode){ $('ecLockErr').textContent = 'Pas de connexion : réessaie dans un instant.'; return; }
+        if(EC_SUB_PENDING) showLocked('Connexion nécessaire', 'Connecte-toi à Internet pour vérifier ton abonnement, puis rouvre l’appli. Ensuite, elle marche aussi hors connexion.');
+      });
+    }
+    // Lien d'abonné pas encore vérifié sur ce téléphone (ou hors connexion depuis plus de 7 jours)
+    if(EC_SUB_PENDING && EC_LOCK_ON){
+      $('ecLockTitle').textContent = 'Vérification de ton accès…'; $('ecLockText').textContent = 'Un instant.';
+      var sp = document.createElement('div'); sp.className = 'ecl-spin'; $('ecLockText').after(sp);
+      verify(EC_SUB_PENDING, false);
+    }
+    // Abonné déjà vérifié : contrôle discret à chaque ouverture (sans bloquer s'il n'y a pas de réseau)
+    if(EC_USER && EC_USER.sub){
+      verify(EC_KEY, false);
+      try{
+        var u = new URL(location.href);
+        if(u.searchParams.get('bienvenue')){
+          u.searchParams.delete('bienvenue'); history.replaceState(null, '', u.toString());
+          setTimeout(function(){ var t = $('toast'), m = $('toastMsg'), un = $('toastUndo'); if(t && m){ m.textContent = 'Bienvenue ! Ton essai gratuit de 7 jours commence 💪'; if(un) un.style.display = 'none'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 6000); } }, 1200);
+        }
+      }catch(e){}
+      // Réglages : « Mon abonnement »
+      setTimeout(function(){
+        var card = document.querySelector('.set-sheet .set-card'), app = card && Array.from(card.querySelectorAll('.set-sec')).filter(function(x){ return /Appli/.test(x.textContent); })[0];
+        if(!card || !app) return;
+        var c = ecSubCache() || {}, st = c.statut === 'trialing' && c.essai ? 'Essai gratuit jusqu’au ' + fdate(c.essai) : (c.resilie && c.fin ? 'Résilié, accès jusqu’au ' + fdate(c.fin) : 'Abonnement ' + (c.formule || '') + ' actif');
+        var sec = document.createElement('div'); sec.className = 'set-sec'; sec.textContent = 'Mon abonnement';
+        var bx = document.createElement('div'); bx.className = 'set-box';
+        bx.innerHTML = '<a class="set-row set-link" href="' + EC_SUB_API + '/portail?k=' + encodeURIComponent(EC_KEY) + '"><span class="set-l">Gérer mon abonnement<small>' + st + ' · carte, factures, résiliation</small></span><span aria-hidden="true">›</span></a>';
+        app.parentNode.insertBefore(sec, app); app.parentNode.insertBefore(bx, app);
+      }, 600);
     }
   })();
 </script>
