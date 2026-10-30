@@ -1572,6 +1572,7 @@
   .ecl-plan{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:58px; padding:10px 16px; border-radius:14px; text-decoration:none; font-weight:700; font-size:1rem; border:1.5px solid #1F4030; color:#1F4030; background:#fff; text-align:left;}
   .ecl-plan small{display:block; font-weight:500; font-size:0.78rem; color:#65685F; margin-top:2px;}
   .ecl-plan b{white-space:nowrap; font-size:1.05rem;}
+.ecl-gift{display:block; margin:10px 0 0; text-align:center; font-weight:700; font-size:0.9rem; color:#1F4030; text-decoration:underline;}
   .ecl-plan.main{background:#1F4030; color:#fff; border-color:#1F4030;}
   .ecl-plan.main small{color:rgba(255,255,255,0.8);}
   .ecl-subnote{font-size:0.8rem; color:#65685F; margin:2px 0 0; line-height:1.4;}
@@ -10100,6 +10101,8 @@
       function norm(t){ return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
       function fd(ms){ return ms ? new Date(ms).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'}) : ''; }
       function st(a){
+        if(a.statut === 'cadeau') return a.actif ? {cls:'on', f:'on', txt:'🎁 Cadeau · jusqu’au ' + fd(a.fin)} : {cls:'off', f:'off', txt:'🎁 Cadeau terminé le ' + fd(a.fin)};
+        if(a.statut === 'cadeau-attente') return {cls:'soon', f:'on', txt:'🎁 Cadeau pas encore ouvert'};
         if(a.statut === 'trialing') return {cls:'soon', f:'essai', txt:'Essai gratuit jusqu’au ' + fd(a.essai) + (a.resilie ? ' · résilié' : '')};
         if(a.statut === 'active' && a.resilie) return {cls:'soon', f:'res', txt:'Résilié · accès jusqu’au ' + fd(a.fin)};
         if(a.statut === 'active') return {cls:'on', f:'on', txt:'Actif · ' + (a.formule || '') + (a.prix ? ' ' + a.prix : '')};
@@ -16318,7 +16321,8 @@
     var sub = document.createElement('div'); sub.className = 'ecl-sub'; sub.id = 'ecLockSub'; sub.hidden = !OPEN;
     sub.innerHTML = '<a class="ecl-plan main" href="' + EC_SUB_API + '/abonnement?plan=mensuel"><span>Mensuel<small>7 jours gratuits, sans engagement</small></span><b>' + PM + ' / mois</b></a>'
       + '<a class="ecl-plan" href="' + EC_SUB_API + '/abonnement?plan=annuel"><span>Annuel<small>7 jours gratuits, ' + (lancement ? '2' : '3') + ' mois offerts</small></span><b>' + PA + ' / an</b></a>'
-      + '<p class="ecl-subnote">' + (lancement ? 'Offre de lancement jusqu’au 31 décembre : ton prix reste bloqué à vie. ' : '') + 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.</p>';
+      + '<p class="ecl-subnote">' + (lancement ? 'Offre de lancement jusqu’au 31 décembre : ton prix reste bloqué à vie. ' : '') + 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.</p>'
+      + '<a class="ecl-gift" href="' + EC_SUB_API + '/cadeau">🎁 Offrir 3 mois à un proche</a>';
     if(box && site) box.insertBefore(sub, site);
     var mailBox = document.createElement('details'); mailBox.className = 'ecl-mail'; mailBox.hidden = !OPEN;
     mailBox.innerHTML = '<summary>Déjà abonné ? Recevoir mon lien par e-mail</summary><div class="ecl-row"><input id="ecMailIn" type="email" autocomplete="email" placeholder="ton e-mail"><button type="button" id="ecMailBtn">Envoyer</button></div><div class="ecl-ok" id="ecMailOk" aria-live="polite"></div>';
@@ -16364,6 +16368,7 @@
         }
         try{ localStorage.removeItem('ec_access'); }catch(e){}
         if(fromCode){ $('ecLockErr').textContent = r.raison === 'inconnu' || r.raison === 'format' ? 'Code non reconnu. Vérifie-le ou demande ton lien par e-mail.' : 'Cet abonnement n’est plus actif.'; return; }
+        if(r.raison === 'cadeau-fini'){ showLocked('Ton accès cadeau est terminé', 'J’espère que ces mois de séances t’ont plu ! Pour continuer, abonne-toi : 7 jours gratuits, et tu retrouves tout ton suivi.'); return; }
         showLocked(r.raison === 'inconnu' ? 'Accès non reconnu' : 'Ton abonnement est terminé', r.raison === 'inconnu' ? 'Ce lien ne correspond à aucun abonnement. Demande ton lien par e-mail ou abonne-toi.' : 'Tu peux le reprendre quand tu veux : 1 minute, et tu retrouves toutes tes séances et ton suivi.');
       }).catch(function(){
         if(fromCode){ $('ecLockErr').textContent = 'Pas de connexion : réessaie dans un instant.'; return; }
@@ -16372,15 +16377,15 @@
     }
     // Page de bienvenue juste après l'abonnement (avant les 3 questions de départ)
     function bienvenue(){
-      var c = ecSubCache() || {}, fin = c.statut === 'trialing' && c.essai ? fdate(c.essai) : '';
+      var c = ecSubCache() || {}, fin = c.statut === 'trialing' && c.essai ? fdate(c.essai) : '', kdo = c.statut === 'cadeau';
       var lg = document.querySelector('.site-logo');
       var w = document.createElement('div'); w.className = 'ec-hello'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'Bienvenue');
       w.innerHTML = '<div class="ech-box">' + (lg ? '<img class="ech-logo" alt="Ethik’Coach" src="' + lg.src + '">' : '')
         + '<div class="ech-big" aria-hidden="true">🎉</div><h1>Bienvenue dans ton appli !</h1>'
-        + '<p class="ech-lead">' + (fin ? 'Ton essai gratuit a commencé : tout est ouvert jusqu’au <b>' + fin + '</b>. Rien n’est prélevé avant.' : 'Ton abonnement est actif : tout est ouvert.') + '</p>'
-        + '<ul class="ech-list"><li><span>📩</span><span><b>Ton lien personnel</b> arrive par e-mail : garde-le, il ouvre ton appli sur n’importe quel téléphone.</span></li>'
+        + '<p class="ech-lead">' + (kdo ? 'On t’a offert l’appli 🎁 Tout est ouvert jusqu’au <b>' + fdate(c.fin) + '</b>, sans rien à payer.' : (fin ? 'Ton essai gratuit a commencé : tout est ouvert jusqu’au <b>' + fin + '</b>. Rien n’est prélevé avant.' : 'Ton abonnement est actif : tout est ouvert.')) + '</p>'
+        + '<ul class="ech-list">' + (kdo ? '<li><span>🔑</span><span><b>Garde ton code cadeau</b> : il ouvre ton appli sur n’importe quel téléphone.</span></li>' : '<li><span>📩</span><span><b>Ton lien personnel</b> arrive par e-mail : garde-le, il ouvre ton appli sur n’importe quel téléphone.</span></li>')
         + '<li><span>📲</span><span><b>Installe l’appli</b> sur ton écran d’accueil : iPhone, bouton Partager › « Sur l’écran d’accueil » ; Android, menu ⋮ › « Installer ».</span></li>'
-        + '<li><span>⚙️</span><span><b>Ton abonnement</b> se gère dans Réglages › Mon abonnement : carte, factures, résiliation en 2 clics.</span></li></ul>'
+        + '' + (kdo ? '<li><span>🎁</span><span><b>Aucun abonnement</b> : à la fin, l’accès s’arrête simplement, et tu pourras t’abonner si tu veux continuer.</span></li>' : '<li><span>⚙️</span><span><b>Ton abonnement</b> se gère dans Réglages › Mon abonnement : carte, factures, résiliation en 2 clics.</span></li>') + '</ul>'
         + '<button type="button" class="ech-go">C’est parti !</button><p class="ech-next">Ensuite, 3 questions pour régler l’appli sur toi.</p></div>';
       document.body.appendChild(w);
       requestAnimationFrame(function(){ w.classList.add('on'); });
@@ -16422,10 +16427,10 @@
       setTimeout(function(){
         var card = document.querySelector('.set-sheet .set-card'), app = card && Array.from(card.querySelectorAll('.set-sec')).filter(function(x){ return /Appli/.test(x.textContent); })[0];
         if(!card || !app) return;
-        var c = ecSubCache() || {}, st = c.statut === 'trialing' && c.essai ? 'Essai gratuit jusqu’au ' + fdate(c.essai) : (c.resilie && c.fin ? 'Résilié, accès jusqu’au ' + fdate(c.fin) : 'Abonnement ' + (c.formule || '') + ' actif');
+        var c = ecSubCache() || {}, st = c.statut === 'cadeau' ? 'Accès offert jusqu’au ' + fdate(c.fin) + ', rien à payer' : (c.statut === 'trialing' && c.essai ? 'Essai gratuit jusqu’au ' + fdate(c.essai) : (c.resilie && c.fin ? 'Résilié, accès jusqu’au ' + fdate(c.fin) : 'Abonnement ' + (c.formule || '') + ' actif'));
         var sec = document.createElement('div'); sec.className = 'set-sec'; sec.textContent = 'Mon abonnement';
         var bx = document.createElement('div'); bx.className = 'set-box';
-        bx.innerHTML = '<a class="set-row set-link" href="' + EC_SUB_API + '/portail?k=' + encodeURIComponent(EC_KEY) + '"><span class="set-l">Gérer mon abonnement<small>' + st + ' · carte, factures, résiliation</small></span><span aria-hidden="true">›</span></a>';
+        bx.innerHTML = '<a class="set-row set-link" href="' + EC_SUB_API + '/portail?k=' + encodeURIComponent(EC_KEY) + '"><span class="set-l">Gérer mon abonnement<small>' + st + (c.statut === 'cadeau' ? '' : ' · carte, factures, résiliation') + '</small></span><span aria-hidden="true">›</span></a>';
         app.parentNode.insertBefore(sec, app); app.parentNode.insertBefore(bx, app);
       }, 600);
     }
