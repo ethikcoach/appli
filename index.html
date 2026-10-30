@@ -2057,6 +2057,7 @@
   html.ec-guest #breathView, html.ec-guest #libView, html.ec-guest #suiviView, html.ec-guest .coach-tools, html.ec-guest .results .sub-actions,
   html.ec-guest .install-btn, html.ec-guest .install-inline, html.ec-guest #ecAccessLine, html.ec-guest .ob-backdrop{display:none !important;}
   html.ec-guest body{padding-bottom:0;}
+  html.ec-guest .recup-switch{display:none !important;}
   html.ec-guest #renfoView{display:block !important; max-width:760px;}
   html.ec-guest.ec-guest-breath #renfoView{display:none !important;}
   html.ec-guest.ec-guest-breath #breathView{display:block !important; max-width:760px;}
@@ -11936,6 +11937,9 @@
       place();
     }
     sw.addEventListener('click', function(e){ var b = e.target.closest('[data-rm]'); if(b) setMode(b.getAttribute('data-rm')); });
+    // Lien de séance de respiration reçu (#r=) : ouvrir directement sur Respiration, pas sur Mobilité
+    if(/^#r=/.test(location.hash || '')) setTimeout(function(){ setMode('breath'); }, 0);
+    window.addEventListener('hashchange', function(){ if(/^#r=/.test(location.hash || '')) setMode('breath'); });
     ['tabRenfoBtn', 'tabBreathBtn'].forEach(function(id){ document.getElementById(id).addEventListener('click', function(){ setTimeout(place, 0); }); });
 
     var _ds = displaySession;
@@ -16387,6 +16391,22 @@
       $('ecLockTitle').textContent = 'Vérification de ton accès…'; $('ecLockText').textContent = 'Un instant.';
       var sp = document.createElement('div'); sp.className = 'ecl-spin'; $('ecLockText').after(sp);
       verify(EC_SUB_PENDING, false);
+    }
+    // Séance offerte (lien « séance seule ») : à partir du lancement, proposer l'essai de l'appli complète
+    if(OPEN && document.documentElement.classList.contains('ec-guest')){
+      var gcss = document.createElement('style');
+      gcss.textContent = '.guest-cta{display:flex; flex-direction:column; gap:4px; margin:10px 0 4px; padding:12px 14px; border-radius:16px; background:#EAF5EE; color:#1F4030; text-decoration:none; text-align:left;} .guest-cta b{font-size:0.98rem;} .guest-cta small{font-size:0.8rem; color:#4A5A50;} .guest-cta span{align-self:flex-start; margin-top:6px; padding:9px 16px; border-radius:999px; background:#1F4030; color:#fff; font-weight:800; font-size:0.9rem;}'
+        + '@media (prefers-color-scheme: dark){ .guest-cta{background:#17301F; color:#CDEBD6;} .guest-cta small{color:#A9C2B1;} .guest-cta span{background:#2E9E5E;} }';
+      document.head.appendChild(gcss);
+      var addCta = function(){
+        document.querySelectorAll('.guest-note').forEach(function(n){
+          if(n.nextElementSibling && n.nextElementSibling.classList.contains('guest-cta')) return;
+          var a = document.createElement('a'); a.className = 'guest-cta'; a.href = 'https://www.ethikcoach.fr/abonnement'; a.target = '_blank'; a.rel = 'noopener';
+          a.innerHTML = '<b>Envie de plus de séances comme celle-ci ?</b><small>L’appli complète : renfo sur mesure, yoga, étirements, respiration, guidés à la voix. ' + (lancement ? 'Dès 6,90 € par mois, ' : '') + '7 jours gratuits, sans engagement.</small><span>Essayer gratuitement</span>';
+          n.after(a);
+        });
+      };
+      addCta(); new MutationObserver(addCta).observe(document.body, {childList:true, subtree:true});
     }
     // Abonné déjà vérifié : contrôle discret à chaque ouverture (sans bloquer s'il n'y a pas de réseau)
     if(EC_USER && EC_USER.sub){
