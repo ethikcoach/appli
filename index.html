@@ -4350,7 +4350,7 @@
       <div id="ctChalNow"></div>
       <div class="ct-form">
         <label class="ct-wide">Nom du défi<input type="text" id="chT" maxlength="40" placeholder="ex. Défi de novembre"></label>
-        <label>Objectif<select id="chK"><option value="sessions">Séances</option><option value="days">Jours actifs</option><option value="minutes">Minutes</option><option value="breath">Séances de respiration</option></select></label>
+        <label>Objectif<select id="chK"><option value="sessions">Séances</option><option value="days">Jours actifs</option><option value="minutes">Minutes</option><option value="breath">Séances de respiration</option><option value="renfo">Séances de renfo</option><option value="mob">Séances récup (yoga, étirements)</option><option value="defi">Défis chrono ou WOD</option><option value="morning">Séances avant 9 h</option><option value="weekend">Séances le week-end</option><option value="long">Séances de 30 min et +</option><option value="streak">Jours d’affilée</option><option value="variety">Familles essayées (sur 4)</option></select></label>
         <label>Nombre<input type="number" id="chN" min="1" max="999" value="10" inputmode="numeric"></label>
         <label>Du<input type="date" id="chFrom"></label>
         <label>Au<input type="date" id="chTo"></label>
@@ -7224,6 +7224,14 @@
   }
   // Durée totale exacte de la séance, telle que le chrono la déroule (échauffement, efforts, récups, transitions)
   function sessionSeconds(session){ return buildTimeline(session).reduce(function(sum, st){ return sum + st.duration; }, 0); }
+  // Plafond de durée (calendrier de l'Avent) : on raccourcit la séance affichée jusqu'à tenir dans maxMin
+  window.ecCapSession = function(maxMin, title){
+    var S = lastSession; if(!S || !S.durationMinutes) return;
+    var guard = 0;
+    while(sessionSeconds(S) > maxMin * 60 + 5 && guard++ < 6 && S.durationMinutes > 4){ S.durationMinutes -= 1; S._fitExtra = null; try{ fitSession(S); }catch(e){ break; } }
+    if(guard) displaySession(S, title || S.title || '', true);
+    return Math.round(sessionSeconds(S));
+  };
   function fmtTotal(sec){
     sec = Math.round(sec); var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), r = sec % 60;
     if(r >= 30 && sec >= 600){ m += 1; r = 0; if(m === 60){ h += 1; m = 0; } }
@@ -9969,7 +9977,7 @@
     // ----- Défi
     function renderChal(){
       var c = draft && draft.challenge, box = $('#ctChalNow'); if(!box) return;
-      var K = {sessions:'séances', days:'jours actifs', minutes:'minutes', breath:'séances de respiration'};
+      var K = {sessions:'séances', days:'jours actifs', minutes:'minutes', breath:'séances de respiration', renfo:'séances de renfo', mob:'séances récup', defi:'défis chrono', morning:'séances avant 9 h', weekend:'séances le week-end', long:'séances de 30 min et +', streak:'jours d’affilée', variety:'familles essayées'};
       box.innerHTML = c ? '<p class="ct-chal-now">En cours : <b>' + esc(c.t) + '</b> · ' + c.n + ' ' + (K[c.k] || '') + ' du ' + frDate(c.from) + ' au ' + frDate(c.to) + '</p>' : '';
       $('#chDel').hidden = !c;
       if(c && !$('#chT').value){ $('#chT').value = c.t; $('#chK').value = c.k; $('#chN').value = c.n; $('#chFrom').value = c.from; $('#chTo').value = c.to; $('#chTxt').value = c.txt || ''; }
@@ -11600,16 +11608,51 @@
       var today = new Date(); today.setHours(0,0,0,0);
       if(c && c.n > 0 && c.from && c.to && parseIso(c.to) >= today && parseIso(c.from) <= today) return c;
       var first = new Date(today.getFullYear(), today.getMonth(), 1), last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      var month = today.toLocaleDateString('fr-FR', {month:'long'});
-      return {id:'m-' + iso(first).slice(0, 7), t:'Défi du mois', k:'sessions', n:8, from:iso(first), to:iso(last), txt:'8 séances en ' + month + ', renfo ou respiration.', auto:true};
+      // Un défi différent chaque mois, et une autre série l'année suivante (cycle de 3 ans)
+      var D = DEFIS[today.getMonth()][((today.getFullYear() - 2026) % 3 + 3) % 3];
+      return {id:'m-' + iso(first).slice(0, 7), t:D[0], k:D[1], n:D[2], from:iso(first), to:iso(last), txt:D[3], auto:true};
     }
-    var KIND = {sessions:['séance', 'séances'], minutes:['minute', 'minutes'], days:['jour actif', 'jours actifs'], breath:['respiration', 'respirations']};
+    // [titre, type, objectif, texte]
+    var DEFIS = [
+      [['🎯 Bonnes résolutions', 'days', 12, '12 jours actifs en janvier : la résolution qui tient !'], ['🚀 Le grand départ', 'sessions', 10, '10 séances pour lancer l’année.'], ['❄️ Série d’hiver', 'streak', 5, '5 jours d’affilée avec au moins une séance.']],
+      [['❤️ Cœur solide', 'minutes', 240, '4 heures d’entraînement en février, le mois le plus court !'], ['⚡ Février express', 'sessions', 8, '8 séances en 28 jours.'], ['🌬️ Souffle d’hiver', 'breath', 8, '8 séances de respiration : cohérence, détente, sommeil.']],
+      [['🌱 Réveil du printemps', 'mob', 8, '8 séances de yoga, mobilité ou étirements.'], ['🌅 Lève-tôt', 'morning', 6, '6 séances avant 9 h du matin.'], ['🧭 Tour d’horizon', 'variety', 4, 'Essaie les 4 familles : renfo, récup, respiration et un défi chrono.']],
+      [['🐟 Pas de poisson, que du renfo', 'renfo', 10, '10 séances de renfo en avril.'], ['🔥 Défis en série', 'defi', 4, '4 défis chrono ou WOD (Créer › Défis & WOD).'], ['📆 Un jour sur deux', 'days', 15, '15 jours actifs en avril.']],
+      [['🌼 Joli mois de mai', 'weekend', 6, '6 séances le week-end.'], ['⏱ Marathon de minutes', 'minutes', 300, '5 heures cumulées en mai.'], ['🧘 Zen en mai', 'breath', 10, '10 séances de respiration.']],
+      [['☀️ Objectif été', 'sessions', 12, '12 séances en juin pour arriver en forme à l’été.'], ['🔗 Série de juin', 'streak', 7, '7 jours d’affilée avec au moins une séance.'], ['🎶 Fête de la musique', 'defi', 5, '5 défis chrono, en musique !']],
+      [['🏖️ Vacances actives', 'days', 10, '10 jours actifs, même en vacances : 10 minutes suffisent.'], ['🤸 Souplesse estivale', 'mob', 10, '10 séances de yoga, mobilité ou étirements.'], ['🌄 Matins d’été', 'morning', 8, '8 séances avant 9 h, à la fraîche.']],
+      [['💪 Pas de pause en août', 'sessions', 8, '8 séances en août, où que tu sois.'], ['🌴 Récup au soleil', 'mob', 8, '8 séances de récup ou d’étirements.'], ['🏕️ Week-ends en forme', 'weekend', 6, '6 séances le week-end.']],
+      [['🎒 La rentrée', 'sessions', 10, '10 séances pour une rentrée en forme.'], ['🧭 Tout essayer', 'variety', 4, 'Les 4 familles ce mois-ci : renfo, récup, respiration et défi chrono.'], ['⏳ Les longues', 'long', 6, '6 séances de 30 minutes ou plus.']],
+      [['🍂 Défi d’automne', 'renfo', 10, '10 séances de renfo en octobre.'], ['🌬️ Respire, c’est l’automne', 'breath', 8, '8 séances de respiration.'], ['🔗 Série d’automne', 'streak', 6, '6 jours d’affilée avec au moins une séance.']],
+      [['🌧️ Novembre sans excuse', 'days', 14, '14 jours actifs, même quand il pleut.'], ['📈 Gros volume', 'minutes', 360, '6 heures cumulées en novembre.'], ['🔥 Défis de novembre', 'defi', 6, '6 défis chrono ou WOD.']],
+      [['🎄 Calendrier de l’Avent', 'days', 15, '15 jours actifs en décembre, une case à la fois.'], ['🎁 Avant les fêtes', 'sessions', 12, '12 séances avant de lever ton verre.'], ['✨ Zen pour les fêtes', 'breath', 8, '8 séances de respiration pour traverser les fêtes sereinement.']]
+    ];
+    var KIND = {sessions:['séance', 'séances'], minutes:['minute', 'minutes'], days:['jour actif', 'jours actifs'], breath:['respiration', 'respirations'],
+      mob:['séance récup', 'séances récup'], renfo:['séance de renfo', 'séances de renfo'], morning:['séance avant 9 h', 'séances avant 9 h'], weekend:['séance le week-end', 'séances le week-end'],
+      streak:['jour d’affilée', 'jours d’affilée'], variety:['famille essayée', 'familles essayées'], defi:['défi chrono', 'défis chrono'], long:['séance de 30 min et +', 'séances de 30 min et +']};
+    var RE_MOB = /yoga|étire|etire|mobilit|récup|recup|massage|souplesse|détente|detente|postures/i, RE_DEFI = /défi|defi|wod|amrap|emom|tabata|hyrox|crossfit|chrono|pyramide|montagne|sandwich/i;
+    function famille(e){ return e.breath ? 'breath' : (RE_DEFI.test(e.title || '') ? 'defi' : (RE_MOB.test(e.title || '') ? 'mob' : 'renfo')); }
     function progress(c, h){
       var a = parseIso(c.from).getTime(), b = parseIso(c.to).getTime() + 86400000;
       var list = h.filter(function(e){ return e.at >= a && e.at < b; });
       if(c.k === 'minutes') return list.reduce(function(s, e){ return s + (+e.minutes || 0); }, 0);
       if(c.k === 'days'){ var d = {}; list.forEach(function(e){ d[dayKey(e.at)] = 1; }); return Object.keys(d).length; }
       if(c.k === 'breath') return list.filter(function(e){ return e.breath; }).length;
+      if(c.k === 'mob' || c.k === 'renfo') return list.filter(function(e){ return famille(e) === c.k; }).length;
+      if(c.k === 'morning') return list.filter(function(e){ return new Date(e.at).getHours() < 9; }).length;
+      if(c.k === 'weekend') return list.filter(function(e){ var g = new Date(e.at).getDay(); return g === 0 || g === 6; }).length;
+      if(c.k === 'long') return list.filter(function(e){ return (+e.minutes || 0) >= 30; }).length;
+      if(c.k === 'defi'){
+        var lg = []; try{ lg = JSON.parse(localStorage.getItem('ec_defi_log') || '[]') || []; }catch(err){}
+        return Math.max(lg.filter(function(x){ return x.at >= a && x.at < b; }).length, list.filter(function(e){ return famille(e) === 'defi'; }).length);
+      }
+      if(c.k === 'variety'){ var f = {}; list.forEach(function(e){ f[famille(e)] = 1; }); return Object.keys(f).length; }
+      if(c.k === 'streak'){
+        var days = {}; list.forEach(function(e){ var d = new Date(e.at); d.setHours(0,0,0,0); days[d.getTime()] = 1; });
+        var ks = Object.keys(days).map(Number).sort(function(x, y){ return x - y; }), best = 0, run = 0, prev = null;
+        ks.forEach(function(t){ run = (prev !== null && Math.round((t - prev) / 86400000) === 1) ? run + 1 : 1; best = Math.max(best, run); prev = t; });
+        return best;
+      }
       return list.length;
     }
     function checkChallenge(h){
@@ -11624,7 +11667,8 @@
       var left = Math.max(0, Math.round((parseIso(c.to) - new Date().setHours(0,0,0,0)) / 86400000));
       var lab = KIND[c.k] || KIND.sessions;
       card.hidden = false;
-      card.innerHTML = '<div class="ch-head"><span class="ch-ico">🎯</span><div><h2>' + esc(c.t) + '</h2><p>' + esc(c.txt || (c.n + ' ' + lab[1])) + (c.auto ? '' : ' <em>· proposé par ton coach</em>') + '</p></div></div>'
+      var ico = '🎯', tt = c.t || '', mm = /^([^\wÀ-ÿ\s«]+)\s+(.+)$/.exec(tt); if(mm){ ico = mm[1]; tt = mm[2]; }
+      card.innerHTML = '<div class="ch-head"><span class="ch-ico">' + ico + '</span><div><h2>' + esc(tt) + '</h2><p>' + esc(c.txt || (c.n + ' ' + lab[1])) + (c.auto ? '' : ' <em>· proposé par ton coach</em>') + '</p></div></div>'
         + '<div class="ch-bar"><span style="width:' + pct + '%"></span></div>'
         + '<div class="ch-foot"><b>' + Math.min(r.p, c.n) + ' / ' + c.n + ' ' + (c.n > 1 ? lab[1] : lab[0]) + '</b><span>' + (r.done ? '✅ Défi réussi, bravo !' : (left === 0 ? 'Dernier jour !' : 'encore ' + left + ' jour' + (left > 1 ? 's' : ''))) + '</span></div>';
       card.classList.toggle('done', r.done);
@@ -16835,6 +16879,123 @@
       window.ecRenderGamif = function(h){ var o = orig.apply(this, arguments); try{ paint(); push(false); var r = cur(); if(r && (g(RK, {}) || {}).on) fetchRank(r.c.id); }catch(e){} return o; };
     }
     setTimeout(function(){ try{ paint(); push(false); var r = cur(); if(r && (g(RK, {}) || {}).on) fetchRank(r.c.id, true); }catch(e){} }, 1500);
+  })();
+</script>
+<script>
+  // ---------- Calendrier de l'Avent : une séance surprise par jour, du 1er au 24 décembre ----------
+  (function(){
+    if(typeof EC_GUEST !== 'undefined' && EC_GUEST) return;
+    var test = false; try{ if(/[?&]avent=1/.test(location.search)) localStorage.setItem('ec_avent_test', '1'); test = localStorage.getItem('ec_avent_test') === '1'; }catch(e){}
+    var now = new Date(), dec = now.getMonth() === 11;
+    if(!dec && !test) return;
+    var Y = now.getFullYear(), TODAY = dec ? now.getDate() : 24;   // en aperçu : toutes les cases ouvertes
+    // [type, réglage, durée, titre, texte]
+    var CASES = [
+      ['renfo', {zone:'full'}, 10, 'Mise en route', 'Un renfo corps complet pour ouvrir le calendrier.'],
+      ['breath', null, 5, 'Cohérence cardiaque', '5 minutes pour faire redescendre la pression.'],
+      ['mob', {g:'yoga'}, 10, 'Premier yoga', 'Des postures au rythme du souffle.'],
+      ['renfo', {zone:'bas'}, 10, 'Jambes de skieur', 'Cuisses et fessiers, pour tenir la descente.'],
+      ['mob', {g:'matin'}, 10, 'Réveil en douceur', 'Une routine courte pour bien démarrer la journée.'],
+      ['defi', {df:'fortime'}, 10, 'Saint-Nicolas au chrono', 'Un petit défi chronométré : bats ton temps !'],
+      ['mob', {g:'yoga'}, 10, 'Yoga cocooning', 'Prends le temps, au chaud.'],
+      ['renfo', {zone:'gainage'}, 10, 'Gainage de sapin', 'Droit comme un sapin : abdos et gainage.'],
+      ['breath', null, 10, 'Souffle d’hiver', '10 minutes de respiration guidée.'],
+      ['mob', {g:'recup'}, 10, 'Étirements', 'Relâcher les jambes et le dos.'],
+      ['renfo', {zone:'haut'}, 10, 'Bras de lutin', 'Haut du corps : il y a des paquets à porter !'],
+      ['mob', {g:'soir'}, 10, 'Détente du soir', 'Lent et au sol, pour mieux dormir.'],
+      ['defi', {df:'tblocs'}, 10, 'Tabata des neiges', '20 secondes à fond, 10 secondes de récup.'],
+      ['renfo', {zone:'full'}, 10, 'Mi-parcours', 'La moitié du calendrier : un renfo complet, à fond !'],
+      ['breath', null, 5, 'Pause respiration', '5 minutes pour souffler entre deux courses de Noël.'],
+      ['mob', {g:'yoga'}, 10, 'Yoga de la mi-décembre', 'Équilibre, ouverture et calme.'],
+      ['renfo', {zone:'equilibre'}, 10, 'Équilibre sur la glace', 'Gainage et équilibre : ne glisse pas !'],
+      ['mob', {g:'mobi'}, 10, 'Mobilité hanches et dos', 'Des mouvements contrôlés pour gagner en amplitude.'],
+      ['defi', {df:'pyramide'}, 10, 'Pyramide de cadeaux', 'De moins en moins de répétitions à chaque palier.'],
+      ['renfo', {zone:'bas'}, 10, 'Jambes avant les fêtes', 'Encore un effort pour les jambes.'],
+      ['mob', {g:'yoga'}, 10, 'Yoga du solstice', 'Le jour le plus court : un yoga lumineux.'],
+      ['breath', null, 10, 'Respire avant les fêtes', '10 minutes pour arriver zen aux fêtes.'],
+      ['renfo', {zone:'full'}, 10, 'Le dernier effort', 'Un renfo complet avant le réveillon.'],
+      ['mob', {g:'soir'}, 10, 'Veillée zen', 'Joyeux Noël ! Une détente douce pour finir le calendrier.']
+    ];
+    var IC = {renfo:'💪', breath:'🌬️', mob:'🧘', defi:'⏱️'}, LB = {renfo:'Renfo', breath:'Respiration', mob:'Yoga & récup', defi:'Défi chrono'};
+    var K = 'ec_avent_' + Y;
+    function st(){ try{ return JSON.parse(localStorage.getItem(K) || '{}') || {}; }catch(e){ return {}; } }
+    function sv(o){ try{ localStorage.setItem(K, JSON.stringify(o)); }catch(e){} }
+    function hist(){ try{ var h = JSON.parse(localStorage.getItem('ec_history_v1') || '[]'); return Array.isArray(h) ? h : []; }catch(e){ return []; } }
+    // Une case est faite quand une séance est terminée après l'avoir ouverte, le même jour
+    function done(n){
+      var o = st(), at = o.open && o.open[n]; if(!at) return false;
+      if(o.done && o.done[n]) return true;
+      var d0 = new Date(at); d0.setHours(23, 59, 59, 999);
+      // la séance doit suivre l'ouverture de cette case, sans qu'une autre case ait été ouverte entre-temps
+      var others = Object.keys(o.open).filter(function(k){ return +k !== n; }).map(function(k){ return o.open[k]; });
+      var ok = hist().some(function(e){ return e.at >= at - 60000 && e.at <= d0.getTime() && !others.some(function(t){ return t > at && t < e.at; }); });
+      if(ok){ o.done = o.done || {}; o.done[n] = Date.now(); sv(o); }
+      return ok;
+    }
+    var css = document.createElement('style');
+    css.textContent = '.av-card{margin:0 0 14px; padding:16px; border-radius:22px; color:#fff; background:radial-gradient(circle at 85% 0%, rgba(214,58,58,.55), transparent 55%), linear-gradient(150deg,#123524,#1F4030 60%,#2B5A3F); box-shadow:0 12px 28px rgba(18,53,36,.28);}'
+      + '.av-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px;} .av-top h2{margin:0; font-size:1.2rem; color:#fff;} .av-top span{font-size:0.82rem; opacity:.85; white-space:nowrap;}'
+      + '.av-sub{font-size:0.84rem; opacity:.9; margin:4px 0 12px;}'
+      + '.av-grid{display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:6px;}'
+      + '.av-c{position:relative; aspect-ratio:1; border:none; border-radius:12px; background:rgba(255,255,255,.12); color:#fff; font:800 1rem/1 "Bricolage Grotesque",sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;}'
+      + '.av-c.lock{opacity:.4; cursor:default;} .av-c.today{background:#D63A3A; box-shadow:0 0 0 2px #FFD7A0 inset; animation:avP 1.6s ease-in-out infinite;} .av-c.open{background:rgba(255,255,255,.22);}'
+      + '.av-c.ok{background:#F4E3B5; color:#1F4030;} .av-c.ok::after{content:"★"; position:absolute; top:2px; right:4px; font-size:0.7rem; color:#C9852B;}'
+      + '@keyframes avP{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}} @media (prefers-reduced-motion:reduce){.av-c.today{animation:none}}'
+      + '.av-dlg .av-big{font-size:2.4rem; text-align:center; margin:4px 0;} .av-dlg .av-k{display:inline-block; font-size:0.78rem; font-weight:700; padding:3px 10px; border-radius:99px; background:var(--chip); margin-bottom:6px;}';
+    document.head.appendChild(css);
+    var card = document.createElement('section'); card.className = 'av-card'; card.id = 'aventCard';
+    function place(){
+      var slot = document.querySelector('#todayView .td-slot'); if(!slot || card.parentNode) return !!card.parentNode;
+      slot.parentNode.insertBefore(card, slot); return true;
+    }
+    function paint(){
+      if(!place()) return;
+      var n = 0, h = '';
+      for(var i = 1; i <= 24; i++){
+        var ok = done(i); if(ok) n++;
+        var o = st(), opened = o.open && o.open[i];
+        var cls = i > TODAY ? 'lock' : (ok ? 'ok' : (i === TODAY ? 'today' : (opened ? 'open' : '')));
+        h += '<button type="button" class="av-c ' + cls + '" data-av="' + i + '" aria-label="Case ' + i + (i > TODAY ? ', pas encore ouverte' : ok ? ', faite' : '') + '"' + (i > TODAY ? ' disabled' : '') + '>' + i + '</button>';
+      }
+      card.innerHTML = '<div class="av-top"><h2>🎄 Calendrier de l’Avent</h2><span>' + n + ' / 24 ★</span></div>'
+        + '<p class="av-sub">' + (TODAY <= 24 && dec ? 'Une séance surprise par jour : renfo, yoga, respiration ou défi. Ouvre la case du jour !' : (dec ? 'Joyeux Noël ! Tu peux encore rattraper les cases jusqu’au 31.' : 'Aperçu : en décembre, une case s’ouvre chaque jour.')) + '</p>'
+        + '<div class="av-grid">' + h + '</div>';
+    }
+    function launch(c){
+      var t = c[0], p = c[1] || {}, d = c[2];
+      if(t === 'renfo'){ if(window.ecAdhoc) window.ecAdhoc({dur:d, zone:p.zone}); }
+      else if(t === 'mob'){ if(window.ecShowView) window.ecShowView('breath'); if(window.ecMobSet) window.ecMobSet({g:p.g, d:d, z:'full'}); if(window.ecMobGenerate) window.ecMobGenerate(); }
+      else if(t === 'breath'){ if(window.ecBreath) window.ecBreath(d); }
+      else if(t === 'defi'){ if(window.ecShowView) window.ecShowView('renfo'); if(window.ecParc && window.ecParc.gen) window.ecParc.gen({type:'defi', df:p.df, d:d}); }
+      setTimeout(function(){
+        try{ var tt = null; document.querySelectorAll('.session-title').forEach(function(x){ if(x.offsetParent && !tt) tt = x.textContent; }); if(window.ecCapSession) window.ecCapSession(10, tt); }catch(e){}
+        try{ if(window.ecScrollToResults) window.ecScrollToResults(); else window.scrollTo(0, 0); }catch(e){}
+      }, 400);
+    }
+    card.addEventListener('click', function(e){
+      var b = e.target.closest('[data-av]'); if(!b || b.disabled) return;
+      var i = +b.getAttribute('data-av'), c = CASES[i - 1], ok = done(i);
+      var w = document.createElement('div'); w.className = 'ec-dialog-backdrop av-dlg';
+      w.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Case ' + i + '">'
+        + '<div class="av-big">' + IC[c[0]] + '</div><p class="ec-dialog-msg" style="text-align:center">Case ' + i + ' · ' + c[3] + '</p>'
+        + '<p class="cp-note" style="text-align:center;margin-top:0"><span class="av-k">' + LB[c[0]] + ' · ' + c[2] + ' min</span><br>' + c[4] + '</p>'
+        + (ok ? '<p class="cp-note" style="text-align:center">★ Case déjà faite, bravo !</p>' : '')
+        + '<div class="cal-acts"><button type="button" class="ct-btn" data-go="1">' + (ok ? 'Refaire la séance' : 'Ouvrir ma séance') + '</button></div>'
+        + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel">Fermer</button></div></div>';
+      document.body.appendChild(w);
+      w.addEventListener('click', function(ev){
+        if(ev.target === w || ev.target.closest('.ec-dialog-cancel')){ w.remove(); return; }
+        if(ev.target.closest('[data-go]')){
+          var o = st(); o.open = o.open || {}; if(!o.open[i] || !ok) o.open[i] = Date.now(); sv(o);
+          w.remove(); launch(c); paint();
+        }
+      });
+    });
+    var tries = 0; (function wait(){ if(!place() && ++tries < 40){ setTimeout(wait, 250); return; } paint(); })();
+    var _sv = window.ecShowView;
+    if(typeof _sv === 'function') window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'today') setTimeout(paint, 50); return r; };
+    window.addEventListener('focus', function(){ setTimeout(paint, 300); });
+    window.ecAventPaint = paint;
   })();
 </script>
 </body>
