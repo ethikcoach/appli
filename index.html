@@ -1995,6 +1995,8 @@
   .ct-row-acts{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
 .ab-meta{display:block; margin-top:5px; font-size:0.76rem; color:var(--stone); word-break:break-all;}
 .ab-key{display:inline-block; margin-top:4px; font-family:ui-monospace, Menlo, monospace; font-size:0.8rem; color:var(--forest); user-select:all; -webkit-user-select:all;}
+.ab-show{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.84rem; color:var(--stone);}
+.ab-show input{width:20px; height:20px; accent-color:#1F4030;}
 .ab-err{color:#A0412A; font-size:0.84rem; margin-top:8px;}
 .ab-link{border:none; background:none; padding:6px 0; color:var(--stone); font-family:inherit; font-size:0.8rem; text-decoration:underline; cursor:pointer;}
 #abSearch{margin-top:2px;}
@@ -4302,7 +4304,8 @@
       <div class="ct-h3row"><h3>Abonnés payants</h3><button type="button" class="ct-gnew" id="abReload">↻ Actualiser</button></div>
       <div id="abSetup" hidden>
         <p class="ct-note" style="margin-top:2px">Pour afficher tes abonnés, entre le code <b>COACH_SECRET</b> enregistré dans Cloudflare. Il reste uniquement sur cet appareil et n’est jamais dans les sauvegardes.</p>
-        <div class="ct-form one"><label>Code abonnés<input type="password" id="abCode" autocomplete="off"></label></div>
+        <div class="ct-form one"><label>Code abonnés<input type="password" id="abCode" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label></div>
+        <label class="ab-show"><input type="checkbox" id="abShow"> Afficher le code</label>
         <button type="button" class="ct-btn" id="abSave">Enregistrer</button>
         <p class="ab-err" id="abSetupErr"></p>
       </div>
@@ -10140,10 +10143,36 @@
           .catch(function(){ $('#abList').innerHTML = '<p class="sv-empty">Liste indisponible : vérifie ta connexion, puis touche Actualiser.</p>'; })
           .then(function(){ loading = false; $('#abReload').textContent = '↻ Actualiser'; });
       }
+      // Le clavier de l'iPhone peut changer la saisie (apostrophe courbe, majuscule au début, double espace) :
+      // on essaie les variantes courantes et on garde celle que le serveur reconnaît
+      function variantes(v){
+        var out = [], add = function(x){ if(x && out.indexOf(x) < 0) out.push(x); };
+        var base = [v, v.replace(/\s+/g, ' ')];
+        base.forEach(function(b){
+          [b, b.replace(/[\u2018\u2019\u02BC]/g, "'").replace(/[\u201C\u201D\u00AB\u00BB]/g, '"').replace(/[\u2013\u2014]/g, '-').replace(/\u00A0/g, ' '), b.replace(/'/g, '\u2019')].forEach(function(x){
+            add(x); add(x.charAt(0).toUpperCase() + x.slice(1)); add(x.charAt(0).toLowerCase() + x.slice(1)); add(x.toLowerCase());
+          });
+        });
+        // un en-tête HTTP n'accepte pas les caractères typographiques (’ “ …) : ces variantes-là sont écartées
+        return out.filter(function(x){ return !/[^\u0000-\u00ff]/.test(x); });
+      }
+      function essai(c){ return fetch(EC_SUB_API + '/coach/abonnes', {headers:{authorization:'Bearer ' + c}, cache:'no-store'}).then(function(r){ return r.status; }); }
+      $('#abShow').addEventListener('change', function(){ $('#abCode').type = this.checked ? 'text' : 'password'; });
       $('#abSave').addEventListener('click', function(){
         var v = $('#abCode').value.trim(); if(v.length < 8){ $('#abSetupErr').textContent = 'Le code est trop court.'; return; }
-        try{ localStorage.setItem(CK, v); }catch(e){}
-        $('#abCode').value = ''; $('#abSetupErr').textContent = ''; load();
+        var vs = variantes(v), i = 0, btn = $('#abSave');
+        btn.disabled = true; $('#abSetupErr').textContent = 'Vérification…';
+        (function next(){
+          if(i >= vs.length){ btn.disabled = false; $('#abSetupErr').textContent = 'Code non reconnu. Coche « Afficher le code » pour vérifier la saisie : il doit être identique à COACH_SECRET dans Cloudflare.'; return; }
+          var c = vs[i++];
+          essai(c).then(function(st){
+            if(st === 401) return next();
+            btn.disabled = false;
+            if(st !== 200){ $('#abSetupErr').textContent = 'Serveur indisponible (' + st + '). Réessaie dans un instant.'; return; }
+            try{ localStorage.setItem(CK, c); }catch(e){}
+            $('#abCode').value = ''; $('#abSetupErr').textContent = ''; load();
+          }).catch(function(){ btn.disabled = false; $('#abSetupErr').textContent = 'Pas de connexion : réessaie dans un instant.'; });
+        })();
       });
       $('#abForget').addEventListener('click', function(){ try{ localStorage.removeItem(CK); }catch(e){} list = null; $('#abList').innerHTML = ''; show(); });
       $('#abReload').addEventListener('click', load);
