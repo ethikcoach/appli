@@ -10110,7 +10110,8 @@
       function st(a){
         if(a.statut === 'cadeau') return a.actif ? {cls:'on', f:'on', txt:'🎁 Cadeau · jusqu’au ' + fd(a.fin)} : {cls:'off', f:'off', txt:'🎁 Cadeau terminé le ' + fd(a.fin)};
         if(a.statut === 'cadeau-attente') return {cls:'soon', f:'on', txt:'🎁 Cadeau pas encore ouvert'};
-        if(a.statut === 'trialing') return {cls:'soon', f:'essai', txt:'Essai gratuit jusqu’au ' + fd(a.essai) + (a.resilie ? ' · résilié' : '')};
+        if(a.statut === 'trialing' && a.moisOffert) return {cls:'on', f:'on', txt:'Actif · mois offert (parrainage) jusqu’au ' + fd(a.essai)};
+        if(a.statut === 'trialing') return {cls:'soon', f:'essai', txt:'Essai gratuit jusqu’au ' + fd(a.essai) + (a.parrain ? ' (1 mois, parrainé)' : '') + (a.resilie ? ' · résilié' : '')};
         if(a.statut === 'active' && a.resilie) return {cls:'soon', f:'res', txt:'Résilié · accès jusqu’au ' + fd(a.fin)};
         if(a.statut === 'active') return {cls:'on', f:'on', txt:'Actif · ' + (a.formule || '') + (a.prix ? ' ' + a.prix : '')};
         if(a.actif) return {cls:'soon', f:'on', txt:'Paiement en retard'};
@@ -10137,7 +10138,7 @@
         $('#abList').innerHTML = rows.length ? rows.map(function(a){
           var s = st(a), nm = a.nom || a.email || 'Sans nom';
           return '<div class="ct-row" data-k="' + esc(a.cle) + '" data-m="' + esc(a.email) + '"><div class="ct-row-top"><div class="info"><b>' + esc(nm) + '</b><span class="st ' + s.cls + '">' + esc(s.txt) + '</span>'
-            + '<span class="ab-meta">' + esc(a.email) + (a.depuis ? ' · abonné depuis le ' + fd(a.depuis) : '') + '</span><span class="ab-key">' + esc(a.cle) + '</span></div></div>'
+            + '<span class="ab-meta">' + esc(a.email) + (a.depuis ? ' · abonné depuis le ' + fd(a.depuis) : '') + (a.filleuls ? ' · 🎁 ' + a.filleuls + ' filleul' + (a.filleuls > 1 ? 's' : '') : '') + '</span><span class="ab-key">' + esc(a.cle) + '</span></div></div>'
             + '<div class="ct-row-acts"><button type="button" data-ab="link">Copier le lien</button>' + (a.email ? '<button type="button" data-ab="mail" class="send">📨 Renvoyer le lien par e-mail</button>' : '') + '</div></div>';
         }).join('') : '<p class="sv-empty">' + (list.length ? 'Aucun abonné ne correspond.' : 'Aucun abonné pour l’instant.') + '</p>';
       }
@@ -10147,13 +10148,13 @@
       function stats(){
         var now = Date.now(), d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
         var abos = list.filter(function(a){ return !a.cadeau; }), kdo = list.filter(function(a){ return a.cadeau; });
-        var payants = abos.filter(function(a){ return a.actif && a.statut !== 'trialing'; });
+        var payants = abos.filter(function(a){ return a.actif && (a.statut !== 'trialing' || a.moisOffert); });
         var mrr = payants.reduce(function(t, a){ return t + eur(a.prix) / (a.formule === 'annuel' ? 12 : 1); }, 0);
         var mens = payants.filter(function(a){ return a.formule !== 'annuel'; }).length;
-        var essais = abos.filter(function(a){ return a.statut === 'trialing'; }).length;
+        var essais = abos.filter(function(a){ return a.statut === 'trialing' && !a.moisOffert; }).length;
         // Essais terminés : transformés si la personne a payé au moins une fois (encore abonnée, ou résiliée après la fin de l'essai)
-        var finis = abos.filter(function(a){ return a.essai && a.essai < now && a.statut !== 'trialing'; });
-        var conv = finis.filter(function(a){ return a.statut === 'active' || a.statut === 'past_due' || a.statut === 'unpaid' || (a.statut === 'canceled' && a.annule && a.annule > a.essai); }).length;
+        var finis = abos.filter(function(a){ return (a.essai && a.essai < now && a.statut !== 'trialing') || a.moisOffert; });
+        var conv = finis.filter(function(a){ return a.moisOffert || a.statut === 'active' || a.statut === 'past_due' || a.statut === 'unpaid' || (a.statut === 'canceled' && a.annule && a.annule > a.essai); }).length;
         var nouveaux = abos.filter(function(a){ return a.depuis && a.depuis >= m0; }).length;
         var resil = abos.filter(function(a){ var t = a.annule || (a.statut === 'canceled' ? a.fin : null); return (a.resilie || a.statut === 'canceled') && t && t >= m0; }).length;
         var kdoMois = kdo.filter(function(a){ return a.depuis && a.depuis >= m0; });
@@ -11635,6 +11636,7 @@
         + list.map(function(b){ return '<div class="bd' + (b.earned ? ' on' : '') + '" title="' + esc(b.n + (b.d ? ' : ' + b.d : '')) + '"><span class="bd-ico">' + b.ico + '</span><span class="bd-n">' + esc(b.n) + '</span>'
           + (b.earned ? '' : '<span class="bd-p">' + b.v + '/' + b.goal + (b.u ? ' ' + b.u : '') + '</span>') + '</div>'; }).join('') + '</div>';
     }
+    window.ecChalNow = function(){ return checkChallenge(hist()); };
     window.ecChalText = function(){ var r = checkChallenge(hist()); return r.done ? '🎯 Défi réussi ✓' : '🎯 ' + Math.min(r.p, r.c.n) + '/' + r.c.n; };
     window.ecRenderGamif = function(h){ h = h || hist(); renderChal(h); renderBadges(h); };
 
@@ -12397,9 +12399,39 @@
     }
     card.addEventListener('click', function(e){
       if(e.target.closest('.tf-more')){ showOthers = !showOthers; renderTests(); return; }
-      if(e.target.closest('[data-all]')){ var g = state.level === 'senior' ? 's' : 'g', q = TESTS.filter(function(T){ return T.grp === g; }); runTest(q[0], q.slice(1)); return; }
+      if(e.target.closest('[data-all]')){ var g = state.level === 'senior' ? 's' : 'g', q = TESTS.filter(function(T){ return T.grp === g; }); fullRun = Date.now(); runTest(q[0], q.slice(1)); return; }
       var b = e.target.closest('[data-test]'); if(b) runTest(TESTS.filter(function(T){ return T.id === b.getAttribute('data-test'); })[0]);
     });
+    // ----- Bilan : niveau proposé d'après les 4 tests généraux (repères adultes) -----
+    var fullRun = 0;
+    var NORMES = {squat60:[25, 40], pompes60:[10, 25], planche:[45, 120], chaise:[45, 120]};
+    function niveauPropose(){
+      if(state.level === 'senior') return null;
+      var pts = 0, n = 0;
+      Object.keys(NORMES).forEach(function(id){
+        var v = testVals(id), last = v[v.length - 1]; if(!last || last.at < fullRun - 60000) return;
+        var nm = NORMES[id]; pts += last.v >= nm[1] ? 2 : (last.v >= nm[0] ? 1 : 0); n++;
+      });
+      if(n < 3) return null;
+      var m = pts / n; return m >= 1.5 ? 'avance' : (m >= 0.6 ? 'intermediaire' : 'debutant');
+    }
+    window.ecBilanOffer = function(){
+      if(document.getElementById('bilanOffer')) return;
+      var w = document.createElement('div'); w.className = 'ec-dialog-backdrop'; w.id = 'bilanOffer';
+      var sen = state.level === 'senior';
+      w.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Bilan de départ">'
+        + '<p class="ec-dialog-msg">🎯 Ton bilan de départ</p>'
+        + '<p class="cp-note" style="margin-top:0">Facultatif : ' + (sen ? '2 petits tests (assis-debout, équilibre)' : '4 petits tests d’une minute (squats, pompes, gainage, chaise)') + ' pour ' + (sen ? '' : 'régler ton niveau et ') + 'mesurer tes progrès. Tu pourras le refaire toutes les 4 à 6 semaines et suivre ta courbe.</p>'
+        + '<div class="cal-acts"><button type="button" class="ct-btn" data-b="go">Faire mon bilan (' + (sen ? '3' : '5') + ' min)</button></div>'
+        + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel" data-b="later">Plus tard</button></div></div>';
+      document.body.appendChild(w);
+      w.addEventListener('click', function(e){
+        var b = e.target.closest('[data-b]'); if(!b) return;
+        w.remove();
+        if(b.getAttribute('data-b') === 'go') window.ecTests.runAll();
+        else showToast('Tu le retrouves quand tu veux dans Suivi › Mes tests de forme.', false);
+      });
+    };
     function runTest(T, queue){
       if(!T) return; queue = queue || [];
       var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop tf-backdrop'; wrap.id = 'tfDialog';
@@ -12451,7 +12483,13 @@
         var msg = prev ? (v > prev.v ? 'Bravo, tu progresses : ' + fmtV(v, T.unit) + ' contre ' + fmtV(prev.v, T.unit) + ' la dernière fois !' : (v === prev.v ? 'Même résultat que la dernière fois : ' + fmtV(v, T.unit).replace(/\.$/, '') + '.' : 'Résultat enregistré : ' + fmtV(v, T.unit).replace(/\.$/, '') + '. Les tests varient selon la forme du jour, c’est normal.')) : 'Premier résultat enregistré : ' + fmtV(v, T.unit).replace(/\.$/, '') + '. Refais ce test dans 4 à 6 semaines.';
         box.innerHTML = '<p class="ec-dialog-msg">' + esc(T.name) + '</p><p class="tf-how">' + esc(msg) + '</p>'
           + (queue.length ? '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-a="close">Terminer</button><button type="button" class="ec-dialog-ok" data-a="next">Test suivant ▶</button></div><p class="tf-prev" style="margin-top:10px">Ensuite : ' + esc(queue[0].name) + ' (' + (queue.length) + ' restant' + (queue.length > 1 ? 's' : '') + ')</p>'
-          : '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-ok" data-a="close">Fermer</button></div>');
+          : (function(){
+              var lv = fullRun ? niveauPropose() : null; fullRun = 0;
+              if(!lv) return '';
+              if(lv === state.level) return '<p class="tf-prev" style="margin-top:10px">✅ Bilan terminé : ton niveau actuel, <b>' + esc(LEVEL_LABEL[lv]) + '</b>, te correspond bien.</p>';
+              return '<p class="tf-prev" style="margin-top:10px">🎯 Bilan terminé : d’après tes résultats, le niveau <b>' + esc(LEVEL_LABEL[lv]) + '</b> te correspond (actuellement : ' + esc(LEVEL_LABEL[state.level]) + ').</p>'
+                + '<div class="ec-dialog-actions one" style="margin-bottom:8px"><button type="button" class="ec-dialog-ok" data-a="lvl" data-lv="' + lv + '">Passer en ' + esc(LEVEL_LABEL[lv]) + '</button></div>';
+            })() + '<div class="ec-dialog-actions one"><button type="button" class="' + (queue.length ? 'ec-dialog-ok' : 'ec-dialog-cancel') + '" data-a="close">Fermer</button></div>');
         renderTests(); renderToday();
       }
       box.addEventListener('click', function(e){
@@ -12461,6 +12499,7 @@
         else if(a === 'go'){ try{ requestWakeLock(); }catch(err){} count(3, T.kind === 'reps' ? runReps : runHold); }
         else if(a === 'stop'){ clearInterval(iv); result(Math.floor((Date.now() - t0) / 1000)); }
         else if(a === 'save') save();
+        else if(a === 'lvl'){ var lv = e.target.closest('[data-lv]').getAttribute('data-lv'), lb = document.querySelector('#levelGroup [data-level="' + lv + '"]'); if(lb) lb.click(); try{ saveSettings(); }catch(err){} close(); showToast('Niveau réglé sur ' + LEVEL_LABEL[lv] + ' ✓ Tes prochaines séances s’adaptent.', false); }
         else if(a === 'next'){ clearInterval(iv); wrap.remove(); runTest(queue[0], queue.slice(1)); }
       });
       box.addEventListener('keydown', function(e){ if(e.key === 'Enter' && box.querySelector('.tf-input')) save(); });
@@ -12477,7 +12516,7 @@
         var lt = lastTestAt(), days = lt ? Math.floor((Date.now() - lt) / DAY) : -1;
         return {n:mine.length, done:mine.filter(function(T){ return testVals(T.id).length; }).length, ups:mine.filter(function(T){ var v = testVals(T.id); return v.length >= 2 && v[v.length - 1].v > v[0].v; }).length, last:lt, days:days, due:testsDue()};
       },
-      runAll:function(){ var g = state.level === 'senior' ? 's' : 'g', q = TESTS.filter(function(T){ return T.grp === g; }); runTest(q[0], q.slice(1)); },
+      runAll:function(){ var g = state.level === 'senior' ? 's' : 'g', q = TESTS.filter(function(T){ return T.grp === g; }); fullRun = Date.now(); runTest(q[0], q.slice(1)); },
       results:function(){ if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('prog'); setTimeout(function(){ card.scrollIntoView({behavior:'smooth', block:'start'}); }, 150); }
     };
     window.ecRunTest = function(id){ runTest(TESTS.filter(function(T){ return T.id === id; })[0]); };
@@ -16088,7 +16127,7 @@
       W.querySelector('.tr-skip').style.visibility = s.last ? 'hidden' : 'visible';
       W.querySelector('.tr-skip').textContent = k === 0 ? 'Plus tard' : 'Passer';
     }
-    function close(){ try{ localStorage.setItem('ec_tour_seen', '1'); }catch(e){} if(W){ W.classList.remove('show'); var w = W; setTimeout(function(){ w.remove(); }, 250); W = null; } paintCard(); }
+    function close(){ try{ if(!localStorage.getItem('ec_bilan_offer') && !(JSON.parse(localStorage.getItem('ec_tests_v1') || '[]') || []).length){ localStorage.setItem('ec_bilan_offer', '1'); setTimeout(function(){ if(window.ecBilanOffer) window.ecBilanOffer(); }, 600); } }catch(e){} try{ localStorage.setItem('ec_tour_seen', '1'); }catch(e){} if(W){ W.classList.remove('show'); var w = W; setTimeout(function(){ w.remove(); }, 250); W = null; } paintCard(); }
     function open(start){
       if(W) return;
       W = document.createElement('div'); W.className = 'tr-wrap'; W.setAttribute('role', 'dialog'); W.setAttribute('aria-label', 'Visite guidée');
@@ -16445,7 +16484,7 @@
     btn.addEventListener('click', trySub, true);
     inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') trySub(e); }, true);
 
-    function save(k, r){ try{ localStorage.setItem('ec_sub', JSON.stringify({k:k, ok:!!r.ok, at:Date.now(), statut:r.statut || null, fin:r.fin || null, essai:r.essai || null, resilie:!!r.resilie, formule:r.formule || null})); }catch(e){} }
+    function save(k, r){ try{ localStorage.setItem('ec_sub', JSON.stringify({k:k, ok:!!r.ok, at:Date.now(), statut:r.statut || null, fin:r.fin || null, essai:r.essai || null, resilie:!!r.resilie, formule:r.formule || null, parrain:r.parrain || null, offert:r.offert || null})); }catch(e){} }
     function showLocked(title, text){
       document.documentElement.classList.remove('ec-subcheck'); document.documentElement.classList.add('ec-locked');
       $('ecLockTitle').textContent = title; $('ecLockText').textContent = text;
@@ -16470,6 +16509,28 @@
         if(EC_SUB_PENDING) showLocked('Connexion nécessaire', 'Connecte-toi à Internet pour vérifier ton abonnement, puis rouvre l’appli. Ensuite, elle marche aussi hors connexion.');
       });
     }
+    // Parrainage : lien personnel à partager
+    function parrainer(pr){
+      var msg = 'J’utilise l’appli Ethik’Coach pour mes séances (renfo, yoga, étirements, respiration, guidés à la voix). Avec mon lien, ton 1er mois est offert : ' + pr.lien;
+      var w = document.createElement('div'); w.className = 'ec-dialog-backdrop'; w.id = 'parDialog';
+      w.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Parrainer un ami">'
+        + '<p class="ec-dialog-msg">🎁 Parrainer un ami</p>'
+        + '<p class="cp-note" style="margin-top:0">Ton ami a <b>1 mois gratuit</b> au lieu de 7 jours. Dès qu’il paie son premier mois, <b>ton prochain mois est offert</b> (jusqu’à ' + pr.max + ' mois).</p>'
+        + '<div class="ec-dialog-input" style="word-break:break-all;font-size:0.9rem;user-select:all;-webkit-user-select:all">' + pr.lien + '</div>'
+        + '<div class="cal-acts">' + (navigator.share ? '<button type="button" class="ct-btn" data-p="share">Partager mon lien</button>' : '')
+        + '<a class="ct-btn' + (navigator.share ? ' ghost' : '') + '" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(msg) + '">WhatsApp</a>'
+        + '<button type="button" class="ct-btn ghost" data-p="copy">Copier le lien</button></div>'
+        + (pr.filleuls ? '<p class="cp-note">Déjà ' + pr.filleuls + ' ami' + (pr.filleuls > 1 ? 's' : '') + ' parrainé' + (pr.filleuls > 1 ? 's' : '') + ', merci ! 💚</p>' : '')
+        + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel">Fermer</button></div></div>';
+      document.body.appendChild(w);
+      w.addEventListener('click', function(e){
+        if(e.target === w || e.target.closest('.ec-dialog-cancel')){ w.remove(); return; }
+        var b = e.target.closest('[data-p]'); if(!b) return;
+        if(b.getAttribute('data-p') === 'share') navigator.share({text:msg}).catch(function(){});
+        else { try{ navigator.clipboard.writeText(pr.lien); b.textContent = 'Lien copié ✓'; }catch(err){} }
+      });
+    }
+    window.ecParrainer = function(){ var c = ecSubCache() || {}; if(c.parrain) parrainer(c.parrain); };
     // Page de bienvenue juste après l'abonnement (avant les 3 questions de départ)
     function bienvenue(){
       var c = ecSubCache() || {}, fin = c.statut === 'trialing' && c.essai ? fdate(c.essai) : '', kdo = c.statut === 'cadeau';
@@ -16522,10 +16583,12 @@
       setTimeout(function(){
         var card = document.querySelector('.set-sheet .set-card'), app = card && Array.from(card.querySelectorAll('.set-sec')).filter(function(x){ return /Appli/.test(x.textContent); })[0];
         if(!card || !app) return;
-        var c = ecSubCache() || {}, st = c.statut === 'cadeau' ? 'Accès offert jusqu’au ' + fdate(c.fin) + ', rien à payer' : (c.statut === 'trialing' && c.essai ? 'Essai gratuit jusqu’au ' + fdate(c.essai) : (c.resilie && c.fin ? 'Résilié, accès jusqu’au ' + fdate(c.fin) : 'Abonnement ' + (c.formule || '') + ' actif'));
+        var c = ecSubCache() || {}, st = c.offert ? 'Mois offert grâce au parrainage, jusqu’au ' + fdate(c.offert) : c.statut === 'cadeau' ? 'Accès offert jusqu’au ' + fdate(c.fin) + ', rien à payer' : (c.statut === 'trialing' && c.essai ? 'Essai gratuit jusqu’au ' + fdate(c.essai) : (c.resilie && c.fin ? 'Résilié, accès jusqu’au ' + fdate(c.fin) : 'Abonnement ' + (c.formule || '') + ' actif'));
         var sec = document.createElement('div'); sec.className = 'set-sec'; sec.textContent = 'Mon abonnement';
         var bx = document.createElement('div'); bx.className = 'set-box';
-        bx.innerHTML = '<a class="set-row set-link" href="' + EC_SUB_API + '/portail?k=' + encodeURIComponent(EC_KEY) + '"><span class="set-l">Gérer mon abonnement<small>' + st + (c.statut === 'cadeau' ? '' : ' · carte, factures, résiliation') + '</small></span><span aria-hidden="true">›</span></a>';
+        bx.innerHTML = '<a class="set-row set-link" href="' + EC_SUB_API + '/portail?k=' + encodeURIComponent(EC_KEY) + '"><span class="set-l">Gérer mon abonnement<small>' + st + (c.statut === 'cadeau' ? '' : ' · carte, factures, résiliation') + '</small></span><span aria-hidden="true">›</span></a>'
+          + (c.parrain ? '<button type="button" class="set-row set-link" id="ecParrainBtn"><span class="set-l">🎁 Parrainer un ami<small>1 mois offert pour toi et pour lui' + (c.parrain.filleuls ? ' · ' + c.parrain.filleuls + ' ami' + (c.parrain.filleuls > 1 ? 's' : '') + ' parrainé' + (c.parrain.filleuls > 1 ? 's' : '') : '') + '</small></span><span aria-hidden="true">›</span></button>' : '');
+        var pb = bx.querySelector('#ecParrainBtn'); if(pb) pb.addEventListener('click', function(){ var x = document.querySelector('.set-sheet .set-x'); if(x) x.click(); setTimeout(function(){ parrainer(c.parrain); }, 250); });
         app.parentNode.insertBefore(sec, app); app.parentNode.insertBefore(bx, app);
       }, 600);
     }
@@ -16670,7 +16733,7 @@
       w.querySelector('.sy-go').addEventListener('click', function(){ s(OK, '1'); s(DIRTY, '1'); close(); flush(); toast('Sauvegarde automatique activée ✓'); });
       w.querySelector('.sy-no').addEventListener('click', function(){ s(OK, '0'); close(); });
     }
-    function busyScreen(){ return document.querySelector('.ec-hello, .tr-wrap, .q-ob:not([hidden]), #timerBackdrop.open') || document.documentElement.classList.contains('ec-locked') || !g('ec_onboard_v1'); }
+    function busyScreen(){ return document.querySelector('.ec-hello, .tr-wrap, .q-ob:not([hidden]), #timerBackdrop.open, #bilanOffer, #tfDialog') || document.documentElement.classList.contains('ec-locked') || !g('ec_onboard_v1'); }
     function askWhenFree(){ var n = 0; (function wait(){ if(g(OK) !== null) return; if(busyScreen()){ if(++n < 600) setTimeout(wait, 2000); return; } setTimeout(function(){ if(!busyScreen()) ask(); else wait(); }, 1500); })(); }
     function toast(m){ var t = document.getElementById('toast'), tm = document.getElementById('toastMsg'), u = document.getElementById('toastUndo'); if(!t || !tm) return; tm.textContent = m; if(u) u.style.display = 'none'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 4000); }
 
@@ -16699,6 +16762,79 @@
     setTimeout(paint, 900);
     load().then(function(r){ if(r === 'reload') return; watch(); paint(); if(g(OK) === '1'){ if(g(DIRTY) === '1' || !g(AT)) schedule(); } else if(g(OK) === null) askWhenFree(); });
     window.ecSyncNow = flush;
+  })();
+</script>
+<script>
+  // ---------- Classement du défi du mois (participation volontaire, prénom seulement) ----------
+  (function(){
+    if(!EC_USER || !EC_KEY || EC_GUEST || !window.fetch) return;
+    if(EC_USER.h === '2g7dfzw49uk') return;
+    var K = String(EC_KEY).trim().toLowerCase(), RK = 'ec_defi_rank', PK = 'ec_defi_push';
+    function g(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+    function s(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+    function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function post(path, b){ b.k = K; return fetch(EC_SUB_API + path, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(b)}).then(function(r){ return r.json(); }); }
+    var css = document.createElement('style');
+    css.textContent = '.ch-rank{margin-top:12px; padding-top:12px; border-top:1px solid var(--ring-line);} .ch-rank h3{font-size:0.9rem; margin:0 0 8px;}'
+      + '.ch-rank ol{list-style:none; margin:0; padding:0;} .ch-rank li{display:flex; gap:8px; align-items:center; padding:5px 8px; border-radius:10px; font-size:0.86rem;} .ch-rank li.me{background:var(--chip); font-weight:700;}'
+      + '.ch-rank li .r{width:26px; color:var(--stone); font-weight:700;} .ch-rank li .n{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .ch-rank li .v{font-weight:700;}'
+      + '.ch-rank .ch-join{display:flex; gap:8px; flex-wrap:wrap; align-items:center;} .ch-rank input{flex:1 1 140px; min-height:40px; border:none; border-radius:10px; padding:6px 10px; background:var(--chip); box-shadow:inset 0 0 0 1px var(--ring-line); font:inherit; font-size:16px; color:var(--ink);}'
+      + '.ch-rank button{border:none; border-radius:999px; padding:9px 14px; font-weight:700; font-family:inherit; background:var(--forest,#1F4030); color:#fff; cursor:pointer;} .ch-rank button.lnk{background:none; color:var(--stone); text-decoration:underline; padding:6px 0; font-weight:500;}'
+      + '.ch-rank .me-line{font-size:0.84rem; margin-top:6px;} .ch-rank small{display:block; color:var(--stone); font-size:0.76rem; margin-top:6px;}';
+    document.head.appendChild(css);
+    var data = {}, last = {}, joining = false;
+    function cur(){ try{ return window.ecChalNow ? window.ecChalNow() : null; }catch(e){ return null; } }
+    function fetchRank(id, force){
+      if(!force && last[id] && Date.now() - last[id] < 90000) return;
+      last[id] = Date.now();
+      post('/defi/classement', {id:id}).then(function(r){ if(r && r.ok){ data[id] = r; paint(); } }).catch(function(){});
+    }
+    function push(force){
+      var r = cur(), me = g(RK, null); if(!r || !me || !me.on) return;
+      var id = r.c.id, sc = Math.min(r.p, 999), was = g(PK, {});
+      if(!force && was.id === id && was.s === sc && was.n === me.nom) return;
+      post('/defi/score', {id:id, nom:me.nom, score:sc}).then(function(x){ if(x && x.ok){ s(PK, {id:id, s:sc, n:me.nom}); data[id] = x; last[id] = Date.now(); paint(); } }).catch(function(){});
+    }
+    function paint(){
+      var card = document.getElementById('svChalCard'); if(!card || card.hidden) return;
+      var r = cur(); if(!r) return;
+      var id = r.c.id, me = g(RK, null), d = data[id], box = card.querySelector('.ch-rank');
+      if(!box){ box = document.createElement('div'); box.className = 'ch-rank'; card.appendChild(box); }
+      var h = '<h3>🏆 Classement' + (d && d.total ? ' · ' + d.total + ' participant' + (d.total > 1 ? 's' : '') : '') + '</h3>';
+      if(me && me.on){
+        if(d && d.top && d.top.length){
+          h += '<ol>' + d.top.map(function(x){ return '<li class="' + (x.moi ? 'me' : '') + '"><span class="r">' + (x.r === 1 ? '🥇' : x.r === 2 ? '🥈' : x.r === 3 ? '🥉' : x.r + '.') + '</span><span class="n">' + esc(x.n) + '</span><span class="v">' + x.s + '</span></li>'; }).join('') + '</ol>';
+          if(d.rang && d.rang > 10) h += '<p class="me-line">Ta place : <b>' + d.rang + '<sup>e</sup></b> sur ' + d.total + '</p>';
+        } else h += '<small>Chargement du classement…</small>';
+        h += '<button type="button" class="lnk" data-r="off">Ne plus apparaître dans le classement</button>';
+      } else if(joining){
+        h += '<div class="ch-join"><input type="text" id="chRankName" maxlength="20" placeholder="Ton prénom" value="' + esc((me && me.nom) || EC_USER.n || ((document.getElementById('athleteName') || {}).value || '')) + '"><button type="button" data-r="ok">Participer</button></div>'
+          + '<small>Seuls ton prénom et ton nombre de séances du défi sont visibles par les autres participants. Tu peux te retirer quand tu veux.</small>';
+      } else {
+        h += '<p class="me-line" style="margin:0 0 8px">Compare-toi aux autres utilisateurs de l’appli, avec ton prénom seulement.</p><button type="button" data-r="join">Participer au classement</button>';
+      }
+      box.innerHTML = h;
+    }
+    document.addEventListener('click', function(e){
+      var b = e.target.closest('.ch-rank [data-r]'); if(!b) return;
+      var a = b.getAttribute('data-r'), r = cur(); if(!r) return;
+      if(a === 'join'){ joining = true; paint(); var i = document.getElementById('chRankName'); if(i) i.focus(); return; }
+      if(a === 'ok'){
+        var n = (document.getElementById('chRankName').value || '').trim().slice(0, 20); if(!n){ document.getElementById('chRankName').focus(); return; }
+        joining = false; s(RK, {on:true, nom:n}); push(true); paint(); return;
+      }
+      if(a === 'off'){
+        var me = g(RK, {}); me.on = false; s(RK, me); s(PK, {});
+        post('/defi/score', {id:r.c.id, retirer:true}).then(function(x){ if(x && x.ok){ data[r.c.id] = x; paint(); } }).catch(function(){});
+        paint();
+      }
+    });
+    // Après chaque mise à jour du suivi (séance terminée, ouverture de Suivi) : score envoyé et classement rafraîchi
+    var orig = window.ecRenderGamif;
+    if(typeof orig === 'function'){
+      window.ecRenderGamif = function(h){ var o = orig.apply(this, arguments); try{ paint(); push(false); var r = cur(); if(r && (g(RK, {}) || {}).on) fetchRank(r.c.id); }catch(e){} return o; };
+    }
+    setTimeout(function(){ try{ paint(); push(false); var r = cur(); if(r && (g(RK, {}) || {}).on) fetchRank(r.c.id, true); }catch(e){} }, 1500);
   })();
 </script>
 </body>
