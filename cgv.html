@@ -70,8 +70,11 @@
   <div class="annexe">
     <h1>Annexe — Tes données dans l’appli</h1>
 
-    <h2>Ce qui reste sur ton téléphone</h2>
-    <p>Tes séances, ton suivi (durées, séries, ressentis, gênes signalées), tes réglages et tes favoris sont enregistrés uniquement sur ton appareil. Ils ne sont pas envoyés à Ethik’Coach, sauf si tu choisis toi-même d’envoyer un retour ou une sauvegarde à ton coach.</p>
+    <h2>Ton suivi : sur ton téléphone, et en ligne si tu l’acceptes</h2>
+    <p>Tes séances, ton suivi (durées, séries, ressentis, gênes signalées), tes réglages et tes favoris sont enregistrés sur ton appareil.</p>
+    <p><b>Sauvegarde automatique (facultative).</b> Si tu l’acceptes, ces données sont aussi sauvegardées en ligne pour que tu les retrouves sur un autre téléphone. Elles comprennent des données de santé (ressentis et gênes signalées) : c’est pourquoi la sauvegarde ne démarre qu’avec ton accord explicite, demandé dans l’appli. Les données sont <b>chiffrées sur ton téléphone avec ton code d’accès personnel</b> avant l’envoi : le serveur ne conserve qu’un bloc illisible, rangé sous une empreinte de ton code. Ni Ethik’Coach ni l’hébergeur ne peuvent les lire.</p>
+    <p>Tu peux arrêter la sauvegarde et effacer la copie en ligne à tout moment dans l’appli (Suivi › Mes données). Sans nouvelle sauvegarde, la copie en ligne est effacée automatiquement au bout de 13 mois. Si tu refuses, tout reste uniquement sur ton téléphone, et tu peux toujours faire une sauvegarde en fichier.</p>
+    <p>En dehors de cela, rien n’est envoyé à Ethik’Coach, sauf si tu choisis toi-même d’envoyer un retour à ton coach.</p>
 
     <h2>Ce qui est traité pour ton abonnement</h2>
     <div class="tbl"><table>
@@ -79,10 +82,11 @@
       <tr><td>Nom, e-mail, moyen de paiement, adresse de facturation</td><td>Paiement, factures, gestion de l’abonnement</td><td>Stripe (paiement)</td><td>Durée de l’abonnement, puis 10 ans pour les factures (obligation comptable)</td></tr>
       <tr><td>E-mail, identifiant client, statut et dates de l’abonnement, clé d’accès</td><td>Ouvrir l’appli et vérifier l’abonnement</td><td>Cloudflare (serveur d’abonnement)</td><td>Durée de l’abonnement, puis 3 ans</td></tr>
       <tr><td>E-mail</td><td>Envoi du lien d’accès et des e-mails liés à l’abonnement</td><td>Brevo (e-mails)</td><td>Durée de l’abonnement, puis 3 ans</td></tr>
+      <tr><td>Sauvegarde automatique du suivi (séances, réglages, ressentis, gênes), chiffrée sur ton téléphone</td><td>Retrouver ton suivi sur un autre appareil, uniquement avec ton accord</td><td>Cloudflare (serveur d’abonnement)</td><td>Jusqu’à ce que tu l’effaces, et au plus 13 mois après la dernière sauvegarde</td></tr>
       <tr><td>Fichiers de l’appli</td><td>Mise en ligne de l’appli</td><td>GitHub Pages (hébergement)</td><td>Aucune donnée personnelle conservée</td></tr>
     </table></div>
 
-    <p><b>Base légale.</b> L’exécution de ton abonnement, et les obligations légales pour la facturation.</p>
+    <p><b>Base légale.</b> L’exécution de ton abonnement, et les obligations légales pour la facturation. Pour la sauvegarde automatique, qui comprend des données de santé : ton consentement explicite, que tu peux retirer à tout moment.</p>
     <p><b>Transferts hors de l’Union européenne.</b> Stripe, Cloudflare et GitHub peuvent traiter des données aux États-Unis, avec les garanties prévues par le règlement européen (cadre de protection des données UE-États-Unis ou clauses contractuelles types).</p>
     <p><b>Aucune revente, aucune publicité.</b> Tes données ne sont jamais vendues ni utilisées pour de la publicité. Aucun traceur publicitaire n’est utilisé dans l’appli.</p>
     <p><b>Tes droits.</b> Tu peux demander à accéder à tes données, les corriger, les supprimer ou t’opposer à leur traitement en écrivant à <a href="mailto:contact@ethikcoach.fr">contact@ethikcoach.fr</a>. Tu peux aussi saisir la CNIL (cnil.fr).</p>

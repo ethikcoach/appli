@@ -9833,7 +9833,7 @@
     // Sauvegarde / restauration
     function backupKeys(){
       var out = {};
-      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
     $('#svExport').addEventListener('click', function(){
@@ -12016,7 +12016,7 @@
       ['Pendant la séance', 'J’ai une douleur pendant un exercice.', 'Arrête l’exercice. Une gêne légère peut se gérer en réduisant l’amplitude ou en remplaçant l’exercice ; une vraie douleur, non. Signale-la dans le retour de fin de séance pour que ton coach adapte la suite, et consulte un professionnel de santé si elle persiste.'],
       ['Suivi et coach', 'À quoi servent les tests de forme ?', 'Dans <b>Suivi › Mes tests de forme</b>, des tests simples (squats en 1 minute, gainage, assis-debout en 30 secondes pour les seniors…) mesurent tes progrès. L’appli te guide avec un chrono et trace ta courbe. Refais-les toutes les 4 à 6 semaines, dans les mêmes conditions.'],
       ['Suivi et coach', 'Comment envoyer mon ressenti à mon coach ?', 'À la fin de chaque séance, note l’effort de 1 à 10, indique une éventuelle gêne, puis envoie ton retour par WhatsApp, SMS ou e-mail. Le message est déjà rédigé.'],
-      ['Suivi et coach', 'Où sont enregistrées mes données ?', 'Uniquement sur ton appareil : rien n’est envoyé sur internet sans ton action. Si tu changes de téléphone, fais <b>Suivi › Sauvegarder mes données</b> sur l’ancien, puis <b>Restaurer une sauvegarde</b> sur le nouveau.'],
+      ['Suivi et coach', 'Où sont enregistrées mes données ?', 'Sur ton appareil et, si tu as activé la <b>sauvegarde automatique</b>, en ligne, chiffrées avec ton code personnel : personne d’autre ne peut les lire. Sur un nouveau téléphone, ouvre simplement ton lien d’accès et tout revient. Tu peux arrêter et effacer la sauvegarde en ligne dans <b>Suivi › Mes données</b>.'],
       ['L’appli', 'Comment installer l’appli sur mon écran d’accueil ?', 'Sur iPhone : dans Safari, touche le bouton <b>Partager</b> puis <b>Sur l’écran d’accueil</b>. Sur Android : menu <b>⋮</b> puis <b>Installer l’application</b> (ou le bouton 📲 en haut de l’appli). Elle s’ouvre ensuite en plein écran, comme une vraie appli.'],
       ['L’appli', 'Android : l’icône a disparu de mon écran d’accueil.', 'Ouvre l’appli dans <b>Chrome</b>, puis menu <b>⋮</b> › <b>Installer l’application</b> (et non « Ajouter à l’écran d’accueil »). L’appli est alors installée pour de bon : elle apparaît aussi dans la liste de tes applis et reste en place après un redémarrage. Tes réglages et ton suivi sont conservés.'],
       ['L’appli', 'Le texte est trop petit.', 'Touche le bouton <b>AA</b> en haut à droite : il passe en grande puis très grande taille.'],
@@ -16409,6 +16409,176 @@
         app.parentNode.insertBefore(sec, app); app.parentNode.insertBefore(bx, app);
       }, 600);
     }
+  })();
+</script>
+<script>
+  // ---------- Sauvegarde automatique en ligne (avec l'accord de la personne) ----------
+  // Les données sont chiffrées sur le téléphone avec le code d'accès avant l'envoi :
+  // le serveur ne garde qu'un bloc illisible. Récupérées toutes seules sur un nouveau téléphone.
+  (function(){
+    if(!EC_USER || !EC_KEY || EC_GUEST || !window.crypto || !crypto.subtle || !window.fetch) return;
+    if(EC_USER.h === '2g7dfzw49uk') return;            // clé partagée de la page du site : pas de sauvegarde commune
+    var K = String(EC_KEY).trim().toLowerCase(), API = EC_SUB_API;
+    var OK = 'ec_sync_ok', AT = 'ec_sync_at', DIRTY = 'ec_sync_dirty', HIST = 'ec_history_v1';
+    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
+    var LS = window.localStorage, setRaw = Storage.prototype.setItem, delRaw = Storage.prototype.removeItem;
+    function g(k){ try{ return LS.getItem(k); }catch(e){ return null; } }
+    function s(k, v){ try{ setRaw.call(LS, k, v); }catch(e){} }
+    function tracked(k){ return /^(ec_|ethikcoach)/.test(k) && !EXCL.test(k); }
+    function collect(){ var o = {}; try{ for(var i = 0; i < LS.length; i++){ var k = LS.key(i); if(tracked(k)) o[k] = LS.getItem(k); } }catch(e){} return o; }
+    // ----- chiffrement -----
+    var ckey = null;
+    function cryptoKey(){
+      if(ckey) return ckey;
+      var te = new TextEncoder();
+      ckey = crypto.subtle.importKey('raw', te.encode(K), 'PBKDF2', false, ['deriveKey']).then(function(b){
+        return crypto.subtle.deriveKey({name:'PBKDF2', salt:te.encode('ethikcoach-sync|v1'), iterations:120000, hash:'SHA-256'}, b, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']);
+      });
+      return ckey;
+    }
+    function b64(u8){ var s2 = '', n = 0x8000; for(var i = 0; i < u8.length; i += n) s2 += String.fromCharCode.apply(null, u8.subarray(i, i + n)); return btoa(s2); }
+    function unb64(t){ var s2 = atob(t), u = new Uint8Array(s2.length); for(var i = 0; i < s2.length; i++) u[i] = s2.charCodeAt(i); return u; }
+    function pipe(u8, T){ return new Response(new Blob([u8]).stream().pipeThrough(new T('gzip'))).arrayBuffer().then(function(b){ return new Uint8Array(b); }); }
+    function enc(obj){
+      var raw = new TextEncoder().encode(JSON.stringify(obj)), zip = typeof CompressionStream === 'function';
+      return (zip ? pipe(raw, CompressionStream) : Promise.resolve(raw)).then(function(data){
+        var iv = crypto.getRandomValues(new Uint8Array(12));
+        return cryptoKey().then(function(key){ return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, key, data); })
+          .then(function(c){ return {d:(zip ? 'z' : 'p') + b64(new Uint8Array(c)), iv:b64(iv)}; });
+      });
+    }
+    function dec(d, iv){
+      var zip = d.charAt(0) === 'z';
+      return cryptoKey().then(function(key){ return crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(iv)}, key, unb64(d.slice(1))); })
+        .then(function(b){ var u = new Uint8Array(b); return zip ? pipe(u, DecompressionStream) : u; })
+        .then(function(u){ return JSON.parse(new TextDecoder().decode(u)); });
+    }
+    function post(path, body, keep){
+      var txt = JSON.stringify(body);
+      return fetch(API + path, {method:'POST', headers:{'content-type':'application/json'}, body:txt, keepalive:!!keep && txt.length < 60000})
+        .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw j; return j; }); });
+    }
+    // ----- fusion : l'historique est additionné (séances des deux téléphones), le reste suit la version la plus récente -----
+    function mergeHist(a, b){
+      var la = [], lb = []; try{ la = JSON.parse(a || '[]'); }catch(e){} try{ lb = JSON.parse(b || '[]'); }catch(e){}
+      if(!Array.isArray(la)) la = []; if(!Array.isArray(lb)) lb = [];
+      var by = {}, out = [];
+      lb.concat(la).forEach(function(x){ if(!x) return; var id = String(x.id || x.at || ''); if(!id){ out.push(x); return; } by[id] = by[id] ? Object.assign({}, by[id], x) : x; });
+      Object.keys(by).forEach(function(id){ out.push(by[id]); });
+      out.sort(function(x, y){ return (x.at || 0) - (y.at || 0); });
+      return JSON.stringify(out);
+    }
+    function apply(remote, localWins){
+      var data = remote.data || {}, changed = false;
+      Object.keys(data).forEach(function(k){
+        if(!tracked(k)) return;
+        var cur = g(k), v = k === HIST ? mergeHist(cur, data[k]) : ((localWins && cur !== null) ? cur : data[k]);
+        if(v !== cur){ s(k, v); changed = true; }
+      });
+      return changed;
+    }
+    var timer = null, first = 0, busy = false, again = false, lastSent = null;
+    function flush(keep){
+      clearTimeout(timer); timer = null; first = 0;
+      if(g(OK) !== '1') return Promise.resolve();
+      if(busy){ again = true; return Promise.resolve(); }
+      var obj = {v:1, ok:1, at:Date.now(), data:collect()}, sig = JSON.stringify(obj.data);
+      if(sig === lastSent && g(DIRTY) !== '1') return Promise.resolve();
+      busy = true;
+      return enc(obj).then(function(b){ b.k = K; return post('/sync/save', b, keep); })
+        .then(function(r){ lastSent = sig; s(AT, String(r.at)); delRaw.call(LS, DIRTY); paint(); })
+        .catch(function(){ /* hors connexion : on réessaiera au prochain changement ou à la prochaine ouverture */ })
+        .then(function(){ busy = false; if(again){ again = false; schedule(); } });
+    }
+    function schedule(){
+      if(g(OK) !== '1') return;
+      var now = Date.now(); if(!first) first = now;
+      clearTimeout(timer);
+      timer = setTimeout(flush, now - first > 60000 ? 0 : 15000);
+    }
+    // Chaque enregistrement de l'appli déclenche une sauvegarde (regroupée).
+    // Branché seulement après la récupération : les réglages écrits au démarrage ne passent pas devant la sauvegarde en ligne.
+    function watch(){
+      Storage.prototype.setItem = function(k, v){ setRaw.apply(this, arguments); if(this === LS && tracked(k)){ s(DIRTY, '1'); schedule(); } };
+      Storage.prototype.removeItem = function(k){ delRaw.apply(this, arguments); if(this === LS && tracked(k)){ s(DIRTY, '1'); schedule(); } };
+    }
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden' && timer) flush(true); });
+    window.addEventListener('pagehide', function(){ if(timer) flush(true); });
+
+    // ----- au démarrage : récupérer la sauvegarde en ligne -----
+    var wasDirty = g(DIRTY) === '1';
+    function load(){
+      if(g(OK) === '0') return Promise.resolve(null);
+      return post('/sync/load', {k:K}).then(function(r){
+        if(!r.ok || r.vide || !r.d) return null;
+        var mine = +(g(AT) || 0);
+        if(r.at <= mine) return 'same';
+        return dec(r.d, r.iv).then(function(remote){
+          if(remote.ok) s(OK, '1');
+          var changed = apply(remote, wasDirty);
+          s(AT, String(r.at));
+          var needSave = JSON.stringify(collect()) !== JSON.stringify(remote.data || {});
+          if(needSave){ s(DIRTY, '1'); schedule(); }
+          if(changed){
+            var n = 0; try{ n = +(sessionStorage.getItem('ec_sync_rl') || 0); }catch(e){}
+            if(n < 2){ try{ sessionStorage.setItem('ec_sync_rl', String(n + 1)); }catch(e){} location.reload(); return 'reload'; }
+          }
+          return 'applied';
+        });
+      }).catch(function(){ return null; });
+    }
+
+    // ----- accord (données de santé : ressentis et gênes) -----
+    var css = document.createElement('style');
+    css.textContent = '.sy-wrap{position:fixed; inset:0; z-index:1400; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,15,.55); padding:16px; opacity:0; transition:opacity .2s;} .sy-wrap.on{opacity:1;}'
+      + '.sy-box{width:100%; max-width:440px; background:var(--card,#fff); color:var(--ink,#1C2620); border-radius:22px; padding:22px 20px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 20px 50px rgba(0,0,0,.3);}'
+      + '.sy-box h2{font-size:1.25rem; margin:0 0 8px;} .sy-box p{font-size:0.9rem; line-height:1.45; margin:0 0 10px; color:var(--stone,#5E615A);} .sy-box p b{color:var(--ink,#1C2620);}'
+      + '.sy-box .sy-go{width:100%; min-height:52px; border:none; border-radius:999px; background:#1F4030; color:#fff; font-weight:800; font-size:1rem; font-family:inherit; margin-top:6px; cursor:pointer;}'
+      + '.sy-box .sy-no{width:100%; min-height:44px; border:none; background:none; color:var(--stone,#5E615A); font-weight:600; font-family:inherit; font-size:0.9rem; margin-top:4px; cursor:pointer;}'
+      + '.sy-box a{color:inherit;} .sy-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--chip,#EEF4EE); font-size:0.84rem;} .sy-row b{flex:1 1 180px;} .sy-row button{border:none; border-radius:999px; padding:8px 14px; font-weight:700; font-family:inherit; background:#1F4030; color:#fff; cursor:pointer;} .sy-row button.sy-off{background:transparent; color:var(--stone,#5E615A); text-decoration:underline; padding:8px 4px;}';
+    document.head.appendChild(css);
+    function ask(){
+      if(g(OK) !== null || document.querySelector('.sy-wrap')) return;
+      var w = document.createElement('div'); w.className = 'sy-wrap'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'Sauvegarde automatique');
+      w.innerHTML = '<div class="sy-box"><h2>☁️ Sauvegarde automatique</h2>'
+        + '<p>Ton suivi est sauvegardé en ligne tout seul : <b>plus besoin de fichier</b>, et tu le retrouves en ouvrant ton lien sur un autre téléphone.</p>'
+        + '<p>Cela comprend tes séances, réglages et favoris, mais aussi <b>tes ressentis et les gênes que tu signales</b>, qui sont des données de santé. Elles sont <b>chiffrées sur ton téléphone avec ton code personnel</b> : personne d’autre ne peut les lire, pas même Ethik’Coach.</p>'
+        + '<p style="font-size:0.8rem">Tu peux arrêter et tout effacer à tout moment dans Suivi › Mes données. <a href="https://appli.ethikcoach.fr/cgv.html" target="_blank" rel="noopener">En savoir plus</a></p>'
+        + '<button type="button" class="sy-go">J’accepte, activer la sauvegarde</button><button type="button" class="sy-no">Non merci, garder sur ce téléphone</button></div>';
+      document.body.appendChild(w); requestAnimationFrame(function(){ w.classList.add('on'); });
+      function close(){ w.classList.remove('on'); setTimeout(function(){ w.remove(); }, 220); paint(); }
+      w.querySelector('.sy-go').addEventListener('click', function(){ s(OK, '1'); s(DIRTY, '1'); close(); flush(); toast('Sauvegarde automatique activée ✓'); });
+      w.querySelector('.sy-no').addEventListener('click', function(){ s(OK, '0'); close(); });
+    }
+    function busyScreen(){ return document.querySelector('.ec-hello, .tr-wrap, .q-ob:not([hidden]), #timerBackdrop.open') || document.documentElement.classList.contains('ec-locked') || !g('ec_onboard_v1'); }
+    function askWhenFree(){ var n = 0; (function wait(){ if(g(OK) !== null) return; if(busyScreen()){ if(++n < 600) setTimeout(wait, 2000); return; } setTimeout(function(){ if(!busyScreen()) ask(); else wait(); }, 1500); })(); }
+    function toast(m){ var t = document.getElementById('toast'), tm = document.getElementById('toastMsg'), u = document.getElementById('toastUndo'); if(!t || !tm) return; tm.textContent = m; if(u) u.style.display = 'none'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 4000); }
+
+    // ----- Suivi › Mes données : état et interrupteur -----
+    var row = null;
+    function paint(){
+      var card = document.getElementById('svExport'); card = card && card.closest('.sv-card'); if(!card) return;
+      if(!row){ row = document.createElement('div'); row.className = 'sy-row'; card.insertBefore(row, card.querySelector('.sv-btns'));
+        row.addEventListener('click', function(e){
+          var b = e.target.closest('button'); if(!b) return;
+          if(b.getAttribute('data-sy') === 'on'){ s(OK, '1'); s(DIRTY, '1'); flush(); paint(); toast('Sauvegarde automatique activée ✓'); return; }
+          if(!confirm('Arrêter la sauvegarde automatique et effacer la copie en ligne ? Tes données restent sur ce téléphone.')) return;
+          s(OK, '0'); clearTimeout(timer);
+          post('/sync/delete', {k:K}).then(function(){ toast('Sauvegarde en ligne effacée'); }).catch(function(){ toast('Pas de connexion : l’effacement n’a pas pu se faire.'); s(OK, '1'); paint(); });
+          delRaw.call(LS, AT); paint();
+        });
+      }
+      var on = g(OK) === '1', at = +(g(AT) || 0);
+      row.innerHTML = on
+        ? '<b>☁️ Sauvegarde automatique activée' + (at ? '<br><small style="font-weight:500">Dernière sauvegarde : ' + new Date(at).toLocaleString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) + '</small>' : '') + '</b><button type="button" class="sy-off" data-sy="off">Arrêter</button>'
+        : '<b>☁️ Sauvegarde automatique désactivée</b><button type="button" data-sy="on">Activer</button>';
+      var hint = card.querySelector('.sv-hint');
+      if(hint) hint.textContent = on ? 'Ton suivi est sauvegardé en ligne tout seul, chiffré avec ton code personnel. Sur un nouveau téléphone, ouvre simplement ton lien : tout revient. Le fichier de sauvegarde reste possible si tu le souhaites.'
+        : 'Ton historique, tes tests, tes charges et tes favoris sont enregistrés uniquement sur cet appareil. Active la sauvegarde automatique, ou fais une sauvegarde en fichier de temps en temps.';
+    }
+    setTimeout(paint, 900);
+    load().then(function(r){ if(r === 'reload') return; watch(); paint(); if(g(OK) === '1'){ if(g(DIRTY) === '1' || !g(AT)) schedule(); } else if(g(OK) === null) askWhenFree(); });
+    window.ecSyncNow = flush;
   })();
 </script>
 </body>
