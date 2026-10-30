@@ -1993,6 +1993,11 @@
   .ct-row .st.soon{background:#FFF0D6; color:#8A5A00 !important;}
   .ct-row .st.off{background:#FBE3DA; color:#A0412A !important;}
   .ct-row-acts{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.ab-meta{display:block; margin-top:5px; font-size:0.76rem; color:var(--stone); word-break:break-all;}
+.ab-key{display:inline-block; margin-top:4px; font-family:ui-monospace, Menlo, monospace; font-size:0.8rem; color:var(--forest); user-select:all; -webkit-user-select:all;}
+.ab-err{color:#A0412A; font-size:0.84rem; margin-top:8px;}
+.ab-link{border:none; background:none; padding:6px 0; color:var(--stone); font-family:inherit; font-size:0.8rem; text-decoration:underline; cursor:pointer;}
+#abSearch{margin-top:2px;}
   .ct-row-acts button{border:none; background:var(--chip); border-radius:999px; padding:7px 12px; font-size:0.78rem; font-weight:700; color:var(--forest); cursor:pointer; font-family:inherit; box-shadow:inset 0 0 0 1px var(--ring-line);}
   .ct-row-acts button.del{color:#A0412A;}
   .ct-ext{margin-top:10px; padding:12px; border-radius:14px; background:var(--sage-light);}
@@ -2135,7 +2140,7 @@
   .ct-hero-stats{position:relative; display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
   .ct-hero-stats span{padding:6px 11px; border-radius:999px; background:rgba(255,255,255,0.14); font-size:0.78rem; font-weight:700;}
   .ct-hero-stats span.warn{background:#F0CF86; color:#17352A;}
-  .ct-tabs{position:sticky; top:0; z-index:5; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px; padding:4px; margin:0 0 12px; border-radius:16px; background:var(--card); box-shadow:var(--shadow-1);}
+  .ct-tabs{position:sticky; top:0; z-index:5; display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:4px; padding:4px; margin:0 0 12px; border-radius:16px; background:var(--card); box-shadow:var(--shadow-1);}
   .ct-tabs button{display:flex; flex-direction:column; align-items:center; gap:2px; min-height:52px; padding:6px 2px; border:none; border-radius:12px; background:transparent; color:var(--stone); font-family:inherit; font-size:0.78rem; font-weight:700; cursor:pointer;}
   .ct-tabs button span{font-size:1.1rem; line-height:1;}
   .ct-tabs button.active{background:var(--forest); color:#fff;}
@@ -4259,6 +4264,7 @@
 
     <div class="ct-tabs" id="ctTabs" role="tablist">
       <button type="button" role="tab" data-pane="ath"><span>👤</span>Athlètes</button>
+      <button type="button" role="tab" data-pane="abo"><span>💳</span>Abonnés</button>
       <button type="button" role="tab" data-pane="grp"><span>👥</span>Groupes</button>
       <button type="button" role="tab" data-pane="send"><span>✍️</span>Séances</button>
       <button type="button" role="tab" data-pane="set"><span>⚙️</span>Réglages</button>
@@ -4288,6 +4294,31 @@
         <button type="button" class="chip" data-f="off">Expirés ou bloqués</button>
       </div>
       <div id="ctList"></div>
+    </div>
+    </div>
+
+    <div class="ct-pane" data-pane="abo" hidden>
+    <div class="ct-card" id="abCard">
+      <div class="ct-h3row"><h3>Abonnés payants</h3><button type="button" class="ct-gnew" id="abReload">↻ Actualiser</button></div>
+      <div id="abSetup" hidden>
+        <p class="ct-note" style="margin-top:2px">Pour afficher tes abonnés, entre le code <b>COACH_SECRET</b> enregistré dans Cloudflare. Il reste uniquement sur cet appareil et n’est jamais dans les sauvegardes.</p>
+        <div class="ct-form one"><label>Code abonnés<input type="password" id="abCode" autocomplete="off"></label></div>
+        <button type="button" class="ct-btn" id="abSave">Enregistrer</button>
+        <p class="ab-err" id="abSetupErr"></p>
+      </div>
+      <div id="abMain" hidden>
+        <p class="ct-count" id="abCount"></p>
+        <div class="ct-form one"><label>Rechercher<input type="search" id="abSearch" placeholder="Nom, prénom, e-mail ou clé" autocomplete="off"></label></div>
+        <div class="ct-filter" id="abFilter">
+          <button type="button" class="chip active" data-f="all">Tous</button>
+          <button type="button" class="chip" data-f="on">Actifs</button>
+          <button type="button" class="chip" data-f="essai">En essai</button>
+          <button type="button" class="chip" data-f="res">Résiliés</button>
+          <button type="button" class="chip" data-f="off">Terminés</button>
+        </div>
+        <div id="abList"></div>
+        <button type="button" class="ab-link" id="abForget">Changer le code abonnés</button>
+      </div>
     </div>
     </div>
 
@@ -9799,7 +9830,7 @@
     // Sauvegarde / restauration
     function backupKeys(){
       var out = {};
-      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_coach_gh' && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
     $('#svExport').addEventListener('click', function(){
@@ -10058,6 +10089,79 @@
     $('#ctTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-pane]'); if(b){ setPane(b.getAttribute('data-pane')); } });
     window.ecCoachRender = function(){ renderCoach(); };
     window.ecCoachOpen = function(p){ if(window.ecShowView) window.ecShowView('espace'); if(p) setPane(p); window.scrollTo(0, 0); };
+    // ---------- Abonnés payants (liste lue sur le serveur d'abonnement, protégée par le code COACH_SECRET) ----------
+    (function(){
+      var CK = 'ec_coach_abo', APP = 'https://appli.ethikcoach.fr/', list = null, abF = 'all', loading = false;
+      function code(){ try{ return localStorage.getItem(CK) || ''; }catch(e){ return ''; } }
+      function norm(t){ return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+      function fd(ms){ return ms ? new Date(ms).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'}) : ''; }
+      function st(a){
+        if(a.statut === 'trialing') return {cls:'soon', f:'essai', txt:'Essai gratuit jusqu’au ' + fd(a.essai) + (a.resilie ? ' · résilié' : '')};
+        if(a.statut === 'active' && a.resilie) return {cls:'soon', f:'res', txt:'Résilié · accès jusqu’au ' + fd(a.fin)};
+        if(a.statut === 'active') return {cls:'on', f:'on', txt:'Actif · ' + (a.formule || '') + (a.prix ? ' ' + a.prix : '')};
+        if(a.actif) return {cls:'soon', f:'on', txt:'Paiement en retard'};
+        return {cls:'off', f:'off', txt:a.statut === 'canceled' ? 'Terminé' : 'Inactif (' + a.statut + ')'};
+      }
+      function show(){
+        var c = code();
+        $('#abSetup').hidden = !!c; $('#abMain').hidden = !c;
+      }
+      function render(){
+        if(!list){ return; }
+        var act = list.filter(function(a){ return a.actif; }).length, es = list.filter(function(a){ return a.statut === 'trialing'; }).length;
+        $('#abCount').textContent = act + ' actif' + (act > 1 ? 's' : '') + (es ? ' dont ' + es + ' en essai' : '') + ' · ' + list.length + ' au total';
+        var q = norm($('#abSearch').value.trim());
+        var rows = list.filter(function(a){
+          var s = st(a);
+          if(abF === 'on' && !a.actif) return false;
+          if(abF === 'essai' && a.statut !== 'trialing') return false;
+          if(abF === 'res' && !(a.resilie && a.actif)) return false;
+          if(abF === 'off' && a.actif) return false;
+          return !q || norm(a.nom + ' ' + a.email + ' ' + a.cle).indexOf(q) > -1;
+        });
+        $('#abList').innerHTML = rows.length ? rows.map(function(a){
+          var s = st(a), nm = a.nom || a.email || 'Sans nom';
+          return '<div class="ct-row" data-k="' + esc(a.cle) + '" data-m="' + esc(a.email) + '"><div class="ct-row-top"><div class="info"><b>' + esc(nm) + '</b><span class="st ' + s.cls + '">' + esc(s.txt) + '</span>'
+            + '<span class="ab-meta">' + esc(a.email) + (a.depuis ? ' · abonné depuis le ' + fd(a.depuis) : '') + '</span><span class="ab-key">' + esc(a.cle) + '</span></div></div>'
+            + '<div class="ct-row-acts"><button type="button" data-ab="link">Copier le lien</button>' + (a.email ? '<button type="button" data-ab="mail" class="send">📨 Renvoyer le lien par e-mail</button>' : '') + '</div></div>';
+        }).join('') : '<p class="sv-empty">' + (list.length ? 'Aucun abonné ne correspond.' : 'Aucun abonné pour l’instant.') + '</p>';
+      }
+      function load(){
+        var c = code(); show(); if(!c || loading) return;
+        loading = true; $('#abReload').textContent = '…';
+        if(!list) $('#abList').innerHTML = '<p class="sv-empty">Chargement…</p>';
+        fetch(EC_SUB_API + '/coach/abonnes', {headers:{authorization:'Bearer ' + c}, cache:'no-store'})
+          .then(function(r){ return r.json().then(function(d){ return {st:r.status, d:d}; }); })
+          .then(function(x){
+            if(x.st === 401){ try{ localStorage.removeItem(CK); }catch(e){} list = null; show(); $('#abSetupErr').textContent = 'Code non reconnu : vérifie le COACH_SECRET dans Cloudflare.'; return; }
+            if(!x.d.ok) throw 0;
+            list = x.d.abonnes || []; render();
+          })
+          .catch(function(){ $('#abList').innerHTML = '<p class="sv-empty">Liste indisponible : vérifie ta connexion, puis touche Actualiser.</p>'; })
+          .then(function(){ loading = false; $('#abReload').textContent = '↻ Actualiser'; });
+      }
+      $('#abSave').addEventListener('click', function(){
+        var v = $('#abCode').value.trim(); if(v.length < 8){ $('#abSetupErr').textContent = 'Le code est trop court.'; return; }
+        try{ localStorage.setItem(CK, v); }catch(e){}
+        $('#abCode').value = ''; $('#abSetupErr').textContent = ''; load();
+      });
+      $('#abForget').addEventListener('click', function(){ try{ localStorage.removeItem(CK); }catch(e){} list = null; $('#abList').innerHTML = ''; show(); });
+      $('#abReload').addEventListener('click', load);
+      $('#abSearch').addEventListener('input', render);
+      $('#abFilter').addEventListener('click', function(e){ var c = e.target.closest('[data-f]'); if(!c) return; abF = c.getAttribute('data-f'); $('#abFilter').querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('active', x === c); }); render(); });
+      $('#abList').addEventListener('click', function(e){
+        var b = e.target.closest('[data-ab]'); if(!b) return;
+        var row = b.closest('[data-k]'), k = row.getAttribute('data-k'), m = row.getAttribute('data-m');
+        if(b.getAttribute('data-ab') === 'link'){ copyText(APP + '?acces=' + k, 'Lien copié'); return; }
+        b.disabled = true;
+        fetch(EC_SUB_API + '/renvoyer', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({email:m})})
+          .then(function(){ showToast('Lien renvoyé à ' + m + ' (un envoi toutes les 10 min au plus)', false); })
+          .catch(function(){ showToast('Pas de connexion : réessaie dans un instant.', false); b.disabled = false; });
+      });
+      $('#ctTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-pane="abo"]'); if(b) load(); });
+      show();
+      if(ctPane === 'abo') setTimeout(function(){ if(document.documentElement.classList.contains('ec-coach')) load(); }, 1200);
+    })();
     $('#coachTools').addEventListener('click', function(e){
       var g = e.target.closest('[data-ct-go]'); if(!g) return;
       if(window.ecShowView) window.ecShowView(g.getAttribute('data-ct-go')); window.scrollTo(0, 0);
@@ -13634,12 +13738,13 @@
       heart:'<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
       bike:'<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5.5L18 16M10 9l3 7h-7M9 6.5h3"/>',
       mtb:'<path d="M2 20l6-9 4 5 3-4 7 8z"/><circle cx="16.5" cy="5" r="1.5"/>',
+      card:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/>',
       kayak:'<path d="M2 15c4 3 16 3 20 0"/><path d="M5 4l14 14"/><path d="M4 2.5l3 3M17 18.5l3 3" stroke-width="3"/>'
     };
     var MAP = {'📅':'cal','⏱':'timer','🎯':'target','💪':'dumbbell','🏋':'dumbbell','✍':'pen','✎':'pen','📲':'phone','🧘':'lotus','🌬':'wind','⇄':'swap',
       '⚡':'bolt','🏃':'run','🔥':'flame','🏠':'home','📈':'chart','📚':'book','🚫':'ban','☆':'star','⭐':'starf','★':'starf','✉':'mail','↻':'redo','⎙':'print',
       '💾':'save','📂':'folder','👤':'user','👥':'users','⚙':'gear','💬':'chat','📄':'doc','📨':'send','🔊':'sound','⛶':'full','📊':'bars',
-      '⛰':'mount','🏔':'mount','🏅':'medal','🧭':'compass','🏟':'stadium','🤸':'body','🧍':'stand','🌱':'sprout','🧓':'heart','🚴':'bike','🚵':'mtb','🛶':'kayak'};
+      '⛰':'mount','🏔':'mount','🏅':'medal','🧭':'compass','🏟':'stadium','🤸':'body','🧍':'stand','🌱':'sprout','🧓':'heart','🚴':'bike','🚵':'mtb','🛶':'kayak','💳':'card'};
     var RE = /^(\s*)([←-⯿]|[☀-➿]|[\uD83C-\uD83E][\uDC00-\uDFFF])[️‍]*\s?/;
     var SKIP = 'script,style,textarea,option,select,input,.bd-ico,.timer-ex-name,#timerExName';
     function svg(k){ return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + P[k] + '</svg>'; }
