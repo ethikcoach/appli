@@ -1447,8 +1447,11 @@
     h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
     return (4294967296*(2097151&h2)+(h1>>>0)).toString(36); }
   var EC_REMIND_DAYS = 7;
+  // Date de fin « Jamais » : 31/12/2099, traitée comme un accès sans date de fin
+  var EC_NEVER = '2099-12-31';
+  function ecNever(exp){ return !!exp && +String(exp).slice(0, 4) >= 2099; }
   function ecDaysLeft(entry){
-    if(!entry || !entry.exp) return null;
+    if(!entry || !entry.exp || ecNever(entry.exp)) return null;
     var p = entry.exp.split('-'), end = new Date(+p[0], +p[1] - 1, +p[2], 23, 59, 59);
     var today = new Date(); today.setHours(0,0,0,0);
     var endDay = new Date(+p[0], +p[1] - 1, +p[2]);
@@ -2004,6 +2007,9 @@
   .ct-steps a{color:var(--forest); font-weight:700;}
   .ct-form.one{grid-template-columns:minmax(0,1fr);}
   .ct-form .ct-wide{grid-column:1 / -1;}
+.ct-form label.ct-chk{flex-direction:row; align-items:center; gap:10px; font-size:0.9rem; color:var(--ink); min-height:36px; cursor:pointer;}
+.ct-form label.ct-chk input{width:22px; height:22px; min-height:0; padding:0; box-shadow:none; accent-color:#1F4030; flex:none;}
+.ct-form input:disabled{opacity:0.45;}
   .ct-row-acts button.send{background:var(--forest); color:#fff; box-shadow:none;}
   .ct-send .ct-acts a, .ct-send .ct-acts button{background:var(--card);}
   .ct-ext-row .ct-ph{flex:1; min-width:0;}
@@ -4265,6 +4271,7 @@
       <div class="ct-form">
         <label>Prénom<input type="text" id="ctName" placeholder="ex. Marie" autocomplete="off"></label>
         <label>Accès jusqu'au<input type="date" id="ctExp"></label>
+        <label class="ct-wide ct-chk"><input type="checkbox" id="ctNever"> Jamais (accès sans date de fin)</label>
         <label class="ct-wide">Téléphone (facultatif, pour l’envoi direct)<input type="tel" id="ctPhone" placeholder="06 12 34 56 78" autocomplete="off"></label>
       </div>
       <button type="button" class="ct-btn" id="ctCreate">Créer la clé</button>
@@ -9896,7 +9903,7 @@
     }
     function statusOf(u){
       if(u.b) return {cls:'off', txt:'Bloqué'};
-      if(!u.exp) return {cls:'on', txt:'Sans date de fin'};
+      if(!u.exp || ecNever(u.exp)) return {cls:'on', txt:'Sans date de fin'};
       var dl = Math.round((parseIso(u.exp) - today0()) / 86400000);
       if(dl < 0) return {cls:'off', txt:'Expiré le ' + frDate(u.exp)};
       if(dl <= 30) return {cls:'soon', txt:'Finit le ' + frDate(u.exp) + (dl <= 7 ? ' (' + (dl === 0 ? 'ce soir' : dl + ' j') + ')' : '')};
@@ -10028,11 +10035,11 @@
             + (ip ? '' : '<p class="ct-note" style="margin-top:6px">Sans numéro, WhatsApp te laisse choisir le contact.</p>') + '</div>';
         }
         if(openEdit === r.h){
-          var base = u.exp && parseIso(u.exp) > today0() ? parseIso(u.exp) : today0();
+          var base = u.exp && !ecNever(u.exp) && parseIso(u.exp) > today0() ? parseIso(u.exp) : today0();
           var plus = function(m){ var d = new Date(base); d.setMonth(d.getMonth() + m); return iso(d); };
-          html += '<div class="ct-ext"><div class="ct-ext-q">Nouvelle date de fin' + (u.exp ? ' (actuelle : ' + frDate(u.exp) + ')' : '') + ' :</div>'
-            + '<div class="ct-acts"><button type="button" data-ct="set" data-d="' + plus(1) + '">+1 mois</button><button type="button" data-ct="set" data-d="' + plus(3) + '">+3 mois</button><button type="button" data-ct="set" data-d="' + plus(6) + '">+6 mois</button><button type="button" data-ct="set" data-d="' + plus(12) + '">+1 an</button></div>'
-            + '<div class="ct-ext-row"><input type="date" class="ct-ext-date" value="' + (u.exp || iso(base)) + '"><button type="button" data-ct="setd">Valider</button></div></div>';
+          html += '<div class="ct-ext"><div class="ct-ext-q">Nouvelle date de fin' + (u.exp ? ' (actuelle : ' + (ecNever(u.exp) ? 'jamais' : frDate(u.exp)) + ')' : '') + ' :</div>'
+            + '<div class="ct-acts"><button type="button" data-ct="set" data-d="' + plus(1) + '">+1 mois</button><button type="button" data-ct="set" data-d="' + plus(3) + '">+3 mois</button><button type="button" data-ct="set" data-d="' + plus(6) + '">+6 mois</button><button type="button" data-ct="set" data-d="' + plus(12) + '">+1 an</button><button type="button" data-ct="set" data-d="' + EC_NEVER + '">Jamais</button></div>'
+            + '<div class="ct-ext-row"><input type="date" class="ct-ext-date" value="' + (u.exp && !ecNever(u.exp) ? u.exp : iso(base)) + '"><button type="button" data-ct="setd">Valider</button></div></div>';
         }
         return html + '</div>';
       }).join('') : '<p class="sv-empty">' + (rows.length ? 'Personne dans cette catégorie.' : 'Aucun accès pour l’instant. Crée la première clé ci-dessus.') + '</p>';
@@ -10095,8 +10102,9 @@
     if(ctExp){
       var dd = new Date(); dd.setFullYear(dd.getFullYear() + 1); ctExp.value = iso(dd);
       $('#ctSite').value = (lsGet(CT_NET, {}) || {}).name || 'appli';
+      var ctNv = $('#ctNever'); if(ctNv) ctNv.addEventListener('change', function(){ ctExp.disabled = ctNv.checked; });
       $('#ctCreate').addEventListener('click', function(){
-        var name = $('#ctName').value.trim(), s = slug(name), exp = ctExp.value;
+        var nv = $('#ctNever'), name = $('#ctName').value.trim(), s = slug(name), exp = nv && nv.checked ? EC_NEVER : ctExp.value;
         if(!s){ showToast('Indique le prénom de l’athlète.', false); return; }
         if(!/^\d{4}-\d{2}-\d{2}$/.test(exp)){ showToast('Choisis une date de fin.', false); return; }
         var key = ecMakeKey(s, exp), h = ecHash(key);
@@ -10105,9 +10113,9 @@
         if(!draft) migrate();
         draft.users[h] = {n:r.n, exp:exp}; saveDraft();
         var o = $('#ctOut'); o.hidden = false;
-        o.innerHTML = '<div>Clé de <b>' + esc(r.n) + '</b>, valable jusqu’au ' + frDate(exp) + ' :</div><div class="k">' + esc(key) + '</div><div class="u">' + esc(appBase() + '?acces=' + key) + '</div>'
+        o.innerHTML = '<div>Clé de <b>' + esc(r.n) + '</b>, ' + (ecNever(exp) ? 'sans date de fin' : 'valable jusqu’au ' + frDate(exp)) + ' :</div><div class="k">' + esc(key) + '</div><div class="u">' + esc(appBase() + '?acces=' + key) + '</div>'
           + '<div class="ct-acts"><button type="button" data-ct-k="link" data-k="' + esc(key) + '">Copier le lien</button><button type="button" data-ct-k="msg" data-k="' + esc(key) + '">Copier le message</button><a href="https://wa.me/?text=' + encodeURIComponent(waMsg(r)) + '" target="_blank" rel="noopener">WhatsApp</a></div>';
-        $('#ctName').value = ''; $('#ctPhone').value = ''; openSend = h; renderCoach(); autoSave();
+        $('#ctName').value = ''; $('#ctPhone').value = ''; if(nv){ nv.checked = false; ctExp.disabled = false; } openSend = h; renderCoach(); autoSave();
       });
       $('#ctOut').addEventListener('click', function(e){
         var b = e.target.closest('[data-ct-k]'); if(!b) return;
@@ -10136,7 +10144,7 @@
           var d = act === 'set' ? b.getAttribute('data-d') : row.querySelector('.ct-ext-date').value;
           if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
           openEdit = null; put(Object.assign({}, cur, {exp:d, b:0}));
-          showToast((cur.n || 'Accès') + ' : accès jusqu\u2019au ' + frDate(d), false); return;
+          showToast((cur.n || 'Accès') + (ecNever(d) ? ' : accès sans date de fin' : ' : accès jusqu\u2019au ' + frDate(d)), false); return;
         }
         if(act === 'blk'){
           if(cur.b){ put(Object.assign({}, cur, {b:0})); return; }
@@ -14618,7 +14626,8 @@
     function qFinish(apply){
       lss('ec_onboard_v1', '1'); if(apply && ans.goal) lss('ec_goal_v1', ans.goal); Q.classList.remove('open'); setTimeout(function(){ Q.hidden = true; }, 200);
       var ob = document.getElementById('obBackdrop'); if(ob) ob.hidden = true;
-      if(!apply) return;
+      // Questions passées : la visite guidée se lance quand même à la première connexion
+      if(!apply){ try{ window.ecShowView('today'); window.scrollTo(0, 0); }catch(e){} setTimeout(function(){ if(window.ecTour) window.ecTour(0); }, 800); return; }
       try{
         if(ans.level) click('#levelGroup [data-level="' + ans.level + '"]');
         var want = Object.keys(ans.eq).filter(function(k){ return k !== 'gym'; });
