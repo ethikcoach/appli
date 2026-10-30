@@ -1998,6 +1998,12 @@
 .ab-key{display:inline-block; margin-top:4px; font-family:ui-monospace, Menlo, monospace; font-size:0.8rem; color:var(--forest); user-select:all; -webkit-user-select:all;}
 .ab-show{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.84rem; color:var(--stone);}
 .ab-show input{width:20px; height:20px; accent-color:#1F4030;}
+.ab-stats{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin:10px 0 14px;}
+@media (min-width:700px){ .ab-stats{grid-template-columns:repeat(4, minmax(0,1fr));} }
+.ab-stat{background:var(--chip); border-radius:14px; padding:10px 12px; min-width:0;}
+.ab-stat b{display:block; font-family:'Bricolage Grotesque',sans-serif; font-size:1.35rem; line-height:1.15; color:var(--forest);}
+.ab-stat span{display:block; font-size:0.74rem; color:var(--stone); margin-top:2px; line-height:1.25;}
+.ab-stat.main{background:var(--forest);} .ab-stat.main b, .ab-stat.main span{color:#fff;}
 .ab-err{color:#A0412A; font-size:0.84rem; margin-top:8px;}
 .ab-link{border:none; background:none; padding:6px 0; color:var(--stone); font-family:inherit; font-size:0.8rem; text-decoration:underline; cursor:pointer;}
 #abSearch{margin-top:2px;}
@@ -4313,6 +4319,7 @@
       </div>
       <div id="abMain" hidden>
         <p class="ct-count" id="abCount"></p>
+        <div class="ab-stats" id="abStats"></div>
         <div class="ct-form one"><label>Rechercher<input type="search" id="abSearch" placeholder="Nom, prénom, e-mail ou clé" autocomplete="off"></label></div>
         <div class="ct-filter" id="abFilter">
           <button type="button" class="chip active" data-f="all">Tous</button>
@@ -10117,6 +10124,7 @@
         if(!list){ return; }
         var act = list.filter(function(a){ return a.actif; }).length, es = list.filter(function(a){ return a.statut === 'trialing'; }).length;
         $('#abCount').textContent = act + ' actif' + (act > 1 ? 's' : '') + (es ? ' dont ' + es + ' en essai' : '') + ' · ' + list.length + ' au total';
+        stats();
         var q = norm($('#abSearch').value.trim());
         var rows = list.filter(function(a){
           var s = st(a);
@@ -10132,6 +10140,36 @@
             + '<span class="ab-meta">' + esc(a.email) + (a.depuis ? ' · abonné depuis le ' + fd(a.depuis) : '') + '</span><span class="ab-key">' + esc(a.cle) + '</span></div></div>'
             + '<div class="ct-row-acts"><button type="button" data-ab="link">Copier le lien</button>' + (a.email ? '<button type="button" data-ab="mail" class="send">📨 Renvoyer le lien par e-mail</button>' : '') + '</div></div>';
         }).join('') : '<p class="sv-empty">' + (list.length ? 'Aucun abonné ne correspond.' : 'Aucun abonné pour l’instant.') + '</p>';
+      }
+      // ----- Statistiques -----
+      function eur(t){ var m = /([\d]+(?:,\d+)?)/.exec(String(t || '')); return m ? parseFloat(m[1].replace(',', '.')) : 0; }
+      function fe(n){ return n.toLocaleString('fr-FR', {minimumFractionDigits:n % 1 ? 2 : 0, maximumFractionDigits:2}) + ' €'; }
+      function stats(){
+        var now = Date.now(), d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+        var abos = list.filter(function(a){ return !a.cadeau; }), kdo = list.filter(function(a){ return a.cadeau; });
+        var payants = abos.filter(function(a){ return a.actif && a.statut !== 'trialing'; });
+        var mrr = payants.reduce(function(t, a){ return t + eur(a.prix) / (a.formule === 'annuel' ? 12 : 1); }, 0);
+        var mens = payants.filter(function(a){ return a.formule !== 'annuel'; }).length;
+        var essais = abos.filter(function(a){ return a.statut === 'trialing'; }).length;
+        // Essais terminés : transformés si la personne a payé au moins une fois (encore abonnée, ou résiliée après la fin de l'essai)
+        var finis = abos.filter(function(a){ return a.essai && a.essai < now && a.statut !== 'trialing'; });
+        var conv = finis.filter(function(a){ return a.statut === 'active' || a.statut === 'past_due' || a.statut === 'unpaid' || (a.statut === 'canceled' && a.annule && a.annule > a.essai); }).length;
+        var nouveaux = abos.filter(function(a){ return a.depuis && a.depuis >= m0; }).length;
+        var resil = abos.filter(function(a){ var t = a.annule || (a.statut === 'canceled' ? a.fin : null); return (a.resilie || a.statut === 'canceled') && t && t >= m0; }).length;
+        var kdoMois = kdo.filter(function(a){ return a.depuis && a.depuis >= m0; });
+        var kdoEur = kdoMois.reduce(function(t, a){ return t + eur(a.prix); }, 0);
+        var mois = d.toLocaleDateString('fr-FR', {month:'long'});
+        var T = [
+          ['main', fe(Math.round(mrr * 100) / 100), 'Revenu mensuel TTC (annuels ÷ 12)'],
+          ['', String(payants.length), 'Abonnés payants · ' + mens + ' mensuel' + (mens > 1 ? 's' : '') + ', ' + (payants.length - mens) + ' annuel' + (payants.length - mens > 1 ? 's' : '')],
+          ['', String(essais), 'Essai' + (essais > 1 ? 's' : '') + ' gratuit' + (essais > 1 ? 's' : '') + ' en cours'],
+          ['', finis.length ? Math.round(conv / finis.length * 100) + ' %' : '—', 'Essais transformés' + (finis.length ? ' (' + conv + ' sur ' + finis.length + ')' : '')],
+          ['', '+' + nouveaux, 'Nouveaux abonnés en ' + mois],
+          ['', String(resil), 'Résiliation' + (resil > 1 ? 's' : '') + ' en ' + mois],
+          ['', String(kdoMois.length), 'Carte' + (kdoMois.length > 1 ? 's' : '') + ' cadeau vendue' + (kdoMois.length > 1 ? 's' : '') + ' en ' + mois + (kdoEur ? ' · ' + fe(kdoEur) : '')],
+          ['', String(kdo.filter(function(a){ return a.actif; }).length), 'Accès cadeau en cours ou pas encore ouverts']
+        ];
+        $('#abStats').innerHTML = T.map(function(t){ return '<div class="ab-stat ' + t[0] + '"><b>' + esc(t[1]) + '</b><span>' + esc(t[2]) + '</span></div>'; }).join('');
       }
       function load(){
         var c = code(); show(); if(!c || loading) return;
@@ -11135,6 +11173,61 @@
       });
     }
     window.ecCalOpen = openDialog;
+
+    // ---------- Rappels de séance : un événement répété chaque semaine dans l'agenda du téléphone, avec alerte ----------
+    var JRS = [['MO', 'L', 1], ['TU', 'M', 2], ['WE', 'M', 3], ['TH', 'J', 4], ['FR', 'V', 5], ['SA', 'S', 6], ['SU', 'D', 0]];
+    function appLink(){ var u = 'https://appli.ethikcoach.fr/'; return EC_KEY && !EC_IS_COACH ? u + '?acces=' + encodeURIComponent(EC_KEY) : u; }
+    function rappelIcs(days, t){
+      var h = t.split(':'), now = new Date(), start = null;
+      for(var i = 0; i < 8 && !start; i++){ var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, +h[0] || 0, +h[1] || 0); if(d > now && days.some(function(x){ return x[2] === d.getDay(); })) start = d; }
+      var end = new Date(start.getTime() + 30 * 60000), url = appLink(), title = '💪 Ma séance Ethik\u2019Coach';
+      var desc = 'C\u2019est l\u2019heure de ta séance ! Ouvre ton appli :\n' + url;
+      var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ethik Coach//Appli//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+        'UID:rappel-' + now.getTime().toString(36) + '@ethikcoach.fr', 'DTSTAMP:' + utcStamp(now), 'DTSTART:' + stamp(start), 'DTEND:' + stamp(end),
+        'RRULE:FREQ=WEEKLY;BYDAY=' + days.map(function(x){ return x[0]; }).join(','),
+        'SUMMARY:' + icsText(title), 'DESCRIPTION:' + icsText(desc), 'URL:' + url,
+        'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT0M', 'DESCRIPTION:' + icsText(title), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'];
+      return {ics:L.map(fold).join('\r\n') + '\r\n', start:start, end:end, title:title, desc:desc};
+    }
+    function openRappels(){
+      var old = document.getElementById('rapDialog'); if(old) old.remove();
+      var saved = {d:['TU', 'TH'], t:'18:00'}; try{ saved = JSON.parse(localStorage.getItem('ec_rappels') || 'null') || saved; }catch(e){}
+      var wrap = document.createElement('div'); wrap.id = 'rapDialog'; wrap.className = 'ec-dialog-backdrop';
+      wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Rappels de séance">'
+        + '<p class="ec-dialog-msg">⏰ Rappels de séance</p>'
+        + '<p class="cp-note" style="margin-top:0">Choisis tes jours et ton heure : ton téléphone t\u2019envoie une alerte, chaque semaine, avec le lien qui ouvre ton appli.</p>'
+        + '<div class="cp-lab">Jours</div><div class="cp-chips" id="rapDays">' + JRS.map(function(j){ return '<button type="button" class="chip' + (saved.d.indexOf(j[0]) > -1 ? ' active' : '') + '" data-v="' + j[0] + '" style="min-width:42px">' + j[1] + '</button>'; }).join('') + '</div>'
+        + '<label class="cp-lab">Heure<input type="time" id="rapTime" class="ec-dialog-input" value="' + saved.t + '" step="300"></label>'
+        + '<p class="cp-note">Pour changer plus tard : supprime l\u2019événement « Ma séance Ethik\u2019Coach » dans ton agenda, puis recommence ici.</p>'
+        + '<div class="cal-acts"><button type="button" class="ct-btn" id="rapIcs">Ajouter à mon agenda</button>'
+        + '<button type="button" class="ct-btn ghost" id="rapGoogle">Ajouter à Google Agenda</button></div>'
+        + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel">Fermer</button></div></div>';
+      document.body.appendChild(wrap);
+      var box = wrap.querySelector('#rapDays');
+      box.addEventListener('click', function(e){ var c = e.target.closest('.chip'); if(c) c.classList.toggle('active'); });
+      function close(){ wrap.remove(); }
+      wrap.querySelector('.ec-dialog-cancel').addEventListener('click', close);
+      wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+      function pick(){
+        var ds = [].map.call(box.querySelectorAll('.chip.active'), function(c){ return c.getAttribute('data-v'); });
+        if(!ds.length){ showToast('Choisis au moins un jour.', false); return null; }
+        var t = wrap.querySelector('#rapTime').value || '18:00';
+        try{ localStorage.setItem('ec_rappels', JSON.stringify({d:ds, t:t})); }catch(e){}
+        return rappelIcs(JRS.filter(function(j){ return ds.indexOf(j[0]) > -1; }), t);
+      }
+      wrap.querySelector('#rapIcs').addEventListener('click', function(){
+        var r = pick(); if(!r) return;
+        close(); openIcs(r.ics); showToast('Valide l\u2019ajout dans ton agenda ✓', false);
+      });
+      wrap.querySelector('#rapGoogle').addEventListener('click', function(){
+        var r = pick(); if(!r) return;
+        var tz = ''; try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }catch(e){}
+        var rr = /RRULE:[^\r\n]+/.exec(r.ics)[0];
+        close(); window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(r.title) + '&dates=' + stamp(r.start) + '/' + stamp(r.end)
+          + (tz ? '&ctz=' + encodeURIComponent(tz) : '') + '&details=' + encodeURIComponent(r.desc) + '&recur=' + encodeURIComponent(rr), '_blank', 'noopener');
+      });
+    }
+    window.ecRappels = openRappels;
     function addBtn(box, kind){
       var acts = box.querySelector('.session-actions');
       if(!acts || acts.querySelector('.cal-btn')) return;
@@ -14438,6 +14531,7 @@
       + '<div class="set-box">'
       +   '<button type="button" class="set-row set-link" data-set="install">Installer sur l’écran d’accueil<span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="data">Mes données et sauvegarde<span aria-hidden="true">›</span></button>'
+      +   '<button type="button" class="set-row set-link" data-set="rappels">Rappels de séance<small style="display:block;font-weight:500;font-size:0.78rem;opacity:.75">Une alerte dans ton agenda les jours choisis</small><span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="help">Aide et mode d’emploi<span aria-hidden="true">›</span></button>'
       + '</div><p class="set-ver">' + ((document.getElementById('appVersion') || {}).textContent || '') + '</p></div>';
     document.body.appendChild(sh);
@@ -14464,6 +14558,7 @@
       if(k === 'voice'){ closeSet(); setTimeout(function(){ if(window.ecOpenVoice) window.ecOpenVoice(); }, 220); }
       else if(k === 'install'){ closeSet(); var ib = document.getElementById('installBtn'); if(ib) setTimeout(function(){ ib.click(); }, 220); }
       else if(k === 'data'){ closeSet(); if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('mine'); setTimeout(function(){ var x = document.getElementById('svExport'); if(x) x.scrollIntoView({behavior:'smooth', block:'center'}); }, 250); }
+      else if(k === 'rappels'){ closeSet(); setTimeout(function(){ if(window.ecRappels) window.ecRappels(); }, 220); }
       else if(k === 'help'){ closeSet(); var hb = document.querySelector('.header-right .help-btn-head:not(.voice-head):not(.set-btn)'); if(hb) setTimeout(function(){ hb.click(); }, 220); }
     });
     sh.addEventListener('change', function(e){
