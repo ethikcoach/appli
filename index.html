@@ -1994,6 +1994,7 @@
   .ct-row .st.soon{background:#FFF0D6; color:#8A5A00 !important;}
   .ct-row .st.off{background:#FBE3DA; color:#A0412A !important;}
   .ct-row-acts{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.lib-item{content-visibility:auto; contain-intrinsic-size:auto 230px;}
 .ab-meta{display:block; margin-top:5px; font-size:0.76rem; color:var(--stone); word-break:break-all;}
 .ab-key{display:inline-block; margin-top:4px; font-family:ui-monospace, Menlo, monospace; font-size:0.8rem; color:var(--forest); user-select:all; -webkit-user-select:all;}
 .ab-show{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.84rem; color:var(--stone);}
@@ -6620,7 +6621,7 @@
         + (editable ? ' data-block="'+BLOCK_SESSION_KEY[blockKey]+'" data-idx="'+idx+'"' : '')+'>';
       html += '<div class="ex-visual">';
       var photo = getExercisePhoto(ex);
-      if(photo) html += '<img class="ex-photo" src="'+photo+'" alt="">';
+      if(photo) html += '<img class="ex-photo" src="'+photo+'" alt="" decoding="async">';
       html += '<span class="ex-num">'+(idx+1)+'</span></div>';
       html += '<div><div class="ex-name">'+ex.name+'</div><div class="ex-note">'+noteFor(ex, level)+'</div>'
         + (ex.coachNote ? '<div class="coach-note"><b>Conseil du coach :</b> '+escapeHtml(ex.coachNote)+'</div>' : '')
@@ -9169,7 +9170,7 @@
     sess.blocks.forEach(function(b, idx){
       var ph = getExercisePhoto(b.ex);
       var rhythm = b.ex.breath ? b.ex.breath.map(function(p){ return p.seconds; }).join('-') + ' s' : 'Guidé à la voix';
-      html += '<div class="exercise" data-btech="' + idx + '"><div class="ex-visual">' + (ph ? '<img class="ex-photo" src="' + ph + '" alt="">' : '<span class="ex-photo breath-ph" aria-hidden="true"></span>')
+      html += '<div class="exercise" data-btech="' + idx + '"><div class="ex-visual">' + (ph ? '<img class="ex-photo" src="' + ph + '" alt="" decoding="async">' : '<span class="ex-photo breath-ph" aria-hidden="true"></span>')
         + '<span class="ex-num">' + (idx + 1) + '</span></div>'
         + '<div><div class="ex-name">' + escapeHtml(b.ex.name) + '</div><div class="ex-note">' + escapeHtml(b.ex.intro) + '</div></div>'
         + '<div class="ex-dose">' + fmtDose(b.secs) + '<span class="ex-rhythm">' + escapeHtml(rhythm) + '</span></div></div>';
@@ -9542,7 +9543,9 @@
       }
       if(!animate || reduce) return;
       var items = results.querySelectorAll('.session-head, .block-title, .exercise, .rest-note');
-      items.forEach(function(el, i){ if(i > 24) return; el.style.setProperty('--i', i); el.classList.remove('ec-anim'); void el.offsetWidth; el.classList.add('ec-anim'); });
+      var anim = [].slice.call(items, 0, 25);
+      anim.forEach(function(el, i){ el.style.setProperty('--i', i); el.classList.remove('ec-anim'); });
+      requestAnimationFrame(function(){ anim.forEach(function(el){ el.classList.add('ec-anim'); }); });
     }
     ['results', 'breathResults'].forEach(function(id){
       var r = document.getElementById(id); if(!r) return;
@@ -9702,8 +9705,12 @@
         var d = document.getElementById('exModalDose'); if(d) d.textContent = 'Exercice n°' + ex._no + (ex.block !== 'principal' ? ' · ' + LIB_BLOCKS[ex.block] : '');
       });
     }
+    var libKey = '';
     function renderLib(){
       buildLibTools();
+      var key = [libState.zone, libState.equip, libState.q, (window.ecPhotosState && window.ecPhotosState()) || ''].join('|');
+      if(key === libKey && $('#libGrid').children.length) return;
+      libKey = key;
       var list = LIB.filter(function(x){
         var z = libState.zone;
         if(z !== 'all'){
@@ -9716,16 +9723,25 @@
       });
       $('#libCount').textContent = list.length + ' exercice' + (list.length > 1 ? 's' : '');
       if(!list.length){ $('#libGrid').innerHTML = '<p class="lib-empty">Aucun exercice ne correspond. Essaie un autre filtre.</p>'; return; }
+      // Photos posées seulement à l'approche de l'écran : la grille de ~500 exercices s'affiche tout de suite
+      var phs = [];
       $('#libGrid').innerHTML = list.map(function(x){
-        var ph = getExercisePhoto(x);
+        var ph = getExercisePhoto(x); if(ph) phs.push(ph);
         var tags = equipsOf(x).map(function(q){ return EQUIP_LABEL[q] || q; }).join(' ou ');
         var place = x.block === 'principal' ? (ZONE_LABEL[x.zone] || '') : LIB_BLOCKS[x.block];
         return '<button type="button" class="lib-item" data-lib="' + esc(x.id) + '"><div class="lib-ph">'
-          + (ph ? '<img src="' + ph + '" alt="" loading="lazy" decoding="async">' : '<span class="lib-none">🏋️</span>')
+          + (ph ? '<img data-ph="' + (phs.length - 1) + '" alt="" decoding="async">' : '<span class="lib-none">🏋️</span>')
           + '<span class="lib-no">n°' + x._no + '</span></div><div class="lib-txt"><div class="lib-name">' + esc(x.name) + '</div>'
           + '<div class="lib-tags">' + esc(place + (tags ? ' · ' + tags : '')) + '</div></div></button>';
       }).join('');
+      var imgs = $('#libGrid').querySelectorAll('img[data-ph]');
+      function put(im){ var i = +im.getAttribute('data-ph'); im.removeAttribute('data-ph'); im.src = phs[i]; }
+      if(!('IntersectionObserver' in window)){ imgs.forEach(put); return; }
+      if(libIO) libIO.disconnect();
+      libIO = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ libIO.unobserve(e.target); put(e.target); } }); }, {rootMargin:'600px 0px'});
+      imgs.forEach(function(im){ libIO.observe(im); });
     }
+    var libIO = null;
 
     // ===== Mon suivi =====
     var calRef = new Date(); calRef.setDate(1);
@@ -11484,7 +11500,7 @@
     // Transition douce entre les pages
     window.ecViewIn = function(el){
       if(!el || reduce) return;
-      el.classList.remove('view-in'); void el.offsetWidth; el.classList.add('view-in');
+      el.classList.remove('view-in'); requestAnimationFrame(function(){ el.classList.add('view-in'); });
     };
 
     // Chrono : glisser vers la gauche = passer (toucher l'écran met déjà en pause)
@@ -16386,7 +16402,7 @@
       var expanded = false;
       function update(){
         var has = !results.querySelector('.empty-state') && results.children.length > 0;
-        if(has && !expanded){ summary(view); view.classList.add('collapsed'); }
+        if(has && !expanded){ view.classList.add('collapsed'); requestAnimationFrame(function(){ setTimeout(function(){ summary(view); }, 0); }); }
         if(!has) view.classList.remove('collapsed');
       }
       new MutationObserver(update).observe(results, {childList:true});
@@ -16996,6 +17012,27 @@
     if(typeof _sv === 'function') window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'today') setTimeout(paint, 50); return r; };
     window.addEventListener('focus', function(){ setTimeout(paint, 300); });
     window.ecAventPaint = paint;
+  })();
+</script>
+<script>
+  // ---------- Nouvelle version disponible (prévenue par sw.js) ----------
+  (function(){
+    if(!('serviceWorker' in navigator)) return;
+    var shown = false;
+    function busy(){ var t = document.getElementById('timerBackdrop'); return t && t.classList.contains('open'); }
+    function show(){
+      if(shown) return;
+      if(busy()){ setTimeout(show, 15000); return; }   // jamais pendant une séance
+      shown = true;
+      var b = document.createElement('div'); b.className = 'ec-maj'; b.setAttribute('role', 'status');
+      b.innerHTML = '<span>✨ Nouvelle version de l’appli</span><button type="button" data-m="go">Mettre à jour</button><button type="button" data-m="x" aria-label="Plus tard">✕</button>';
+      var css = document.createElement('style');
+      css.textContent = '.ec-maj{position:fixed; left:12px; right:12px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:1300; display:flex; align-items:center; gap:8px; max-width:480px; margin:0 auto; padding:10px 10px 10px 16px; border-radius:16px; background:#1F4030; color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.25); font-size:0.9rem; font-weight:600;}'
+        + '.ec-maj span{flex:1;} .ec-maj button{border:none; border-radius:999px; padding:9px 14px; font:inherit; font-weight:800; background:#BEE6C8; color:#0F2A1C; cursor:pointer;} .ec-maj [data-m=x]{background:transparent; color:#fff; padding:9px 8px;}';
+      document.head.appendChild(css); document.body.appendChild(b);
+      b.addEventListener('click', function(e){ var x = e.target.closest('[data-m]'); if(!x) return; if(x.getAttribute('data-m') === 'go') location.reload(); else b.remove(); });
+    }
+    navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && e.data.type === 'ec-maj') show(); });
   })();
 </script>
 </body>

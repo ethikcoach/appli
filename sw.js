@@ -1,6 +1,6 @@
 // Ethik'Coach — fonctionnement hors connexion.
-// La page est chargée en ligne quand le réseau répond vite (mises à jour immédiates) ;
-// sans réseau, ou si le réseau traîne plus de 4 secondes, la dernière version enregistrée prend le relais.
+// La page s'ouvre tout de suite avec la dernière version enregistrée (même sans réseau),
+// et la nouvelle version éventuelle est téléchargée en arrière-plan.
 // Les visuels des exercices (photos.js) sont gardés en mémoire, une version à la fois.
 var CACHE = 'ethikcoach-v2';
 
@@ -24,22 +24,32 @@ self.addEventListener('fetch', function(e){
   if(req.method !== 'GET') return;
   var url = new URL(req.url);
 
-  // La page de l'appli : réseau d'abord, copie de secours ensuite
-  // Réseau lent (salle de sport, zone blanche) : au-delà de 4 secondes, la copie enregistrée s'affiche
-  // et la nouvelle version, si elle arrive, est gardée pour la prochaine ouverture.
+  // La page de l'appli : ouverture instantanée avec la version enregistrée, puis mise à jour en arrière-plan.
+  // Si une nouvelle version est arrivée, l'appli propose « Mettre à jour » (ou elle sera là à la prochaine ouverture).
+  // Première visite ou rien d'enregistré : réseau.
   if(req.mode === 'navigate'){
-    var net = fetch(req).then(function(res){
-      if(res && res.ok){ var copy = res.clone(); caches.open(CACHE).then(function(c){ c.put('./', copy); }); }
-      return res;
-    });
-    var cached = function(){ return caches.match('./').then(function(r){ return r || caches.match(req, {ignoreSearch:true}); }); };
-    e.respondWith(new Promise(function(resolve){
-      var done = false;
-      var t = setTimeout(function(){ cached().then(function(r){ if(r && !done){ done = true; resolve(r); } }); }, 4000);
-      net.then(function(res){ if(!done){ done = true; clearTimeout(t); resolve(res); } })
-         .catch(function(){ clearTimeout(t); cached().then(function(r){ if(!done){ done = true; resolve(r || Response.error()); } }); });
+    e.respondWith(caches.open(CACHE).then(function(c){
+      return c.match('./').then(function(hit){
+        function check(){
+          return fetch(req, {cache:'no-cache'}).then(function(res){
+            if(res && res.ok){
+              var was = hit && (hit.headers.get('etag') || hit.headers.get('last-modified') || hit.headers.get('content-length'));
+              var now = res.headers.get('etag') || res.headers.get('last-modified') || res.headers.get('content-length');
+              if(hit && was && now && was === now) return res;   // même version : rien à enregistrer
+              var copy = res.clone();
+              c.put('./', copy).then(function(){
+                if(hit) self.clients.matchAll({type:'window'}).then(function(cl){ cl.forEach(function(w){ w.postMessage({type:'ec-maj'}); }); });
+              });
+            }
+            return res;
+          });
+        }
+        // Version enregistrée : affichée tout de suite ; la vérification attend que l'appli soit ouverte
+        if(hit){ e.waitUntil(new Promise(function(r){ setTimeout(r, 2500); }).then(check).catch(function(){})); return hit; }
+        var net = check();
+        return net.catch(function(){ return caches.match(req, {ignoreSearch:true}).then(function(r){ return r || Response.error(); }); });
+      });
     }));
-    e.waitUntil(net.catch(function(){}));
     return;
   }
 
