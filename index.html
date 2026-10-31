@@ -17035,5 +17035,90 @@
     navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && e.data.type === 'ec-maj') show(); });
   })();
 </script>
+<script>
+  // ---------- Chrono XXL + commandes depuis les écouteurs et l'écran verrouillé ----------
+  (function(){
+    var bd = document.getElementById('timerBackdrop'); if(!bd) return;
+    function lg(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+    function ls(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+    var css = document.createElement('style');
+    css.textContent = '#timerBackdrop.tm-xxl #timerIconWrap, #timerBackdrop.tm-xxl #timerTipsWrap, #timerBackdrop.tm-xxl #timerCoachNote, #timerBackdrop.tm-xxl #timerExSublabel, #timerBackdrop.tm-xxl .timer-tip, #timerBackdrop.tm-xxl #timerSwap{display:none !important;}'
+      + '#timerBackdrop.tm-xxl .tc-ring{--ring:min(86vw, 50vh, 50dvh, 560px);}'
+      + '#timerBackdrop.tm-xxl .timer-exname{font-size:clamp(1.5rem, 6.5vw, 2.8rem); line-height:1.15;}'
+      + '#timerBackdrop.tm-xxl .timer-kind{font-size:clamp(1rem, 4vw, 1.5rem);}'
+      + '#timerBackdrop.tm-xxl .timer-next-name{font-size:1.1rem;}'
+      + '@media (orientation:landscape) and (max-height:600px){ #timerBackdrop.tm-xxl:not(.feedback) .timer-center{display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:28px; align-items:center; align-content:center;}'
+      +   ' #timerBackdrop.tm-xxl:not(.feedback) .timer-exname{grid-column:1; grid-row:1; align-self:end;} #timerBackdrop.tm-xxl:not(.feedback) .timer-kind{grid-column:1; grid-row:2;}'
+      +   ' #timerBackdrop.tm-xxl:not(.feedback) .tc-ring{grid-column:2; grid-row:1 / span 3; --ring:min(58vh, 58dvh, 42vw, 520px);} #timerBackdrop.tm-xxl:not(.feedback) .timer-exname{font-size:clamp(1.2rem, 7vh, 2.2rem);} #timerBackdrop.tm-xxl:not(.feedback) .timer-kind{font-size:clamp(0.9rem, 4vh, 1.2rem);} #timerBackdrop.tm-xxl:not(.feedback) .timer-controls{grid-column:1; grid-row:3; align-self:start;}'
+      +   ' #timerBackdrop.tm-xxl #timerNextCard{display:none !important;} #timerBackdrop.tm-xxl .timer-progressbar{display:none;} }'
+      + '.timer-remaining-session{display:flex; align-items:center; gap:8px;} .timer-xxl{margin-left:auto; flex:none; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.08); color:#fff; border-radius:999px; padding:4px 11px; font:800 0.78rem/1.2 inherit; letter-spacing:.04em; cursor:pointer;}'
+      + '.timer-xxl[aria-pressed="true"]{background:#E8C77A; border-color:#E8C77A; color:#1C2620;}';
+    document.head.appendChild(css);
+    // Bouton XXL dans la barre du chrono
+    var row = bd.querySelector('.timer-remaining-session');
+    var xb = document.createElement('button'); xb.type = 'button'; xb.className = 'timer-xxl'; xb.id = 'timerXxl'; xb.textContent = 'XXL';
+    function setX(on){ bd.classList.toggle('tm-xxl', on); xb.setAttribute('aria-pressed', on ? 'true' : 'false'); xb.setAttribute('aria-label', on ? 'Chrono géant activé, toucher pour revenir à l’affichage normal' : 'Chrono géant, lisible de loin'); }
+    setX(lg('ec_timer_xxl') === '1');
+    xb.addEventListener('click', function(e){ e.stopPropagation(); var on = !bd.classList.contains('tm-xxl'); setX(on); ls('ec_timer_xxl', on ? '1' : '0'); });
+    if(row) row.appendChild(xb);
+
+    // ----- Commandes écouteurs / écran verrouillé (Media Session), sur option -----
+    if(!('mediaSession' in navigator)) return;
+    var on = function(){ return lg('ec_media_ctl') === '1'; };
+    var au = null;
+    function silence(){
+      // 10 s de silence (WAV 8 bits, 4 kHz) fabriqués sur place
+      var sr = 4000, n = sr * 10, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+      function w(o, s){ for(var i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); }
+      w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, sr, true); v.setUint32(28, sr, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+      for(var i = 0; i < n; i++) v.setUint8(44 + i, 128);
+      return URL.createObjectURL(new Blob([buf], {type:'audio/wav'}));
+    }
+    function audio(){ if(!au){ au = new Audio(silence()); au.loop = true; au.setAttribute('playsinline', ''); } return au; }
+    var logo = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
+    function meta(){
+      try{
+        var nm = (document.getElementById('timerExName') || {}).textContent || 'Séance', kd = (document.getElementById('timerKind') || {}).textContent || '';
+        navigator.mediaSession.metadata = new MediaMetadata({title:nm, artist:'Ethik’Coach' + (kd ? ' · ' + kd : ''), album:(document.getElementById('timerBlockLabel') || {}).textContent || '', artwork:logo ? [{src:logo, sizes:'180x180', type:'image/png'}] : []});
+        navigator.mediaSession.playbackState = bd.classList.contains('paused') ? 'paused' : 'playing';
+      }catch(e){}
+    }
+    function click(id){ var b = document.getElementById(id); if(b) b.click(); }
+    function handlers(set){
+      var H = {play:function(){ if(bd.classList.contains('paused')) click('timerPause'); meta(); },
+               pause:function(){ if(!bd.classList.contains('paused')) click('timerPause'); meta(); },
+               nexttrack:function(){ click('timerSkip'); setTimeout(meta, 150); }};
+      Object.keys(H).forEach(function(k){ try{ navigator.mediaSession.setActionHandler(k, set ? H[k] : null); }catch(e){} });
+    }
+    var armed = false;
+    // Démarrer une séance (geste de l'utilisateur) : lecture du silence, indispensable pour recevoir les commandes
+    document.addEventListener('click', function(e){
+      if(!on() || bd.classList.contains('open')) return;
+      var b = e.target.closest && e.target.closest('button, a'); if(!b) return;
+      if(!(b.id === 'startBtn' || b.matches('.btn-start, .tc-go, .tp-go, [data-t="go"]') || /D[ée]marrer|Reprendre/i.test(b.textContent || ''))) return;
+      try{ var p = audio().play(); if(p && p.catch) p.catch(function(){}); armed = true; }catch(err){}
+      setTimeout(function(){ if(!bd.classList.contains('open') && au){ au.pause(); armed = false; } }, 2500);
+    }, true);
+    function sync(){
+      var open = bd.classList.contains('open') && !bd.classList.contains('feedback');
+      if(open && on()){ if(au && au.paused && armed){ var p = au.play(); if(p && p.catch) p.catch(function(){}); } handlers(true); meta(); }
+      else { if(au) au.pause(); armed = false; handlers(false); try{ navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; }catch(e){} }
+    }
+    new MutationObserver(sync).observe(bd, {attributes:true, attributeFilter:['class']});
+    var nm = document.getElementById('timerExName');
+    if(nm) new MutationObserver(function(){ if(bd.classList.contains('open') && !bd.classList.contains('feedback') && on()) meta(); }).observe(nm, {childList:true, characterData:true, subtree:true});
+    // Réglages › Son pendant la séance : l'option
+    function addOpt(){
+      var box = document.querySelector('.set-sheet .rx-cb2'); box = box && box.closest('.set-box'); if(!box || box.querySelector('.mc-cb')) return;
+      var l = document.createElement('label'); l.className = 'set-row';
+      l.innerHTML = '<span class="set-l">Commandes écouteurs et écran verrouillé<small>Pause et exercice suivant depuis tes écouteurs (AirPods…) ou l’écran verrouillé. Attention : met en pause la musique d’une autre appli.</small></span><input type="checkbox" class="mc-cb">';
+      box.appendChild(l);
+      var cb = l.querySelector('.mc-cb'); cb.checked = on();
+      cb.addEventListener('change', function(){ ls('ec_media_ctl', cb.checked ? '1' : '0'); if(!cb.checked) sync(); });
+    }
+    setTimeout(addOpt, 900); document.addEventListener('click', function(){ setTimeout(addOpt, 60); });
+  })();
+</script>
 </body>
 </html>
