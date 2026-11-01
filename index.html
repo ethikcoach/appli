@@ -15642,7 +15642,7 @@
       var L = ['L','M','M','J','V','S','D'];
       curve.innerHTML = '<div class="cv-h"><span><b>Ta semaine</b> · ' + totalW + ' min</span><span class="cv-tr ' + (tr === null ? '' : (tr >= 0 ? 'up' : 'down')) + '">' + trTxt + '</span></div>'
         + '<svg viewBox="-6 0 ' + (W + 12) + ' ' + Hh + '" aria-hidden="true"><defs><linearGradient id="cvA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E9E5E" stop-opacity=".28"/><stop offset="1" stop-color="#2E9E5E" stop-opacity="0"/></linearGradient><linearGradient id="cvL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2E9E5E"/><stop offset=".5" stop-color="#1E9A96"/><stop offset="1" stop-color="#7A68D8"/></linearGradient></defs>'
-        + '<path d="' + path + ' L' + W + ',' + Hh + ' L0,' + Hh + ' Z" fill="url(#cvA)"/><path class="cv-line" d="' + path + '" fill="none" stroke="url(#cvL)" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' + dots + '</svg>'
+        + '<path d="' + path + ' L' + W + ',' + Hh + ' L0,' + Hh + ' Z" fill="url(#cvA)"/><path class="cv-line" style="stroke-dasharray:' + Math.ceil(W * 2 + 200) + ';stroke-dashoffset:' + Math.ceil(W * 2 + 200) + '" d="' + path + '" fill="none" stroke="url(#cvL)" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' + dots + '</svg>'
         + '<div class="cv-days">' + L.map(function(l, i){ return '<span class="' + (i === todayIdx ? 'now' : '') + '">' + l + '</span>'; }).join('') + '</div>';
     }
     // Carrousel : une photo par carte
