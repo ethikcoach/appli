@@ -5868,12 +5868,13 @@
   var ecDuckT = null;
   function ecDuck(ms){
     var AS = navigator.audioSession; if(!AS) return;
+    if(window.__ecMediaOn){ try{ if(AS.type !== 'playback') AS.type = 'playback'; }catch(e){} return; }
     if(window.ecRecVoice && window.ecRecVoice()){ try{ if(AS.type !== 'ambient') AS.type = 'ambient'; }catch(e){} return; }
     try{ if(AS.type !== 'transient') AS.type = 'transient'; }catch(e){}
     clearTimeout(ecDuckT); ecDuckT = setTimeout(function(){ try{ AS.type = 'ambient'; }catch(e){} }, ms || 1500);
   }
   // Toujours : l'appli se mélange à la musique des autres applis, et la baisse seulement le temps d'une annonce ou d'un bip
-  function ecMusicSession(){ var AS = navigator.audioSession; if(!AS) return; try{ if(AS.type !== 'transient') AS.type = 'ambient'; }catch(e){} }
+  function ecMusicSession(){ var AS = navigator.audioSession; if(!AS) return; if(window.__ecMediaOn){ try{ AS.type = 'playback'; }catch(e){} return; } try{ if(AS.type !== 'transient') AS.type = 'ambient'; }catch(e){} }
   ecMusicSession();
   function playBeep(){
     if(timerState.silent) return;
@@ -14647,7 +14648,7 @@
       + '<div class="set-sec">Son pendant la séance</div>'
       + '<div class="set-box">'
       +   '<div class="set-row"><span class="set-l">Voix du coach<small class="set-vname"></small></span><button type="button" class="set-btn2" data-set="voice">Changer</button></div>'
-      +   '<label class="set-row"><span class="set-l">Je m’entraîne en musique<small>Bips plus forts et voix au maximum. Le compte à rebours (3, 2, 1, mi-parcours…) passe en bips ; les exercices, durées, tours et récupérations restent annoncés.</small></span><input type="checkbox" class="music-cb"></label>'
+      +   '<label class="set-row"><span class="set-l">Je m’entraîne en musique<small>Bips plus forts et voix au maximum. Le compte à rebours (3, 2, 1, mi-parcours…) passe en bips ; les exercices, durées, tours et récupérations restent annoncés. Ta musique n’est pas coupée : les commandes des écouteurs restent alors à ta musique.</small></span><input type="checkbox" class="music-cb"></label>'
       +   '<label class="set-row"><span class="set-l">Explications audio en Récup<small>La voix décrit chaque posture</small></span><input type="checkbox" class="rx-cb2"></label>'
       + '</div>'
       + '<div class="set-sec">Appli</div>'
@@ -17099,9 +17100,10 @@
     xb.addEventListener('click', function(e){ e.stopPropagation(); var on = !bd.classList.contains('tm-xxl'); setX(on); ls('ec_timer_xxl', on ? '1' : '0'); });
     if(row) row.appendChild(xb);
 
-    // ----- Commandes écouteurs / écran verrouillé (Media Session), sur option -----
+    // ----- Commandes écouteurs / écran verrouillé (Media Session) : automatiques, sauf en mode « Je m'entraîne en musique » (pour ne pas couper la musique) -----
     if(!('mediaSession' in navigator)) return;
-    var on = function(){ return lg('ec_media_ctl') === '1'; };
+    var on = function(){ return lg('ec_music_mode') !== '1'; };
+    function sess(v){ window.__ecMediaOn = v; var AS = navigator.audioSession; if(!AS) return; try{ AS.type = v ? 'playback' : 'ambient'; }catch(e){} }
     var au = null;
     function silence(){
       // 10 s de silence (WAV 8 bits, 4 kHz) fabriqués sur place
@@ -17123,8 +17125,9 @@
     }
     function click(id){ var b = document.getElementById(id); if(b) b.click(); }
     function handlers(set){
-      var H = {play:function(){ if(bd.classList.contains('paused')) click('timerPause'); meta(); },
+      var H = {play:function(){ if(au){ var p = au.play(); if(p && p.catch) p.catch(function(){}); } if(bd.classList.contains('paused')) click('timerPause'); meta(); },
                pause:function(){ if(!bd.classList.contains('paused')) click('timerPause'); meta(); },
+               stop:function(){ if(!bd.classList.contains('paused')) click('timerPause'); meta(); },
                nexttrack:function(){ click('timerSkip'); setTimeout(meta, 150); }};
       Object.keys(H).forEach(function(k){ try{ navigator.mediaSession.setActionHandler(k, set ? H[k] : null); }catch(e){} });
     }
@@ -17134,13 +17137,13 @@
       if(!on() || bd.classList.contains('open')) return;
       var b = e.target.closest && e.target.closest('button, a'); if(!b) return;
       if(!(b.id === 'startBtn' || b.matches('.btn-start, .tc-go, .tp-go, [data-t="go"]') || /D[ée]marrer|Reprendre/i.test(b.textContent || ''))) return;
-      try{ var p = audio().play(); if(p && p.catch) p.catch(function(){}); armed = true; }catch(err){}
-      setTimeout(function(){ if(!bd.classList.contains('open') && au){ au.pause(); armed = false; } }, 2500);
+      try{ sess(true); var p = audio().play(); if(p && p.catch) p.catch(function(){}); armed = true; handlers(true); }catch(err){}
+      setTimeout(function(){ if(!bd.classList.contains('open') && au){ au.pause(); armed = false; sess(false); } }, 4000);
     }, true);
     function sync(){
       var open = bd.classList.contains('open') && !bd.classList.contains('feedback');
-      if(open && on()){ if(au && au.paused && armed){ var p = au.play(); if(p && p.catch) p.catch(function(){}); } handlers(true); meta(); }
-      else { if(au) au.pause(); armed = false; handlers(false); try{ navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; }catch(e){} }
+      if(open && on() && armed){ if(au && au.paused){ var p = au.play(); if(p && p.catch) p.catch(function(){}); } handlers(true); meta(); }
+      else if(!open){ if(au) au.pause(); if(armed || window.__ecMediaOn) sess(false); armed = false; handlers(false); try{ navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; }catch(e){} }
     }
     new MutationObserver(sync).observe(bd, {attributes:true, attributeFilter:['class']});
     var nm = document.getElementById('timerExName');
@@ -17154,7 +17157,6 @@
       var cb = l.querySelector('.mc-cb'); cb.checked = on();
       cb.addEventListener('change', function(){ ls('ec_media_ctl', cb.checked ? '1' : '0'); if(!cb.checked) sync(); });
     }
-    setTimeout(addOpt, 900); document.addEventListener('click', function(){ setTimeout(addOpt, 60); });
   })();
 </script>
 </body>
