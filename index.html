@@ -1448,7 +1448,7 @@
     {h:'1y5gvgy39du', n:'', label:'Coach (Benoît)'},
     {h:'1pqbtcpme2n', n:'Test', label:'Accès test', exp:'2026-12-31'}
   ];
-  var EC_ACCESS_PAGE = 'https://www.ethikcoach.fr/appli-renfo-relax';
+  var EC_ACCESS_PAGE = 'https://www.ethikcoach.fr/appli-renfo-relax.html';
   function ecHash(str){ str='ethikcoach|'+String(str).trim().toLowerCase(); var h1=0xdeadbeef, h2=0x41c6ce57;
     for(var i=0;i<str.length;i++){ var ch=str.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
     h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
@@ -16659,7 +16659,7 @@
       var addCta = function(){
         document.querySelectorAll('.guest-note').forEach(function(n){
           if(n.nextElementSibling && n.nextElementSibling.classList.contains('guest-cta')) return;
-          var a = document.createElement('a'); a.className = 'guest-cta'; a.href = 'https://www.ethikcoach.fr/abonnement'; a.target = '_blank'; a.rel = 'noopener';
+          var a = document.createElement('a'); a.className = 'guest-cta'; a.href = 'https://www.ethikcoach.fr/abonnement.html'; a.target = '_blank'; a.rel = 'noopener';
           a.innerHTML = '<b>Envie de plus de séances comme celle-ci ?</b><small>L’appli complète : renfo sur mesure, yoga, étirements, respiration, guidés à la voix. ' + (lancement ? 'Dès 6,90 € par mois, ' : '') + '7 jours gratuits, sans engagement.</small><span>Essayer gratuitement</span>';
           n.after(a);
         });
