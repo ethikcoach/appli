@@ -16680,6 +16680,18 @@
       + '<p class="ecl-subnote">' + (lancement ? 'Offre de lancement jusqu’au 31 décembre : ton prix reste bloqué à vie. ' : '') + 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.</p>'
       + '<a class="ecl-gift" href="' + EC_SUB_API + '/cadeau">🎁 Offrir 3 mois à un proche</a>';
     if(box && site) box.insertBefore(sub, site);
+    // Offre de lancement limitée en nombre : prix et places restantes donnés par le serveur
+    if(lancement) try{ fetch(EC_SUB_API + '/tarifs', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(t){
+      if(!t || !t.offre) return;
+      var bs = sub.querySelectorAll('.ecl-plan b'), sm = sub.querySelectorAll('.ecl-plan small'), note = sub.querySelector('.ecl-subnote');
+      if(t.offre === 'normal'){
+        if(bs[0]) bs[0].textContent = t.prixMois + ' / mois'; if(bs[1]) bs[1].textContent = t.prixAn + ' / an';
+        if(sm[1]) sm[1].textContent = '7 jours gratuits, 3 mois offerts';
+        if(note) note.textContent = 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.';
+      } else if(t.restantes != null && note){
+        note.textContent = 'Offre de lancement : plus que ' + t.restantes + ' place' + (t.restantes > 1 ? 's' : '') + ', prix bloqué à vie. Rien n’est prélevé pendant l’essai, résiliable en 2 clics.';
+      }
+    }).catch(function(){}); }catch(e){}
     var mailBox = document.createElement('details'); mailBox.className = 'ecl-mail'; mailBox.hidden = !OPEN;
     mailBox.innerHTML = '<summary>Déjà abonné ? Recevoir mon lien par e-mail</summary><div class="ecl-row"><input id="ecMailIn" type="email" autocomplete="email" placeholder="ton e-mail"><button type="button" id="ecMailBtn">Envoyer</button></div><div class="ecl-ok" id="ecMailOk" aria-live="polite"></div>';
     var code = document.querySelector('#ecLock .ecl-code'); if(box && code) box.insertBefore(mailBox, code);
