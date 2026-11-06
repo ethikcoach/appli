@@ -1592,8 +1592,15 @@
   .ecl-plan small{display:block; font-weight:500; font-size:0.78rem; color:#65685F; margin-top:2px;}
   .ecl-plan b{white-space:nowrap; font-size:1.05rem;}
 .ecl-gift{display:block; margin:10px 0 0; text-align:center; font-weight:700; font-size:0.9rem; color:#1F4030; text-decoration:underline;}
-  .ecl-plan.main{background:#1F4030; color:#fff; border-color:#1F4030;}
-  .ecl-plan.main small{color:rgba(255,255,255,0.8);}
+  .ecl-plan{width:100%; font-family:inherit; text-align:left; cursor:pointer; justify-content:flex-start;}
+  .ecl-plan > span{flex:1;}
+  .ecl-dot{flex:none; width:24px; height:24px; border-radius:50%; border:2px solid #A9B6AC; background:#fff;}
+  .ecl-plan.sel{background:#EAF3EC; border-width:2.5px;}
+  .ecl-plan.sel .ecl-dot{border-color:#1F4030; background:#1F4030 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/15px no-repeat;}
+  .ecl-step{margin:10px 0 2px; font-weight:700; font-size:0.86rem; color:#1F4030; text-align:left;}
+  .ecl-go{display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:58px; padding:8px 16px; border-radius:14px; background:#1F4030; color:#fff; font-weight:800; font-size:1.02rem; text-decoration:none; line-height:1.25; text-align:center;}
+  .ecl-go small{font-weight:500; font-size:0.8rem; opacity:.85;}
+  .ecl-go.off{background:#C9D3CB; color:#fff; font-weight:700; cursor:default;}
   .ecl-subnote{font-size:0.8rem; color:#65685F; margin:2px 0 0; line-height:1.4;}
   .ecl-mail{margin-top:18px; text-align:left;}
   .ecl-mail summary{cursor:pointer; font-size:0.88rem; font-weight:600; color:#1F4030; list-style:none;}
@@ -1603,7 +1610,7 @@
   html.ec-subcheck .ecl-code, html.ec-subcheck .ecl-wa, html.ec-subcheck #ecLockSite, html.ec-subcheck .ecl-mail, html.ec-subcheck .ecl-sub{display:none !important;}
   .ecl-spin{width:34px; height:34px; margin:6px auto 0; border-radius:50%; border:3px solid #D9D9D2; border-top-color:#1F4030; animation:eclspin 0.9s linear infinite;}
   @keyframes eclspin{to{transform:rotate(360deg);}}
-  @media (prefers-color-scheme: dark){ .ecl-plan{background:#18211B; color:#E4EAE1; border-color:#8FC49E;} .ecl-plan small, .ecl-subnote{color:#BAC2B5;} .ecl-plan.main{background:#357D51; border-color:#357D51; color:#fff;} .ecl-mail summary{color:#8FC49E;} }
+  @media (prefers-color-scheme: dark){ .ecl-plan{background:#18211B; color:#E4EAE1; border-color:#8FC49E;} .ecl-plan small, .ecl-subnote{color:#BAC2B5;} .ecl-plan.sel{background:#22352A;} .ecl-plan.sel .ecl-dot{border-color:#8FC49E; background-color:#357D51;} .ecl-step{color:#A7D8B4;} .ecl-go{background:#357D51;} .ecl-go.off{background:#3A453D; color:#9AA59C;} .ecl-mail summary{color:#8FC49E;} }
   .access-line{text-align:center; margin:0; padding:12px 16px 0; font-size:0.84rem; font-weight:600; color:var(--forest);}
   .access-line.soon{color:#A8442E;}
   .access-line + .app-version{padding-top:4px;}
@@ -16675,11 +16682,26 @@
     // Écran d'accueil : formules + lien perdu
     var box = document.querySelector('#ecLock .ecl-box'), site = $('ecLockSite');
     var sub = document.createElement('div'); sub.className = 'ecl-sub'; sub.id = 'ecLockSub'; sub.hidden = !OPEN;
-    sub.innerHTML = '<a class="ecl-plan main" href="' + EC_SUB_API + '/abonnement?plan=mensuel"><span>Mensuel<small>7 jours gratuits, sans engagement</small></span><b>' + PM + ' / mois</b></a>'
-      + '<a class="ecl-plan" href="' + EC_SUB_API + '/abonnement?plan=annuel"><span>Annuel<small>7 jours gratuits, ' + (lancement ? '2' : '3') + ' mois offerts</small></span><b>' + PA + ' / an</b></a>'
+    sub.innerHTML = '<p class="ecl-step">1. Choisis ta formule</p>'
+      + '<button type="button" class="ecl-plan" role="radio" aria-checked="false" data-plan="mensuel"><i class="ecl-dot" aria-hidden="true"></i><span>Mensuel<small>7 jours gratuits, sans engagement</small></span><b>' + PM + ' / mois</b></button>'
+      + '<button type="button" class="ecl-plan" role="radio" aria-checked="false" data-plan="annuel"><i class="ecl-dot" aria-hidden="true"></i><span>Annuel<small>7 jours gratuits, ' + (lancement ? '2' : '3') + ' mois offerts</small></span><b>' + PA + ' / an</b></button>'
+      + '<p class="ecl-step">2. Valide ton choix</p>'
+      + '<a class="ecl-go off" id="ecLockGo" href="#" aria-disabled="true">Choisis une formule ci-dessus</a>'
       + '<p class="ecl-subnote">' + (lancement ? 'Offre de lancement jusqu’au 31 décembre : ton prix reste bloqué à vie. ' : '') + 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.</p>'
       + '<a class="ecl-gift" href="' + EC_SUB_API + '/cadeau">🎁 Offrir 3 mois à un proche</a>';
     if(box && site) box.insertBefore(sub, site);
+    // Sélection de la formule, puis validation
+    function eclChoose(plan){
+      var go = $('ecLockGo'); if(!go) return;
+      sub.querySelectorAll('.ecl-plan').forEach(function(b){ var on = b.getAttribute('data-plan') === plan; b.classList.toggle('sel', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      var pb = sub.querySelector('.ecl-plan[data-plan="' + plan + '"] b');
+      go.href = EC_SUB_API + '/abonnement?plan=' + plan; go.classList.remove('off'); go.removeAttribute('aria-disabled');
+      go.innerHTML = 'Essayer 7 jours gratuits<small>Formule ' + (plan === 'annuel' ? 'annuelle' : 'mensuelle') + ' · ' + (pb ? pb.textContent : '') + '</small>';
+    }
+    sub.addEventListener('click', function(e){
+      var b = e.target.closest('.ecl-plan'); if(b){ eclChoose(b.getAttribute('data-plan')); return; }
+      var g = e.target.closest('#ecLockGo'); if(g && g.classList.contains('off')) e.preventDefault();
+    });
     // Offre de lancement limitée en nombre : prix et places restantes donnés par le serveur
     if(lancement) try{ fetch(EC_SUB_API + '/tarifs', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(t){
       if(!t || !t.offre) return;
@@ -16688,6 +16710,7 @@
         if(bs[0]) bs[0].textContent = t.prixMois + ' / mois'; if(bs[1]) bs[1].textContent = t.prixAn + ' / an';
         if(sm[1]) sm[1].textContent = '7 jours gratuits, 3 mois offerts';
         if(note) note.textContent = 'Rien n’est prélevé pendant l’essai, résiliable en 2 clics.';
+        var sl = sub.querySelector('.ecl-plan.sel'); if(sl) eclChoose(sl.getAttribute('data-plan'));
       } else if(t.restantes != null && note){
         note.textContent = 'Offre de lancement : plus que ' + t.restantes + ' place' + (t.restantes > 1 ? 's' : '') + ', prix bloqué à vie. Rien n’est prélevé pendant l’essai, résiliable en 2 clics.';
       }
