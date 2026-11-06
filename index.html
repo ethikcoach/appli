@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F4030">
 <title>Ethik’Coach_Renfo-Récup-Respi</title>
@@ -7379,6 +7380,7 @@
     return '<div class="prep-list"><b>À préparer</b><span>' + it.map(function(x){ return '<i>' + escapeHtml(x) + '</i>'; }).join('') + '</span></div>';
   }
   function displaySession(session, title, keepScroll){
+    title = String(title == null ? '' : title).replace(/[<>]/g, '');
     if(!keepScroll){ session.removed = []; editMode = false; applySkip(session); }
     lastRenderSession = session;
     lastSession = session;
@@ -7836,6 +7838,16 @@
     while(str.length % 4) str += '=';
     return decodeURIComponent(escape(atob(str)));
   }
+  // Lien reçu (séance, programme, respiration, exercice) : on neutralise tout texte qui pourrait contenir du code
+  function ecLinkClean(v, depth){
+    if(depth > 8) return null;
+    if(typeof v === 'string') return v.replace(/[<>`]/g, '').slice(0, 600);
+    if(typeof v === 'number') return isFinite(v) ? v : 0;
+    if(Array.isArray(v)) return v.slice(0, 400).map(function(x){ return ecLinkClean(x, depth + 1); });
+    if(v && typeof v === 'object'){ var o = {}; Object.keys(v).slice(0, 80).forEach(function(k){ if(k === '__proto__' || k === 'constructor' || k === 'prototype') return; o[k] = ecLinkClean(v[k], depth + 1); }); return o; }
+    return v;
+  }
+  function ecLinkParse(str){ return ecLinkClean(JSON.parse(b64urlDecode(str)), 0); }
   function clearSharedHash(){
     try{ if(/^#[spre]=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search); }catch(e){}
   }
@@ -7943,7 +7955,7 @@
     var m = /^#s=([A-Za-z0-9_-]+)/.exec(location.hash || '');
     if(!m) return false;
     var data;
-    try{ data = JSON.parse(b64urlDecode(m[1])); }catch(e){ showToast("Ce lien de séance est incomplet ou abîmé.", false); return false; }
+    try{ data = ecLinkParse(m[1]); }catch(e){ showToast("Ce lien de séance est incomplet ou abîmé.", false); return false; }
     if(!data || !LEVEL_LABEL[data.l] || !THEME_LABEL[data.th]) { showToast("Ce lien de séance n'est pas reconnu.", false); return false; }
     var mapIds = function(ids){ return (ids || []).map(exById).filter(Boolean); };
     var session = {
@@ -8236,7 +8248,8 @@
       b:P.blocks.map(function(bl){ return bl.map(serializeTpl); })};
   }
   function programFromPayload(d, done){
-    if(!d || !PROG_OBJECTIVES[d.o] || !LEVEL_LABEL[d.l] || !d.b) return null;
+    if(!d || !PROG_OBJECTIVES[d.o] || !LEVEL_LABEL[d.l] || !Array.isArray(d.b)) return null;
+    d.wk = Math.max(1, Math.min(52, Math.round(+d.wk) || 1)); d.spw = Math.max(1, Math.min(7, Math.round(+d.spw) || 1)); d.d = Math.max(5, Math.min(120, Math.round(+d.d) || 30));
     var map = function(ids){ return (ids || []).map(exById).filter(Boolean); };
     var blocks = d.b.map(function(bl){ return bl.map(function(t){
       var tpl = {
@@ -8346,7 +8359,7 @@
     var m = /^#p=([A-Za-z0-9_-]+)/.exec(location.hash || '');
     if(!m) return false;
     var d;
-    try{ d = JSON.parse(b64urlDecode(m[1])); }catch(e){ showToast("Ce lien de programme est incomplet ou abîmé.", false); return false; }
+    try{ d = ecLinkParse(m[1]); }catch(e){ showToast("Ce lien de programme est incomplet ou abîmé.", false); return false; }
     var stored = loadStoredProgram();
     var done = (stored && stored.id === d.id) ? stored.done : {};
     var P = programFromPayload(d, done);
@@ -10966,7 +10979,7 @@
     // Ouverture d'un lien de respiration reçu
     function loadBreathFromHash(){
       var m = /^#r=([A-Za-z0-9_-]+)/.exec(location.hash || ''); if(!m) return false;
-      var d; try{ d = JSON.parse(b64urlDecode(m[1])); }catch(e){ return false; }
+      var d; try{ d = ecLinkParse(m[1]); }catch(e){ return false; }
       if(!d || !BREATH_INTENTIONS[d.i] || !PROFILE_LABEL[d.p] || !POSITION_LABEL[d.o]) return false;
       breathFormState.intention = d.i; breathFormState.profile = d.p; breathFormState.position = d.o;
       if([3,5,10,15,20].indexOf(+d.d) > -1) breathFormState.duration = +d.d;
@@ -11149,7 +11162,7 @@
     // Ouverture d'un lien d'exercice reçu
     function loadExFromHash(){
       var m = /^#e=([A-Za-z0-9_-]+)/.exec(location.hash || ''); if(!m) return false;
-      var d; try{ d = JSON.parse(b64urlDecode(m[1])); }catch(e){ return false; }
+      var d; try{ d = ecLinkParse(m[1]); }catch(e){ return false; }
       var ex = d && exById(d.id); if(!ex) return false;
       if(!document.documentElement.classList.contains('ec-guest') && window.ecShowView) window.ecShowView('lib');
       openExerciseModal(ex, 'intermediaire', 'equilibre', 0);
@@ -16931,6 +16944,7 @@
       clearTimeout(timer); timer = null; first = 0;
       if(g(OK) !== '1') return Promise.resolve();
       if(busy){ again = true; return Promise.resolve(); }
+      first = 0; clearTimeout(timer); timer = null;
       var obj = {v:1, ok:1, at:Date.now(), data:collect()}, sig = JSON.stringify(obj.data);
       if(sig === lastSent && g(DIRTY) !== '1') return Promise.resolve();
       busy = true;
@@ -16943,7 +16957,8 @@
       if(g(OK) !== '1') return;
       var now = Date.now(); if(!first) first = now;
       clearTimeout(timer);
-      timer = setTimeout(flush, now - first > 60000 ? 0 : 15000);
+      // Regroupement : envoi 30 s après le dernier changement, au plus tard 3 min après le premier (limite les écritures côté serveur)
+      timer = setTimeout(flush, now - first > 180000 ? 0 : 30000);
     }
     // Chaque enregistrement de l'appli déclenche une sauvegarde (regroupée).
     // Branché seulement après la récupération : les réglages écrits au démarrage ne passent pas devant la sauvegarde en ligne.
