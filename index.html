@@ -16813,18 +16813,27 @@
     // Séance offerte (lien « séance seule ») : à partir du lancement, proposer l'essai de l'appli complète
     if(OPEN && document.documentElement.classList.contains('ec-guest')){
       var gcss = document.createElement('style');
-      gcss.textContent = '.guest-cta{display:flex; flex-direction:column; gap:4px; margin:10px 0 4px; padding:12px 14px; border-radius:16px; background:#EAF5EE; color:#1F4030; text-decoration:none; text-align:left;} .guest-cta b{font-size:0.98rem;} .guest-cta small{font-size:0.8rem; color:#4A5A50;} .guest-cta span{align-self:flex-start; margin-top:6px; padding:9px 16px; border-radius:999px; background:#1F4030; color:#fff; font-weight:800; font-size:0.9rem;}'
+      gcss.textContent = '.guest-cta.fbg{margin:14px auto 6px; max-width:520px; background:#F3E7C2; color:#2A2410;} .guest-cta.fbg small{color:#5C4E25;} .guest-cta{display:flex; flex-direction:column; gap:4px; margin:10px 0 4px; padding:12px 14px; border-radius:16px; background:#EAF5EE; color:#1F4030; text-decoration:none; text-align:left;} .guest-cta b{font-size:0.98rem;} .guest-cta small{font-size:0.8rem; color:#4A5A50;} .guest-cta span{align-self:flex-start; margin-top:6px; padding:9px 16px; border-radius:999px; background:#1F4030; color:#fff; font-weight:800; font-size:0.9rem;}'
         + '@media (prefers-color-scheme: dark){ .guest-cta{background:#17301F; color:#CDEBD6;} .guest-cta small{color:#A9C2B1;} .guest-cta span{background:#2E9E5E;} }';
       document.head.appendChild(gcss);
       var addCta = function(){
         document.querySelectorAll('.guest-note').forEach(function(n){
           if(n.nextElementSibling && n.nextElementSibling.classList.contains('guest-cta')) return;
           var a = document.createElement('a'); a.className = 'guest-cta'; a.href = 'https://www.ethikcoach.fr/abonnement.html'; a.target = '_blank'; a.rel = 'noopener';
-          a.innerHTML = '<b>Envie de plus de séances comme celle-ci ?</b><small>L’appli complète : renfo sur mesure, yoga, étirements, respiration, guidés à la voix. ' + (lancement ? 'Dès 6,90 € par mois, ' : '') + '7 jours gratuits, sans engagement.</small><span>Essayer gratuitement</span>';
+          a.innerHTML = '<b>Envie de plus de séances comme celle-ci ?</b><small>L’appli complète : renfo sur mesure, yoga, étirements, respiration, guidés à la voix. 7 jours gratuits, sans engagement.</small><span>Essayer gratuitement</span>';
           n.after(a);
         });
       };
       addCta(); new MutationObserver(addCta).observe(document.body, {childList:true, subtree:true});
+      // Fin de séance : le bon moment pour proposer l'appli complète
+      var tbd = $('timerBackdrop');
+      if(tbd) new MutationObserver(function(){
+        if(!(tbd.classList.contains('feedback') && tbd.classList.contains('open'))) return;
+        var sum = $('fbSummary'); if(!sum || document.querySelector('.guest-cta.fbg')) return;
+        var a = document.createElement('a'); a.className = 'guest-cta fbg'; a.href = 'https://www.ethikcoach.fr/abonnement.html'; a.target = '_blank'; a.rel = 'noopener';
+        a.innerHTML = '<b>Tu as aimé cette séance ? 💪</b><small>Avec l’appli Ethik’Coach, des séances comme celle-ci à volonté, adaptées à ton niveau, ton matériel et ton temps : renfo, yoga, étirements, respiration, guidés à la voix. 7 jours gratuits, sans engagement.</small><span>Essayer l’appli gratuitement</span>';
+        sum.after(a);
+      }).observe(tbd, {attributes:true, attributeFilter:['class']});
     }
     // Abonné déjà vérifié : contrôle discret à chaque ouverture (sans bloquer s'il n'y a pas de réseau)
     if(EC_USER && EC_USER.sub){
