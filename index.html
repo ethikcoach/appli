@@ -3065,10 +3065,11 @@
   .q-next:disabled{opacity:0.4; cursor:default;}
   @media screen and (prefers-color-scheme: dark){ .q-op.on{background:#1D3527;} .q-next{background:#357D51;} }
   /* ---------- Sélecteurs en cartes + Créer en 2 temps ---------- */
-  .sw-big{display:grid !important; grid-template-columns:1fr 1fr !important; gap:10px !important; padding:0 !important; background:none !important; border:none !important; box-shadow:none !important;}
+  .sw-big{display:grid !important; grid-template-columns:repeat(2, minmax(0,1fr)) !important; gap:10px !important; padding:0 !important; background:none !important; border:none !important; box-shadow:none !important;}
   .sw-big .sw-card{display:flex !important; align-items:center; gap:10px; min-height:72px !important; padding:12px !important; border-radius:18px !important; text-align:left; background:var(--card) !important; color:var(--ink) !important; box-shadow:inset 0 0 0 1.5px var(--stone-light), 0 2px 8px rgba(0,0,0,0.04) !important; font-family:'Inter',sans-serif !important; cursor:pointer; transition:background-color .2s ease, color .2s ease, box-shadow .2s ease;}
   .sw-card .sw-ico{flex:none; width:40px; height:40px; border-radius:12px; display:grid; place-items:center; color:#fff;}
   .sw-card .sw-txt{display:flex; flex-direction:column; min-width:0;}
+  @media (max-width:370px){ .sw-big .sw-card{flex-direction:column !important; align-items:flex-start !important; gap:8px !important;} .sw-card b{font-size:.92rem;} .sw-card small{font-size:.7rem;} }
   .sw-card b{font-size:0.98rem; line-height:1.15; font-weight:800;}
   .sw-card small{font-size:0.74rem; line-height:1.25; opacity:0.8; margin-top:2px; font-weight:500;}
   .sw-ses .sw-ico{background:#2E7D4F;} .sw-prog .sw-ico{background:#5B4BA6;} .sw-mob .sw-ico{background:#1E7A78;} .sw-breath .sw-ico{background:#2F6DB5;}
@@ -16147,7 +16148,7 @@
       {id:'v3', n:'Denise', d:'Douce et posée', g:'Femme'},
       {id:'v4', n:'Clara', d:'Chaleureuse et enveloppante', g:'Femme'},
       {id:'h1', n:'Henri', d:'Très doux', g:'Homme'},
-      {id:'h2', n:'Henri', d:'Zen, idéal détente', g:'Homme'}
+      {id:'h2', n:'Henri Zen', d:'Plus lent, idéal détente', g:'Homme'}
     ];
     var ANDROID = /Android/i.test(navigator.userAgent);
     function byId(v){ return VOICES.filter(function(x){ return x.id === v; })[0] || null; }
