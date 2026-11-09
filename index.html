@@ -17475,7 +17475,9 @@
       try{ var sub = JSON.parse(localStorage.getItem('ec_sub') || 'null'); if(sub && sub.parrain && sub.parrain.lien) link = sub.parrain.lien; }catch(e){}
       return (o.k === 'mois' ? 'Mon mois de ' + (o.m || o.t) + ' : ' + (o.n || 0) + ' séance' + ((o.n || 0) > 1 ? 's' : '') : o.k === 'defi' ? 'Défi « ' + o.t + ' » réussi' : (o.k === 'seance' ? 'Séance « ' + o.t + ' » bouclée (' + (o.min || 1) + ' min)' : 'Nouveau badge « ' + o.t + ' »')) + ' avec l’appli Ethik’Coach 💪 ' + link;
     }
+    var shBusy = false;
     window.ecShareWin = function(o){
+      if(shBusy) return; shBusy = true; setTimeout(function(){ shBusy = false; }, 4000);
       var fontsReady = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 84px 'Bricolage Grotesque'"), document.fonts.load("600 42px 'Inter'")]).catch(function(){}) : Promise.resolve();
       fontsReady.then(function(){ return draw(o); }).then(function(c){
         c.toBlob(function(blob){
@@ -17483,6 +17485,7 @@
           var url = URL.createObjectURL(blob), file = null;
           try{ file = new File([blob], 'ethikcoach-reussite.png', {type:'image/png'}); }catch(e){}
           var canFile = !!(file && navigator.canShare && navigator.canShare({files:[file]}));
+          shBusy = false; document.querySelectorAll('.sh-wrap').forEach(function(x){ x.remove(); });
           var w = document.createElement('div'); w.className = 'ec-dialog-backdrop sh-wrap';
           w.innerHTML = '<div class="ec-dialog sh-box" role="dialog" aria-modal="true" aria-label="Partager ma réussite">'
             + '<button type="button" class="sh-x" aria-label="Fermer">&times;</button>'
@@ -17526,6 +17529,7 @@
   .fb-share{display:inline-flex; align-items:center; gap:8px; margin:4px auto 14px; padding:9px 18px; border-radius:999px; border:1px solid rgba(232,199,122,.6); background:rgba(232,199,122,.14); color:#F3DFA8; font:700 0.9rem 'Inter',sans-serif; cursor:pointer;}
   .ch-share{display:block; margin:12px 0 0; width:100%; min-height:42px; font-size:0.9rem;}
   .bd.on[data-sh-t]{cursor:pointer;}
+  .sh-wrap{z-index:1600 !important;}
   .sh-box{max-width:420px; padding:18px; position:relative; text-align:center;}
   .sh-x{position:absolute; top:8px; right:8px; width:36px; height:36px; border-radius:50%; border:none; background:var(--sage-light); color:var(--ink); font-size:1.3rem; cursor:pointer;}
   .sh-img{display:block; width:100%; max-height:58vh; object-fit:contain; border-radius:16px; margin:22px 0 14px; box-shadow:0 10px 30px rgba(0,0,0,.25);}
@@ -18005,6 +18009,7 @@
         if(e.target.closest('.rc-x')){ close(); return; }
         if(e.target.closest('.rc-again')){ show(0); return; }
         if(e.target.closest('.rc-go')){
+          var gb = e.target.closest('.rc-go'); if(gb.disabled) return; gb.disabled = true; var gt = gb.textContent; gb.textContent = 'Préparation de l’image…'; setTimeout(function(){ gb.disabled = false; gb.textContent = gt; }, 1800);
           if(window.ecShareWin) window.ecShareWin({k:'mois', t:cap(MN) + ' ' + y, n:r.n, s:hm(r.mins) + ' · ' + pl(r.days, 'jour actif', 'jours actifs'), m:MN});
           return;
         }
