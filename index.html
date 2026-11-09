@@ -12328,6 +12328,10 @@
       ['Pendant la séance', 'Puis-je piloter la séance avec mes écouteurs ou l’écran verrouillé ?', 'Non : sur iPhone, une appli installée depuis Safari ne peut pas recevoir les commandes des écouteurs. Un appui sur tes AirPods commande ta musique. Garde l’écran allumé pendant la séance (l’appli le demande au téléphone) : touche l’écran pour la pause, glisse vers la gauche pour passer.'],
       ['Pendant la séance', 'J’ai une douleur pendant un exercice.', 'Arrête l’exercice. Une gêne légère peut se gérer en réduisant l’amplitude ou en remplaçant l’exercice ; une vraie douleur, non. Signale-la dans le retour de fin de séance pour que ton coach adapte la suite, et consulte un professionnel de santé si elle persiste.'],
       ['Suivi et coach', 'À quoi servent les tests de forme ?', 'Dans <b>Suivi › Mes tests de forme</b>, des tests simples (squats en 1 minute, gainage, assis-debout en 30 secondes pour les seniors…) mesurent tes progrès. L’appli te guide avec un chrono et trace ta courbe. Refais-les toutes les 4 à 6 semaines, dans les mêmes conditions.'],
+      ['Suivi et coach', 'Que représentent les 3 anneaux sur Aujourd’hui ?', 'Tes objectifs de la semaine : <b>séances</b> (vert), <b>minutes d’entraînement</b> (orange) et <b>jours d’affilée</b> (violet, sur 7 jours). Touche les anneaux pour voir où tu en es et ce qu’il reste pour les boucler.'],
+      ['Suivi et coach', 'C’est quoi le récap du mois ?', 'Au début de chaque mois, une carte <b>Ton récap … est prêt</b> apparaît sur Aujourd’hui : tes séances, tes minutes, ta régularité, tes habitudes et ton ressenti du mois écoulé, à faire défiler comme une story. Touche à droite pour avancer, à gauche pour revenir, garde le doigt appuyé pour faire pause. Tu peux le revoir à tout moment dans <b>Suivi</b>, sous le calendrier, et le partager en image.'],
+      ['Suivi et coach', 'Que veulent dire les couleurs du calendrier ?', 'Chaque jour de séance prend la couleur de ton ressenti noté en fin de séance : vert clair (facile), vert, jaune, puis orange (dur). Un petit point indique deux séances le même jour.'],
+      ['Pendant la séance', 'Pourquoi le chrono change de couleur ?', 'Pour savoir d’un coup d’œil où tu en es : couleur de ta séance pendant l’effort, bleu pendant la récupération (avec un halo qui t’aide à respirer), doré au départ et sur les 3 dernières secondes. La barre du haut est découpée en parties (échauffement, corps de séance, retour au calme).'],
       ['Suivi et coach', 'Comment partager ma séance ou un badge ?', 'À la fin de chaque séance, touche <b>Partager ma séance</b> : une image est créée avec le nom de la séance, sa durée et ta semaine. Pour un badge, touche-le dans <b>Suivi › Progrès</b> ; pour le défi du mois réussi, <b>Partager ma réussite</b>. Ensuite, <b>Partager</b> (WhatsApp, Instagram…) ou <b>Enregistrer l’image</b>.'],
       ['Suivi et coach', 'C’est quoi le défi du mois et le classement ?', 'Chaque mois, un nouveau défi ludique (nombre de séances, jours actifs, séances du matin…) s’affiche dans <b>Suivi › Progrès</b>, avec ta progression. Si tu le souhaites, participe au <b>classement</b> pour te comparer aux autres utilisateurs, avec ton prénom seulement ; tu peux en sortir à tout moment.'],
       ['Suivi et coach', 'Comment recevoir un rappel de séance ?', 'Touche la <b>roue dentée</b>, puis <b>Rappels de séance</b> : choisis tes jours et ton heure. Un rendez-vous répété, avec alerte, s’ajoute à l’agenda de ton téléphone (ou à Google Agenda).'],
@@ -17687,7 +17691,7 @@
   .rc-card .rc-cs small{font-size:.74rem; color:rgba(255,255,255,.7);}
   .rc-acts{display:grid; gap:10px; position:relative; z-index:5;}
   .rc-acts button{min-height:52px; border-radius:999px; border:none; font:800 1rem 'Inter',sans-serif; cursor:pointer;}
-  .rc-go{background:#E8C77A; color:#2A2210;}
+  .rc-share{background:#E8C77A; color:#2A2210;}
   .rc-again{background:rgba(255,255,255,.12); color:#fff;}
 
   /* Accès au récap : carte Aujourd'hui + bouton Suivi */
@@ -17801,6 +17805,7 @@
       if(!st) bd.classList.remove('t-urg', 't-final');
       if(st){
         if(ts.timeline !== lastTl || ts.index !== lastIdx){ var first = ts.timeline !== lastTl; lastTl = ts.timeline; if(first) lastIdx = -1; onStep(ts, ts.index); lastIdx = ts.index; }
+        if(st.type === 'work' && !st.side && !st.prep){ var sbl = document.getElementById('timerExSublabel'); if(sbl && sbl.textContent.indexOf('Exercice ') < 0){ var cc = exCounter(ts.timeline, ts.index); if(cc) sbl.textContent = sbl.textContent ? sbl.textContent + ' · ' + cc : cc; } }
         var frac = 0;
         if(ts.running && ts.lastTick) frac = Math.min(.999, Math.max(0, (Date.now() - ts.lastTick) / 1000));
         var rem = Math.max(0, ts.remaining - frac);
@@ -17975,7 +17980,7 @@
         slides.push('<div class="rc-k rc-a" style="--i:0">Ton ressenti moyen</div><div class="rc-big rc-a" style="--i:1">' + avg.toFixed(1).replace('.', ',') + '<small>/10</small></div><div class="rc-gauge rc-a" style="--i:2"><i data-l="' + Math.round((avg - 1) / 9 * 100) + '"></i></div><p class="rc-p rc-a" style="--i:3">' + esc(msg) + '</p>');
       }
       slides.push('<div class="rc-k rc-a" style="--i:0">Ton mois en un coup d’œil</div><div class="rc-card rc-a" style="--i:1"><div class="rc-cm">' + cap(MN) + ' ' + y + '</div><div class="rc-cs"><div><b>' + r.n + '</b><small>' + (r.n > 1 ? 'séances' : 'séance') + '</small></div><div><b>' + r.mins + '</b><small>minutes</small></div><div><b>' + r.days + '</b><small>' + (r.days > 1 ? 'jours actifs' : 'jour actif') + '</small></div></div></div>'
-        + '<p class="rc-p rc-a" style="--i:2">Rendez-vous le mois prochain 💪</p><div class="rc-acts rc-a" style="--i:3"><button type="button" class="rc-go">Partager mon mois</button><button type="button" class="rc-again">Revoir</button></div>');
+        + '<p class="rc-p rc-a" style="--i:2">Rendez-vous le mois prochain 💪</p><div class="rc-acts rc-a" style="--i:3"><button type="button" class="rc-share">Partager mon mois</button><button type="button" class="rc-again">Revoir</button></div>');
 
       var ov = document.createElement('div'); ov.className = 'rc'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Ton récap ' + de(m));
       ov.innerHTML = '<div class="rc-bg" aria-hidden="true"><i></i><i></i></div><div class="rc-top">' + slides.map(function(){ return '<span><i></i></span>'; }).join('') + '</div>'
@@ -18008,8 +18013,8 @@
       ov.addEventListener('click', function(e){
         if(e.target.closest('.rc-x')){ close(); return; }
         if(e.target.closest('.rc-again')){ show(0); return; }
-        if(e.target.closest('.rc-go')){
-          var gb = e.target.closest('.rc-go'); if(gb.disabled) return; gb.disabled = true; var gt = gb.textContent; gb.textContent = 'Préparation de l’image…'; setTimeout(function(){ gb.disabled = false; gb.textContent = gt; }, 1800);
+        if(e.target.closest('.rc-share')){
+          var gb = e.target.closest('.rc-share'); if(gb.disabled) return; gb.disabled = true; var gt = gb.textContent; gb.textContent = 'Préparation de l’image…'; setTimeout(function(){ gb.disabled = false; gb.textContent = gt; }, 1800);
           if(window.ecShareWin) window.ecShareWin({k:'mois', t:cap(MN) + ' ' + y, n:r.n, s:hm(r.mins) + ' · ' + pl(r.days, 'jour actif', 'jours actifs'), m:MN});
           return;
         }
@@ -18087,8 +18092,9 @@
   @keyframes vtL{from{opacity:.25; transform:translateX(-22px);} to{opacity:1; transform:none;}}
   .bn-pill{position:absolute; top:0; left:0; width:52px; height:30px; border-radius:15px; pointer-events:none; z-index:0; opacity:0;
     transition:transform .42s cubic-bezier(.3,1.35,.5,1), width .3s ease, background-color .3s ease, opacity .2s;}
-  .bn-pill{background:color-mix(in srgb, var(--pg-nav, #23603D) 15%, transparent);}
-  @media screen and (prefers-color-scheme: dark){ .bn-pill{background:color-mix(in srgb, var(--pg-navd, #8FD0A5) 22%, transparent);} }
+  .bn-pill{background:rgba(35,96,61,.14); background:color-mix(in srgb, var(--pg-nav, #23603D) 15%, transparent);}
+  @media screen and (prefers-color-scheme: dark){ .bn-pill{background:rgba(143,208,165,.2); background:color-mix(in srgb, var(--pg-navd, #8FD0A5) 22%, transparent);} }
+  @media print{ .sx-mos, .hm-leg, .td-recap, .sv-recap, .bn-pill{display:none !important;} }
   .bnav.has-pill > button{position:relative; z-index:1;}
   html .bnav.has-pill button.active .bn-ico{background:transparent !important;}
   .bnav.has-pill button.bn-pop .bn-ico svg{animation:bnPop .4s cubic-bezier(.2,1.6,.4,1);}
@@ -18267,7 +18273,8 @@
     function paintMosaic(){
       if(!results) return;
       var strip = results.querySelector('.session-head .session-actions') || results.querySelector('.sess-strip'), old = results.querySelector('.sx-mos'), inHead = !!strip && strip.classList.contains('session-actions');
-      var items = results.querySelectorAll('.block.principal .exercise, .block[class*="principal"] .exercise');
+      var items = results.querySelectorAll('.block.principal .exercise');
+      if(!items.length) items = results.querySelectorAll('.block:not(.echauffement):not(.retour_calme) .exercise');
       if(!strip || !items.length){ if(old) old.remove(); return; }
       var seen = {}, list = [];
       items.forEach(function(ex){
@@ -18279,7 +18286,7 @@
       if(old && old.getAttribute('data-k') === key && (inHead ? old.nextElementSibling === strip : old.previousElementSibling === strip)) return;
       if(old) old.remove();
       var box = document.createElement('div'); box.className = 'sx-mos'; box.setAttribute('data-k', key);
-      box.innerHTML = '<h3>Au programme <small>' + list.length + ' exercice' + (list.length > 1 ? 's' : '') + ' au corps de séance</small></h3><div class="sx-row">'
+      box.innerHTML = '<h3>Au programme <small>' + list.length + ' exercice' + (list.length > 1 ? 's' : '') + (results.querySelector('.block.principal') ? ' au corps de séance' : '') + '</small></h3><div class="sx-row">'
         + list.map(function(x, i){ return '<button type="button" class="sx-it" data-sx="' + i + '" style="--i:' + i + '"><span class="sx-ph"' + (x.src ? ' style="background-image:url(&quot;' + esc(x.src) + '&quot;)"' : '') + '><b>' + (i + 1) + '</b></span><span class="sx-n">' + esc(x.n) + '</span></button>'; }).join('') + '</div>';
       strip.parentNode.insertBefore(box, inHead ? strip : strip.nextSibling);
       box.addEventListener('click', function(e){
@@ -18300,7 +18307,9 @@
     }
     function go321(){
       var ts = window.ecTS(); if(!ts || !ts.timeline || !ts.timeline.length) return;
-      var s0 = ts.timeline[0]; if(ts.index !== 0 || !s0.prep || ts.remaining < s0.duration - 1 || bd.classList.contains('calm')) return;
+      var s0 = ts.timeline[0]; if(ts.index !== 0 || !s0.prep || ts.remaining < s0.duration - 1 || bd.classList.contains('calm') || bd.dataset.fam === 'recup') return;
+      var w1 = null; for(var q = 0; q < ts.timeline.length; q++){ if(ts.timeline[q].type === 'work'){ w1 = ts.timeline[q]; break; } }
+      if(w1 && w1.ex && w1.ex.breath) return;
       if(lsg('ec_go321') === '0') return;
       ts.running = false;
       var ov = document.createElement('div'); ov.className = 'go321'; ov.setAttribute('role', 'status'); ov.setAttribute('aria-live', 'assertive');
