@@ -12348,7 +12348,7 @@
       ['L’appli', 'Le texte est trop petit.', 'Touche la <b>roue dentée</b> en haut à droite, puis <b>Taille du texte</b> : choisis le grand ou le très grand A.'],
       ['L’appli', 'L’appli fonctionne sans internet ?', 'Une fois ouverte une première fois, elle fonctionne même avec une connexion faible. Les vidéos de démonstration, elles, ont besoin d’internet.'],
       ['L’appli', 'Comment gérer ou résilier mon abonnement ?', 'Touche la <b>roue dentée</b>, puis <b>Gérer mon abonnement</b> : tu changes de carte bancaire, retrouves tes factures ou résilies en quelques secondes. Tu gardes l’accès jusqu’à la fin de la période payée.'],
-      ['L’appli', 'Comment parrainer un ami ou offrir l’appli ?', '<b>Réglages › Parrainer un ami</b> : partage ton lien personnel. Ton ami a son 1er mois offert, et toi aussi un mois offert quand il s’abonne. Pour offrir l’appli, la <b>carte cadeau 3 mois</b> s’achète sur ethikcoach.fr.'],
+      ['L’appli', 'Comment parrainer un ami ou offrir l’appli ?', '<b>Réglages › Parrainer un ami</b> : partage ton lien personnel. Ton ami a 14 jours d’essai gratuit au lieu de 7, et toi un mois offert quand il s’abonne. Pour offrir l’appli, la <b>carte cadeau 3 mois</b> s’achète sur ethikcoach.fr.'],
       ['L’appli', 'Mon accès ne fonctionne plus.', 'Ta clé d’accès est peut-être arrivée à échéance, ou l’appli a été réinstallée. Si tu es abonné, rouvre le lien reçu par e-mail ou demande-le à nouveau sur la page d’accès. Sinon, contacte ton coach avec le bouton ci-dessous : il te renvoie un accès.']
     ];
     function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -16794,11 +16794,11 @@
     }
     // Parrainage : lien personnel à partager
     function parrainer(pr){
-      var msg = 'J’utilise l’appli Ethik’Coach pour mes séances (renfo, yoga, étirements, respiration, guidés à la voix). Avec mon lien, ton 1er mois est offert : ' + pr.lien;
+      var msg = 'J’utilise l’appli Ethik’Coach pour mes séances (renfo, yoga, étirements, respiration, guidés à la voix). Avec mon lien, tu as 14 jours d’essai gratuit au lieu de 7 : ' + pr.lien;
       var w = document.createElement('div'); w.className = 'ec-dialog-backdrop'; w.id = 'parDialog';
       w.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Parrainer un ami">'
         + '<p class="ec-dialog-msg">🎁 Parrainer un ami</p>'
-        + '<p class="cp-note" style="margin-top:0">Ton ami a <b>1 mois gratuit</b> au lieu de 7 jours. Dès qu’il paie son premier mois, <b>ton prochain mois est offert</b> (jusqu’à ' + pr.max + ' mois).</p>'
+        + '<p class="cp-note" style="margin-top:0">Ton ami a <b>14 jours d’essai gratuit</b> au lieu de 7. Dès qu’il paie son premier mois, <b>ton prochain mois est offert</b> (jusqu’à ' + pr.max + ' mois).</p>'
         + '<div class="ec-dialog-input" style="word-break:break-all;font-size:0.9rem;user-select:all;-webkit-user-select:all">' + pr.lien + '</div>'
         + '<div class="cal-acts">' + (navigator.share ? '<button type="button" class="ct-btn" data-p="share">Partager mon lien</button>' : '')
         + '<a class="ct-btn' + (navigator.share ? ' ghost' : '') + '" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(msg) + '">WhatsApp</a>'
@@ -16879,7 +16879,7 @@
         var sec = document.createElement('div'); sec.className = 'set-sec'; sec.textContent = 'Mon abonnement';
         var bx = document.createElement('div'); bx.className = 'set-box';
         bx.innerHTML = '<a class="set-row set-link" href="' + EC_SUB_API + '/portail?k=' + encodeURIComponent(EC_KEY) + '"><span class="set-l">Gérer mon abonnement<small>' + st + (c.statut === 'cadeau' ? '' : ' · carte, factures, résiliation') + '</small></span><span aria-hidden="true">›</span></a>'
-          + (c.parrain ? '<button type="button" class="set-row set-link" id="ecParrainBtn"><span class="set-l">🎁 Parrainer un ami<small>1 mois offert pour toi et pour lui' + (c.parrain.filleuls ? ' · ' + c.parrain.filleuls + ' ami' + (c.parrain.filleuls > 1 ? 's' : '') + ' parrainé' + (c.parrain.filleuls > 1 ? 's' : '') : '') + '</small></span><span aria-hidden="true">›</span></button>' : '');
+          + (c.parrain ? '<button type="button" class="set-row set-link" id="ecParrainBtn"><span class="set-l">🎁 Parrainer un ami<small>1 mois offert pour toi, 14 jours d’essai pour ton ami' + (c.parrain.filleuls ? ' · ' + c.parrain.filleuls + ' ami' + (c.parrain.filleuls > 1 ? 's' : '') + ' parrainé' + (c.parrain.filleuls > 1 ? 's' : '') : '') + '</small></span><span aria-hidden="true">›</span></button>' : '');
         var pb = bx.querySelector('#ecParrainBtn'); if(pb) pb.addEventListener('click', function(){ var x = document.querySelector('.set-sheet .set-x'); if(x) x.click(); setTimeout(function(){ parrainer(c.parrain); }, 250); });
         app.parentNode.insertBefore(sec, app); app.parentNode.insertBefore(bx, app);
       }, 600);
@@ -18893,7 +18893,7 @@
   .td-invite .ti-ic{flex:none; font-size:1.9rem;}
   .td-invite b{display:block; font:800 1rem 'Bricolage Grotesque',sans-serif;}
   .td-invite small{display:block; font-size:.8rem; color:#5C4A25;}
-  .td-invite .ti-x{position:absolute; top:6px; right:8px; width:28px; height:28px; border:none; border-radius:50%; background:rgba(0,0,0,.08); color:#5C4A25; font-size:1rem; line-height:1; cursor:pointer;}
+  .td-invite .ti-x{position:absolute; top:6px; right:8px; width:28px; height:28px; display:grid; place-items:center; border:none; border-radius:50%; background:rgba(0,0,0,.08); color:#5C4A25; font-size:1rem; line-height:1; cursor:pointer;}
   .td-invite[hidden]{display:none !important;}
   @media screen and (prefers-color-scheme: dark){ .td-invite{background:linear-gradient(120deg, #3A3220, #4A3320); color:#F7E7C4;} .td-invite small{color:#D9C49A;} .td-invite .ti-x{background:rgba(255,255,255,.1); color:#F7E7C4;} }
 
@@ -18934,7 +18934,7 @@
     // ===================== 2. Fin d'essai : ton bilan et la suite =====================
     function trialStats(c){
       var H = hist(), end = c.essai, start = end - 7 * DAY;
-      if(H.some(function(e){ return e.at < start && e.at >= end - 31 * DAY; })) start = end - 30 * DAY;
+      if(H.some(function(e){ return e.at < start && e.at >= end - 31 * DAY; })) start = end - (H.some(function(e){ return e.at < end - 15 * DAY && e.at >= end - 31 * DAY; }) ? 30 : 14) * DAY;
       var L = H.filter(function(e){ return e.at >= start && e.at <= end; }), days = {}, mins = 0, kinds = {};
       L.forEach(function(e){ var d = new Date(e.at); d.setHours(0, 0, 0, 0); days[d.getTime()] = 1; mins += +e.minutes || 0; kinds[e.breath ? 'r' : 'f'] = 1; });
       return {n:L.length, mins:mins, days:Object.keys(days).length, breath:!!kinds.r};
@@ -18978,7 +18978,7 @@
     if(typeof _sv === 'function') window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'today'){ tryTrial(); setTimeout(paintInvite, 0); } return r; };
 
     // ===================== 3. Invite un ami =====================
-    function inviteMsg(pr){ return 'J’utilise l’appli Ethik’Coach pour mes séances : renfo, yoga, étirements, respiration, guidés à la voix. Avec mon lien, ton 1er mois est offert 🎁 ' + pr.lien; }
+    function inviteMsg(pr){ return 'J’utilise l’appli Ethik’Coach pour mes séances : renfo, yoga, étirements, respiration, guidés à la voix. Avec mon lien, tu as 14 jours d’essai gratuit au lieu de 7 🎁 ' + pr.lien; }
     function invitePage(){
       var c = sub() || {}, pr = c.parrain; if(!pr || !pr.lien) return false;
       var n = Math.min(pr.filleuls || 0, pr.max || 12), mx = pr.max || 12, msg = inviteMsg(pr);
@@ -18987,9 +18987,9 @@
       w.innerHTML = '<div class="inv-box"><button type="button" class="inv-x" aria-label="Fermer" style="--i:0">&times;</button>'
         + '<div class="inv-hero" aria-hidden="true" style="--i:1"><svg viewBox="0 0 320 150" preserveAspectRatio="xMidYMid meet"><path d="M70 66 C120 20, 200 20, 250 66" fill="none" stroke="rgba(232,199,122,.6)" stroke-width="3" stroke-dasharray="4 8" stroke-linecap="round"/></svg>'
         + '<span class="ih-a l">Toi</span><span class="ih-gift">🎁</span><span class="ih-a r">Ami</span></div>'
-        + '<div class="inv-k" style="--i:2">Parrainage</div><h1 style="--i:3">Offre <em>1 mois</em> à tes amis</h1>'
-        + '<p class="inv-lead" style="--i:4">Et gagne <b>1 mois offert</b> pour chaque ami qui s’abonne, jusqu’à ' + mx + ' mois.</p>'
-        + '<div class="inv-steps" style="--i:5"><div><span>Tu partages ton lien personnel.</span></div><div><span>Ton ami profite d’<b>1 mois gratuit</b> au lieu de 7 jours.</span></div><div><span>Dès son premier paiement, <b>ton prochain mois est offert</b>.</span></div></div>'
+        + '<div class="inv-k" style="--i:2">Parrainage</div><h1 style="--i:3">Invite tes amis, gagne <em>1 mois</em></h1>'
+        + '<p class="inv-lead" style="--i:4">Ton ami a <b>14 jours d’essai gratuit</b> au lieu de 7, et toi <b>1 mois offert</b> pour chaque ami qui s’abonne, jusqu’à ' + mx + ' mois.</p>'
+        + '<div class="inv-steps" style="--i:5"><div><span>Tu partages ton lien personnel.</span></div><div><span>Ton ami profite de <b>14 jours d’essai gratuit</b> au lieu de 7.</span></div><div><span>Dès son premier paiement, <b>ton prochain mois est offert</b>.</span></div></div>'
         + '<div class="inv-link" style="--i:6"><span>' + esc(pr.lien) + '</span><button type="button" data-i="copy">Copier</button></div>'
         + '<div class="inv-acts" style="--i:7">' + (navigator.share ? '<button type="button" class="inv-go" data-i="share">Partager mon lien</button>' : '')
         + '<a href="https://wa.me/?text=' + encodeURIComponent(msg) + '" target="_blank" rel="noopener">WhatsApp</a>'
@@ -19026,7 +19026,7 @@
       ic.hidden = !show;
       if(!show) return;
       var n = c.parrain.filleuls || 0;
-      ic.innerHTML = '<span class="ti-ic" aria-hidden="true">🎁</span><span><b>Offre 1 mois à un ami</b><small>' + (n ? 'Déjà ' + n + ' mois gagné' + (n > 1 ? 's' : '') + ' · continue !' : 'Et gagne 1 mois offert pour toi') + '</small></span><span class="ti-x" role="button" aria-label="Masquer">&times;</span>';
+      ic.innerHTML = '<span class="ti-ic" aria-hidden="true">🎁</span><span><b>Invite un ami, gagne 1 mois</b><small>' + (n ? 'Déjà ' + n + ' mois gagné' + (n > 1 ? 's' : '') + ' · continue !' : 'Lui : 14 jours d’essai gratuit · toi : 1 mois offert') + '</small></span><span class="ti-x" role="button" aria-label="Masquer">&times;</span>';
       var more = tv.querySelector('.td-more');
       if(more && ic.nextSibling !== more) tv.insertBefore(ic, more); else if(!more && !ic.parentNode) tv.appendChild(ic);
     }
