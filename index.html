@@ -18520,6 +18520,26 @@
 
 <style>
   /* ---------- Design 3 : parcours trail, flamme, sons, fiche exercice, ambiance horaire, accueil ---------- */
+  /* Bandeau du haut d'Aujourd'hui */
+  html.ec-p2 #todayView .td-dash{margin-top:14px; padding:14px; border-radius:24px; background:color-mix(in srgb, var(--card) 72%, transparent); background-color:var(--card); border:1px solid color-mix(in srgb, var(--ink) 8%, transparent); box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,.06)); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);}
+  html.ec-p2 #todayView .dd-main{display:flex; align-items:center; gap:16px;}
+  html.ec-p2 #todayView .td-dash .td-ring{width:96px; height:96px; flex:none;}
+  html.ec-p2 #todayView .td-dash .td-motto{display:flex !important; flex-direction:column; gap:9px; margin:0; font-size:.9rem;}
+  html.ec-p2 #todayView .td-dash .td-leg i{width:9px; height:9px;}
+  html.ec-p2 #todayView .dd-chips{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px;}
+  html.ec-p2 #todayView .dd-chips:not(:has(> :not([hidden]))){display:none;}
+  html.ec-p2 #todayView .dd-chips > :only-child, html.ec-p2 #todayView .dd-chips > :not([hidden]):only-of-type{grid-column:1 / -1;}
+  html.ec-p2 #todayView .dd-chips .td-flame, html.ec-p2 #todayView .dd-chips .td-lvl{width:100%; max-width:none; min-width:0; margin:0; min-height:58px; padding:8px 10px; border-radius:16px; gap:8px; box-shadow:none; background:color-mix(in srgb, var(--ink) 6%, transparent); background-color:rgba(127,127,127,.1);}
+  html.ec-p2 #todayView .dd-chips .td-flame:not(.danger){background:linear-gradient(135deg, color-mix(in srgb, var(--fl1) 22%, transparent), color-mix(in srgb, var(--fl2) 10%, transparent));}
+  html.ec-p2 #todayView .dd-chips .td-flame svg{width:22px; height:26px;}
+  html.ec-p2 #todayView .dd-chips .td-flame b{display:block; font-size:.84rem; line-height:1.15;}
+  html.ec-p2 #todayView .dd-chips .td-flame small{font-size:.7rem; margin-top:2px; line-height:1.2;}
+  html.ec-p2 #todayView .dd-chips .td-flame > span{min-width:0;}
+  html.ec-p2 #todayView .dd-chips .td-lvl .lv-m{width:30px; height:30px; font-size:.85rem;}
+  html.ec-p2 #todayView .dd-chips .td-lvl .lv-t b{font-size:.8rem;}
+  html.ec-p2 #todayView .dd-chips .td-lvl .lv-t small{font-size:.68rem; overflow:hidden; text-overflow:ellipsis;}
+  @media (max-width:370px){ html.ec-p2 #todayView .td-dash .td-ring{width:84px; height:84px;} html.ec-p2 #todayView .td-dash .td-motto{font-size:.82rem;} html.ec-p2 #todayView .dd-chips{grid-template-columns:1fr;} html.ec-p2 #todayView .dd-chips .td-flame, html.ec-p2 #todayView .dd-chips .td-lvl{min-height:50px;} }
+  @media (min-width:700px){ html.ec-p2 #todayView .td-dash{display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:20px;} html.ec-p2 #todayView .dd-chips{margin:0;} html.ec-p2 #todayView .td-dash .td-ring{width:110px; height:110px;} }
   .td-flame[hidden], .td-tod[hidden], .exm-nav[hidden], .td-recap[hidden], .sv-recap[hidden], .hm-leg[hidden], .cel[hidden], .sx-mos[hidden], .ptr[hidden]{display:none !important;}
   /* 1. Programme en parcours de trail */
   .ptr{margin:14px 0 6px; padding:14px 0 6px; border-radius:24px; background:var(--card); box-shadow:var(--shadow-1, 0 2px 10px rgba(0,0,0,.06)); overflow:hidden;}
@@ -18742,6 +18762,16 @@
 
     // ===================== 4. Flamme de série + 6. Ambiance selon l'heure =====================
     var tv = document.getElementById('todayView'), flame = null, todBtn = null;
+    // Bandeau du haut : anneaux + légende, puis série et niveau côte à côte
+    window.ecTdDash = function(){
+      var tv2 = document.getElementById('todayView'), top = tv2 && tv2.querySelector('.td-top'); if(!top) return null;
+      var dash = tv2.querySelector('.td-dash');
+      if(!dash){ dash = document.createElement('div'); dash.className = 'td-dash'; dash.innerHTML = '<div class="dd-main"></div><div class="dd-chips"></div>'; top.parentNode.insertBefore(dash, top.nextSibling); }
+      var main = dash.firstChild, ring = tv2.querySelector('.td-ring'), motto = tv2.querySelector('.td-motto');
+      if(ring && ring.parentNode !== main) main.insertBefore(ring, main.firstChild);
+      if(motto && motto.parentNode !== main) main.appendChild(motto);
+      return dash.lastChild;
+    };
     function streak(){
       var H = hist(), days = {}; H.forEach(function(e){ days[day0(e.at)] = 1; });
       var today = day0(Date.now()), D = 86400000, c = today, st = 0, doneToday = !!days[today];
@@ -18752,7 +18782,7 @@
     var FL = [[1, '#FF9F43', '#FFD25E'], [3, '#FF5E3A', '#FFB648'], [7, '#2F8CFF', '#9FD8FF'], [14, '#7B5CFF', '#D9CCFF'], [30, '#E8B83A', '#FFF1B8']];
     function paintFlame(){
       if(!tv) return;
-      var hi = tv.querySelector('.td-hi'); if(!hi) return;
+      var hi = (window.ecTdDash && window.ecTdDash()) || tv.querySelector('.td-hi'); if(!hi) return;
       var s = streak();
       if(!flame){ flame = document.createElement('button'); flame.type = 'button'; flame.className = 'td-flame';
         flame.addEventListener('click', function(){ var sl = tv.querySelector('.td-slot'); if(sl) sl.scrollIntoView({behavior:reduce ? 'auto' : 'smooth', block:'center'}); }); }
@@ -18765,7 +18795,7 @@
       var svg = '<svg viewBox="0 0 26 30" aria-hidden="true"><defs><linearGradient id="flG" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="' + lv[1] + '"/><stop offset="1" stop-color="' + lv[2] + '"/></linearGradient></defs>'
         + '<path class="fl-o" d="M13 1C14 7 21 10 21 18a8 8 0 0 1-16 0c0-4 2-6 3-8 .5 3 2 4 3 4-1-5 1-9 2-13z"/>'
         + '<path class="fl-i" d="M13 14c.6 3 4 4.5 4 8a4 4 0 0 1-8 0c0-2.2 1.4-3.2 2-4.4.3 1.2 1 1.8 1.6 1.8-.3-2 .1-3.8.4-5.4z"/></svg>';
-      flame.innerHTML = svg + '<span><b>' + s.n + ' jour' + (s.n > 1 ? 's' : '') + ' d’affilée</b><small>' + (s.today ? (s.n >= 7 ? 'Série en feu, continue !' : 'Reviens demain pour la faire grandir') : 'Une séance aujourd’hui pour la garder') + '</small></span>';
+      flame.innerHTML = svg + '<span><b>' + s.n + ' jour' + (s.n > 1 ? 's' : '') + ' d’affilée</b><small>' + (s.today ? (s.n >= 7 ? 'Série en feu !' : 'Reviens demain') : 'À garder aujourd’hui') + '</small></span>';
       flame.setAttribute('aria-label', 'Série de ' + s.n + ' jours' + (s.today ? '' : ', à garder aujourd’hui'));
     }
     function tod(){ var h = new Date().getHours(); return h >= 5 && h < 11 ? 'matin' : (h >= 19 || h < 2 ? 'soir' : 'jour'); }
@@ -19206,7 +19236,7 @@
     var tv = document.getElementById('todayView'), lvBtn = null;
     function paintLevel(){
       if(!tv) return;
-      var hi = tv.querySelector('.td-hi'); if(!hi) return;
+      var hi = (window.ecTdDash && window.ecTdDash()) || tv.querySelector('.td-hi'); if(!hi) return;
       var H = hist(), L = level(xpOf(H));
       if(!lvBtn){ lvBtn = document.createElement('button'); lvBtn.type = 'button'; lvBtn.className = 'td-lvl'; lvBtn.addEventListener('click', function(){ openCard(); }); }
       var fl = hi.querySelector('.td-flame');
@@ -19215,7 +19245,7 @@
       lvBtn.hidden = !H.length;
       if(!H.length) return;
       lvBtn.style.setProperty('--lvg', L.g);
-      lvBtn.innerHTML = '<span class="lv-m">' + L.n + '</span><span class="lv-t"><b>Niveau ' + L.n + ' · ' + esc(L.name) + '</b><span class="lv-bar"><i></i></span><small>' + (L.next ? L.xp + ' / ' + L.next + ' points' : 'Niveau max 🏆') + '</small></span>';
+      lvBtn.innerHTML = '<span class="lv-m">' + L.n + '</span><span class="lv-t"><b>' + esc(L.name) + '</b><span class="lv-bar"><i></i></span><small>' + (L.next ? 'Niv. ' + L.n + ' · ' + L.xp + ' / ' + L.next + ' pts' : 'Niveau max 🏆') + '</small></span>';
       lvBtn.setAttribute('aria-label', 'Niveau ' + L.n + ', ' + L.name + (L.next ? ', ' + (L.next - L.xp) + ' points avant le niveau suivant' : ''));
       var bar = lvBtn.querySelector('.lv-bar i'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ bar.style.width = L.pct + '%'; }); });
     }
