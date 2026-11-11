@@ -10012,7 +10012,7 @@
     // Sauvegarde / restauration
     function backupKeys(){
       var out = {};
-      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
     $('#svExport').addEventListener('click', function(){
@@ -10033,7 +10033,7 @@
         if(!data || data.app !== 'ethikcoach' || !data.data){ showToast('Ce fichier n’est pas une sauvegarde Ethik’Coach.', false); return; }
         var n = 0; try{ n = JSON.parse(data.data.ec_history_v1 || '[]').length; }catch(e){}
         ecConfirm('Restaurer cette sauvegarde (' + n + ' séance' + (n > 1 ? 's' : '') + ' dans l’historique) ? Les données actuelles de cet appareil seront remplacées.', 'Restaurer', function(){
-          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
+          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
           location.reload();
         });
       };
@@ -12342,6 +12342,7 @@
       ['Pendant la séance', 'Pourquoi le chrono change de couleur ?', 'Pour savoir d’un coup d’œil où tu en es : couleur de ta séance pendant l’effort, bleu pendant la récupération (avec un halo qui t’aide à respirer), doré au départ et sur les 3 dernières secondes. La barre du haut est découpée en parties (échauffement, corps de séance, retour au calme).'],
       ['Suivi et coach', 'Comment partager ma séance ou un badge ?', 'À la fin de chaque séance, touche <b>Partager ma séance</b> : une image est créée avec le nom de la séance, sa durée et ta semaine. Pour un badge, touche-le dans <b>Suivi › Progrès</b> ; pour le défi du mois réussi, <b>Partager ma réussite</b>. Ensuite, <b>Partager</b> (WhatsApp, Instagram…) ou <b>Enregistrer l’image</b>.'],
       ['Suivi et coach', 'C’est quoi le défi du mois et le classement ?', 'Chaque mois, un nouveau défi ludique (nombre de séances, jours actifs, séances du matin…) s’affiche dans <b>Suivi › Progrès</b>, avec ta progression. Si tu le souhaites, participe au <b>classement</b> pour te comparer aux autres utilisateurs, avec ton prénom seulement ; tu peux en sortir à tout moment.'],
+      ['Suivi et coach', 'Comment recevoir une notification le matin ou le soir ?', 'Sur la page <b>Aujourd’hui</b>, sous la suggestion du matin ou du soir, touche <b>Recevoir ce rappel</b> (ou roue dentée › <b>Notifications du matin et du soir</b>). Choisis tes heures et autorise les notifications. Sur iPhone et iPad, l’appli doit être <b>ajoutée à l’écran d’accueil</b> et ouverte depuis son icône. Si tu as déjà fait ta routine, pas de rappel ce jour-là.'],
       ['Suivi et coach', 'Comment recevoir un rappel de séance ?', 'Touche la <b>roue dentée</b>, puis <b>Rappels de séance</b> : choisis tes jours et ton heure. Un rendez-vous répété, avec alerte, s’ajoute à l’agenda de ton téléphone (ou à Google Agenda).'],
       ['Suivi et coach', 'Comment envoyer mon ressenti à mon coach ?', 'À la fin de chaque séance, note l’effort de 1 à 10, indique une éventuelle gêne, puis envoie ton retour par WhatsApp, SMS ou e-mail. Le message est déjà rédigé.'],
       ['Suivi et coach', 'Où sont enregistrées mes données ?', 'Sur ton appareil et, si tu as activé la <b>sauvegarde automatique</b>, en ligne, chiffrées avec ton code personnel : personne d’autre ne peut les lire. Sur un nouveau téléphone, ouvre simplement ton lien d’accès et tout revient. Tu peux arrêter et effacer la sauvegarde en ligne dans <b>Suivi › Mes données</b>.'],
@@ -14813,6 +14814,7 @@
       + '<div class="set-box">'
       +   '<button type="button" class="set-row set-link" data-set="install">Installer sur l’écran d’accueil<span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="data">Mes données et sauvegarde<span aria-hidden="true">›</span></button>'
+      +   '<button type="button" class="set-row set-link" data-set="notifs"><span class="sl-txt" style="flex:1;text-align:left">Notifications du matin et du soir<small style="display:block;font-weight:500;font-size:0.78rem;opacity:.75;margin-top:2px">Un rappel pour ta routine du matin et ta détente du soir</small></span><span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="rappels"><span class="sl-txt" style="flex:1;text-align:left">Rappels de séance<small style="display:block;font-weight:500;font-size:0.78rem;opacity:.75;margin-top:2px">Une alerte dans ton agenda les jours choisis</small></span><span aria-hidden="true">›</span></button>'
       +   '<button type="button" class="set-row set-link" data-set="help">Aide et mode d’emploi<span aria-hidden="true">›</span></button>'
       + '</div><p class="set-ver">' + ((document.getElementById('appVersion') || {}).textContent || '') + '</p></div>';
@@ -14840,6 +14842,7 @@
       if(k === 'voice'){ closeSet(); setTimeout(function(){ if(window.ecOpenVoice) window.ecOpenVoice(); }, 220); }
       else if(k === 'install'){ closeSet(); var ib = document.getElementById('installBtn'); if(ib) setTimeout(function(){ ib.click(); }, 220); }
       else if(k === 'data'){ closeSet(); if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('mine'); setTimeout(function(){ var x = document.getElementById('svExport'); if(x) x.scrollIntoView({behavior:'smooth', block:'center'}); }, 250); }
+      else if(k === 'notifs'){ closeSet(); setTimeout(function(){ if(window.ecNotifs) window.ecNotifs(); }, 220); }
       else if(k === 'rappels'){ closeSet(); setTimeout(function(){ if(window.ecRappels) window.ecRappels(); }, 220); }
       else if(k === 'help'){ closeSet(); var hb = document.querySelector('.header-right .help-btn-head:not(.voice-head):not(.set-btn)'); if(hb) setTimeout(function(){ hb.click(); }, 220); }
     });
@@ -16897,7 +16900,7 @@
     if(EC_USER.h === '2g7dfzw49uk') return;            // clé partagée de la page du site : pas de sauvegarde commune
     var K = String(EC_KEY).trim().toLowerCase(), API = EC_SUB_API;
     var OK = 'ec_sync_ok', AT = 'ec_sync_at', DIRTY = 'ec_sync_dirty', HIST = 'ec_history_v1';
-    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
+    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
     var LS = window.localStorage, setRaw = Storage.prototype.setItem, delRaw = Storage.prototype.removeItem;
     function g(k){ try{ return LS.getItem(k); }catch(e){ return null; } }
     function s(k, v){ try{ setRaw.call(LS, k, v); }catch(e){} }
@@ -18528,7 +18531,10 @@
   html.ec-p2 #todayView .td-dash .td-leg i{width:9px; height:9px;}
   html.ec-p2 #todayView .dd-chips{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px;}
   html.ec-p2 #todayView .dd-chips:not(:has(> :not([hidden]))){display:none;}
-  html.ec-p2 #todayView .dd-chips > :only-child, html.ec-p2 #todayView .dd-chips > :not([hidden]):only-of-type{grid-column:1 / -1;}
+  html.ec-p2 #todayView .td-dash[data-n="1"] .dd-chips{grid-template-columns:1fr;}
+  html.ec-p2 #todayView .td-dash[data-n="0"] .dd-chips{display:none;}
+  html.ec-p2 #todayView .td-dash[data-n="1"] .dd-chips .td-lvl .lv-t small, html.ec-p2 #todayView .td-dash[data-n="1"] .dd-chips .td-flame small{white-space:normal; overflow:visible;}
+  html.ec-p2 #todayView .td-dash[data-n="1"] .dd-chips .td-lvl{min-height:52px;}
   html.ec-p2 #todayView .dd-chips .td-flame, html.ec-p2 #todayView .dd-chips .td-lvl{width:100%; max-width:none; min-width:0; margin:0; min-height:58px; padding:8px 10px; border-radius:16px; gap:8px; box-shadow:none; background:color-mix(in srgb, var(--ink) 6%, transparent); background-color:rgba(127,127,127,.1);}
   html.ec-p2 #todayView .dd-chips .td-flame:not(.danger){background:linear-gradient(135deg, color-mix(in srgb, var(--fl1) 22%, transparent), color-mix(in srgb, var(--fl2) 10%, transparent));}
   html.ec-p2 #todayView .dd-chips .td-flame svg{width:22px; height:26px;}
@@ -18770,6 +18776,8 @@
       var main = dash.firstChild, ring = tv2.querySelector('.td-ring'), motto = tv2.querySelector('.td-motto');
       if(ring && ring.parentNode !== main) main.insertBefore(ring, main.firstChild);
       if(motto && motto.parentNode !== main) main.appendChild(motto);
+      if(!dash.__fit){ dash.__fit = 1; var fit = function(){ var n = 0; Array.prototype.forEach.call(dash.lastChild.children, function(c){ if(!c.hidden && getComputedStyle(c).display !== 'none') n++; }); dash.setAttribute('data-n', n); };
+        new MutationObserver(function(){ clearTimeout(dash.__ft); dash.__ft = setTimeout(fit, 30); }).observe(dash.lastChild, {childList:true, subtree:true, attributes:true, attributeFilter:['hidden', 'class']}); setTimeout(fit, 30); }
       return dash.lastChild;
     };
     function streak(){
@@ -18804,11 +18812,9 @@
       if(!tv) return;
       var show = t !== 'jour' && !(t === 'matin' && streak().today);
       if(!todBtn){ todBtn = document.createElement('button'); todBtn.type = 'button'; todBtn.className = 'td-tod';
-        todBtn.addEventListener('click', function(){
-          var m = todBtn.getAttribute('data-m');
-          try{ window.ecShowView('breath'); if(window.ecMobSet) window.ecMobSet({g:m, d:m === 'matin' ? 5 : 10}); if(window.ecMobGenerate) window.ecMobGenerate(); window.scrollTo(0, 0); }catch(e){}
-        }); }
+        todBtn.addEventListener('click', function(){ window.ecTodGo(todBtn.getAttribute('data-m')); }); }
       todBtn.hidden = !show;
+      if(window.ecNotifPill) try{ window.ecNotifPill(todBtn, show ? t : null); }catch(e){}
       if(!show) return;
       todBtn.setAttribute('data-m', t);
       todBtn.innerHTML = t === 'matin'
@@ -18817,7 +18823,13 @@
       var curve = tv.querySelector('.td-curve'), top = tv.querySelector('.td-top'), ref = curve || top;
       if(ref && todBtn.previousElementSibling !== ref) ref.parentNode.insertBefore(todBtn, ref.nextSibling);
     }
-    function paintToday(){ try{ paintFlame(); }catch(e){} try{ paintTod(); }catch(e){} }
+    // Lance la routine du matin ou du soir (carte suggestion, notification, lien ?go=)
+    window.ecTodGo = function(m){
+      m = m === 'matin' ? 'matin' : 'soir';
+      try{ window.ecShowView('breath'); if(window.ecMobSet) window.ecMobSet({g:m, d:m === 'matin' ? 5 : 10}); if(window.ecMobGenerate) window.ecMobGenerate(); window.scrollTo(0, 0); }catch(e){}
+      if(window.ecNotifFait) try{ window.ecNotifFait(m); }catch(e){}
+    };
+    function paintToday(){ try{ paintFlame(); }catch(e){} try{ paintTod(); }catch(e){} if(window.ecNotifPill && todBtn && !todBtn.parentNode) try{ window.ecNotifPill(todBtn, null); }catch(e){} }
     var _sv = window.ecShowView;
     if(typeof _sv === 'function') window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'today') setTimeout(paintToday, 0); return r; };
     setTimeout(paintToday, 0);
@@ -19357,5 +19369,202 @@
   })();
 </script>
 
+<!-- ===================== Design 6 : notifications du matin et du soir ===================== -->
+<style>
+  .td-notif{display:flex; align-items:center; gap:8px; width:100%; margin:6px 0 0; padding:9px 14px; border:1px dashed color-mix(in srgb, var(--ink) 18%, transparent); border-color:rgba(127,127,127,.3); border-radius:14px; background:transparent; color:var(--stone); font:600 .8rem/1.3 inherit; text-align:left; cursor:pointer;}
+  .td-notif b{color:var(--ink); font-weight:700;}
+  .td-notif .tn-ic{font-size:1rem;}
+  .td-notif .tn-go{margin-left:auto; font-weight:700; color:var(--accent, #3BA55C); white-space:nowrap;}
+  .td-notif.on{border-style:solid; border-color:transparent; background:color-mix(in srgb, var(--ink) 5%, transparent);}
+  .td-notif[hidden]{display:none !important;}
+  .nt-row{display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid rgba(127,127,127,.18);}
+  .nt-row:first-of-type{border-top:none;}
+  .nt-row .nt-ic{flex:none; width:38px; height:38px; border-radius:12px; display:grid; place-items:center; font-size:1.2rem;}
+  .nt-row .nt-ic.m{background:linear-gradient(135deg, #FFE3A3, #F6B36B);}
+  .nt-row .nt-ic.s{background:linear-gradient(135deg, #3B4E9E, #6A57C8);}
+  .nt-row .nt-t{flex:1; min-width:0;}
+  .nt-row .nt-t b{display:block; font-size:.92rem;}
+  .nt-row .nt-t small{display:block; font-size:.74rem; color:var(--stone);}
+  .nt-row select{font:inherit; font-size:.9rem; padding:6px 8px; border-radius:10px; border:1px solid rgba(127,127,127,.35); background:var(--card, transparent); color:var(--ink); max-width:92px;}
+  .nt-row select:disabled{opacity:.4;}
+  .nt-sw{position:relative; flex:none; width:46px; height:28px; border-radius:20px; border:none; background:rgba(127,127,127,.35); cursor:pointer; transition:background .2s;}
+  .nt-sw::after{content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:transform .2s;}
+  .nt-sw[aria-checked="true"]{background:#3BA55C;}
+  .nt-sw[aria-checked="true"]::after{transform:translateX(18px);}
+  .nt-warn{margin:8px 0 0; padding:10px 12px; border-radius:12px; font-size:.8rem; line-height:1.45; background:rgba(246,179,107,.16);}
+  #ntDialog .ct-btn:disabled{opacity:.45; cursor:default;}
+  .nt-st{margin:6px 0 0; font-size:.78rem; color:var(--stone); min-height:1.1em;}
+  @media print{ .td-notif{display:none !important;} }
+</style>
+<script>
+(function(){
+  var API = (typeof EC_SUB_API !== 'undefined' && EC_SUB_API) || 'https://ethikcoach-abonnement.ethikcoach.workers.dev';
+  var LS = 'ec_notif_dev', DEF = {on:false, matin:'07:30', soir:'21:30', mOn:true, sOn:true};
+  function get(){ var o = null; try{ o = JSON.parse(localStorage.getItem(LS) || 'null'); }catch(e){} return Object.assign({}, DEF, o || {}); }
+  function put(o){ try{ localStorage.setItem(LS, JSON.stringify(o)); }catch(e){} }
+  function toast(m){ try{ (window.showToast || showToast)(m, false); }catch(e){} }
+  function key(){ try{ return (typeof EC_KEY !== 'undefined' && EC_KEY) || localStorage.getItem('ec_access') || ''; }catch(e){ return ''; } }
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]; }); }
+  var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function standalone(){ return navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+  function support(){
+    if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return ios && !standalone() ? 'ios-home' : 'non';
+    if(!window.isSecureContext) return 'non';
+    if(ios && !standalone()) return 'ios-home';
+    if(Notification.permission === 'denied') return 'refus';
+    return 'ok';
+  }
+  function active(){ var o = get(); return o.on && support() === 'ok' && Notification.permission === 'granted'; }
+  function post(path, body){ return fetch(API + path, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body)}).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); }); }
+  function b2u(b64){ var p = '='.repeat((4 - b64.length % 4) % 4), s = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/')), a = new Uint8Array(s.length); for(var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+  function ready(){ return Promise.race([navigator.serviceWorker.ready, new Promise(function(_, no){ setTimeout(function(){ no(new Error('sw')); }, 8000); })]); }
+  function tz(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'; }catch(e){ return 'Europe/Paris'; } }
+  // Abonne cet appareil (ou met à jour les heures) ; à appeler après l'autorisation
+  function subscribe(o){
+    return ready().then(function(reg){
+      return reg.pushManager.getSubscription().then(function(sub){
+        if(sub) return sub;
+        return fetch(API + '/push/cle').then(function(r){ return r.json(); }).then(function(j){
+          if(!j || !j.cle) throw new Error('cle');
+          return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b2u(j.cle)});
+        });
+      });
+    }).then(function(sub){
+      return post('/push/abonner', {k:key(), endpoint:sub.endpoint, matin:o.mOn ? o.matin : '', soir:o.sOn ? o.soir : '', tz:tz()}).then(function(r){
+        if(!r || !r.ok) throw new Error(r && r.raison || 'serveur');
+        o.at = new Date().toDateString(); put(o); return sub;
+      });
+    });
+  }
+  function unsubscribe(){
+    var o = get(); o.on = false; put(o);
+    if(!('serviceWorker' in navigator)) return Promise.resolve();
+    return ready().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+      if(!sub) return; post('/push/desabonner', {endpoint:sub.endpoint}).catch(function(){}); return sub.unsubscribe();
+    }).catch(function(){});
+  }
+  // Routine faite : pas de notification pour ce moment-là aujourd'hui
+  window.ecNotifFait = function(m){
+    if(!active()) return;
+    ready().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){ if(sub) post('/push/fait', {endpoint:sub.endpoint, moment:m}).catch(function(){}); }).catch(function(){});
+  };
+
+  // ---------- Fenêtre de réglage ----------
+  function hours(a, b, cur){ var out = ''; for(var m = a * 60; m <= b * 60; m += 15){ var h = ('0' + Math.floor(m / 60) % 24).slice(-2) + ':' + ('0' + m % 60).slice(-2); out += '<option value="' + h + '"' + (h === cur ? ' selected' : '') + '>' + h.replace(':', ' h ') + '</option>'; } return out; }
+  function open(focus){
+    var old = document.getElementById('ntDialog'); if(old) old.remove();
+    var o = get(), sp = support(), on = active();
+    if(focus === 'matin') o.mOn = true; if(focus === 'soir') o.sOn = true;
+    var warn = sp === 'ios-home' ? 'Sur iPhone et iPad, les notifications ne fonctionnent qu’avec l’appli <b>ajoutée à l’écran d’accueil</b> : dans Safari, touche Partager <b>⎙</b>, puis « Sur l’écran d’accueil ». Ouvre ensuite l’appli depuis son icône et reviens ici.'
+      : sp === 'refus' ? 'Les notifications sont bloquées pour l’appli. Autorise-les dans les réglages du téléphone (Réglages › Notifications › Ethik’Coach), puis reviens ici.'
+      : sp === 'non' ? 'Ce navigateur ne permet pas les notifications. Ouvre l’appli dans Safari (iPhone) ou Chrome (Android), ajoutée à l’écran d’accueil.' : '';
+    var wrap = document.createElement('div'); wrap.id = 'ntDialog'; wrap.className = 'ec-dialog-backdrop';
+    wrap.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Notifications">'
+      + '<p class="ec-dialog-msg">🔔 Notifications</p>'
+      + '<p class="cp-note" style="margin-top:0">Un petit rappel sur ton téléphone pour ta routine du matin et ta détente du soir. Pas de rappel si tu l’as déjà faite.</p>'
+      + '<div class="nt-row"><span class="nt-ic m" aria-hidden="true">☀️</span><span class="nt-t"><b>Le matin</b><small>Réveil musculaire · 5 min</small></span><select id="ntM" aria-label="Heure du matin">' + hours(6, 10, o.matin) + '</select><button type="button" class="nt-sw" role="switch" id="ntMs" aria-label="Rappel du matin" aria-checked="' + !!o.mOn + '"></button></div>'
+      + '<div class="nt-row"><span class="nt-ic s" aria-hidden="true">🌙</span><span class="nt-t"><b>Le soir</b><small>Détente avant de dormir · 10 min</small></span><select id="ntS" aria-label="Heure du soir">' + hours(19, 23.75, o.soir) + '</select><button type="button" class="nt-sw" role="switch" id="ntSs" aria-label="Rappel du soir" aria-checked="' + !!o.sOn + '"></button></div>'
+      + (warn ? '<p class="nt-warn">' + warn + '</p>' : '')
+      + '<p class="nt-st" id="ntSt" role="status">' + (on ? '✓ Activées sur ce téléphone' : '') + '</p>'
+      + '<div class="cal-acts"><button type="button" class="ct-btn" id="ntGo"' + (sp !== 'ok' ? ' disabled' : '') + '>' + (on ? 'Enregistrer' : 'Activer les notifications') + '</button>'
+      + (on ? '<button type="button" class="ct-btn ghost" id="ntTest">Envoyer un essai</button><button type="button" class="ct-btn ghost" id="ntOff">Désactiver</button>' : '') + '</div>'
+      + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel">Fermer</button></div></div>';
+    document.body.appendChild(wrap);
+    var st = wrap.querySelector('#ntSt'), go = wrap.querySelector('#ntGo');
+    function close(){ wrap.remove(); paint(); }
+    wrap.querySelector('.ec-dialog-cancel').addEventListener('click', close);
+    wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+    function sync(){ wrap.querySelector('#ntM').disabled = wrap.querySelector('#ntMs').getAttribute('aria-checked') !== 'true'; wrap.querySelector('#ntS').disabled = wrap.querySelector('#ntSs').getAttribute('aria-checked') !== 'true'; }
+    [].forEach.call(wrap.querySelectorAll('.nt-sw'), function(b){ b.addEventListener('click', function(){ b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); sync(); }); });
+    sync();
+    go.addEventListener('click', function(){
+      var n = get();
+      n.matin = wrap.querySelector('#ntM').value; n.soir = wrap.querySelector('#ntS').value;
+      n.mOn = wrap.querySelector('#ntMs').getAttribute('aria-checked') === 'true'; n.sOn = wrap.querySelector('#ntSs').getAttribute('aria-checked') === 'true';
+      if(!n.mOn && !n.sOn){ go.disabled = true; st.textContent = '…'; unsubscribe().then(function(){ toast('Notifications désactivées'); close(); }); return; }
+      go.disabled = true; st.textContent = 'Activation…';
+      // L'autorisation est demandée tout de suite, dans le geste (exigé par iPhone)
+      var perm = Notification.permission === 'granted' ? Promise.resolve('granted') : new Promise(function(res){ var r = Notification.requestPermission(res); if(r && r.then) r.then(res); });
+      perm.then(function(p){
+        if(p !== 'granted'){ throw new Error('perm'); }
+        n.on = true; put(n);
+        return subscribe(n);
+      }).then(function(){
+        toast('🔔 Notifications activées'); close();
+      }).catch(function(e){
+        var m = e && e.message;
+        if(m !== 'perm'){ var b = get(); b.on = false; put(b); }
+        go.disabled = false;
+        st.textContent = m === 'perm' ? 'Autorisation refusée : active les notifications dans les réglages du téléphone.'
+          : m === 'cle' ? 'Les notifications sont réservées aux personnes abonnées ou suivies par Benoît.'
+          : m === 'sw' ? 'Ouvre l’appli depuis son icône sur l’écran d’accueil, puis réessaie.'
+          : 'Pas de connexion au serveur pour l’instant. Réessaie dans un moment.';
+      });
+    });
+    var tb = wrap.querySelector('#ntTest');
+    if(tb) tb.addEventListener('click', function(){
+      tb.disabled = true; st.textContent = 'Envoi…';
+      ready().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+        if(!sub) throw new Error('none');
+        return post('/push/essai', {k:key(), endpoint:sub.endpoint});
+      }).then(function(r){
+        st.textContent = r && r.ok ? 'Envoyée : elle arrive dans quelques secondes (verrouille l’écran pour la voir).' : (r && r.raison === 'attends' ? 'Attends une minute entre deux essais.' : 'L’essai n’est pas passé. Désactive puis réactive les notifications.');
+        setTimeout(function(){ tb.disabled = false; }, 5000);
+      }).catch(function(){ st.textContent = 'L’essai n’est pas passé. Désactive puis réactive les notifications.'; tb.disabled = false; });
+    });
+    var ob = wrap.querySelector('#ntOff');
+    if(ob) ob.addEventListener('click', function(){ ob.disabled = true; unsubscribe().then(function(){ toast('Notifications désactivées'); close(); }); });
+  }
+  window.ecNotifs = open;
+
+  // ---------- Pastille sous la suggestion du matin / du soir ----------
+  var pill = null, lastBtn = null, lastT = null;
+  function paint(){ if(lastBtn) window.ecNotifPill(lastBtn, lastT); }
+  window.ecNotifPill = function(btn, t){
+    lastBtn = btn; lastT = t;
+    if(!pill){ pill = document.createElement('button'); pill.type = 'button'; pill.className = 'td-notif';
+      pill.addEventListener('click', function(){ open(pill.getAttribute('data-m')); }); }
+    var o = get(), sp = support(), skip = 0;
+    try{ skip = +localStorage.getItem('ec_notif_non') || 0; }catch(e){}
+    var on = active(), slotOn = on && (t === 'matin' ? o.mOn : o.sOn);
+    // Pas de pastille si : pas de suggestion, navigateur incapable, ou déjà activé pour ce moment (on garde un rappel discret)
+    pill.hidden = !t || !btn.parentNode || btn.hidden || sp === 'non';
+    if(pill.hidden){ if(pill.parentNode) pill.remove(); return; }
+    pill.setAttribute('data-m', t);
+    pill.classList.toggle('on', !!slotOn);
+    var h = (t === 'matin' ? o.matin : o.soir).replace(':', ' h ');
+    pill.innerHTML = slotOn
+      ? '<span class="tn-ic" aria-hidden="true">🔔</span><span>Rappel chaque ' + (t === 'matin' ? 'matin' : 'soir') + ' à <b>' + esc(h) + '</b></span><span class="tn-go">Modifier</span>'
+      : '<span class="tn-ic" aria-hidden="true">🔕</span><span>Recevoir ce rappel <b>chaque ' + (t === 'matin' ? 'matin' : 'soir') + '</b></span><span class="tn-go">Activer</span>';
+    if(btn.nextSibling !== pill) btn.parentNode.insertBefore(pill, btn.nextSibling);
+  };
+
+  // ---------- Ouverture depuis une notification ----------
+  function goFromUrl(){
+    var m = null; try{ m = new URLSearchParams(location.search).get('go'); }catch(e){}
+    if(m !== 'matin' && m !== 'soir') return;
+    try{ var u = new URL(location.href); u.searchParams.delete('go'); history.replaceState(null, '', u.toString()); }catch(e){}
+    var n = 0, iv = setInterval(function(){
+      n++;
+      var locked = document.documentElement.classList.contains('ec-locked') || document.querySelector('.lock-screen:not([hidden]), #lockScreen:not([hidden])');
+      if(window.ecTodGo && window.ecShowView && !locked){ clearInterval(iv); window.ecTodGo(m); }
+      else if(n > 40) clearInterval(iv);
+    }, 250);
+  }
+  if('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', function(e){
+    var d = e.data || {};
+    if(d.type === 'ec-go' && window.ecTodGo) window.ecTodGo(d.m);
+    if(d.type === 'ec-push-renew' && active()) subscribe(get()).catch(function(){});
+  });
+  // Une fois par jour : renvoie l'abonnement au serveur (fuseau, renouvellement, durée de conservation)
+  function refresh(){
+    var o = get(); if(!o.on || o.at === new Date().toDateString()) return;
+    if(!active()) return;
+    subscribe(o).catch(function(){});
+  }
+  window.addEventListener('load', function(){ setTimeout(goFromUrl, 400); setTimeout(refresh, 4000); });
+  if(document.readyState === 'complete'){ setTimeout(goFromUrl, 400); setTimeout(refresh, 4000); }
+})();
+</script>
 </body>
 </html>

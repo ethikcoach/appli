@@ -85,3 +85,32 @@ self.addEventListener('fetch', function(e){
     );
   }
 });
+
+// ---------- Notifications du matin et du soir ----------
+// Le serveur envoie un simple signal (aucun contenu) à l'heure choisie ; le texte est choisi ici, sur le téléphone.
+var EC_NOTIF = {
+  matin: {t:'☀️ Bien démarrer la journée', b:['5 minutes de réveil musculaire guidé, et c’est parti !', 'Un petit réveil du corps avant d’attaquer la journée ?', 'Ton réveil musculaire t’attend : 5 minutes, pas plus.']},
+  soir: {t:'🌙 Avant de dormir', b:['10 minutes de détente guidée pour bien dormir.', 'Relâche le corps et la tête avant la nuit : 10 minutes.', 'Ta détente du soir est prête. Installe-toi.']}
+};
+self.addEventListener('push', function(e){
+  var d = {}; try{ d = e.data ? e.data.json() : {}; }catch(x){}
+  var h = new Date().getHours(), m = d.m === 'matin' || d.m === 'soir' ? d.m : (h < 14 ? 'matin' : 'soir'), n = EC_NOTIF[m];
+  var body = d.b || n.b[Math.floor(Math.random() * n.b.length)];
+  e.waitUntil(self.registration.showNotification(d.t || (d.essai ? '🔔 Notifications activées' : n.t), {
+    body: d.essai ? 'Tout fonctionne. À bientôt pour ta routine !' : body,
+    icon: 'icon-192.png', badge: 'icon-192.png', tag: 'ec-' + m, renotify: false, lang: 'fr',
+    data: {u: './?go=' + m, m: m}
+  }));
+});
+self.addEventListener('notificationclick', function(e){
+  e.notification.close();
+  var m = (e.notification.data && e.notification.data.m) || 'soir', url = new URL((e.notification.data && e.notification.data.u) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({type:'window', includeUncontrolled:true}).then(function(cl){
+    for(var i = 0; i < cl.length; i++){ if(cl[i].url.indexOf(self.registration.scope) === 0 && 'focus' in cl[i]){ cl[i].postMessage({type:'ec-go', m:m}); return cl[i].focus(); } }
+    return self.clients.openWindow(url);
+  }));
+});
+self.addEventListener('pushsubscriptionchange', function(e){
+  // Abonnement renouvelé par le navigateur : l'appli le renverra au serveur à sa prochaine ouverture
+  e.waitUntil(self.clients.matchAll({type:'window'}).then(function(cl){ cl.forEach(function(w){ w.postMessage({type:'ec-push-renew'}); }); }));
+});
