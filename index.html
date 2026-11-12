@@ -19566,5 +19566,93 @@
   if(document.readyState === 'complete'){ setTimeout(goFromUrl, 400); setTimeout(refresh, 4000); }
 })();
 </script>
+<!-- ===================== Design 7 : chrono ajusté à la hauteur de l'écran ===================== -->
+<style>
+  /* Niveaux de compactage, appliqués un par un jusqu'à ce que tout tienne sans faire défiler */
+  #timerBackdrop.fit-1 .timer-tip, #timerBackdrop.fit-1 #timerNext{display:none !important;}
+  #timerBackdrop.fit-1 .timer-progressbar{margin-top:6px !important;}
+  #timerBackdrop.fit-1 .timer-tips-wrap{margin-top:4px !important;}
+  #timerBackdrop.fit-1 .timer-swap{margin-top:6px !important; min-height:34px !important; padding:5px 12px !important; font-size:.78rem !important;}
+  #timerBackdrop.fit-1 .timer-controls{padding-top:6px !important;}
+  #timerBackdrop[style*="--fitimg"] .timer-icon-wrap.has-photo{width:var(--fitimg) !important; max-width:70vw;}
+  #timerBackdrop.fit-2 .timer-exname{font-size:1.18rem !important;}
+  #timerBackdrop.fit-2:not(.calm):not(.feedback):not(.tm-xxl) .tc-ring{--ring:min(44vw, 150px) !important;}
+  #timerBackdrop.fit-3 .timer-next-thumb{display:none !important;}
+  #timerBackdrop.fit-3 .timer-next-card{padding:5px 12px !important; margin-top:4px !important;}
+  #timerBackdrop.fit-3 .timer-tips{font-size:.74rem !important; padding:6px 10px !important;}
+  #timerBackdrop.fit-3 .timer-tips p{margin-bottom:2px !important;}
+  #timerBackdrop.fit-3:not(.calm):not(.feedback):not(.tm-xxl) .tc-ring{--ring:min(40vw, 136px) !important; margin:2px auto 4px !important;}
+  #timerBackdrop.fit-4 .timer-tips p.err{display:none !important;}
+  #timerBackdrop.fit-4:not(.calm):not(.feedback):not(.tm-xxl) .tc-ring{--ring:min(36vw, 124px) !important;}
+  /* Niveau 5 : consignes repliées derrière un bouton */
+  .tm-tipbtn{display:none; margin:4px auto 0; padding:5px 12px; border:none; border-radius:999px; background:rgba(255,255,255,.14); color:#fff; font:700 .76rem/1.2 inherit; cursor:pointer;}
+  #timerBackdrop.fit-5.tips-on:not(.feedback):not(.calm) .tm-tipbtn{display:inline-block;}
+  #timerBackdrop.fit-5:not(.tips-open) .timer-tips-wrap{display:none !important;}
+  #timerBackdrop.fit-5.tips-open .timer-tips-wrap{position:fixed; left:12px; right:12px; top:calc(env(safe-area-inset-top, 0px) + 92px); z-index:30; width:auto !important; max-width:none !important; margin:0 !important;}
+  #timerBackdrop.fit-5.tips-open .timer-tips{max-height:60vh; background:rgba(8,22,15,.96); box-shadow:0 18px 40px rgba(0,0,0,.45); font-size:.84rem !important; padding:12px 14px !important;}
+  #timerBackdrop.fit-5.tips-open .timer-tips p.err{display:block !important;}
+  #timerBackdrop.fit-6:not(.calm):not(.feedback):not(.tm-xxl) .tc-ring{--ring:min(34vw, 112px) !important;}
+  #timerBackdrop.fit-6 .timer-exsublabel{font-size:.78rem !important;}
+  #timerBackdrop.fit-7 .timer-icon-wrap{display:none !important;}
+  #timerBackdrop.tm-xxl.fit-3:not(.feedback) .tc-ring{--ring:min(80vw, 40dvh) !important;}
+  #timerBackdrop.tm-xxl.fit-5:not(.feedback) .tc-ring{--ring:min(74vw, 34dvh) !important;}
+  #timerBackdrop.tm-xxl.fit-6:not(.feedback) .tc-ring{--ring:min(64vw, 28dvh) !important;}
+  #timerBackdrop.fit-7 .timer-swap{display:none !important;}
+</style>
+<script>
+(function(){
+  var b = document.getElementById('timerBackdrop'); if(!b) return;
+  var MAX = 7, busy = false, lastBase = '', raf = 0;
+  var sub = document.getElementById('timerExSublabel'), tw = document.getElementById('timerTipsWrap');
+  var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'tm-tipbtn'; btn.textContent = 'ⓘ Consignes de l’exercice';
+  if(sub && sub.parentNode) sub.parentNode.insertBefore(btn, sub.nextSibling);
+  btn.addEventListener('click', function(e){ e.stopPropagation(); b.classList.toggle('tips-open'); btn.textContent = b.classList.contains('tips-open') ? '✕ Fermer les consignes' : 'ⓘ Consignes de l’exercice'; });
+  if(tw) tw.addEventListener('click', function(){ if(b.classList.contains('tips-open')){ b.classList.remove('tips-open'); btn.textContent = 'ⓘ Consignes de l’exercice'; } });
+  function base(){ return b.className.replace(/\b(fit-\d|tips-open)\b/g, '').replace(/\s+/g, ' ').trim(); }
+  function clear(){ for(var i = 1; i <= MAX; i++) b.classList.remove('fit-' + i); }
+  function over(){ return b.scrollHeight - b.clientHeight > 1; }
+  function fit(){
+    raf = 0;
+    if(!b.classList.contains('open')){ clear(); return; }
+    var fb = document.getElementById('timerFeedback');
+    busy = true;
+    clear(); b.style.removeProperty('--fitimg'); b.classList.remove('tips-open'); btn.textContent = 'ⓘ Consignes de l’exercice';
+    // Écran de fin (ressenti, message au coach) : on laisse défiler normalement
+    if(!(b.classList.contains('feedback') || (fb && !fb.hidden))){
+      // Pour chaque niveau, la photo prend la plus grande taille possible (sans descendre sous un minimum)
+      var RANGE = {2:[150, 230], 3:[118, 190], 4:[100, 170], 5:[90, 230], 6:[64, 150]};
+      for(var lv = 1; lv <= MAX && over(); lv++){
+        b.classList.add('fit-' + lv);
+        var r = RANGE[lv]; if(!r) continue;
+        b.style.setProperty('--fitimg', r[0] + 'px');
+        if(over()){ continue; }
+        var lo = r[0], hi = r[1];
+        while(hi - lo > 6){ var mid = (lo + hi) >> 1; b.style.setProperty('--fitimg', mid + 'px'); if(over()) hi = mid; else lo = mid; }
+        b.style.setProperty('--fitimg', lo + 'px');
+        break;
+      }
+      if(b.classList.contains('fit-7')) b.style.removeProperty('--fitimg');
+    }
+    b.scrollTop = 0;
+    lastBase = base();
+    setTimeout(function(){ busy = false; }, 0);
+  }
+  function later(){ if(!raf) raf = requestAnimationFrame(fit); }
+  window.ecTimerFit = later;
+  new MutationObserver(function(){
+    if(busy) return;
+    var nb = base(); if(nb !== lastBase) later();
+  }).observe(b, {attributes:true, attributeFilter:['class', 'data-kind']});
+  ['timerExName', 'timerTipsWrap', 'timerIconWrap', 'timerNextCard', 'timerKind'].forEach(function(id){
+    var el = document.getElementById(id); if(!el) return;
+    new MutationObserver(function(){ if(!busy) later(); }).observe(el, {childList:true, characterData:true, subtree:true, attributes:true, attributeFilter:['hidden', 'class', 'style']});
+  });
+  // Photo chargée après coup : on remesure
+  b.addEventListener('load', function(e){ if(e.target && e.target.tagName === 'IMG') later(); }, true);
+  window.addEventListener('resize', later);
+  window.addEventListener('orientationchange', function(){ setTimeout(later, 300); });
+  if(window.visualViewport) visualViewport.addEventListener('resize', later);
+})();
+</script>
 </body>
 </html>
