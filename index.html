@@ -20630,7 +20630,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   :root[data-theme="dark"] .cl-av{background:#244233; color:#CFE8D8;} :root[data-theme="dark"] .cl-tag{color:#9FDDB6;}
 
   /* ---------- Éditeur de séance ---------- */
-  .cl-ov{position:fixed; inset:0; z-index:1400; display:flex; flex-direction:column; background:var(--bg, #F6F3EC); color:var(--ink);}
+  .cl-ov{position:fixed; inset:0; z-index:1400; display:flex; flex-direction:column; background:var(--paper, #F6F3EC); color:var(--ink);}
   .cl-ov-top{display:flex; align-items:center; gap:8px; padding:calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px; background:var(--card); box-shadow:0 1px 0 var(--cl-b, rgba(127,127,127,.2));}
   .cl-ov-top b{flex:1; min-width:0; font:800 1.05rem/1.2 'Bricolage Grotesque', sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .cl-ov-body{flex:1; overflow:auto; -webkit-overflow-scrolling:touch; padding:14px 14px calc(env(safe-area-inset-bottom, 0px) + 24px);}
@@ -20642,14 +20642,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cl-ln{display:flex; align-items:center; gap:6px; margin-bottom:6px;}
   .cl-ln .n{flex:none; width:22px; text-align:center; font-weight:800; color:var(--stone); font-size:.84rem;}
   .cl-ln input{min-width:0; min-height:44px; padding:0 10px; border:1.5px solid rgba(127,127,127,.22); border-radius:12px; background:var(--card); color:var(--ink); font:500 16px/1.2 inherit; font-family:inherit;}
-  .cl-ln .nm{flex:1;} .cl-ln .v{flex:none; width:76px; text-align:center; font-weight:700;}
+  .cl-ln .nm{flex:1;} .cl-ln .v{flex:none; width:64px; padding:0 4px; text-align:center; font-weight:700;} .cl-ln{gap:5px;} .cl-ln button[data-e=up], .cl-ln button[data-e=del]{width:28px;} .cl-ln button.sd{width:34px;}
+  .cl-ln button.ph{width:40px; height:40px; border-radius:10px; background:rgba(127,127,127,.12) center/cover no-repeat; color:var(--stone); font-weight:800; font-size:.82rem; box-shadow:inset 0 0 0 1px rgba(127,127,127,.18);}
   .cl-ln button.sd{width:40px; font-weight:800; font-size:.8rem;} .cl-ln button.sd[aria-pressed="true"]{background:#1E7A4F; color:#fff;}
   .cl-ln button{flex:none; width:32px; height:40px; border:none; border-radius:10px; background:rgba(127,127,127,.12); color:var(--ink); font-size:.9rem; cursor:pointer; padding:0;}
   .cl-add{width:100%; min-height:44px; margin-top:2px; border:1.5px dashed rgba(127,127,127,.35); border-radius:12px; background:transparent; color:var(--ink); font:700 .9rem/1 inherit; font-family:inherit; cursor:pointer;}
   .cl-tip{margin:6px 0 0; font-size:.78rem; color:var(--stone); line-height:1.4;}
-  .cl-row2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
-  .cl-row2 label{display:block; font-size:.74rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--stone);}
-  .cl-row2 input{display:block; width:100%; box-sizing:border-box; margin-top:6px; min-height:44px; padding:0 10px; border:1.5px solid rgba(127,127,127,.22); border-radius:12px; background:var(--card); color:var(--ink); font:500 16px/1.2 inherit; font-family:inherit;}
+  .cl-row2{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px;}
+  .cl-row2 input::-webkit-date-and-time-value{text-align:left; margin:0;} .cl-row2 input::-webkit-calendar-picker-indicator{opacity:.6;}
+  @media (prefers-color-scheme: dark){ .cl-row2 input[type=date]{color-scheme:dark;} }
+  .cl-row2 label{min-width:0; display:block; font-size:.74rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--stone);}
+  .cl-row2 input{-webkit-appearance:none; appearance:none; height:44px; line-height:44px; text-align:left; display:block; width:100%; max-width:100%; box-sizing:border-box; margin-top:6px; min-height:44px; padding:0 10px; border:1.5px solid rgba(127,127,127,.22); border-radius:12px; background:var(--card); color:var(--ink); font:500 16px/1.2 inherit; font-family:inherit;}
 
   /* ---------- Présentation (à montrer au client) ---------- */
   .clp{position:fixed; inset:0; z-index:1450; display:flex; flex-direction:column; background:#F6F3EC; color:#18261E; overflow:hidden;}
@@ -20811,7 +20814,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     [/dead ?lift|souleve/, 'Soulevé de terre'], [/biceps/, 'Curl biceps classique'], [/triceps/, 'Extension triceps au-dessus de la tête'],
     [/elevation lat/, 'Élévations latérales haltères'], [/rotation epaule/, 'Rotations d’épaules et de bras'],
     [/\bours\b|bear/, 'Marche de l’ours (bear crawl)'], [/montee box|step/, 'Montées sur box'],
-    [/rameur/, 'Rameur endurance'], [/velo/, 'Vélo endurance'], [/tapis|marche incline/, 'Marche rapide inclinée'],
+    [/rameur/, 'Rameur endurance'], [/(^| )velo( |$)/, 'Vélo endurance'], [/tapis|marche incline/, 'Marche rapide inclinée'],
     [/respiration/, 'Respiration diaphragmatique (ventre)'], [/dos c dos r|chat vache/, 'Chat-vache (mobilisation du dos)'],
     [/crunch/, 'Crunch debout croisé (coude-genou opposé)']
   ];
@@ -20821,11 +20824,39 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!byName){ byName = {}; exList().forEach(function(e){ byName[nz(e.name)] = e; }); }
     return byName[nz(n)] || null;
   }
+  // Recherche souple : tous les mots du nom écrit doivent se retrouver dans le nom d'un exercice de l'appli (pluriels et débuts de mots acceptés)
+  var STOP = {de:1, du:1, des:1, la:1, le:1, les:1, a:1, au:1, aux:1, sur:1, en:1, avec:1, et:1, un:1, une:1, l:1, d:1};
+  var FZ = {};
+  function stem(w){ return w.replace(/(es|s|x)$/, ''); }
+  function qWords(name){ return nz(name).split(' ').filter(function(w){ return w.length > 1 && !STOP[w] && !/^\d+$/.test(w); }).map(stem); }
+  function covers(e, name){ var et = nz(e.name).split(' ').map(stem); return qWords(name).every(function(w){ return et.some(function(t){ return t === w || (w.length >= 4 && t.indexOf(w) === 0) || (t.length >= 4 && w.indexOf(t) === 0); }); }); }
+  function exFuzzy(name){
+    var k = nz(name); if(Object.prototype.hasOwnProperty.call(FZ, k)) return FZ[k];
+    var q = k.split(' ').filter(function(w){ return w.length > 1 && !STOP[w] && !/^\d+$/.test(w); }).map(stem), best = null, bestS = 0;
+    if(q.length >= 2){
+      exList().forEach(function(e){
+        var raw = nz(e.name).split(' '), et = raw.map(stem);
+        var ok = q.every(function(w){ return et.some(function(t){ return t === w || (w.length >= 4 && t.indexOf(w) === 0) || (t.length >= 4 && w.indexOf(t) === 0); }); });
+        if(!ok) return;
+        var ph = ''; try{ ph = window.ecExPhoto ? window.ecExPhoto(e) : ''; }catch(x){}
+        if(!ph || ph.indexOf('data:image/svg') === 0) return;
+        var sc = k.split(' ').filter(function(w){ return raw.indexOf(w) >= 0; }).length * 1000 - e.name.length;
+        if(!best || sc > bestS){ best = e; bestS = sc; }
+      });
+    }
+    return (FZ[k] = best);
+  }
   function exFor(name){
     var k = nz(name); if(!k) return null;
     if(D.map && Object.prototype.hasOwnProperty.call(D.map, k)){ var id = D.map[k]; return id ? (exList().find(function(e){ return e.id === id; }) || null) : null; }
-    for(var i = 0; i < RULES.length; i++){ if(RULES[i][0].test(k)) return RULES[i][1] ? exByNameApp(RULES[i][1]) : null; }
-    return exByNameApp(name);
+    var i;
+    for(i = 0; i < RULES.length; i++){ if(!RULES[i][1] && RULES[i][0].test(k)) return null; }
+    var e = exByNameApp(name); if(e) return e;
+    var f = exFuzzy(name), r = null;
+    for(i = 0; i < RULES.length; i++){ if(RULES[i][0].test(k)){ r = exByNameApp(RULES[i][1]); break; } }
+    // La règle gagne, sauf si elle oublie un mot écrit (ex. « Squat bulgare » → Squat) alors que la recherche souple les retrouve tous
+    if(r && f && !covers(r, name)) return f;
+    return r || f;
   }
   function photoOf(name){ var e = exFor(name); if(!e) return ''; try{ var p = window.ecExPhoto ? window.ecExPhoto(e) : ''; return p && p.indexOf('data:image/svg') !== 0 ? p : ''; }catch(x){ return ''; } }
   function ini(name){ var w = String(name || '').replace(/^trx\s*/i, '').trim().split(/\s+/); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase(); }
@@ -20873,7 +20904,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function renderClient(c){
     var l = lastSess(c), list = c.s.slice().reverse(), shown = list.slice(0, V.more);
     var h = '<div class="cl-head"><button type="button" class="cl-back" data-a="back" aria-label="Retour">‹</button><span><h3>' + esc(c.nom) + '</h3><small>' + c.s.length + ' séance' + (c.s.length > 1 ? 's' : '') + (l ? ' · dernière : ' + esc(dShort(l)) : '') + '</small></span><button type="button" class="cl-btn ghost" data-a="cmenu" aria-label="Options du client">⋯</button></div>'
-      + '<div class="cl-grid2" style="margin:0 0 12px"><button type="button" class="cl-btn go" data-a="new">＋ Nouvelle séance</button><button type="button" class="cl-btn ghost" data-a="blank">Page blanche</button></div>';
+      + '<div class="cl-grid2" style="margin:0 0 12px"><button type="button" class="cl-btn go" data-a="new" style="grid-column:1 / -1">＋ Nouvelle séance</button></div>';
     h += shown.length ? shown.map(function(s){ return sessHtml(c, s); }).join('') : '<div class="cl-card cl-empty"><b>📝</b>Pas encore de séance pour ' + esc(c.nom) + '.</div>';
     if(list.length > shown.length) h += '<button type="button" class="cl-btn ghost cl-more" data-a="more">Voir les séances plus anciennes (' + (list.length - shown.length) + ')</button>';
     pane.innerHTML = h;
@@ -20892,7 +20923,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'more'){ V.more += 30; render(); return; }
     if(!c) return;
     if(a === 'cmenu') return clientMenu(c);
-    if(a === 'new'){ var l = lastSess(c); return openEditor(c, l ? {d:todayIso(), t:l.t, r:l.r, w:l.w, who:l.who, ex:l.ex.map(function(x){ return x.slice(); })} : {d:todayIso(), ex:[['', '30"']]}, true); }
+    if(a === 'new'){ var l0 = lastSess(c);
+      if(!l0) return openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true);
+      sheet('<h4>＋ Nouvelle séance · ' + esc(c.nom) + '</h4><p>Comment veux-tu partir ?</p>'
+        + '<button type="button" class="cl-btn go" data-k="last">⧉ Dernière séance <small style="font-weight:600;opacity:.85">· ' + esc(dShort(l0)) + ' · ' + l0.ex.length + ' exercice' + (l0.ex.length > 1 ? 's' : '') + '</small></button>'
+        + '<button type="button" class="cl-btn" data-k="blank">📄 Séance vierge</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k){
+          if(k === 'last') setTimeout(function(){ openEditor(c, {d:todayIso(), t:l0.t, r:l0.r, w:l0.w, who:l0.who, ex:l0.ex.map(function(x){ return x.slice(); })}, true); }, 0);
+          if(k === 'blank') setTimeout(function(){ openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true); }, 0);
+        });
+      return; }
+    if(a === 'newlast_unused'){ var l = lastSess(c); return openEditor(c, l ? {d:todayIso(), t:l.t, r:l.r, w:l.w, who:l.who, ex:l.ex.map(function(x){ return x.slice(); })} : {d:todayIso(), ex:[['', '30"']]}, true); }
     if(a === 'blank') return openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true);
     if(!s) return;
     if(a === 'go') return launchSheet(c.nom, s, c);
@@ -21001,21 +21041,23 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var B = el.querySelector('#clEdB');
     function lines(sec){
       var arr = S[sec];
-      return arr.map(function(l, i){ return '<div class="cl-ln" data-sec="' + sec + '" data-i="' + i + '"><span class="n">' + (i + 1) + '</span><input class="nm" list="clExL" value="' + esc(l[0]) + '" placeholder="Exercice" autocomplete="off" autocapitalize="sentences"><input class="v" list="clValL" value="' + esc(l[1]) + '" placeholder="30&quot;" autocomplete="off">' + (sec === 'ci' ? '<button type="button" class="sd" data-e="side" aria-label="Un côté puis l’autre" aria-pressed="' + sidesOf(l) + '">↔</button>' : '') + '<button type="button" data-e="up" aria-label="Monter"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-e="del" aria-label="Retirer">✕</button></div>'; }).join('');
+      return arr.map(function(l, i){ return '<div class="cl-ln" data-sec="' + sec + '" data-i="' + i + '">' + thumbHtml(l[0], i) + '<input class="nm" list="clExL" value="' + esc(l[0]) + '" placeholder="Exercice" autocomplete="off" autocapitalize="sentences"><input class="v" list="clValL" value="' + esc(l[1]) + '" placeholder="30&quot;" autocomplete="off">' + (sec === 'ci' ? '<button type="button" class="sd" data-e="side" aria-label="Un côté puis l’autre" aria-pressed="' + sidesOf(l) + '">↔</button>' : '') + '<button type="button" data-e="up" aria-label="Monter"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-e="del" aria-label="Retirer">✕</button></div>'; }).join('');
     }
+    function thumbHtml(nm, i){ var p = photoOf(nm); return '<button type="button" class="ph" data-e="pk" aria-label="Image de l’exercice"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : (i + 1)) + '</button>'; }
+    function thumbUpd(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')], b = ln.querySelector('.ph'), p = photoOf(l[0]); b.style.backgroundImage = p ? "url('" + p + "')" : ''; b.textContent = p ? '' : (+ln.getAttribute('data-i') + 1); }
     function draw(){
       B.innerHTML = '<div class="cl-row2"><label>Date<input type="date" id="clEdD" value="' + esc(S.d) + '"></label><label>Participant(s)<input type="text" id="clEdW" value="' + esc(S.who) + '" placeholder="facultatif" autocomplete="off"></label></div>'
         + '<span class="cl-lab">Tours du circuit</span><div class="cl-chips" id="clEdT">' + [[0, 'Non précisé'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']].map(function(o){ return '<button type="button" class="cl-chip" data-t="' + o[0] + '" aria-pressed="' + (S.t === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div>'
         + '<span class="cl-lab">Récup entre les tours</span><div class="cl-chips" id="clEdR">' + [['', '⏱ Chrono'], ["1'", "1'"], ["1'30", "1'30"], ["2'", "2'"], ["3'", "3'"], ["5'", "5'"]].map(function(o){ return '<button type="button" class="cl-chip" data-r="' + esc(o[0]) + '" aria-pressed="' + (clean(S.r) === clean(o[0])) + '">' + o[1] + '</button>'; }).join('') + '</div>'
         + '<span class="cl-lab">🔸 Échauffement (fait une fois)</span>' + lines('wu') + '<button type="button" class="cl-add" data-e="add" data-sec="wu">＋ Ajouter un échauffement</button>'
         + '<span class="cl-lab">💪 Circuit</span>' + lines('ci') + '<button type="button" class="cl-add" data-e="add" data-sec="ci">＋ Ajouter un exercice</button>'
-        + '<p class="cl-tip">Valeur : <b>30"</b> ou <b>1\'</b> = compte à rebours · <b>12</b> = répétitions · <b>3X30"recup30"</b> = séries · <b>30"-10</b> = deux temps enchaînés · <b>↔</b> vert = un côté puis l’autre (repéré seul pour 1J, 1 bras, 1B1J…, sauf « Alt »). Les noms sont proposés d’après tes anciennes séances.</p>'
+        + '<p class="cl-tip">Valeur : <b>30"</b> ou <b>1\'</b> = compte à rebours · <b>12</b> = répétitions · <b>3X30"recup30"</b> = séries · <b>30"-10</b> = deux temps enchaînés · <b>↔</b> vert = un côté puis l’autre (repéré seul pour 1J, 1 bras, 1B1J…, sauf « Alt »). Les noms sont proposés d’après tes anciennes séances. La vignette à gauche montre l’image trouvée ; touche-la pour en choisir une autre.</p>'
         + '<div class="cl-grid2" style="margin-top:14px"><button type="button" class="cl-btn ghost" data-e="show">🖥️ Présenter</button><button type="button" class="cl-btn go" data-e="go">▶️ Enregistrer et lancer</button></div>';
     }
     draw();
     B.addEventListener('input', function(e){
       var ln = e.target.closest('.cl-ln');
-      if(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')]; if(e.target.classList.contains('nm')) l[0] = e.target.value; else l[1] = e.target.value; return; }
+      if(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')]; if(e.target.classList.contains('nm')){ l[0] = e.target.value; thumbUpd(ln); } else l[1] = e.target.value; return; }
       if(e.target.id === 'clEdD') S.d = e.target.value; if(e.target.id === 'clEdW') S.who = e.target.value;
     });
     B.addEventListener('change', function(e){ if(e.target.id === 'clEdD') S.d = e.target.value; });
@@ -21042,6 +21084,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if(a === 'add'){ var sec = b.getAttribute('data-sec'), prevV = S[sec].length ? S[sec][S[sec].length - 1][1] : '30"'; S[sec].push(['', sec === 'wu' ? '' : prevV]); draw(); var ins = B.querySelectorAll('.cl-ln[data-sec="' + sec + '"] .nm'); ins.length && ins[ins.length - 1].focus(); return; }
       if(ln){ var arr = S[ln.getAttribute('data-sec')], i = +ln.getAttribute('data-i');
         if(a === 'del'){ arr.splice(i, 1); draw(); return; }
+        if(a === 'pk'){ var nm0 = String(arr[i][0] || '').trim(); if(!nm0){ toast('Écris d’abord le nom de l’exercice'); return; } pickPhoto(nm0, function(){ thumbUpd(ln); }); return; }
         if(a === 'side'){ arr[i][2] = sidesOf(arr[i]) ? 0 : 1; b.setAttribute('aria-pressed', sidesOf(arr[i])); return; }
         if(a === 'up' && i > 0){ var x = arr[i]; arr[i] = arr[i - 1]; arr[i - 1] = x; draw(); return; } }
       if(a === 'show'){ var o = build(); if(!o.ex.length){ toast('Ajoute au moins un exercice'); return; } present(c.nom, o, null); return; }
@@ -21283,7 +21326,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'auto'){ CT.o.auto = !CT.o.auto; CO.auto = CT.o.auto; saveCO(); b.setAttribute('aria-pressed', CT.o.auto); b.textContent = (CT.o.auto ? '✓' : '○') + ' Tout s’enchaîne seul'; return; }
   }
 
-  window.ecClientsTest = {autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
+  window.ecClientsTest = {fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
   load().then(render);
   render();
 })();
