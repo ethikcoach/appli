@@ -20807,6 +20807,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if(denied) return '⚪ Synchro réservée à la clé coach';
       if(state === 'run') return '🔄 Synchronisation…';
       if(!navigator.onLine || state === 'off') return '📴 Hors ligne' + (st.dirty ? ' · tes changements partiront au retour du réseau' : ' · tout est enregistré sur cet appareil');
+      if(state === 'old') return '🛠 Serveur pas encore mis à jour : dépose le nouveau worker.js sur Cloudflare' + (st.dirty ? ' · tes changements attendent sur cet appareil' : '');
       if(state === 'err') return '⚠️ Synchro impossible pour l’instant' + (st.dirty ? ' · nouvel essai automatique' : '');
       if(st.dirty) return '⏳ Changements en attente d’envoi';
       return st.at ? '✅ iPad et iPhone à jour · ' + hm(st.at) : '🔄 Synchro iPad ↔ iPhone activée';
@@ -20889,7 +20890,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       // Les dernières modifications pas encore horodatées le sont avant l'échange
       if(saveT){ clearTimeout(saveT); saveT = 0; if(stamp()){ st.dirty = true; seq++; } persist(); }
       else if(stamp()){ st.dirty = true; seq++; persist(); }
-      return pull(0).then(function(){ set('ok'); }, function(e){ set(e && e.raison === 'cle' ? 'ok' : (navigator.onLine ? 'err' : 'off')); })
+      return pull(0).then(function(){ set('ok'); }, function(e){ set(e && e.raison === 'cle' ? 'ok' : e && e._s === 404 ? 'old' : (navigator.onLine ? 'err' : 'off')); })
         .then(function(){ busy = false; if(again){ again = false; setTimeout(run, 300); } });
     }
     function changed(){ st.dirty = true; seq++; keep(); set(state); clearTimeout(pushT); pushT = setTimeout(run, 1500); }
