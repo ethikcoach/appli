@@ -20673,6 +20673,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .clp-c b{font:800 clamp(.98rem, 1.9vw, 1.2rem)/1.2 'Bricolage Grotesque', sans-serif;}
   .clp-c em{align-self:flex-start; margin-top:auto; padding:5px 12px; border-radius:999px; background:#FFF1CF; color:#6B4A06; font:800 clamp(.95rem, 1.9vw, 1.15rem)/1.1 Inter, sans-serif; font-style:normal;}
   .clp-save{display:flex; gap:8px; align-items:center; margin:16px 0 0; padding:12px; border-radius:16px; background:#E4EFE7;}
+  @media (min-width:700px){
+    .clp-body{padding-left:22px; padding-right:22px;}
+    .clp-grid{grid-template-columns:repeat(auto-fill, minmax(236px, 1fr)); gap:16px;}
+    .clp-c{border-radius:24px;}
+    .clp-n{top:12px; left:12px; min-width:40px; height:40px; font-size:1.15rem;}
+    .clp-c > div{padding:14px 16px 16px; gap:10px;}
+    .clp-c b{font-size:clamp(1.25rem, 2.3vw, 1.6rem);}
+    .clp-c em{padding:7px 16px; font-size:clamp(1.2rem, 2.3vw, 1.55rem);}
+    .clp-ph .ini{font-size:2.6rem;}
+    .clp-wu span{padding:10px 16px; font-size:1.15rem;}
+  }
   .clp-save span{flex:1; font-size:.88rem; font-weight:600;}
   @media screen and (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .clp{background:#0E1813; color:#EEF3EF;} :root:not([data-theme="light"]) .clp-top p{color:#A8B8AE;} :root:not([data-theme="light"]) .clp-top p b{color:#8FD0A5;} :root:not([data-theme="light"]) .clp-ib{background:rgba(255,255,255,.1); color:#EEF3EF;} :root:not([data-theme="light"]) .clp-c, :root:not([data-theme="light"]) .clp-wu span{background:#18261E; box-shadow:none;} :root:not([data-theme="light"]) .clp-sec{color:#A8B8AE;} :root:not([data-theme="light"]) .clp-save{background:#1F3A2B;} }
   :root[data-theme="dark"] .clp{background:#0E1813; color:#EEF3EF;} :root[data-theme="dark"] .clp-top p{color:#A8B8AE;} :root[data-theme="dark"] .clp-top p b{color:#8FD0A5;} :root[data-theme="dark"] .clp-ib{background:rgba(255,255,255,.1); color:#EEF3EF;} :root[data-theme="dark"] .clp-c, :root[data-theme="dark"] .clp-wu span{background:#18261E; box-shadow:none;} :root[data-theme="dark"] .clp-sec{color:#A8B8AE;} :root[data-theme="dark"] .clp-save{background:#1F3A2B;}
@@ -20851,7 +20862,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return '<div class="cl-ss" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '')
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
-      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">▶️ Chrono</button><button type="button" data-a="show">🖥️ Présenter</button><button type="button" data-a="dup">⧉ Refaire</button><button type="button" data-a="edit">✏️</button><button type="button" data-a="qr" aria-label="QR pour l’iPad">📷</button><button type="button" data-a="del" aria-label="Supprimer">🗑</button></div></div>';
+      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">▶️ Chrono</button><button type="button" data-a="show">🖥️ Présenter</button><button type="button" data-a="dup">⧉ Refaire</button><button type="button" data-a="copy">↗ Copier vers…</button><button type="button" data-a="edit">✏️</button><button type="button" data-a="qr" aria-label="QR pour l’iPad">📷</button><button type="button" data-a="del" aria-label="Supprimer">🗑</button></div></div>';
   }
   function renderClient(c){
     var l = lastSess(c), list = c.s.slice().reverse(), shown = list.slice(0, V.more);
@@ -20883,6 +20894,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'edit') return openEditor(c, s, false);
     if(a === 'dup') return openEditor(c, {d:todayIso(), t:s.t, r:s.r, w:s.w, who:s.who, ex:s.ex.map(function(x){ return x.slice(); })}, true);
     if(a === 'qr') return showQR(c.nom, s);
+    if(a === 'copy') return copyTo(c, s);
     if(a === 'del') return sheet('<h4>Supprimer cette séance ?</h4><p>' + esc(dLong(s)) + ' · ' + esc(c.nom) + '</p><button type="button" class="cl-btn red" data-k="ok">Supprimer</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k){ if(k === 'ok'){ c.s = c.s.filter(function(x){ return x !== s; }); save(); render(); toast('Séance supprimée'); } });
   });
 
@@ -20954,7 +20966,25 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     SUG = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).slice(0, 500).map(function(k){ var o = best[k]; return Object.keys(o).sort(function(a, b){ return o[b] - o[a]; })[0]; });
     return SUG;
   }
-  function openEditor(c, s0, isNew){
+  function copyTo(c0, s){
+    var d = sheet('<h4>↗ Copier vers un autre client</h4><p>Séance du ' + esc(dShort(s)) + ' de ' + esc(c0.nom) + '. Tu pourras la retoucher avant d’enregistrer.</p>'
+      + '<div class="cl-row2" style="grid-template-columns:1fr"><label>Date de la nouvelle séance<input type="date" id="clCpD" value="' + todayIso() + '"></label></div>'
+      + '<input class="cl-in" id="clCpQ" type="search" placeholder="Rechercher un client" style="width:100%;box-sizing:border-box;margin-top:12px" autocomplete="off"><div class="cl-list" id="clCpL"></div>'
+      + '<button type="button" class="cl-btn ghost" data-k="newc">＋ Nouveau client</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k, dd, kb){
+      var date = dd.querySelector('#clCpD').value || todayIso();
+      var go = function(tc){ if(!tc) return; setTimeout(function(){ openEditor(tc, {d:date, t:s.t, r:s.r, w:s.w, ex:s.ex.map(function(x){ return x.slice(); })}, true, function(){ V.c = tc.id; V.more = 15; toast('↗ Séance copiée pour ' + tc.nom); }); }, 0); };
+      if(k === 'pick'){ go(clientById(kb.getAttribute('data-id'))); return; }
+      if(k === 'newc'){ setTimeout(function(){ askName('Nouveau client', '', function(n){ var nc = {id:uid(), nom:n, s:[]}; D.clients.push(nc); save(); go(nc); }); }, 0); return; }
+    });
+    var q = d.querySelector('#clCpQ'), L = d.querySelector('#clCpL');
+    function draw(){
+      var t = nz(q.value), arr = D.clients.filter(function(c){ return c !== c0 && (!t || nz(c.nom).indexOf(t) >= 0); }).map(function(c){ var l = lastSess(c); return {c:c, k:l ? (l.d || l._k || '') : ''}; });
+      arr.sort(function(a, b){ return a.k < b.k ? 1 : a.k > b.k ? -1 : a.c.nom.localeCompare(b.c.nom); });
+      L.innerHTML = arr.slice(0, 40).map(function(x){ return '<button type="button" class="cl-row" data-k="pick" data-id="' + esc(x.c.id) + '"><em class="cl-av">' + esc(ini(x.c.nom)) + '</em><span><b>' + esc(x.c.nom) + '</b><small>' + x.c.s.length + ' séance' + (x.c.s.length > 1 ? 's' : '') + '</small></span><i>›</i></button>'; }).join('') || '<div class="cl-empty">Aucun client trouvé.</div>';
+    }
+    q.addEventListener('input', draw); draw();
+  }
+  function openEditor(c, s0, isNew, onSaved){
     var S = {d:s0.d || '', lab:s0.lab || '', who:s0.who || '', t:s0.t || 0, r:s0.r || '', wu:[], ci:[]};
     var w = s0.w || 0; (s0.ex || []).forEach(function(l, i){ (i < w ? S.wu : S.ci).push([l[0], l[1]]); });
     var el = document.createElement('div'); el.className = 'cl-ov'; el.setAttribute('role', 'dialog');
@@ -21002,13 +21032,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var b = e.target.closest('[data-e]'); if(!b) return;
       var a = b.getAttribute('data-e'), ln = b.closest('.cl-ln');
       if(a === 'x'){ close(); return; }
-      if(a === 'save'){ if(commit()){ toast('💾 Séance enregistrée'); close(); } return; }
+      if(a === 'save'){ if(commit()){ if(onSaved) onSaved(); else toast('💾 Séance enregistrée'); close(); } return; }
       if(a === 'add'){ var sec = b.getAttribute('data-sec'), prevV = S[sec].length ? S[sec][S[sec].length - 1][1] : '30"'; S[sec].push(['', sec === 'wu' ? '' : prevV]); draw(); var ins = B.querySelectorAll('.cl-ln[data-sec="' + sec + '"] .nm'); ins.length && ins[ins.length - 1].focus(); return; }
       if(ln){ var arr = S[ln.getAttribute('data-sec')], i = +ln.getAttribute('data-i');
         if(a === 'del'){ arr.splice(i, 1); draw(); return; }
         if(a === 'up' && i > 0){ var x = arr[i]; arr[i] = arr[i - 1]; arr[i - 1] = x; draw(); return; } }
       if(a === 'show'){ var o = build(); if(!o.ex.length){ toast('Ajoute au moins un exercice'); return; } present(c.nom, o, null); return; }
-      if(a === 'go'){ var s = commit(); if(s){ close(); launchSheet(c.nom, s, c); } return; }
+      if(a === 'go'){ var s = commit(); if(s){ if(onSaved) onSaved(); close(); launchSheet(c.nom, s, c); } return; }
     });
   }
 
