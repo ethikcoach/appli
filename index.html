@@ -20238,6 +20238,7 @@
       setTimeout(function(){ spinReveal(c, T[+c.getAttribute('data-i')], P, k === cards.length - 1 && !dc); }, 300 + k * 420);
     });
     if(dc) setTimeout(function(){ spinDefi(dc, true); }, 300 + cards.length * 420 + 350);
+    st.revealUntil = Date.now() + 300 + cards.length * 420 + (dc ? 1600 : 0) + 1500;
     if(!cards.length && !dc) ding();
   }
   function spinReveal(c, e, P, last){
@@ -20360,9 +20361,11 @@
   }
   // ---------- Grand chrono sur l'iPad (lancé depuis le téléphone) ----------
   var BIG = {p:null, el:null, iv:0, hide:'', last:-1};
-  function bigKey(p){ return p ? [p.n, p.i, p.c].join('|') : ''; }
+  function bigKey(p){ var T = (st && st.tours[st.cur]) || []; return p ? [p.n, p.i, p.c, (T[p.i] || {}).id || ('df' + dfCur())].join('|') : ''; }
   function bigPos(p){
-    var show = p && (p.etat === 'chrono' || p.etat === 'pause');
+    // Dès que le téléphone est sur un exercice (avant même le chrono), l'iPad l'affiche en grand
+    var show = p && /^(pret|chrono|pause|recup)$/.test(p.etat);
+    if(show && st.revealUntil && Date.now() < st.revealUntil) return;   // on laisse finir l'animation du tirage
     if(!show){ bigClose(); BIG.hide = ''; return; }
     var k = bigKey(p); if(BIG.hide && BIG.hide === k) return;
     if(BIG.p && bigKey(BIG.p) === k && BIG.el) return;
@@ -20437,6 +20440,7 @@
     else { var kk = oldStep ? R.steps.findIndex(function(x){ return x.i === oldStep.i && (x.c === oldStep.c || x.c === 0 || oldStep.c === 0); }) : 0; R.k = kk < 0 ? Math.min(R.k, R.steps.length - 1) : kk; }
     R.i = R.steps[R.k].i; if(isNew || R.state === 'pret'){ R.left = curSec(); R.el2 = 0; }
     renderRemote();
+    if(isNew) sendPos();   // l'iPad affiche tout de suite le 1er exercice en grand
   }
   function secAt(i){ return R && R.tour ? (R.tour.secs[i] || 40) : 40; }
   function stepSec(sp){ if(!sp) return 40; if(sp.df){ var d = defOf(sp.df); return d ? d.d : 0; } return secAt(sp.i); }
