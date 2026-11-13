@@ -4392,7 +4392,7 @@
     <div class="ct-pane" data-pane="grp">
     <div class="ct-card" id="ctAvpCard">
       <div class="ct-h3row"><h3>🎄 Calendrier de l’Avent ouvert à tous</h3></div>
-      <p class="ct-note" style="margin-top:2px">Un lien qui donne accès <b>uniquement au calendrier de l’Avent</b>, sans abonnement, jusqu’au 31 décembre. Idéal pour le défi de l’École de Trail : chacun l’ouvre et l’ajoute à son écran d’accueil.</p>
+      <p class="ct-note" style="margin-top:2px">Un lien qui donne accès <b>uniquement au calendrier de l’Avent</b>, sans abonnement à l’appli, jusqu’au 31 décembre. Idéal pour le défi de l’École de Trail : chacun l’ouvre et l’ajoute à son écran d’accueil.</p>
       <div class="ct-form"><label class="ct-wide">Lien à partager<input type="text" id="ctAvpLink" readonly></label></div>
       <div class="ct-rowbtns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
         <button type="button" class="ct-btn" id="ctAvpCopy">Copier le lien</button>
@@ -19714,7 +19714,7 @@
     var inp = document.getElementById('ctAvpLink'); if(!inp || typeof ecAvLink !== 'function') return;
     var y = new Date().getFullYear(), link = ecAvLink('edt', y);
     inp.value = link;
-    var txt = '🎄 Défi de l’Avent de l’École de Trail ! Du 1er au 24 décembre, une séance surprise de 5 à 10 minutes par jour dans l’appli Ethik’Coach (renfo, yoga, respiration, défis). Offert, sans abonnement : ouvre le lien puis ajoute l’appli à ton écran d’accueil 👉 ' + link;
+    var txt = '🎄 Défi de l’Avent de l’École de Trail ! Du 1er au 24 décembre, une séance surprise de 5 à 10 minutes par jour sur l’appli Ethik’Coach (renfo, yoga, respiration, défis), guidée à la voix. Pas besoin d’abonnement : ouvre le lien puis ajoute l’appli à ton écran d’accueil 👉 ' + link;
     var wa = document.getElementById('ctAvpWa'); if(wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
     function toast(m){ try{ (window.showToast || showToast)(m, false); }catch(e){} }
     document.getElementById('ctAvpCopy').addEventListener('click', function(){
@@ -19758,7 +19758,7 @@
     var tv = document.getElementById('todayView'), card = document.getElementById('aventCard'); if(!tv || !card) return false;
     if(!tv.querySelector('.avp-hello')){
       var hi = document.createElement('p'); hi.className = 'avp-hello';
-      hi.innerHTML = '🎁 Calendrier offert par <b>' + GRP + '</b>. Ta progression reste sur ce téléphone.';
+      hi.innerHTML = '🎄 Le calendrier de l’Avent de <b>' + GRP + '</b>, sur l’appli Ethik’Coach. Ta progression reste sur ce téléphone.';
       card.parentNode.insertBefore(hi, card);
     }
     if(!tv.querySelector('a.avp-cta, div.avp-cta')){
