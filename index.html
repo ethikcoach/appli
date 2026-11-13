@@ -20709,6 +20709,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .clt-rest{flex-direction:column; gap:6px; background:linear-gradient(140deg, #13324A, #1E5A7A) !important; color:#fff; text-align:center; padding:16px;}
   .clt-rest.sw{background:linear-gradient(140deg, #4A2C7A, #7A4FB0) !important;} .clt-rest.wup{background:linear-gradient(140deg, #7A3A13, #C2661E) !important;}
   .clt-rest i{font-style:normal; font-size:3rem;} .clt-rest b{font:800 1.2rem/1.2 'Bricolage Grotesque', sans-serif;} .clt-rest span{font:600 .95rem/1.3 Inter, sans-serif; opacity:.9;}
+  .cl-sync{margin:0 0 8px !important; padding:9px 12px; border-radius:12px; background:rgba(46,125,79,.1); color:var(--ink) !important; font-weight:700; font-size:.86rem !important;}
   .clt-ini{font:800 2.6rem/1 'Bricolage Grotesque', sans-serif; color:#9FB3A6;}
 </style>
 <script>
@@ -20727,13 +20728,179 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function load(){
     return idb().then(function(db){ return new Promise(function(res){ try{ var q = db.transaction('kv').objectStore('kv').get('data'); q.onsuccess = function(){ res(q.result || null); }; q.onerror = function(){ res(null); }; }catch(e){ res(null); } }); })
       .catch(function(){ try{ return JSON.parse(localStorage.getItem(LSK) || 'null'); }catch(e){ return null; } })
-      .then(function(x){ if(x && x.clients){ D = x; D.map = D.map || {}; } READY = true; });
+      .then(function(x){ if(x && x.clients){ D = x; } D.map = D.map || {}; D.mapU = D.mapU || {}; D.dead = D.dead || {}; uniq(); snap(); READY = true; });
   }
+  function persist(){ idb().then(function(db){ var tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(D, 'data'); }).catch(function(){ try{ localStorage.setItem(LSK, JSON.stringify(D)); }catch(e){ toast('⚠️ Stockage plein : exporte tes clients'); } }); }
   function save(now){
     clearTimeout(saveT);
-    var run = function(){ idb().then(function(db){ var tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(D, 'data'); }).catch(function(){ try{ localStorage.setItem(LSK, JSON.stringify(D)); }catch(e){ toast('⚠️ Stockage plein : exporte tes clients'); } }); };
+    var run = function(){ saveT = 0; if(stamp()) SY.changed(); persist(); };
     if(now) run(); else saveT = setTimeout(run, 250);
   }
+
+  // ---------- Horodatage : chaque client, séance et image choisie garde l'heure de sa dernière modification ----------
+  // (sert à fusionner sans rien perdre quand l'iPad et l'iPhone ont travaillé chacun de leur côté, même hors ligne)
+  var SNAP = {};
+  // Une même référence de séance chez deux clients (cas de l'import Excel : Sandrine / Sandrine R) : on la rend unique,
+  // de la même façon sur chaque appareil, pour que la synchro les reconnaisse
+  function uniq(){
+    var n = {}, ch = false; D.clients.forEach(function(c){ c.s.forEach(function(x){ n[x.id] = (n[x.id] || 0) + 1; }); });
+    D.clients.forEach(function(c){ c.s.forEach(function(x){ if(n[x.id] > 1){ x.id = x.id + '~' + c.id; ch = true; } }); });
+    return ch;
+  }
+  function cSig(c){ return JSON.stringify([c.nom, c.lt || 0]); }
+  function sSig(x){ var o = {}; Object.keys(x).forEach(function(k){ if(k !== 'u') o[k] = x[k]; }); return JSON.stringify(o); }
+  function snap(){ SNAP = {}; D.clients.forEach(function(c){ SNAP['c:' + c.id] = cSig(c); c.s.forEach(function(x){ SNAP['s:' + x.id] = sSig(x); }); }); Object.keys(D.map).forEach(function(k){ SNAP['m:' + k] = String(D.map[k]); }); }
+  function stamp(){
+    var now = Date.now(), seen = {}, ch = false;
+    D.clients.forEach(function(c){
+      var k = 'c:' + c.id; seen[k] = 1; if(SNAP[k] !== cSig(c)){ c.u = now; ch = true; }
+      c.s.forEach(function(x){ var k2 = 's:' + x.id; seen[k2] = 1; if(SNAP[k2] !== sSig(x)){ x.u = now; ch = true; } });
+    });
+    Object.keys(D.map).forEach(function(k){ var k2 = 'm:' + k; seen[k2] = 1; if(SNAP[k2] !== String(D.map[k])){ D.mapU[k] = now; ch = true; } });
+    Object.keys(SNAP).forEach(function(k){ if(!seen[k] && k.charAt(0) !== 'm'){ D.dead[k.slice(2)] = now; ch = true; } });
+    if(ch) snap();
+    return ch;
+  }
+
+  // ---------- Synchro automatique iPad ↔ iPhone (clé coach, contenu chiffré sur l'appareil) ----------
+  // Chaque appareil garde tout en local et marche sans réseau ; dès qu'il y a du réseau, il envoie ses changements
+  // et récupère ceux de l'autre appareil. Fusion séance par séance : la modification la plus récente gagne.
+  var SY = (function(){
+    var API = (typeof EC_SUB_API !== 'undefined' && EC_SUB_API) || '', SK = 'ec_coach_clsync';
+    var st = {v:0, dirty:false, at:0}; try{ Object.assign(st, JSON.parse(localStorage.getItem(SK) || '{}')); }catch(e){}
+    var busy = false, again = false, pushT = 0, seq = 0, state = '', denied = false;
+    function keep(){ try{ localStorage.setItem(SK, JSON.stringify(st)); }catch(e){} }
+    function K(){ try{ return String((typeof EC_KEY !== 'undefined' && EC_KEY) || localStorage.getItem('ec_access') || '').trim().toLowerCase(); }catch(e){ return ''; } }
+    var ck = null, ckK = '';
+    function cryptoKey(){
+      var k = K(); if(ck && ckK === k) return ck; ckK = k;
+      var te = new TextEncoder();
+      ck = crypto.subtle.importKey('raw', te.encode(k), 'PBKDF2', false, ['deriveKey']).then(function(b){
+        return crypto.subtle.deriveKey({name:'PBKDF2', salt:te.encode('ethikcoach-coaching|v1'), iterations:120000, hash:'SHA-256'}, b, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']);
+      });
+      return ck;
+    }
+    function b64(u8){ var t = '', n = 0x8000; for(var i = 0; i < u8.length; i += n) t += String.fromCharCode.apply(null, u8.subarray(i, i + n)); return btoa(t); }
+    function unb64(t){ var x = atob(t), u = new Uint8Array(x.length); for(var i = 0; i < x.length; i++) u[i] = x.charCodeAt(i); return u; }
+    function pipe(u8, T){ return new Response(new Blob([u8]).stream().pipeThrough(new T('gzip'))).arrayBuffer().then(function(b){ return new Uint8Array(b); }); }
+    function enc(obj){
+      var raw = new TextEncoder().encode(JSON.stringify(obj)), zip = typeof CompressionStream === 'function';
+      return (zip ? pipe(raw, CompressionStream) : Promise.resolve(raw)).then(function(data){
+        var iv = crypto.getRandomValues(new Uint8Array(12));
+        return cryptoKey().then(function(key){ return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, key, data); }).then(function(c){ return {d:(zip ? 'z' : 'p') + b64(new Uint8Array(c)), iv:b64(iv)}; });
+      });
+    }
+    function dec(d, iv){
+      var zip = d.charAt(0) === 'z';
+      return cryptoKey().then(function(key){ return crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(iv)}, key, unb64(d.slice(1))); })
+        .then(function(b){ var u = new Uint8Array(b); return zip ? pipe(u, DecompressionStream) : u; })
+        .then(function(u){ return JSON.parse(new TextDecoder().decode(u)); });
+    }
+    function post(path, body){
+      body.k = K();
+      return fetch(API + path, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body), cache:'no-store'})
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._s = r.status; return j; }); });
+    }
+    function set(x){ state = x; var el = document.getElementById('clSyncSt'); if(el) el.innerHTML = label(); }
+    function hm(t){ var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function label(){
+      if(denied) return '⚪ Synchro réservée à la clé coach';
+      if(state === 'run') return '🔄 Synchronisation…';
+      if(!navigator.onLine || state === 'off') return '📴 Hors ligne' + (st.dirty ? ' · tes changements partiront au retour du réseau' : ' · tout est enregistré sur cet appareil');
+      if(state === 'err') return '⚠️ Synchro impossible pour l’instant' + (st.dirty ? ' · nouvel essai automatique' : '');
+      if(st.dirty) return '⏳ Changements en attente d’envoi';
+      return st.at ? '✅ iPad et iPhone à jour · ' + hm(st.at) : '🔄 Synchro iPad ↔ iPhone activée';
+    }
+    function doc(){ return {type:'ec-clients-sync', v:2, clients:D.clients, map:D.map, mapU:D.mapU, dead:D.dead}; }
+    function copy(o){ return JSON.parse(JSON.stringify(o)); }
+    // Fusionne le contenu reçu dans D (en gardant les objets locaux, pour ne pas gêner une séance ouverte). Renvoie {got, mine}.
+    function merge(R){
+      var got = false, mine = false, dead = D.dead, Rd = R.dead || {}, k;
+      for(k in Rd){ if(!(dead[k] >= Rd[k])){ dead[k] = Rd[k]; got = true; } }
+      for(k in dead){ if(!(Rd[k] >= dead[k])) mine = true; }
+      // Rapprochement par identifiant ; à défaut (même client ou séance créé des deux côtés) par prénom ou par contenu
+      var rcIds = {}; (R.clients || []).forEach(function(rc){ rcIds[rc.id] = 1; });
+      var byId = {}, byNm = {}; D.clients.forEach(function(c){ byId[c.id] = c; if(!rcIds[c.id]) byNm[nz(c.nom)] = byNm[nz(c.nom)] || c; });
+      var rSeen = {};
+      (R.clients || []).forEach(function(rc){
+        var lc = byId[rc.id] || byNm[nz(rc.nom)];
+        if(lc && !byId[rc.id]) delete byNm[nz(rc.nom)];
+        if(!lc){ if(dead[rc.id] >= (rc.u || 0)) return; lc = copy(rc); lc.s = []; D.clients.push(lc); byId[lc.id] = lc; got = true; }
+        else {
+          if((rc.u || 0) > (lc.u || 0)){ lc.nom = rc.nom; if(rc.lt) lc.lt = rc.lt; lc.u = rc.u; got = true; }
+          else if((lc.u || 0) > (rc.u || 0)) mine = true;
+          if(lc.id !== rc.id){ if(rc.id < lc.id){ if(V.c === lc.id) V.c = rc.id; lc.id = rc.id; got = true; } else mine = true; }   // même client créé des deux côtés : un seul identifiant
+        }
+        rSeen['c:' + lc.id] = 1;
+        var rsIds = {}; (rc.s || []).forEach(function(rs){ rsIds[rs.id] = 1; });
+        var sId = {}, sSg = {}; lc.s.forEach(function(x){ sId[x.id] = x; if(!rsIds[x.id]){ var g = sig(x); (sSg[g] = sSg[g] || []).push(x); } });
+        (rc.s || []).forEach(function(rs){
+          var ls = sId[rs.id]; if(!ls && sSg[sig(rs)] && sSg[sig(rs)].length) ls = sSg[sig(rs)].shift();
+          if(!ls){ if(dead[rs.id] >= (rs.u || 0)) return; lc.s.push(copy(rs)); got = true; rSeen['s:' + rs.id] = 1; return; }
+          rSeen['s:' + ls.id] = 1;
+          var uid2 = rs.id < ls.id ? rs.id : ls.id;
+          if((rs.u || 0) > (ls.u || 0)){ Object.keys(ls).forEach(function(q){ delete ls[q]; }); Object.assign(ls, copy(rs)); got = true; }
+          else if((ls.u || 0) > (rs.u || 0)) mine = true;
+          if(ls.id !== uid2){ ls.id = uid2; got = true; } if(rs.id !== uid2) mine = true;
+          rSeen['s:' + ls.id] = 1;
+        });
+        sortSess(lc);
+      });
+      // Suppressions faites sur l'autre appareil
+      D.clients = D.clients.filter(function(c){ if(dead[c.id] >= (c.u || 0)){ got = true; return false; } c.s = c.s.filter(function(x){ if(dead[x.id] >= (x.u || 0)){ got = true; return false; } return true; }); return true; });
+      // Ce qui n'existe que sur cet appareil doit partir
+      D.clients.forEach(function(c){ if(!rSeen['c:' + c.id]) mine = true; c.s.forEach(function(x){ if(!rSeen['s:' + x.id]) mine = true; }); });
+      var Rm = R.map || {}, Ru = R.mapU || {};
+      for(k in Rm){ if(!(k in D.map) || (Ru[k] || 0) > (D.mapU[k] || 0)){ if(D.map[k] !== Rm[k]){ D.map[k] = Rm[k]; got = true; } D.mapU[k] = Ru[k] || 0; } }
+      for(k in D.map){ if(!(k in Rm) || (D.mapU[k] || 0) > (Ru[k] || 0)) mine = true; }
+      return {got:got, mine:mine};
+    }
+    function quiet(){ return !document.querySelector('.cl-ov, .clp, .stx, .cl-dlg'); }
+    function refresh(){ if(quiet()) render(); else pend = true; }
+    var pend = false;
+    function push(base, tries){
+      var mySeq = seq;
+      return enc(doc()).then(function(b){ b.base = base; return post('/coaching/ecrire', b); }).then(function(r){
+        if(r.ok){ st.v = r.v; st.at = Date.now(); if(mySeq === seq) st.dirty = false; keep(); return; }
+        if(r.raison === 'conflit' && tries < 3) return pull(tries + 1);
+        if(r.raison === 'cle'){ denied = true; }
+        throw r;
+      });
+    }
+    function pull(tries){
+      return post('/coaching/lire', {v:st.v}).then(function(r){
+        if(!r.ok){ if(r.raison === 'cle') denied = true; throw r; }
+        denied = false;
+        if(r.vide || r.same){ if(r.vide && !D.clients.length && !Object.keys(D.dead).length){ st.v = 0; st.at = Date.now(); keep(); return; } if(st.dirty || r.vide) return push(r.v || 0, tries); st.at = Date.now(); keep(); return; }
+        return dec(r.d, r.iv).then(function(R){
+          var m = merge(R); if(uniq()) m.mine = true; snap(); persist();
+          if(m.got) refresh();
+          st.v = r.v; keep();
+          if(m.mine || st.dirty) return push(r.v, tries);
+          st.at = Date.now(); keep();
+        });
+      });
+    }
+    function run(){
+      if(!READY || !API || !K() || !window.crypto || !crypto.subtle) return Promise.resolve();
+      if(!navigator.onLine){ set('off'); return Promise.resolve(); }
+      if(busy){ again = true; return Promise.resolve(); }
+      busy = true; set('run');
+      // Les dernières modifications pas encore horodatées le sont avant l'échange
+      if(saveT){ clearTimeout(saveT); saveT = 0; if(stamp()){ st.dirty = true; seq++; } persist(); }
+      else if(stamp()){ st.dirty = true; seq++; persist(); }
+      return pull(0).then(function(){ set('ok'); }, function(e){ set(e && e.raison === 'cle' ? 'ok' : (navigator.onLine ? 'err' : 'off')); })
+        .then(function(){ busy = false; if(again){ again = false; setTimeout(run, 300); } });
+    }
+    function changed(){ st.dirty = true; seq++; keep(); set(state); clearTimeout(pushT); pushT = setTimeout(run, 1500); }
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) run(); else if(st.dirty) run(); });
+    window.addEventListener('online', function(){ run(); });
+    window.addEventListener('offline', function(){ set('off'); });
+    setInterval(function(){ if(!document.hidden) run(); }, 20000);
+    // Une séance ouverte au moment d'une réception : l'écran se met à jour à sa fermeture
+    new MutationObserver(function(){ if(pend && quiet()){ pend = false; render(); } }).observe(document.body, {childList:true});
+    return {run:run, changed:changed, label:label, test:{merge:merge, st:function(){ return st; }}};
+  })();
   function clientById(id){ return D.clients.find(function(c){ return c.id === id; }) || null; }
   function sortSess(c){ c.s.sort(function(a, b){ return (a.d || a._k || '') < (b.d || b._k || '') ? -1 : (a.d || a._k || '') > (b.d || b._k || '') ? 1 : 0; }); }
   function lastSess(c){ return c.s.length ? c.s[c.s.length - 1] : null; }
@@ -20884,7 +21051,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       h += '<div class="cl-bar"><input class="cl-in" id="clQ" type="search" placeholder="Rechercher un client" value="' + esc(V.q) + '" autocomplete="off"><button type="button" class="cl-btn" data-a="newc" aria-label="Nouveau client">＋</button></div><div class="cl-list" id="clList"></div>';
     }
     h += '</div>';
-    h += '<div class="cl-card"><h3>📲 Transfert et sauvegarde</h3><p>Pour l’iPad : <b>Exporter</b> puis AirDrop, et <b>Importer</b> sur l’iPad. Sur place sans réseau, affiche le <b>QR</b> d’une séance sur le téléphone et scanne-le ici.</p>'
+    h += '<div class="cl-card"><h3>📲 iPad ↔ iPhone</h3><p class="cl-sync" id="clSyncSt">' + SY.label() + '</p><p>Tes séances se synchronisent toutes seules entre tes appareils (avec ta clé coach) dès qu’il y a du réseau. Sans réseau, tout reste enregistré sur l’appareil et part au retour de la connexion. Dépannage sur place : <b>QR</b> d’une séance, ou <b>Exporter</b> / <b>Importer</b>.</p>'
+      + '<button type="button" class="cl-btn ghost" data-a="sync" style="width:100%;margin-bottom:8px">🔄 Synchroniser maintenant</button>'
       + '<div class="cl-grid3"><button type="button" class="cl-btn ghost" data-a="import">📥 Importer</button><button type="button" class="cl-btn ghost" data-a="export"' + (D.clients.length ? '' : ' disabled') + '>📤 Exporter</button><button type="button" class="cl-btn ghost" data-a="scan">📷 Scanner</button></div></div>';
     pane.innerHTML = h;
     listRows();
@@ -20920,6 +21088,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'import') return pickImport();
     if(a === 'export') return doExport();
     if(a === 'scan') return scanQR();
+    if(a === 'sync'){ SY.run(); return; }
     if(a === 'newc') return askName('Nouveau client', '', function(n){ var nc = {id:uid(), nom:n, s:[]}; D.clients.push(nc); save(); V.c = nc.id; render(); });
     if(a === 'back'){ V.c = null; render(); return; }
     if(a === 'more'){ V.more += 30; render(); return; }
@@ -20990,6 +21159,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         sortSess(c);
       });
       if(x.map) Object.keys(x.map).forEach(function(k){ if(!(k in D.map)) D.map[k] = x.map[k]; });
+      uniq();
       save(true); try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(e){}
       V.c = null; render(); toast('📥 ' + add + ' séance' + (add > 1 ? 's' : '') + ' importée' + (add > 1 ? 's' : '') + (addC ? ' · ' + addC + ' client' + (addC > 1 ? 's' : '') : ''));
     }
@@ -21329,8 +21499,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'auto'){ CT.o.auto = !CT.o.auto; CO.auto = CT.o.auto; saveCO(); b.setAttribute('aria-pressed', CT.o.auto); b.textContent = (CT.o.auto ? '✓' : '○') + ' Tout s’enchaîne seul'; return; }
   }
 
-  window.ecClientsTest = {fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
-  load().then(render);
+  window.ecClientsTest = {sync:SY, stamp:stamp, fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
+  load().then(function(){ render(); SY.run(); });
   render();
 })();
 </script>
