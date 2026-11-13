@@ -19875,6 +19875,7 @@
   .stp-ph{position:relative; width:100%; flex:1 1 auto; min-height:120px; max-height:34vh; border-radius:20px; background:#fff center/contain no-repeat; display:grid; place-items:center; font-size:3rem; box-shadow:0 10px 26px rgba(0,0,0,.35);}
   .stp-n{position:absolute; top:8px; left:8px; padding:4px 10px; border-radius:999px; background:var(--a1); color:#fff; font:800 .8rem/1 'Bricolage Grotesque', sans-serif;}
   .stp-name{font:800 1.35rem/1.15 'Bricolage Grotesque', sans-serif; text-align:center; padding:0 6px;}
+  .stp-cote{display:inline-block; margin-left:8px; padding:3px 10px; border-radius:999px; background:var(--gold); color:#2A1A06; font:800 .8rem/1.2 Inter, sans-serif; vertical-align:middle;}
   .stp-ring{position:relative; flex:none; width:min(52vw, 30vh, 220px); aspect-ratio:1; border:none; border-radius:50%; background:transparent; color:#fff; cursor:pointer; padding:0;}
   .stp-ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg);}
   .stp-ring .tr{fill:rgba(255,255,255,.08); stroke:rgba(255,255,255,.14); stroke-width:8;}
@@ -20035,10 +20036,12 @@
   function fmtSec(v){ return v >= 60 ? '1 min' : v + ' s'; }
   function secOf(i){ return S.sec > 0 ? S.sec : ((st && st.secs[st.cur] && st.secs[st.cur][i]) || 40); }
   function secTxt(i){ return fmtSec(secOf(i)); }
-  function dose(i){ return '⏱️ ' + secTxt(i); }
+  function dose(i){ var T = st && st.tours[st.cur], e = T && T[i]; return '⏱️ ' + secTxt(i) + (e && e.perSide ? ' × 2 côtés' : ''); }
+  function nbChronos(){ var T = (st && st.tours[st.cur]) || []; return T.reduce(function(a, e){ return a + (e.perSide ? 2 : 1); }, 0); }
   function fmtLine(n){
-    if(S.sec > 0) return '<b>⏱️ ' + fmtSec(S.sec) + ' par exercice</b> · ' + n + ' exercices · récupération et nombre de tours à ta main';
-    var tot = 0; for(var i = 0; i < n; i++) tot += secOf(i);
+    var nc = nbChronos(), extra = nc > n ? ' (' + nc + ' chronos avec les côtés)' : '';
+    if(S.sec > 0) return '<b>⏱️ ' + fmtSec(S.sec) + ' par exercice</b> · ' + n + ' exercices' + extra + ' · récupération et nombre de tours à ta main';
+    var tot = 0, T = st.tours[st.cur] || []; for(var i = 0; i < n; i++) tot += secOf(i) * (T[i] && T[i].perSide ? 2 : 1);
     return '<b>🎲 Temps surprise par exercice</b> · ' + Math.floor(tot / 60) + ' min ' + (tot % 60 ? (tot % 60) + ' s ' : '') + 'd’effort par tour · récupération et tours à ta main';
   }
   function photo(e){ try{ var p = window.ecExPhoto ? window.ecExPhoto(e) : ''; return p && p.indexOf('data:image/svg') !== 0 ? p : ''; }catch(x){ return ''; } }
@@ -20184,7 +20187,7 @@
     if(a === 'redraw'){ st.cur = st.cur; redraw(); return; }
     if(a === 'fs'){ var el = st.el; try{ if(document.fullscreenElement || document.webkitFullscreenElement){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }catch(x){} return; }
     if(a === 'copy'){
-      var T = st.tours[st.cur], t = AMB[AM].ic + ' Tour ' + (st.cur + 1) + ' : ' + st.el.querySelector('#stxFmt').textContent + '\n' + T.map(function(x, i){ return (i + 1) + '. ' + x.name + ' : ' + secTxt(i); }).join('\n');
+      var T = st.tours[st.cur], t = AMB[AM].ic + ' Tour ' + (st.cur + 1) + ' : ' + st.el.querySelector('#stxFmt').textContent + '\n' + T.map(function(x, i){ return (i + 1) + '. ' + x.name + ' : ' + secTxt(i) + (x.perSide ? ' × 2 côtés' : ''); }).join('\n');
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function(){ toast('Série copiée ✓'); }, function(){}); return;
     }
     var c = b.closest('.stx-c'); if(!c) return; var i = +c.getAttribute('data-i');
@@ -20227,7 +20230,7 @@
     el.innerHTML = '<div class="stx-top"><div class="stx-tour" id="stpTour">📱 Chrono studio<small>Connexion…</small></div><span class="stx-sp"></span><button type="button" class="stx-ib" data-r="close" aria-label="Fermer">✕</button></div>'
       + '<div class="stp-body" id="stpBody"><div class="stp-wait"><i>📡</i><b>En attente d’une série</b><span>Lance « Tirer la série » sur l’iPad : elle arrive ici automatiquement.</span></div></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
-    R = {el:el, tour:null, i:0, state:'pret', endAt:0, left:0, recup:0, auto:true, t:0};
+    R = {el:el, tour:null, i:0, k:0, steps:[], state:'pret', endAt:0, left:0, recup:0, auto:true, t:0};
     try{ R.auto = localStorage.getItem('ec_coach_stauto') !== '0'; }catch(e){}
     el.addEventListener('click', onRemote);
     try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ if(R) R.wl = w; }).catch(function(){}); }catch(e){}
@@ -20245,8 +20248,11 @@
         var same = R.tour && t.s === R.tour.s && t.n === R.tour.n;
         var isNew = !same;
         R.tour = t;
-        if(isNew){ R.i = 0; R.state = 'pret'; R.left = secAt(0); R.recup = 0; vibrate([80, 60, 80]); ding(); }
-        else { if(R.i >= t.ids.length) R.i = t.ids.length - 1; if(R.state === 'pret') R.left = secAt(R.i); }
+        var oldStep = R.steps && R.steps[R.k];
+        R.steps = []; t.ids.forEach(function(id, i){ var ex = exById(id); if(ex && ex.perSide){ R.steps.push({i:i, c:1}, {i:i, c:2}); } else R.steps.push({i:i, c:0}); });
+        if(isNew){ R.k = 0; R.state = 'pret'; R.recup = 0; vibrate([80, 60, 80]); ding(); }
+        else { var kk = oldStep ? R.steps.findIndex(function(x){ return x.i === oldStep.i && (x.c === oldStep.c || x.c === 0 || oldStep.c === 0); }) : 0; R.k = kk < 0 ? Math.min(R.k, R.steps.length - 1) : kk; }
+        R.i = R.steps[R.k].i; if(isNew || R.state === 'pret') R.left = secAt(R.i);
         renderRemote();
       } else if(!t){ R.el.querySelector('#stpTour small').textContent = 'En attente de l’iPad'; }
     }).catch(function(){ if(R) R.el.querySelector('#stpTour small').textContent = 'Hors ligne, nouvel essai…'; })
@@ -20258,19 +20264,22 @@
   function vibrate(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
   function renderRemote(){
     if(!R || !R.tour) return;
-    var t = R.tour, n = t.ids.length, i = R.i, e = exById(t.ids[i]) || {id:t.ids[i], name:t.noms[i] || 'Exercice'}, nx = i + 1 < n ? (exById(t.ids[i + 1]) || {id:t.ids[i + 1], name:t.noms[i + 1]}) : null;
+    var t = R.tour, n = t.ids.length, i = R.i, stp = R.steps[R.k] || {i:i, c:0}, ns = R.steps[R.k + 1] || null;
+    var e = exById(t.ids[i]) || {id:t.ids[i], name:t.noms[i] || 'Exercice'};
+    var nx = ns ? (exById(t.ids[ns.i]) || {id:t.ids[ns.i], name:t.noms[ns.i]}) : null;
+    var cote = stp.c ? '<span class="stp-cote">' + (stp.c === 1 ? '1er côté' : '2e côté') + '</span>' : '';
     var a = AMB[t.amb] || AMB.classique; R.el.setAttribute('data-amb', AMB[t.amb] ? t.amb : 'classique');
-    R.el.querySelector('#stpTour').innerHTML = a.ic + ' Tour ' + t.n + '<small>' + (R.state === 'fin' ? 'Tour terminé' : 'Exercice ' + (i + 1) + ' / ' + n) + '</small>';
+    R.el.querySelector('#stpTour').innerHTML = a.ic + ' Tour ' + t.n + '<small>' + (R.state === 'fin' ? 'Tour terminé' : 'Exercice ' + (i + 1) + ' / ' + n + (stp.c ? ' · côté ' + stp.c + '/2' : '') + (R.steps.length > n ? ' · chrono ' + (R.k + 1) + '/' + R.steps.length : '')) + '</small>';
     var p = photo(e), pn = nx ? photo(nx) : '';
     var h;
     if(R.state === 'fin'){
       h = '<div class="stp-wait"><i>🎉</i><b>Tour ' + t.n + ' terminé !</b><span>Récup <b id="stpRec">+0:00</b></span><span>Le prochain tour arrivera ici dès que tu le tires sur l’iPad.</span><button type="button" class="stp-sm" data-r="restart">↺ Refaire ce tour</button></div>';
     } else {
       h = '<div class="stp-ph"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '🔥') + '<span class="stp-n">' + (i + 1) + '/' + n + '</span></div>'
-        + '<div class="stp-name">' + esc(e.name) + '</div>'
+        + '<div class="stp-name">' + esc(e.name) + cote + '</div>'
         + '<button type="button" class="stp-ring" data-r="toggle" aria-label="Démarrer ou mettre en pause"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="br" id="stpBar"/></svg><b id="stpTime">' + mmss(R.left) + '</b><small id="stpState"></small></button>'
-        + '<div class="stp-ctl"><button type="button" data-r="prev" aria-label="Précédent"' + (i === 0 ? ' disabled' : '') + '>⏮</button><button type="button" class="pp" data-r="toggle" id="stpPP">▶️ Démarrer</button><button type="button" class="nx" data-r="next">' + (nx ? 'Suivant ⏭' : 'Terminer ✓') + '</button></div>'
-        + (nx ? '<div class="stp-next"><span class="stp-tn"' + (pn ? ' style="background-image:url(\'' + pn + '\')"' : '') + '></span><span><small>Ensuite</small><b>' + esc(nx.name) + '</b></span><em>' + mmss(secAt(i + 1)) + '</em></div>' : '<div class="stp-next last"><span><small>Ensuite</small><b>Fin du tour 🎉</b></span></div>')
+        + '<div class="stp-ctl"><button type="button" data-r="prev" aria-label="Précédent"' + (R.k === 0 ? ' disabled' : '') + '>⏮</button><button type="button" class="pp" data-r="toggle" id="stpPP">▶️ Démarrer</button><button type="button" class="nx" data-r="next">' + (nx ? 'Suivant ⏭' : 'Terminer ✓') + '</button></div>'
+        + (nx ? '<div class="stp-next"><span class="stp-tn"' + (pn ? ' style="background-image:url(\'' + pn + '\')"' : '') + '></span><span><small>Ensuite</small><b>' + (ns.i === i ? 'Même exercice, 2e côté' : esc(nx.name) + (ns.c ? ' · 1er côté' : '')) + '</b></span><em>' + mmss(secAt(ns.i)) + '</em></div>' : '<div class="stp-next last"><span><small>Ensuite</small><b>Fin du tour 🎉</b></span></div>')
         + '<button type="button" class="stp-auto" data-r="auto" aria-pressed="' + R.auto + '">' + (R.auto ? '✓' : '○') + ' « Suivant » lance le chrono</button>';
     }
     R.el.querySelector('#stpBody').innerHTML = h;
@@ -20297,9 +20306,9 @@
   }
   function start(){ if(R.state === 'recup') R.left = secAt(R.i); if(R.left <= 0) R.left = secAt(R.i); R.endAt = Date.now() + R.left * 1000; R.state = 'chrono'; tick(1500, .1); vibrate(60); }
   function go(d){
-    var n = R.tour.ids.length;
-    if(d > 0 && R.i + 1 >= n){ R.state = 'fin'; R.recup = Date.now(); ding(); try{ if(window.ecConfetti) window.ecConfetti(); }catch(x){} renderRemote(); sendPos(); return; }
-    R.i = Math.max(0, Math.min(n - 1, R.i + d)); R.left = secAt(R.i); R.state = 'pret';
+    var n = R.steps.length;
+    if(d > 0 && R.k + 1 >= n){ R.state = 'fin'; R.recup = Date.now(); ding(); try{ if(window.ecConfetti) window.ecConfetti(); }catch(x){} renderRemote(); sendPos(); return; }
+    R.k = Math.max(0, Math.min(n - 1, R.k + d)); R.i = R.steps[R.k].i; R.left = secAt(R.i); R.state = 'pret';
     renderRemote();
     if(d > 0 && R.auto) start();
     tickRemote(true); sendPos();
@@ -20311,7 +20320,7 @@
     if(a === 'toggle'){ if(R.state === 'chrono'){ R.left = Math.max(0, (R.endAt - Date.now()) / 1000); R.state = 'pause'; } else start(); tickRemote(true); return; }
     if(a === 'next'){ go(1); return; }
     if(a === 'prev'){ go(-1); return; }
-    if(a === 'restart'){ R.i = 0; R.state = 'pret'; R.left = secAt(0); renderRemote(); sendPos(); return; }
+    if(a === 'restart'){ R.k = 0; R.i = R.steps[0] ? R.steps[0].i : 0; R.state = 'pret'; R.left = secAt(0); renderRemote(); sendPos(); return; }
     if(a === 'auto'){ R.auto = !R.auto; try{ localStorage.setItem('ec_coach_stauto', R.auto ? '1' : '0'); }catch(x){} b.setAttribute('aria-pressed', R.auto); b.textContent = (R.auto ? '✓' : '○') + ' « Suivant » lance le chrono'; return; }
   }
   window.ecStudioRemote = openRemote;
