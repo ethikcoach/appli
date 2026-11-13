@@ -20344,7 +20344,7 @@
       if(!st) return;
       var T = st.tours[st.cur] || []; if(!T.length) return;
       post('/studio/tour', {tour:{s:st.sid, n:st.cur + 1, amb:AM, ids:T.map(function(e){ return e.id; }), secs:T.map(function(e, i){ return secOf(i); }), noms:T.map(function(e){ return e.name; }), jk:jkCur() ? jkCur().i + ':' + jkCur().k : '', df:dfCur() || ''}})
-        .then(function(r){ setLive(r && r.ok ? '📱 En direct' : '📱 Hors ligne', r && r.ok); }).catch(function(){ setLive('📱 Hors ligne', false); });
+        .then(function(r){ setLive(r && r.ok ? (r.d1 === false ? '📱 En direct · lent' : '📱 En direct') : '📱 Hors ligne', r && r.ok); }).catch(function(){ setLive('📱 Hors ligne', false); });
     }, 450);
   }
   // L'iPad suit l'exercice en cours sur le téléphone
@@ -20424,7 +20424,7 @@
       if(t && (!R.tour || (t.v !== R.tour.v && !(R.qr && t.v < R.tour.v)))){ applyTour(t, false);
       } else if(!t && !R.tour){ R.el.querySelector('#stpTour small').textContent = 'En attente de l’iPad'; }
     }).catch(function(){ if(R && !R.tour) R.el.querySelector('#stpTour small').textContent = 'Hors réseau : scanne le QR de l’iPad (📷)'; })
-      .then(function(){ if(R) R.pt = setTimeout(pollRemote, 2500); });
+      .then(function(){ if(R) R.pt = setTimeout(pollRemote, 1500); });
   }
   function applyTour(t, fromQr){
     if(!R) return;
