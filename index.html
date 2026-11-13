@@ -1506,6 +1506,21 @@
   // « Séance seule » : lien signé qui ouvre uniquement cette séance, sans donner accès au reste de l'appli
   function ecGuestSig(p){ return (ecHash('seance|' + p + '|' + EC_SIGN) + '00000000').slice(0, 8); }
   var EC_GUEST = (function(){ var m = /^#[spre]=([A-Za-z0-9_-]+)&g=([a-z0-9]{8})$/.exec(location.hash || ''); return !!(m && ecGuestSig(m[1]) === m[2]); })();
+  // « Calendrier de l'Avent seul » : lien signé par groupe (ex. École de Trail), valable jusqu'au 31 décembre de l'année du lien.
+  // Donne accès uniquement au calendrier et aux séances de ses cases, sans abonnement. Gardé sur le téléphone pour l'icône d'accueil.
+  var EC_AVP_GROUPES = {edt:'l’École de Trail Pont-Audemer'};
+  function ecAvSig(g, y){ return (ecHash('avent|' + g + '|' + y + '|' + EC_SIGN) + '00000000').slice(0, 8); }
+  function ecAvLink(g, y){ y = y || new Date().getFullYear(); return 'https://appli.ethikcoach.fr/#avent=' + g + '-' + y + '&g=' + ecAvSig(g, y); }
+  var EC_AVPASS = (function(){
+    var p = null, m = /^#avent=([a-z0-9]{2,16})-(\d{4})&g=([a-z0-9]{8})$/.exec(location.hash || '');
+    if(m) p = {g:m[1], y:+m[2], s:m[3]};
+    else { try{ p = JSON.parse(localStorage.getItem('ec_avpass') || 'null'); }catch(e){} }
+    if(!p || ecAvSig(p.g, p.y) !== p.s) return null;
+    if(Date.now() >= new Date(p.y + 1, 0, 1).getTime()) { try{ localStorage.removeItem('ec_avpass'); }catch(e){} return null; }
+    try{ localStorage.setItem('ec_avpass', JSON.stringify(p)); }catch(e){}
+    if(m) try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+    return p;
+  })();
   // Adresse de partage sans la clé d'accès de l'expéditeur
   function ecCleanBase(){ try{ var u = new URL(location.href.split('#')[0]); u.searchParams.delete('acces'); return u.toString(); }catch(e){ return location.href.split('#')[0]; } }
   // Le verrou s'applique sur le site en ligne (ethikcoach.fr, netlify.app), pas dans l'aperçu de travail.
@@ -1544,6 +1559,8 @@
       document.documentElement.classList.add('ec-locked', 'ec-subcheck');
     } else if(EC_LOCK_ON && EC_GUEST){
       document.documentElement.classList.add('ec-guest');
+    } else if(EC_LOCK_ON && EC_AVPASS){
+      document.documentElement.classList.add('ec-avpass');
     } else if(EC_LOCK_ON){
       try{ localStorage.removeItem('ec_access'); }catch(e){}
       document.documentElement.classList.add('ec-locked');
@@ -4373,6 +4390,16 @@
     </div>
 
     <div class="ct-pane" data-pane="grp">
+    <div class="ct-card" id="ctAvpCard">
+      <div class="ct-h3row"><h3>🎄 Calendrier de l’Avent ouvert à tous</h3></div>
+      <p class="ct-note" style="margin-top:2px">Un lien qui donne accès <b>uniquement au calendrier de l’Avent</b>, sans abonnement, jusqu’au 31 décembre. Idéal pour le défi de l’École de Trail : chacun l’ouvre et l’ajoute à son écran d’accueil.</p>
+      <div class="ct-form"><label class="ct-wide">Lien à partager<input type="text" id="ctAvpLink" readonly></label></div>
+      <div class="ct-rowbtns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+        <button type="button" class="ct-btn" id="ctAvpCopy">Copier le lien</button>
+        <button type="button" class="ct-btn ghost" id="ctAvpShare">Partager…</button>
+        <a class="ct-btn ghost" id="ctAvpWa" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>
     <div class="ct-card" id="ctGroupsCard">
       <div class="ct-h3row"><h3>Mes groupes</h3><button type="button" class="ct-gnew" id="ctGrpNew">＋ Créer un groupe</button></div>
       <p class="ct-note" style="margin-top:2px">Ex. « Trail du mardi » : envoie une séance à tout le groupe en un seul geste.</p>
@@ -17141,9 +17168,9 @@
   (function(){
     if(typeof EC_GUEST !== 'undefined' && EC_GUEST) return;
     var test = false; try{ if(/[?&]avent=1/.test(location.search)) localStorage.setItem('ec_avent_test', '1'); test = localStorage.getItem('ec_avent_test') === '1'; }catch(e){}
-    var now = new Date(), dec = now.getMonth() === 11;
-    if(!dec && !test) return;
-    var Y = now.getFullYear(), TODAY = dec ? now.getDate() : 24;   // en aperçu : toutes les cases ouvertes
+    var now = new Date(), dec = now.getMonth() === 11, AVP = document.documentElement.classList.contains('ec-avpass');
+    if(!dec && !test && !AVP) return;
+    var Y = now.getFullYear(), TODAY = dec ? now.getDate() : (test ? 24 : 0);   // en aperçu : toutes les cases ouvertes ; lien Avent avant décembre : tout fermé
     // [type, réglage, durée, titre, texte]
     var CASES = [
       ['renfo', {zone:'full'}, 10, 'Mise en route', 'Un renfo corps complet pour ouvrir le calendrier.'],
@@ -17213,7 +17240,7 @@
         h += '<button type="button" class="av-c ' + cls + '" data-av="' + i + '" aria-label="Case ' + i + (i > TODAY ? ', pas encore ouverte' : ok ? ', faite' : '') + '"' + (i > TODAY ? ' disabled' : '') + '>' + i + '</button>';
       }
       card.innerHTML = '<div class="av-top"><h2>🎄 Calendrier de l’Avent</h2><span>' + n + ' / 24 ★</span></div>'
-        + '<p class="av-sub">' + (TODAY <= 24 && dec ? 'Une séance surprise par jour : renfo, yoga, respiration ou défi. Ouvre la case du jour !' : (dec ? 'Joyeux Noël ! Tu peux encore rattraper les cases jusqu’au 31.' : 'Aperçu : en décembre, une case s’ouvre chaque jour.')) + '</p>'
+        + '<p class="av-sub">' + (!dec && !TODAY ? 'Rendez-vous le <b>1er décembre</b> : une case s’ouvre chaque jour jusqu’à Noël, avec une séance surprise de 5 à 10 minutes. Encore ' + Math.ceil((new Date(Y, 11, 1) - now) / 86400000) + ' jour' + (Math.ceil((new Date(Y, 11, 1) - now) / 86400000) > 1 ? 's' : '') + ' !' : '') + (!dec && !TODAY ? '' : TODAY <= 24 && dec ? 'Une séance surprise par jour : renfo, yoga, respiration ou défi. Ouvre la case du jour !' : (dec ? 'Joyeux Noël ! Tu peux encore rattraper les cases jusqu’au 31.' : 'Aperçu : en décembre, une case s’ouvre chaque jour.')) + '</p>'
         + '<div class="av-grid">' + h + '</div>';
     }
     function launch(c){
@@ -19652,6 +19679,101 @@
   window.addEventListener('resize', later);
   window.addEventListener('orientationchange', function(){ setTimeout(later, 300); });
   if(window.visualViewport) visualViewport.addEventListener('resize', later);
+})();
+</script>
+<!-- ===================== Design 8 : « Calendrier de l'Avent seul » (lien sans abonnement) ===================== -->
+<style>
+  /* Tout est masqué sauf le calendrier et les séances lancées depuis ses cases */
+  html.ec-avpass .bnav, html.ec-avpass #coachTools, html.ec-avpass .ob-backdrop, html.ec-avpass #ecAccessLine,
+  html.ec-avpass .set-btn, html.ec-avpass .coach-only, html.ec-avpass .tr-end{display:none !important;}
+  html.ec-avpass body .header-inner .header-right button.set-btn{display:none !important;}
+  html.ec-avpass body{padding-bottom:0;}
+  html.ec-avpass #todayView > *:not(.td-top):not(#aventCard):not(.avp-cta):not(.avp-hello){display:none !important;}
+  html.ec-avpass #renfoView > .intro, html.ec-avpass #renfoView > .panel, html.ec-avpass .session-info-bar, html.ec-avpass .results .sub-actions,
+  html.ec-avpass .time-adj-btn, html.ec-avpass .recup-switch, html.ec-avpass .sx-mos + .sub-actions,
+  html.ec-avpass #breathView > .intro, html.ec-avpass #breathView > .panel, html.ec-avpass #breathRegenBtn, html.ec-avpass #breathShareBtn,
+  html.ec-avpass .timer-swap, html.ec-avpass .td-notif{display:none !important;}
+  .avp-back{position:fixed; z-index:60; left:12px; top:calc(env(safe-area-inset-top, 0px) + 10px); display:none; align-items:center; gap:6px; padding:9px 14px; border:none; border-radius:999px; background:#1F4030; color:#fff; font:700 .86rem/1 inherit; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:pointer;}
+  html.ec-avpass:not(.avp-v-today) .avp-back{display:inline-flex;}
+  html.ec-avpass:has(#timerBackdrop.open) .avp-back, html.ec-avpass:has(.ec-dialog-backdrop) .avp-back{display:none !important;}
+  html.ec-avpass:not(.avp-v-today) .app-header, html.ec-avpass:not(.avp-v-today) header.topbar{padding-left:0;}
+  .avp-cta{display:block; margin:0 0 16px; padding:16px; border-radius:20px; background:var(--card, #fff); border:1px solid rgba(127,127,127,.18); color:var(--ink); text-decoration:none;}
+  .avp-cta .ac-k{display:inline-block; font-size:.74rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:#C9852B; margin-bottom:4px;}
+  .avp-cta b{display:block; font-family:'Bricolage Grotesque', sans-serif; font-size:1.05rem; margin-bottom:4px;}
+  .avp-cta p{margin:0 0 10px; font-size:.86rem; color:var(--stone); line-height:1.45;}
+  .avp-cta .ac-go{display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:999px; background:#2E9E5E; color:#fff; font-weight:800; font-size:.9rem; text-decoration:none;}
+  .avp-cta .ac-note{display:block; margin-top:8px; font-size:.74rem; color:var(--stone);}
+  .avp-hello{margin:2px 0 12px; font-size:.9rem; color:var(--stone);}
+  .avp-hello b{color:var(--ink);}
+</style>
+<script>
+(function(){
+  var html = document.documentElement;
+  // ---------- Espace coach : lien à partager ----------
+  (function(){
+    var inp = document.getElementById('ctAvpLink'); if(!inp || typeof ecAvLink !== 'function') return;
+    var y = new Date().getFullYear(), link = ecAvLink('edt', y);
+    inp.value = link;
+    var txt = '🎄 Défi de l’Avent de l’École de Trail ! Du 1er au 24 décembre, une séance surprise de 5 à 10 minutes par jour dans l’appli Ethik’Coach (renfo, yoga, respiration, défis). Offert, sans abonnement : ouvre le lien puis ajoute l’appli à ton écran d’accueil 👉 ' + link;
+    var wa = document.getElementById('ctAvpWa'); if(wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+    function toast(m){ try{ (window.showToast || showToast)(m, false); }catch(e){} }
+    document.getElementById('ctAvpCopy').addEventListener('click', function(){
+      var done = function(){ toast('Lien copié ✓'); };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ inp.select(); document.execCommand('copy'); done(); });
+      else { inp.select(); document.execCommand('copy'); done(); }
+    });
+    document.getElementById('ctAvpShare').addEventListener('click', function(){
+      if(navigator.share) navigator.share({title:'Calendrier de l’Avent Ethik’Coach', text:txt}).catch(function(){});
+      else document.getElementById('ctAvpCopy').click();
+    });
+  })();
+
+  if(!html.classList.contains('ec-avpass')) return;
+  var P = (typeof EC_AVPASS !== 'undefined' && EC_AVPASS) || {g:'edt'};
+  var GRP = (typeof EC_AVP_GROUPES !== 'undefined' && EC_AVP_GROUPES[P.g]) || 'ton coach';
+  try{ localStorage.setItem('ec_onboard_v1', localStorage.getItem('ec_onboard_v1') || '1'); localStorage.setItem('ec_tour_seen', '1'); }catch(e){}
+
+  // Vue courante (pour le bouton retour)
+  function mark(k){ html.className = html.className.replace(/\bavp-v-\w+\b/g, '').trim(); html.classList.add('avp-v-' + (k || 'today')); }
+  mark('today');
+  function wrap(){
+    var sv = window.ecShowView; if(typeof sv !== 'function' || sv.__avp) return !!sv;
+    var w = function(k){ var r = sv.apply(this, arguments); mark(k); return r; }; w.__avp = 1; window.ecShowView = w; return true;
+  }
+  var n = 0; (function t(){ if(!wrap() && ++n < 40) setTimeout(t, 200); })();
+  // Toute vue autre que le calendrier ou une séance renvoie au calendrier
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('[data-view="suivi"], [data-view="lib"], [data-view="coach"], .set-btn');
+    if(a){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  var back = document.createElement('button'); back.type = 'button'; back.className = 'avp-back'; back.innerHTML = '<span aria-hidden="true">←</span> 🎄 Calendrier';
+  back.addEventListener('click', function(){ if(window.ecShowView) window.ecShowView('today'); window.scrollTo(0, 0); });
+  document.body.appendChild(back);
+
+  // Bienvenue + appli complète
+  var LAUNCH = Date.parse('2026-12-01T00:00:00+01:00');
+  var API = (typeof EC_SUB_API !== 'undefined' && EC_SUB_API) || '';
+  function place(){
+    var tv = document.getElementById('todayView'), card = document.getElementById('aventCard'); if(!tv || !card) return false;
+    if(!tv.querySelector('.avp-hello')){
+      var hi = document.createElement('p'); hi.className = 'avp-hello';
+      hi.innerHTML = '🎁 Calendrier offert par <b>' + GRP + '</b>. Ta progression reste sur ce téléphone.';
+      card.parentNode.insertBefore(hi, card);
+    }
+    if(!tv.querySelector('a.avp-cta, div.avp-cta')){
+      var open = Date.now() >= LAUNCH;
+      var c = document.createElement(open ? 'a' : 'div'); c.className = 'avp-cta';
+      if(open){ c.href = API + '/abonnement?plan=mensuel'; c.target = '_blank'; c.rel = 'noopener'; }
+      c.innerHTML = '<span class="ac-k">Envie de plus ?</span><b>L’appli Ethik’Coach complète</b>'
+        + '<p>Renfo sur mesure selon ton matériel, programmes, yoga, étirements, respiration, tests et suivi : toutes les séances guidées à la voix, toute l’année.</p>'
+        + (open ? '<span class="ac-go">Essayer 7 jours gratuits ›</span><span class="ac-note">Offre de lancement jusqu’au 31 décembre : 6,90 €/mois, prix bloqué à vie. Sans engagement.</span>'
+                : '<span class="ac-note">Ouverture le 1er décembre, avec 7 jours d’essai gratuits.</span>');
+      card.parentNode.insertBefore(c, card.nextSibling);
+    }
+    return true;
+  }
+  var m = 0; (function t(){ if(!place() && ++m < 60) setTimeout(t, 250); })();
 })();
 </script>
 </body>
