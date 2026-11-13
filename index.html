@@ -16084,6 +16084,8 @@
       timerState.wakeLock = null;
       try{ if(vid) vid.pause(); }catch(e){}
     };
+    // Utilisé aussi par les chronos de l'espace coach (séances clients, studio)
+    window.ecKeepAwake = function(on){ if(on) requestWakeLock(); else releaseWakeLock(); };
     // Le système retire le verrou quand on change d'appli (musique, message…) : on le reprend au retour
     document.addEventListener('visibilitychange', function(){ if(!document.hidden && keep){ wl = null; acquire(); } });
     // Sécurité : tant que le chrono est ouvert, l'écran reste allumé
@@ -19888,7 +19890,7 @@
   .stp.run .stp-ring{animation:stpPulse 2s ease-in-out infinite;} @keyframes stpPulse{50%{transform:scale(1.03);}}
   .stp-ctl{display:flex; gap:8px; width:100%;}
   .stp-ctl button{min-height:58px; border:none; border-radius:18px; font:800 1rem/1 inherit; cursor:pointer; background:rgba(255,255,255,.14); color:#fff;}
-  .stp-ctl button[data-r="prev"]{flex:0 0 58px; font-size:1.2rem;} .stp-ctl button:disabled{opacity:.35;}
+  .stp-ctl button[data-r="prev"]{flex:0 0 58px; font-size:1.2rem;} .stp-ctl button[data-r="reset"]{flex:1; min-height:64px; font-size:1.15rem; background:rgba(255,255,255,.22);} .stp-ctl button:disabled{opacity:.35;}
   .stp-ctl .pp{flex:1;} .stp-ctl .nx{flex:1.3; background:var(--gold); color:#2A1A06;}
   .stp-next{display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border-radius:16px; background:rgba(255,255,255,.1);}
   .stp-next .stp-tn{flex:none; width:58px; height:42px; border-radius:10px; background:#fff center/contain no-repeat;}
@@ -20412,11 +20414,11 @@
     R = {el:el, tour:null, i:0, k:0, steps:[], state:'pret', endAt:0, left:0, recup:0, auto:true, t:0};
     R.auto = false; try{ R.auto = localStorage.getItem('ec_coach_stauto2') === '1'; }catch(e){}
     el.addEventListener('click', onRemote);
-    try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ if(R) R.wl = w; }).catch(function(){}); }catch(e){}
+    try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     R.iv = setInterval(tickRemote, 200);
     pollRemote();
   }
-  function closeRemote(){ if(!R) return; clearInterval(R.iv); clearTimeout(R.pt); try{ R.wl && R.wl.release(); }catch(e){} R.el.remove(); R = null; document.documentElement.style.overflow = ''; }
+  function closeRemote(){ if(!R) return; clearInterval(R.iv); clearTimeout(R.pt); try{ window.ecKeepAwake && window.ecKeepAwake(false); }catch(e){} R.el.remove(); R = null; document.documentElement.style.overflow = ''; }
   function pollRemote(){
     if(!R) return;
     post('/studio/lire', {}).then(function(r){
@@ -21235,14 +21237,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     el.innerHTML = '<div class="stx-top"><div class="stx-tour" id="cltT">' + esc(nom) + '<small></small></div><span class="stx-sp"></span><button type="button" class="stx-ib" data-r="show" aria-label="Voir la séance">📋</button><button type="button" class="stx-ib" data-r="close" aria-label="Fermer">✕</button></div><div class="stp-body" id="cltB"></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     CT = {el:el, nom:nom, s:s, o:o, steps:steps, k:0, state:'pret', left:0, endAt:0, sw:0, el2:0, done:0};
-    try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ if(CT) CT.wl = w; }).catch(function(){}); }catch(e){}
+    // Écran toujours allumé pendant le chrono (verrou officiel + vidéo muette sur iPhone, repris au retour dans l'appli)
+    try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     CT.left = steps[0].sec || 0;
     el.addEventListener('click', onTimer);
     CT.iv = setInterval(tickT, 200);
     renderT();
     if(steps[0].k === 'rest' && !steps[0].wup) startT();
   }
-  function closeTimer(){ if(!CT) return; clearInterval(CT.iv); try{ CT.wl && CT.wl.release(); }catch(e){} CT.el.remove(); CT = null; if(!document.querySelector('.cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
+  function closeTimer(){ if(!CT) return; clearInterval(CT.iv); try{ window.ecKeepAwake && window.ecKeepAwake(false); }catch(e){} CT.el.remove(); CT = null; if(!document.querySelector('.cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
   function cur(){ return CT.steps[CT.k]; }
   function nextEx(from){ for(var j = from; j < CT.steps.length; j++){ if(CT.steps[j].k === 'ex') return CT.steps[j]; } return null; }
   function renderT(){
@@ -21261,7 +21264,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           : '<div class="stp-ph"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '<span class="clt-ini">' + esc(ini(st.name)) + '</span>') + (st.wu ? '<span class="stp-n">🔸</span>' : '<span class="stp-n">' + (st.i + 1) + '/' + st.n + '</span>') + '</div>')
         + (isRest ? '' : '<div class="stp-name">' + esc(st.name || 'Exercice') + (tag ? '<span class="stp-cote">' + esc(tag) + '</span>' : '') + '</div>' + (hint ? '<div class="clt-val">' + esc(hint) + '</div>' : ''))
         + '<button type="button" class="stp-ring" data-r="toggle" aria-label="Démarrer ou mettre en pause"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="br" id="cltBar"/></svg><b id="cltTime">' + mmss(CT.left) + '</b><small id="cltState"></small></button>'
-        + '<div class="stp-ctl">' + (st.wup ? '<button type="button" data-r="reset" aria-label="Remettre à zéro">↺</button>' : '<button type="button" data-r="prev" aria-label="Précédent"' + (CT.k === 0 ? ' disabled' : '') + '>⏮</button>') + '<button type="button" class="pp" data-r="toggle" id="cltPP">▶️ Démarrer</button><button type="button" class="nx" data-r="next">' + (ns ? (st.wup ? 'Passer à la séance ⏭' : st.tourRest ? 'Tour suivant ⏭' : isRest ? 'Passer ⏭' : 'Suivant ⏭') : 'Terminer ✓') + '</button></div>'
+        + '<div class="stp-ctl">' + (st.wup ? '<button type="button" data-r="reset" aria-label="Remettre à zéro">↺ Zéro</button>' : '<button type="button" data-r="prev" aria-label="Précédent"' + (CT.k === 0 ? ' disabled' : '') + '>⏮</button>') + '<button type="button" class="pp" data-r="toggle" id="cltPP">▶️ Démarrer</button><button type="button" class="nx" data-r="next">' + (ns ? (st.wup ? 'Passer à la séance ⏭' : st.tourRest ? 'Tour suivant ⏭' : isRest ? 'Passer ⏭' : 'Suivant ⏭') : 'Terminer ✓') + '</button></div>'
         + (ns ? '<div class="stp-next"><span class="stp-tn"' + (nx && photoOf(nx.name) ? ' style="background-image:url(\'' + photoOf(nx.name) + '\')"' : '') + '></span><span><small>Ensuite</small><b>' + (ns.k === 'rest' ? esc(ns.lab) + (nx ? ' puis ' + esc(nx.name) : '') : esc(ns.name || 'Exercice') + (ns.side ? ' · ' + ns.side.toLowerCase() : '') + (ns.set ? ' · série ' + ns.set : '')) + '</b></span><em>' + (ns.k === 'rest' ? (ns.sec ? mmss(ns.sec) : 'libre') : ns.sec ? mmss(ns.sec) : ns.reps ? ns.reps + ' rép.' : 'libre') + '</em></div>' : '')
         + '<button type="button" class="stp-auto" data-r="auto" aria-pressed="' + CT.o.auto + '">' + (CT.o.auto ? '✓' : '○') + ' Tout s’enchaîne seul</button>';
     }
@@ -21269,7 +21272,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     tickT(true);
   }
   function startT(){
-    var st = cur(); if(!CT.t0) CT.t0 = Date.now();
+    var st = cur(); if(!CT.t0) CT.t0 = Date.now(); try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     if(!st.sec){ CT.sw = Date.now() - (CT.el2 || 0) * 1000; CT.state = 'chrono'; if(st.k !== 'rest'){ tick(1500, .1); vib(60); } return; }
     if(CT.state === 'over' || CT.left <= 0) CT.left = st.sec;
     CT.endAt = Date.now() + CT.left * 1000; CT.state = 'chrono'; if(st.k !== 'rest'){ tick(1500, .1); vib(60); }
