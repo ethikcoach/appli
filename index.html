@@ -21279,7 +21279,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         + '<span class="cl-lab">🔸 Échauffement (fait une fois)</span>' + lines('wu') + '<button type="button" class="cl-add" data-e="add" data-sec="wu">＋ Ajouter un échauffement</button>'
         + '<span class="cl-lab">💪 Circuit</span>' + lines('ci') + '<button type="button" class="cl-add" data-e="add" data-sec="ci">＋ Ajouter un exercice</button>'
         + '<p class="cl-tip">Valeur : <b>30"</b> ou <b>1\'</b> = compte à rebours · <b>12</b> = répétitions · <b>3X30"recup30"</b> = séries · <b>30"-10</b> = deux temps enchaînés · <b>↔</b> vert = un côté puis l’autre (repéré seul pour 1J, 1 bras, 1B1J…, sauf « Alt »). Les noms sont proposés d’après tes anciennes séances. La vignette à gauche montre l’image trouvée ; touche-la pour en choisir une autre.</p>'
-        + '<div class="cl-grid2" style="margin-top:14px"><button type="button" class="cl-btn ghost" data-e="show">🖥️ Présenter</button><button type="button" class="cl-btn go" data-e="go">▶️ Enregistrer et lancer</button></div>';
+        + '<button type="button" class="cl-btn go" data-e="save" style="width:100%;margin-top:14px;min-height:54px;font-size:1.05rem">💾 Enregistrer</button>'
+        + '<div class="cl-grid2" style="margin-top:8px"><button type="button" class="cl-btn ghost" data-e="show">🖥️ Présenter</button><button type="button" class="cl-btn ghost" data-e="go">▶️ Enregistrer et lancer</button></div>';
     }
     draw();
     B.addEventListener('input', function(e){
