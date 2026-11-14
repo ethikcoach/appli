@@ -10675,6 +10675,31 @@
     }
   })();
 
+  // ---------- IA (clé coach) pour composer séances et programmes de l'appli ----------
+  window.ecAIApp = function(mode, obj, def){
+    var lib = (window.ecEX || []).filter(function(e){ return ['echauffement', 'mobilite', 'principal', 'cardio', 'retour_calme'].indexOf(e.block) > -1; })
+      .map(function(e){ return [e.id, e.name, e.block, e.zone || '', Array.isArray(e.equipment) ? e.equipment.join('+') : (e.equipment || '')]; });
+    var api = (typeof EC_SUB_API !== 'undefined' && EC_SUB_API) || '', k = String((typeof EC_KEY !== 'undefined' && EC_KEY) || '').trim().toLowerCase();
+    if(!navigator.onLine) return Promise.reject({raison:'offline'});
+    return fetch(api + '/coaching/ia', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({k:k, mode:mode, obj:obj, def:def, lib:lib}), cache:'no-store'})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._s = r.status; if(!j.ok) throw j; return j; }); });
+  };
+  window.ecAIErr = function(e){
+    var w = e && e.raison;
+    return w === 'offline' ? '📴 Pas de réseau : l’IA a besoin d’internet.' : w === 'ia-off' ? '🛠 L’IA n’est pas encore branchée : ajoute la clé ANTHROPIC_API_KEY dans Cloudflare.' : w === 'cle' ? '⚪ Réservé à la clé coach.' : w === 'quota' ? '⏳ Limite du jour atteinte, réessaie demain.' : (e && e._s === 404) ? '🛠 Serveur pas encore mis à jour : dépose le nouveau worker.js sur Cloudflare.' : '⚠️ L’IA n’a pas répondu correctement. Réessaie.';
+  };
+  window.ecAIWire = function(wrap, run){
+    var go = wrap.querySelector('#cpAiGo'), st = wrap.querySelector('#cpAiSt'), ta = wrap.querySelector('#cpAi'); if(!go) return;
+    try{ ta.value = localStorage.getItem('ec_coach_iaapp') || ''; }catch(e){}
+    go.addEventListener('click', function(){
+      var obj = ta.value.trim(); if(obj.length < 3){ st.textContent = '✍️ Écris d’abord l’objectif.'; ta.focus(); return; }
+      if(go.disabled) return; try{ localStorage.setItem('ec_coach_iaapp', obj); }catch(e){}
+      go.disabled = true; go.innerHTML = '<span class="cl-ai-spin"></span> L’IA compose…'; st.textContent = 'Quelques secondes…';
+      run(obj).catch(function(e){ go.disabled = false; go.innerHTML = '✨ Réessayer'; st.textContent = window.ecAIErr(e); });
+    });
+  };
+  window.ecAIById = function(ids){ var m = {}; (window.ecEX || []).forEach(function(e){ m[e.id] = e; }); return (ids || []).map(function(id){ return m[id]; }).filter(Boolean); };
+
   // ---------- Séance composée par le coach, exercice par exercice ----------
   (function(){
     function $(s){ return document.querySelector(s); }
@@ -10690,7 +10715,8 @@
         + '<div class="cp-lab">Tours du corps de séance</div><div class="cp-chips" id="cpRounds">'
         + [1,2,3,4,5].map(function(r){ return '<button type="button" class="chip' + (r === rounds ? ' active' : '') + '" data-v="' + r + '">' + r + '</button>'; }).join('') + '</div>'
         + '<p class="cp-note">Ensuite, ajoute tes exercices avec « ＋ Ajouter un exercice » dans chaque partie, puis « Envoyer ».</p>'
-        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel">Annuler</button><button type="button" class="ec-dialog-ok">Commencer</button></div></div>';
+        + '<div class="cp-ai"><div class="cp-lab">✨ Ou décris l’objectif : l’IA compose la séance</div><textarea id="cpAi" class="ec-dialog-input" rows="3" placeholder="Ex. : gainage et haut du corps, 30 min, élastiques, sans exercice au sol"></textarea><button type="button" class="cp-ai-go" id="cpAiGo">✨ Créer avec l’IA</button><p class="cp-ai-st" id="cpAiSt">Elle choisit dans la bibliothèque de l’appli, avec ton niveau, tes tours et ton matériel.</p></div>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel">Annuler</button><button type="button" class="ec-dialog-ok">Commencer vide</button></div></div>';
       document.body.appendChild(wrap);
       wrap.querySelectorAll('.cp-chips').forEach(function(g){
         g.addEventListener('click', function(e){ var c = e.target.closest('.chip'); if(!c) return; g.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('active', x === c); }); });
@@ -10704,15 +10730,24 @@
         rounds = rd ? +rd.getAttribute('data-v') : 3;
         close(); startComposed(title, lv ? lv.getAttribute('data-v') : 'intermediaire', rounds);
       });
+      window.ecAIWire(wrap, function(obj){
+        var lv = wrap.querySelector('#cpLevel .chip.active'), rd = wrap.querySelector('#cpRounds .chip.active');
+        return window.ecAIApp('app-seance', obj, {niveau:lv ? lv.getAttribute('data-v') : 'intermediaire', tours:rd ? +rd.getAttribute('data-v') : 3, materiel:(state.equip || []).join(', ')}).then(function(r){
+          var t0 = $('#cpTitle').value.trim(), title = (t0 && t0 !== 'Séance de Benoît') ? t0 : (r.s.titre || 'Séance IA');
+          close(); startComposed(title, r.s.niveau, r.s.tours, {warm:window.ecAIById(r.s.warm), main:window.ecAIById(r.s.main), cool:window.ecAIById(r.s.cool)});
+          setTimeout(function(){ showToast('✨ Séance composée par l’IA' + (r.note ? ' · ' + r.note : '') + ' Tu peux la modifier avant de la lancer ou l’envoyer.', false); }, 2600);
+        });
+      });
       setTimeout(function(){ var t = $('#cpTitle'); if(t){ t.focus(); t.select(); } }, 40);
     }
-    function startComposed(title, level, r){
+    function startComposed(title, level, r, fill){
       if(window.ecShowView) window.ecShowView('renfo');
       try{ clearSharedHash(); }catch(e){}
       WORK_FACTOR = 1; SESSION_ADJ = null;
-      var session = {warm:[], cardio:[], main:[], cool:[], level:level, theme:'equilibre', rounds:r, durationMinutes:30,
+      var session = {warm:fill ? fill.warm : [], cardio:[], main:fill ? fill.main : [], cool:fill ? fill.cool : [], level:level, theme:'equilibre', rounds:r, durationMinutes:30,
         equip:state.equip.slice(), zone:'full', noFloor:false, chair:false, sport:null, composed:true};
       displaySession(session, escapeHtml(title), false);
+      if(fill) return;
       var b = document.getElementById('editModeBtn'); if(b && !editMode) b.click();
       showToast('Ajoute tes exercices avec « ＋ Ajouter un exercice » dans chaque partie.', false);
     }
@@ -11238,16 +11273,35 @@
         + '<div class="cp-lab">Niveau (règle les temps d’effort)</div>' + chips('cpLevel', ['debutant','intermediaire','avance','senior'], state.level || 'intermediaire', function(l){ return (LEVEL_LABEL[l] || l).replace(/ ·.*$/, ''); })
         + '<div class="cp-lab">Tours du corps de séance</div>' + chips('cpRounds', ['1','2','3','4','5'], '3')
         + '<p class="cp-note">Chaque séance (A, B…) revient chaque semaine, avec un temps d’effort qui augmente et une semaine allégée toutes les 4 semaines. Tu composes ensuite chaque séance avec « ＋ Ajouter un exercice ».</p>'
-        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel">Annuler</button><button type="button" class="ec-dialog-ok">Créer</button></div></div>';
+        + '<div class="cp-ai"><div class="cp-lab">✨ Ou décris l’objectif : l’IA compose le programme</div><textarea id="cpAi" class="ec-dialog-input" rows="3" placeholder="Ex. : prépa trail 8 semaines, 3 séances, renfo jambes et gainage, kettlebell et TRX"></textarea><button type="button" class="cp-ai-go" id="cpAiGo">✨ Créer avec l’IA</button><p class="cp-ai-st" id="cpAiSt">Elle choisit dans la bibliothèque de l’appli, avec ton niveau, tes tours et ton matériel.</p></div>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel">Annuler</button><button type="button" class="ec-dialog-ok">Créer vide</button></div></div>';
       document.body.appendChild(wrap);
       wrap.querySelectorAll('.cp-chips').forEach(function(g){ g.addEventListener('click', function(e){ var c = e.target.closest('.chip'); if(!c) return; g.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('active', x === c); }); }); });
       function close(){ wrap.remove(); }
       wrap.querySelector('.ec-dialog-cancel').addEventListener('click', close);
       wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+      function makeProg(title, weeks, spw, level, r, fill, note){
+        var slots = [];
+        for(var i = 0; i < spw; i++){ var f = fill && fill[i]; slots.push({zone:'full', theme:'equilibre', rounds:r, title:'Séance ' + SLOT_LETTERS[i] + (f && f.titre ? ' · ' + f.titre : ''), composed:true, warm:f ? window.ecAIById(f.warm) : [], cardio:[], main:f ? window.ecAIById(f.main) : [], cool:f ? window.ecAIById(f.cool) : []}); }
+        currentProgram = {id:Date.now().toString(36) + Math.random().toString(36).slice(2, 6), obj:'perso', title:title, weeks:weeks, spw:spw, duration:30, level:level,
+          equip:state.equip.slice(), noFloor:false, chair:false, athlete:'', blocks:[slots], done:{}};
+        if(window.ecShowView) window.ecShowView('renfo');
+        saveProgram(); showProgram(true);
+        try{ saveProgramNamed(currentProgram, null, title); }catch(e){}
+        setTimeout(function(){ showToast(fill ? '✨ Programme composé par l’IA et enregistré dans « Mes séances et programmes ».' + (note ? ' ' + note : '') : 'Programme enregistré dans « Mes séances et programmes ». Ouvre la séance A, puis B… pour y ajouter tes exercices.', false); }, 1600);
+      }
+      window.ecAIWire(wrap, function(obj){
+        var t0 = $('#cpTitle').value.trim(), level = pick(wrap, 'cpLevel') || 'intermediaire', r = +pick(wrap, 'cpRounds') || 3;
+        return window.ecAIApp('app-prog', obj, {niveau:level, tours:r, semaines:+pick(wrap, 'cpWeeks') || 4, spw:+pick(wrap, 'cpSpw') || 2, materiel:(state.equip || []).join(', ')}).then(function(x){
+          var p = x.p; close();
+          makeProg((t0 && t0 !== 'Programme de Benoît') ? t0 : (p.titre || 'Programme IA'), p.semaines, p.seances.length, p.niveau, p.tours, p.seances, x.note);
+        });
+      });
       wrap.querySelector('.ec-dialog-ok').addEventListener('click', function(){
         var title = $('#cpTitle').value.trim() || 'Programme de Benoît', weeks = +pick(wrap, 'cpWeeks') || 4, spw = +pick(wrap, 'cpSpw') || 2;
         var level = pick(wrap, 'cpLevel') || 'intermediaire', r = +pick(wrap, 'cpRounds') || 3;
-        close();
+        close(); makeProg(title, weeks, spw, level, r, null);
+        return;
         var slots = [];
         for(var i = 0; i < spw; i++) slots.push({zone:'full', theme:'equilibre', rounds:r, title:'Séance ' + SLOT_LETTERS[i], composed:true, warm:[], cardio:[], main:[], cool:[]});
         currentProgram = {id:Date.now().toString(36) + Math.random().toString(36).slice(2, 6), obj:'perso', title:title, weeks:weeks, spw:spw, duration:30, level:level,
@@ -20746,12 +20800,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cl-pick-more{grid-column:1 / -1; padding:12px; border-radius:14px; border:1px dashed var(--cl-b, rgba(127,127,127,.3)); background:transparent; color:inherit; font:700 .86rem/1 Inter, sans-serif; cursor:pointer;}
   .cl-pick-tip{margin:6px 0 0; font-size:.74rem; color:var(--stone); text-align:center;}
   @media (min-width:700px){ .cl-pick{padding-left:28px; padding-right:28px;} .cl-pick-g{grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px;} }
+  .cl-ln input{-webkit-user-select:text; user-select:text; touch-action:manipulation;}
+  .cl-vq{display:flex; flex-wrap:wrap; gap:6px; margin:-2px 0 8px 46px; padding:6px; border-radius:14px; background:var(--card, #fff); border:1px solid var(--cl-b, rgba(127,127,127,.2)); box-shadow:0 10px 26px rgba(0,0,0,.12);}
+  .cl-vq button{min-width:52px; min-height:40px; padding:0 12px; border:1px solid var(--cl-b, rgba(127,127,127,.25)); border-radius:12px; background:transparent; color:inherit; font:800 .95rem/1 'Bricolage Grotesque', sans-serif; cursor:pointer;}
+  .cl-vq button[aria-pressed="true"]{background:#1F6B43; border-color:#1F6B43; color:#fff;}
   .cl-sug{margin:-2px 0 8px 46px; padding:4px; border-radius:14px; background:var(--card, #fff); border:1px solid var(--cl-b, rgba(127,127,127,.2)); box-shadow:0 10px 26px rgba(0,0,0,.12);}
   .cl-sug button{display:flex; align-items:center; gap:10px; width:100%; padding:6px 8px; border:none; border-radius:10px; background:transparent; color:inherit; text-align:left; cursor:pointer; font:600 .9rem/1.2 Inter, sans-serif;}
   .cl-sug button:active, .cl-sug button:hover{background:rgba(127,127,127,.1);}
   .cl-sug i{flex:none; width:48px; height:32px; border-radius:8px; background:#F1F4EF center/contain no-repeat;}
   .cl-sug span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .cl-sug small{flex:none; font-size:.66rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--stone);}
+  .cp-ai{margin:14px 0 4px; padding:12px; border-radius:16px; background:linear-gradient(120deg, rgba(109,74,255,.1), rgba(47,203,114,.1)); border:1px solid rgba(109,74,255,.25);}
+  .cp-ai textarea{width:100%; box-sizing:border-box; min-height:78px; resize:vertical; font:600 .95rem/1.4 Inter, sans-serif;}
+  .cp-ai-go{width:100%; margin-top:8px; min-height:48px; border:none; border-radius:14px; background:linear-gradient(120deg, #6D4AFF, #2FCB72); color:#fff; font:800 .95rem/1 Inter, sans-serif; cursor:pointer;}
+  .cp-ai-go:disabled{opacity:.85;} .cp-ai-st{margin:8px 0 0; font-size:.78rem; opacity:.8;}
   .cl-ai-b{background:linear-gradient(120deg, #6D4AFF, #2FCB72) !important; color:#fff !important; border:none !important;}
   .cl-ai-b:disabled{opacity:.85;}
   .cl-ai-t{width:100%; box-sizing:border-box; min-height:96px; padding:12px; border-radius:14px; font:600 .95rem/1.4 Inter, sans-serif; resize:vertical;}
@@ -21294,7 +21356,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var B = el.querySelector('#clEdB');
     function lines(sec){
       var arr = S[sec];
-      return arr.map(function(l, i){ return '<div class="cl-ln" data-sec="' + sec + '" data-i="' + i + '">' + thumbHtml(l[0], i) + '<input class="nm" value="' + esc(l[0]) + '" placeholder="Exercice" autocomplete="off" autocapitalize="sentences" enterkeyhint="next"><input class="v" list="clValL" value="' + esc(l[1]) + '" placeholder="30&quot;" autocomplete="off">' + (sec === 'ci' ? '<button type="button" class="sd" data-e="side" aria-label="Un côté puis l’autre" aria-pressed="' + sidesOf(l) + '">↔</button>' : '') + '<button type="button" data-e="up" aria-label="Monter"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-e="del" aria-label="Retirer">✕</button></div>'; }).join('');
+      return arr.map(function(l, i){ return '<div class="cl-ln" data-sec="' + sec + '" data-i="' + i + '">' + thumbHtml(l[0], i) + '<input class="nm" value="' + esc(l[0]) + '" placeholder="Exercice" autocomplete="off" autocapitalize="sentences" enterkeyhint="next"><input class="v" value="' + esc(l[1]) + '" placeholder="30&quot;" autocomplete="off">' + (sec === 'ci' ? '<button type="button" class="sd" data-e="side" aria-label="Un côté puis l’autre" aria-pressed="' + sidesOf(l) + '">↔</button>' : '') + '<button type="button" data-e="up" aria-label="Monter"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-e="del" aria-label="Retirer">✕</button></div>'; }).join('');
     }
     function thumbHtml(nm, i){ var p = photoOf(nm); return '<button type="button" class="ph" data-e="pk" aria-label="Image de l’exercice"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : (i + 1)) + '</button>'; }
     function thumbUpd(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')], b = ln.querySelector('.ph'), p = photoOf(l[0]); b.style.backgroundImage = p ? "url('" + p + "')" : ''; b.textContent = p ? '' : (+ln.getAttribute('data-i') + 1); }
@@ -21329,7 +21391,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       SG.innerHTML = items.map(function(it){ return '<button type="button" data-n="' + esc(it.n) + '"><i' + (it.ph ? ' style="background-image:url(\'' + it.ph + '\')"' : '') + '></i><span>' + esc(it.n) + '</span><small>' + (it.mine ? 'mes séances' : 'banque') + '</small></button>'; }).join('');
       if(SG.previousElementSibling !== ln) ln.insertAdjacentElement('afterend', SG);
     }
-    B.addEventListener('focusout', function(e){ if(e.target.classList && e.target.classList.contains('nm')) setTimeout(function(){ if(SG && document.activeElement !== SG._inp) sugHide(); }, 150); });
+    B.addEventListener('focusout', function(e){ if(e.target.classList && e.target.classList.contains('nm')) setTimeout(function(){ if(SG && document.activeElement !== SG._inp) sugHide(); }, 150); if(e.target.classList && e.target.classList.contains('v')) setTimeout(function(){ if(VG && document.activeElement !== VG._inp) vHide(); }, 150); });
+    // Valeur (temps / répétitions) : au toucher, tout est sélectionné pour retaper directement, et des valeurs rapides s'affichent
+    var VG = null, VALS = ['20"', '30"', '40"', '45"', "1'", "1'30", '8', '10', '12', '15', '20'];
+    function vHide(){ if(VG){ VG.remove(); VG = null; } }
+    B.addEventListener('focusin', function(e){
+      var t = e.target; if(!t.classList) return;
+      if(t.classList.contains('v')){
+        sugHide(); setTimeout(function(){ try{ t.setSelectionRange(0, t.value.length); }catch(x){ t.select(); } }, 30);
+        var ln = t.closest('.cl-ln'); if(!ln) return;
+        if(!VG){ VG = document.createElement('div'); VG.className = 'cl-vq'; VG.addEventListener('pointerdown', function(ev){ ev.preventDefault(); var b = ev.target.closest('[data-v]'); if(!b || !VG) return; var inp = VG._inp, l2 = VG._ln; inp.value = b.getAttribute('data-v'); S[l2.getAttribute('data-sec')][+l2.getAttribute('data-i')][1] = inp.value; vHide(); inp.blur(); }); }
+        VG._inp = t; VG._ln = ln; VG.innerHTML = VALS.map(function(v){ return '<button type="button" data-v="' + esc(v) + '"' + (clean(v) === clean(t.value) ? ' aria-pressed="true"' : '') + '>' + esc(v) + '</button>'; }).join('');
+        ln.insertAdjacentElement('afterend', VG);
+      } else if(t.classList.contains('nm')){ vHide(); }
+    });
     function build(){
       var wu = S.wu.filter(function(l){ return String(l[0]).trim() || String(l[1]).trim(); }), ci = S.ci.filter(function(l){ return String(l[0]).trim() || String(l[1]).trim(); });
       var o = {d:S.d || '', ex:wu.concat(ci).map(function(l){ var q = [String(l[0]).trim(), String(l[1]).trim()]; if((l[2] === 0 || l[2] === 1) && (l[2] === 1) !== autoSide(q[0])) q[2] = l[2]; return q; })};
