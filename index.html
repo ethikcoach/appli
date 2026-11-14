@@ -21671,6 +21671,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
   function mmss(x){ x = Math.max(0, Math.ceil(x)); return Math.floor(x / 60) + ':' + ('0' + x % 60).slice(-2); }
+  function fmtC(x){ x = Math.max(0, x || 0); var sc = Math.floor(x + 1e-6), cs = Math.min(99, Math.floor((x - sc) * 100 + 1e-6)); return Math.floor(sc / 60) + ':' + ('0' + sc % 60).slice(-2) + '<small class="cs">,' + ('0' + cs).slice(-2) + '</small>'; }
   function openTimer(nom, s, o){
     var steps = buildSteps(s, o);
     if(!steps.length){ toast('Séance vide'); return; }
@@ -21682,7 +21683,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     CT.left = steps[0].sec || 0;
     el.addEventListener('click', onTimer);
-    CT.iv = setInterval(tickT, 200);
+    CT.iv = setInterval(tickT, 100);
+    // Centièmes : l'affichage du temps suit chaque image de l'écran
+    (function cltRaf(){ if(!CT || CT.el !== el) return; var st = cur(), t = el.querySelector('#cltTime');
+      if(t && CT.state === 'chrono') t.innerHTML = st.sec ? fmtC((CT.endAt - Date.now()) / 1000) : fmtC((Date.now() - CT.sw) / 1000);
+      else if(t && CT.state === 'over') t.innerHTML = '+' + fmtC((Date.now() - CT.overAt) / 1000);
+      requestAnimationFrame(cltRaf); })();
     renderT();
     if(steps[0].k === 'rest' && !steps[0].wup) startT();
   }
@@ -21750,14 +21756,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     CT.el.classList.toggle('hot', CT.state === 'chrono' && !free && st.k !== 'rest' && CT.left <= 3.2);
     CT.el.classList.toggle('pz', CT.state === 'pause');
     if(free){
-      tEl.textContent = mmss(Math.floor(CT.el2 || 0));
+      tEl.innerHTML = fmtC(CT.el2 || 0);
       sEl.textContent = CT.state === 'chrono' ? (st.wup ? 'Chronomètre en marche' : st.k === 'rest' ? 'Récup libre' : (st.reps ? 'Go ! ' + st.reps + ' rép.' : 'C’est parti !')) : CT.state === 'pause' ? 'En pause' : (st.k === 'rest' && !st.wup ? 'Récup libre' : 'Touche pour démarrer');
       if(bar) bar.style.strokeDashoffset = '0';
       if(pp) pp.textContent = CT.state === 'chrono' ? '⏸ Pause' : '▶️ Démarrer';
       return;
     }
-    if(CT.state === 'over'){ tEl.textContent = '+' + mmss((now - CT.overAt) / 1000); sEl.textContent = 'Terminé ✓ · récup'; }
-    else { tEl.textContent = mmss(CT.left); sEl.textContent = CT.state === 'chrono' ? (st.wup ? 'Échauffement' : st.sw ? 'Change de côté' : st.k === 'rest' ? 'Récup' : (st.side ? st.side + ' · go !' : 'C’est parti !')) : CT.state === 'pause' ? 'En pause' : 'Touche pour démarrer'; }
+    if(CT.state === 'over'){ tEl.innerHTML = '+' + fmtC((now - CT.overAt) / 1000); sEl.textContent = 'Terminé ✓ · récup'; }
+    else { tEl.innerHTML = fmtC(CT.left); sEl.textContent = CT.state === 'chrono' ? (st.wup ? 'Échauffement' : st.sw ? 'Change de côté' : st.k === 'rest' ? 'Récup' : (st.side ? st.side + ' · go !' : 'C’est parti !')) : CT.state === 'pause' ? 'En pause' : 'Touche pour démarrer'; }
     var frac = CT.state === 'over' ? 0 : Math.max(0, Math.min(1, CT.left / (st.sec || 1)));
     if(bar) bar.style.strokeDashoffset = (339.3 * (1 - frac)).toFixed(1);
     if(pp) pp.textContent = CT.state === 'chrono' ? '⏸ Pause' : CT.state === 'over' ? '↺ Relancer' : '▶️ Démarrer';
@@ -21865,6 +21871,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .stx.clt .stp-ring .br{stroke:var(--acc); stroke-width:7; filter:drop-shadow(0 0 6px var(--acc)); transition:stroke-dashoffset .2s linear, stroke .4s;}
 .stx.clt.rec .stp-ring .tr{stroke:rgba(77,178,255,.35); stroke-dasharray:3 6;}
 .stx.clt .stp-ring b{font:800 clamp(3rem, 16vw, 4.6rem)/1 'Bricolage Grotesque', sans-serif; letter-spacing:-.04em; font-variant-numeric:tabular-nums; color:#fff;}
+.stx.clt .stp-ring b .cs{display:inline; margin:0; font-family:inherit; font-weight:800; text-transform:none; font-size:.4em; letter-spacing:0; opacity:.7; font-variant-numeric:tabular-nums; color:inherit;}
 .stx.clt.rec .stp-ring b{color:#BFE3FF;}
 .stx.clt.hot .stp-ring b{color:#FFB37A;}
 .stx.clt .stp-ring small{margin-top:8px; font:800 .72rem/1 Inter, sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--acc); opacity:1;}
