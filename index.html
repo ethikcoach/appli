@@ -16821,6 +16821,13 @@
     var LAUNCH = Date.parse('2026-12-01T00:00:00+01:00'), FIN_OFFRE = Date.parse('2027-01-01T00:00:00+01:00');
     var test = false; try{ test = /[?&]abotest=1/.test(location.search) || localStorage.getItem('ec_abotest') === '1'; if(/[?&]abotest=1/.test(location.search)) localStorage.setItem('ec_abotest', '1'); }catch(e){}
     var OPEN = Date.now() >= LAUNCH || test;
+    // Invitation à s'abonner pour les « séances seules » : la même pour l'appli et pour l'Espace coaching
+    window.ecAboOpen = OPEN;
+    window.ecGuestCtaHtml = function(end){
+      return '<a class="guest-cta' + (end ? ' fbg' : '') + '" href="https://www.ethikcoach.fr/abonnement.html" target="_blank" rel="noopener">'
+        + (end ? '<b>Tu as aimé cette séance ? 💪</b><small>Avec l’appli Ethik’Coach, des séances comme celle-ci à volonté, adaptées à ton niveau, ton matériel et ton temps : renfo, yoga, étirements, respiration, guidés à la voix. 7 jours gratuits, sans engagement.</small><span>Essayer l’appli gratuitement</span>'
+          : '<b>Envie de plus de séances comme celle-ci ?</b><small>L’appli complète : renfo sur mesure, yoga, étirements, respiration, guidés à la voix. 7 jours gratuits, sans engagement.</small><span>Essayer gratuitement</span>') + '</a>';
+    };
     var $ = function(id){ return document.getElementById(id); };
     var lancement = Date.now() < FIN_OFFRE;
     var PM = lancement ? '6,90 €' : '9,90 €', PA = lancement ? '69 €' : '89 €';
@@ -21407,7 +21414,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     try{ if(/(^|\.)ethikcoach\.fr$/i.test(location.hostname)) base = location.origin + '/'; }catch(e){}
     return base + '#c=' + p + (typeof ecGuestSig === 'function' ? '&g=' + ecGuestSig(p) : '');
   }
-  function guestCta(){ return '<div class="clp-guest"><b>Cette séance t’est offerte par Benoît, coach Ethik’Coach.</b><p>Envie de continuer ? Avec l’appli, tu as des séances de renfo, récup et respiration guidées à la voix, faites pour toi.</p><div><a class="cl-btn go" href="https://www.ethikcoach.fr/appli-renfo-relax.html" target="_blank" rel="noopener">' + IC('spark') + 'Découvrir l’abonnement</a><a class="cl-btn ghost" href="https://wa.me/33611323245?text=' + encodeURIComponent('Bonjour Benoît, j’ai fait la séance que tu m’as envoyée et je voudrais en savoir plus sur l’appli Ethik’Coach.') + '" target="_blank" rel="noopener">Écrire à Benoît</a></div></div>'; }
+  function guestCta(){ return '<div class="clp-gwrap"><span class="guest-note">Cette séance t’est offerte par Benoît, coach Ethik’Coach. Envie d’un programme fait pour toi ? Écris-lui, il te répond vite.</span><div class="clp-gbtns"><a class="cl-btn ghost" href="https://wa.me/33611323245?text=' + encodeURIComponent('Bonjour Benoît, j’ai fait la séance que tu m’as envoyée et je voudrais en savoir plus sur l’appli Ethik’Coach.') + '" target="_blank" rel="noopener">Écrire à Benoît sur WhatsApp</a></div></div>'; }
   window.ecCoachingOpen = function(code, note, guest){ var r = parseCC(code); if(!r){ toast('Séance illisible'); return; } present(r.nom || 'Ta séance', r.s, {athlete:true, note:note || '', guest:!!guest}); };
   (function(){ var m = /^#c=([A-Za-z0-9_-]+)(?:&g=[a-z0-9]{8})?$/.exec(location.hash || ''); if(!m) return; var code = ''; try{ code = b64d(m[1]); }catch(e){}
     var guest = document.documentElement.classList.contains('ec-guest');
@@ -21426,7 +21433,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return out;
   }
   function sendSession(nom, s){
-    var link = guestLink(s), txt = sendText(nom, s) + '\n\n▶️ Fais-la avec le chrono et les exercices illustrés : ' + link, file = null, url = '', fname = 'seance-' + (nz(nom).replace(/[^a-z0-9]+/g, '-') || 'client') + '-' + (s.d || 'ethikcoach') + '.png';
+    var link = guestLink(s), ciN = s.ex.length - (s.w || 0);
+    var intro = 'Bonjour ' + nom + ',\nVoici ta séance du ' + dLong(s) + ' (' + ciN + ' exercice' + (ciN > 1 ? 's' : '') + (s.t ? ', ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '). Ouvre le lien et appuie sur « Chrono » : le chrono te guide exercice par exercice.\n' + link;
+    var txt = intro + '\n\n' + sendText(nom, s).split('\n').slice(1).join('\n').replace(/\n*Bonne séance [^\n]*\n[^\n]*$/, '').replace(/^\n+/, '') + '\n\nBonne séance !', file = null, url = '', fname = 'seance-' + (nz(nom).replace(/[^a-z0-9]+/g, '-') || 'client') + '-' + (s.d || 'ethikcoach') + '.png';
     var d = sheet('<h4>' + IC('plane') + ' Envoyer la séance</h4><p>À <b>' + esc(nom) + '</b> · ' + esc(dLong(s)) + '. La personne reçoit la fiche en image et un lien : il ouvre uniquement cette séance dans l’appli (chrono, illustrations), avec une invitation à s’abonner.</p>'
       + '<div class="cl-send-pv" id="clSendPv"><span>Préparation de l’image…</span></div>'
       + '<button type="button" class="cl-btn go" data-k="img" id="clSendImg" disabled>' + IC('plane') + 'Envoyer l’image + le lien</button>'
@@ -21444,7 +21453,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       + '<button type="button" class="cl-btn ghost" data-k="x">Fermer</button>', function(k){
         if(k === 'img'){
           var canFile = !!(file && navigator.canShare && navigator.canShare({files:[file]}));
-          if(canFile){ navigator.share({files:[file], text:'Ta séance du ' + dLong(s) + ' 💪\n▶️ Fais-la avec le chrono : ' + link}).catch(function(){}); return false; }
+          if(canFile){ navigator.share({files:[file], text:intro}).catch(function(){}); return false; }
           if(url){ var a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); toast('Image enregistrée : envoie-la depuis tes photos'); }
           return false;
         }
@@ -21921,7 +21930,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var h;
     if(CT.state === 'fin'){
       var nEx2 = 0, seenI = {}; CT.steps.forEach(function(x){ if(x.k === 'ex' && !x.wu && !seenI[x.i]){ seenI[x.i] = 1; nEx2++; } });
-      h = '<div class="stp-wait clt-end"><i>🏆</i><b>Bravo ' + esc(CT.nom) + ' !</b><span>Séance terminée</span><div class="clt-stats"><div><b>' + mmss((Date.now() - (CT.t0 || Date.now())) / 1000) + '</b><small>durée</small></div><div><b>' + (CT.o.t || 1) + '</b><small>tour' + ((CT.o.t || 1) > 1 ? 's' : '') + '</small></div><div><b>' + nEx2 + '</b><small>exercices</small></div></div><button type="button" class="stp-sm pri" data-r="close">Terminer</button><button type="button" class="stp-sm" data-r="restart">' + IC('reset') + 'Recommencer</button></div>';
+      h = '<div class="stp-wait clt-end"><i>🏆</i><b>Bravo' + (CT.nom && CT.nom !== 'Ta séance' ? ' ' + esc(CT.nom) : '') + ' !</b><span>Séance terminée</span><div class="clt-stats"><div><b>' + mmss((Date.now() - (CT.t0 || Date.now())) / 1000) + '</b><small>durée</small></div><div><b>' + (CT.o.t || 1) + '</b><small>tour' + ((CT.o.t || 1) > 1 ? 's' : '') + '</small></div><div><b>' + nEx2 + '</b><small>exercices</small></div></div><button type="button" class="stp-sm pri" data-r="close">Terminer</button><button type="button" class="stp-sm" data-r="restart">' + IC('reset') + 'Recommencer</button>' + (document.documentElement.classList.contains('ec-guest') && window.ecAboOpen && window.ecGuestCtaHtml ? window.ecGuestCtaHtml(true) : '') + '</div>';
     } else {
       var isRest = st.k === 'rest', p = isRest ? '' : photoOf(st.name), tag = [st.side ? '↔ ' + st.side : '', st.set ? 'Série ' + st.set : st.part ? 'Partie ' + st.part : ''].filter(Boolean).join(' · ');
       var hint = isRest ? '' : st.sec ? (st.txt ? st.txt : '') : st.reps ? st.reps + ' répétitions' : (st.txt || 'À ton rythme');
@@ -22435,6 +22444,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-send-pv img{display:block; width:100%; height:auto;}
 .cl-send-alt{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
 .cl-send-alt .cl-btn{text-decoration:none; font-size:.84rem; padding:0 8px;}
+.clp-gwrap{margin:22px 0 10px; padding:16px; border-radius:20px; background:var(--cd, #fff); border:1px solid var(--ln, rgba(14,26,20,.08));}
+.clp-gwrap .guest-note{margin:0 0 4px; font:600 .9rem/1.45 Inter, sans-serif;}
+.clp-gbtns{margin-top:10px;} .clp-gbtns .cl-btn{width:100%; text-decoration:none; margin:0;}
+.clt-end .guest-cta{margin-top:14px; text-align:left; text-decoration:none;}
+.stx .stp-sm{display:inline-flex; align-items:center; justify-content:center; gap:8px;} .stx .stp-sm .tmi{width:18px; height:18px; flex:none;}
 .clp-guest{margin:22px 0 10px; padding:18px; border-radius:22px; background:radial-gradient(120% 140% at 0% 0%, #23482F 0%, #0E1A14 60%); color:#fff; position:relative; overflow:hidden;}
 .clp-guest::after{content:''; position:absolute; top:50%; right:-40px; width:170px; height:144px; transform:translateY(-50%) rotate(-6deg); background:var(--ec-wm) no-repeat center / contain; opacity:.1; pointer-events:none;}
 .clp-guest > *{position:relative; z-index:1;}
