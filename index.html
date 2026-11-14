@@ -20709,6 +20709,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .clt-rest{flex-direction:column; gap:6px; background:linear-gradient(140deg, #13324A, #1E5A7A) !important; color:#fff; text-align:center; padding:16px;}
   .clt-rest.sw{background:linear-gradient(140deg, #4A2C7A, #7A4FB0) !important;} .clt-rest.wup{background:linear-gradient(140deg, #7A3A13, #C2661E) !important;}
   .clt-rest i{font-style:normal; font-size:3rem;} .clt-rest b{font:800 1.2rem/1.2 'Bricolage Grotesque', sans-serif;} .clt-rest span{font:600 .95rem/1.3 Inter, sans-serif; opacity:.9;}
+  .cl-ai-b{background:linear-gradient(120deg, #6D4AFF, #2FCB72) !important; color:#fff !important; border:none !important;}
+  .cl-ai-b:disabled{opacity:.85;}
+  .cl-ai-t{width:100%; box-sizing:border-box; min-height:96px; padding:12px; border-radius:14px; font:600 .95rem/1.4 Inter, sans-serif; resize:vertical;}
+  .cl-ai-ch{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 6px;}
+  .cl-ai-ch button{padding:7px 11px; border-radius:999px; border:1px solid rgba(109,74,255,.3); background:rgba(109,74,255,.08); color:inherit; font:700 .78rem/1 Inter, sans-serif; cursor:pointer;}
+  .cl-ai-o{display:flex; align-items:center; gap:8px; margin:8px 0 4px; font:600 .84rem/1.3 Inter, sans-serif;}
+  .cl-ai-s{margin:6px 0 0 !important; font-size:.8rem !important;}
+  .cl-ai-spin{display:inline-block; width:14px; height:14px; margin-right:6px; vertical-align:-2px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:clAiSp .8s linear infinite;}
+  @keyframes clAiSp{to{transform:rotate(360deg);}}
+  .cl-ai-note{display:flex; flex-direction:column; gap:5px; margin:0 0 14px; padding:12px 14px; border-radius:16px; background:linear-gradient(120deg, rgba(109,74,255,.12), rgba(47,203,114,.12)); border:1px solid rgba(109,74,255,.25); font:600 .86rem/1.4 Inter, sans-serif;}
+  .cl-ai-note b{font:800 .95rem/1.2 'Bricolage Grotesque', sans-serif;} .cl-ai-note small{opacity:.7;}
   .cl-sync{margin:0 0 8px !important; padding:9px 12px; border-radius:12px; background:rgba(46,125,79,.1); color:var(--ink) !important; font-weight:700; font-size:.86rem !important;}
   .clt-ini{font:800 2.6rem/1 'Bricolage Grotesque', sans-serif; color:#9FB3A6;}
 </style>
@@ -20900,7 +20911,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     setInterval(function(){ if(!document.hidden) run(); }, 20000);
     // Une séance ouverte au moment d'une réception : l'écran se met à jour à sa fermeture
     new MutationObserver(function(){ if(pend && quiet()){ pend = false; render(); } }).observe(document.body, {childList:true});
-    return {run:run, changed:changed, label:label, test:{merge:merge, st:function(){ return st; }}};
+    return {run:run, changed:changed, label:label, post:post, test:{merge:merge, st:function(){ return st; }}};
   })();
   function clientById(id){ return D.clients.find(function(c){ return c.id === id; }) || null; }
   function sortSess(c){ c.s.sort(function(a, b){ return (a.d || a._k || '') < (b.d || b._k || '') ? -1 : (a.d || a._k || '') > (b.d || b._k || '') ? 1 : 0; }); }
@@ -21096,10 +21107,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!c) return;
     if(a === 'cmenu') return clientMenu(c);
     if(a === 'new'){ var l0 = lastSess(c);
-      if(!l0) return openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true);
       sheet('<h4>＋ Nouvelle séance · ' + esc(c.nom) + '</h4><p>Comment veux-tu partir ?</p>'
-        + '<button type="button" class="cl-btn go" data-k="last">⧉ Dernière séance <small style="font-weight:600;opacity:.85">· ' + esc(dShort(l0)) + ' · ' + l0.ex.length + ' exercice' + (l0.ex.length > 1 ? 's' : '') + '</small></button>'
+        + '<button type="button" class="cl-btn cl-ai-b" data-k="ia">✨ Créer avec l’IA <small style="font-weight:600;opacity:.85">· à partir d’un objectif</small></button>'
+        + (l0 ? '<button type="button" class="cl-btn go" data-k="last">⧉ Dernière séance <small style="font-weight:600;opacity:.85">· ' + esc(dShort(l0)) + ' · ' + l0.ex.length + ' exercice' + (l0.ex.length > 1 ? 's' : '') + '</small></button>' : '')
         + '<button type="button" class="cl-btn" data-k="blank">📄 Séance vierge</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k){
+          if(k === 'ia') setTimeout(function(){ aiSheet(c); }, 0);
           if(k === 'last') setTimeout(function(){ openEditor(c, {d:todayIso(), t:l0.t, r:l0.r, w:l0.w, who:l0.who, ex:l0.ex.map(function(x){ return x.slice(); })}, true); }, 0);
           if(k === 'blank') setTimeout(function(){ openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true); }, 0);
         });
@@ -21298,6 +21310,44 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     });
     return el;
   }
+  // ---------- Création de séance avec l'IA (via le serveur, clé coach ; le prénom du client n'est jamais envoyé) ----------
+  var AI_CH = ['Haut du corps', 'Bas du corps', 'Gainage', 'Cardio', 'Mobilité', 'Senior / doux', 'Prépa trail', 'TRX', 'Kettlebell', 'Élastique', 'Poids du corps', 'À domicile', '45 min', 'Débutant', 'Confirmé'];
+  var AI_LAST = 'ec_coach_iaobj';
+  function aiSheet(c){
+    var last = ''; try{ last = localStorage.getItem(AI_LAST) || ''; }catch(e){}
+    var d = sheet('<h4>✨ Séance avec l’IA · ' + esc(c.nom) + '</h4><p>Décris l’objectif : zone travaillée, niveau, matériel, durée, contraintes. L’IA propose la séance, tu l’ajustes avant d’enregistrer.</p>'
+      + '<textarea class="cl-in cl-ai-t" id="clIaT" rows="4" placeholder="Ex. : renfo bas du corps et gainage, genou fragile, 45 min, TRX et kettlebell, niveau intermédiaire">' + esc(last) + '</textarea>'
+      + '<div class="cl-ai-ch">' + AI_CH.map(function(x){ return '<button type="button" data-ch="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>'
+      + '<label class="cl-ai-o"><input type="checkbox" id="clIaH" checked> S’appuyer sur ses dernières séances (progression, variété)</label>'
+      + '<p class="cl-ai-s" id="clIaS">Le prénom du client n’est pas envoyé. Il faut du réseau.</p>'
+      + '<button type="button" class="cl-btn cl-ai-b" data-k="go" id="clIaGo">✨ Créer la séance</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k, dd){
+        if(k !== 'go') return;
+        var obj = dd.querySelector('#clIaT').value.trim(), st2 = dd.querySelector('#clIaS'), go = dd.querySelector('#clIaGo');
+        if(obj.length < 3){ st2.textContent = '✍️ Écris d’abord l’objectif de la séance.'; return false; }
+        if(!navigator.onLine){ st2.textContent = '📴 Pas de réseau : l’IA a besoin d’internet.'; return false; }
+        if(go.disabled) return false;
+        try{ localStorage.setItem(AI_LAST, obj); }catch(e){}
+        go.disabled = true; go.innerHTML = '<span class="cl-ai-spin"></span> L’IA prépare la séance…'; st2.textContent = 'Quelques secondes…';
+        var hist = dd.querySelector('#clIaH').checked ? c.s.slice(-4).reverse().map(function(x){ return {d:x.d || '', t:x.t || 0, ex:x.ex.slice(x.w || 0).map(function(l){ return [l[0], l[1]]; })}; }) : [];
+        var lib = exList().filter(function(e){ var ph = ''; try{ ph = window.ecExPhoto ? window.ecExPhoto(e) : ''; }catch(x){} return ph && ph.indexOf('data:image/svg') !== 0; }).map(function(e){ return e.name; });
+        SY.post('/coaching/ia', {obj:obj, hist:hist, mots:suggestions().slice(0, 200), lib:lib}).then(function(r){
+          if(!r.ok) throw r;
+          dd.remove();
+          var s0 = {d:todayIso(), t:r.s.t, r:r.s.r || '', w:r.s.w || 0, ex:r.s.ex.map(function(l){ return [l[0], l[1] || '30"']; })};
+          openEditor(c, s0, true);
+          var body = document.querySelector('.cl-ov:last-of-type .cl-ov-body');
+          if(body) body.insertAdjacentHTML('afterbegin', '<div class="cl-ai-note"><b>✨ Proposition de l’IA</b><span>Objectif : ' + esc(obj) + '</span>' + (r.note ? '<span>💡 ' + esc(r.note) + '</span>' : '') + '<small>Vérifie, ajuste puis Enregistrer.</small></div>');
+        }).catch(function(e){
+          go.disabled = false; go.innerHTML = '✨ Réessayer';
+          var why = e && e.raison;
+          st2.textContent = why === 'ia-off' ? '🛠 L’IA n’est pas encore branchée : ajoute la clé ANTHROPIC_API_KEY dans Cloudflare.' : why === 'cle' ? '⚪ Réservé à la clé coach.' : why === 'quota' ? '⏳ Limite du jour atteinte, réessaie demain.' : (e && e._s === 404) ? '🛠 Serveur pas encore mis à jour : dépose le nouveau worker.js sur Cloudflare.' : '⚠️ L’IA n’a pas répondu correctement. Réessaie.';
+        });
+        return false;
+      });
+    d.addEventListener('click', function(ev){ var ch = ev.target.closest('[data-ch]'); if(!ch) return; var t = d.querySelector('#clIaT'), v = ch.getAttribute('data-ch'); t.value = (t.value.trim() ? t.value.trim().replace(/[,.]?$/, ', ') : '') + v; t.focus(); });
+    setTimeout(function(){ var t = d.querySelector('#clIaT'); if(t && !t.value) t.focus(); }, 80);
+  }
+
   function pickPhoto(name, done){
     var cur = exFor(name);
     var d = sheet('<h4>Image pour « ' + esc(name) + ' »</h4><p>Ton choix s’applique à toutes les séances où cet exercice apparaît.</p><input class="cl-in" style="width:100%;box-sizing:border-box" id="clPkQ" type="search" placeholder="Chercher (ex. rowing, gainage)" autocomplete="off"><div id="clPkL" style="margin-top:8px"></div><button type="button" class="cl-btn ghost" data-k="none">Pas d’image</button><button type="button" class="cl-btn ghost" data-k="x">Fermer</button>', function(k, dd, kb){
