@@ -20608,6 +20608,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cl-av{flex:none; font-style:normal; width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:#E4EFE7; color:#1F4030; font:800 .95rem/1 'Bricolage Grotesque', sans-serif;}
   .cl-row span{flex:1; min-width:0;} .cl-row b{display:block; font-size:1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .cl-row small{display:block; color:var(--stone); font-size:.78rem; margin-top:2px;}
   .cl-row i{font-style:normal; color:var(--stone); font-size:1.2rem;}
+  .cl-grp{display:flex; align-items:center; gap:8px; width:100%; margin:12px 0 8px; padding:0; border:none; background:none; color:var(--stone); font:800 .72rem/1 Inter, sans-serif; letter-spacing:.12em; text-transform:uppercase; text-align:left;}
+  .cl-grp span{padding:3px 7px; border-radius:999px; background:rgba(127,127,127,.14); letter-spacing:0; font-size:.7rem;}
+  .cl-grp i{margin-left:auto; font-style:normal; font-size:.9rem;}
+  .cl-arch{cursor:pointer; padding:10px 12px; margin-top:14px; border-radius:12px; border:1px dashed var(--cl-b);}
+  .cl-tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;}
+  .cl-tile{display:flex; align-items:center; gap:9px; min-width:0; padding:8px 10px 8px 8px; border:1px solid var(--cl-b); border-radius:14px; background:var(--card, #fff); color:var(--ink); text-align:left; cursor:pointer; transition:transform .12s;}
+  .cl-tile:active, .cl-dn:active{transform:scale(.97);}
+  .cl-av2{flex:none; width:34px; height:34px; border-radius:11px; display:grid; place-items:center; color:#fff; font:800 .8rem/1 'Bricolage Grotesque', sans-serif; font-style:normal;}
+  .cl-tile span{min-width:0; flex:1;} .cl-tile b{display:block; font-size:.92rem; line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cl-tile small{display:block; margin-top:2px; font-size:.72rem; color:var(--stone); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .cl-dense{display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:0 12px;}
+  .cl-dn{display:flex; align-items:center; gap:8px; min-width:0; padding:8px 6px; border:none; border-bottom:1px solid var(--cl-b); background:none; color:var(--ink); text-align:left; cursor:pointer;}
+  .cl-dn i{flex:none; width:8px; height:8px; border-radius:50%;}
+  .cl-dn b{flex:1; min-width:0; font-size:.88rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cl-dn small{flex:none; font-size:.7rem; color:var(--stone);}
+  @media (min-width:700px){ .cl-tiles{grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px;} .cl-dense{grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));} }
   .cl-empty{text-align:center; padding:18px 8px; color:var(--stone); font-size:.9rem;}
   .cl-empty b{display:block; font-size:2.2rem; margin-bottom:6px;}
   .cl-head{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
@@ -21055,7 +21071,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var c = V.c && clientById(V.c);
     if(c) return renderClient(c);
     V.c = null;
-    var h = '<div class="cl-card"><h3>🏋️ Mes clients</h3><p>Tes séances studio et à domicile, client par client. Tout reste sur cet appareil et marche sans internet.</p>';
+    var h = '<div class="cl-card"><h3>🏋️ Mes clients</h3><p>Tes séances studio et à domicile, client par client.</p>';
     if(!D.clients.length){
       h += '<div class="cl-empty"><b>📥</b>Aucun client pour l’instant.<br>Importe le fichier de tes séances, ou crée ton premier client.</div>'
         + '<div class="cl-grid2"><button type="button" class="cl-btn go" data-a="import">📥 Importer</button><button type="button" class="cl-btn ghost" data-a="newc">＋ Nouveau client</button></div>';
@@ -21069,12 +21085,36 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     pane.innerHTML = h;
     listRows();
   }
+  // Liste des clients : récents en tuiles, anciens repliés en liste dense ; la recherche cherche partout
+  var ARCH_K = 'ec_coach_clarch', ACTIF_J = 120;
+  var AV_COL = ['#2E9E5E', '#3A7BC8', '#C2661E', '#8E3FC8', '#C8302E', '#1F8A8A', '#B8861E', '#5B6BD6', '#D6336C', '#4E7D2F'];
+  function avCol(n){ var h = 0, t = nz(n); for(var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return AV_COL[h % AV_COL.length]; }
+  function lastIso(c){ var l = lastSess(c); return l && /^\d{4}-\d{2}-\d{2}$/.test(l.d || '') ? l.d : ''; }
+  function ago(c){
+    var l = lastSess(c); if(!l) return 'aucune séance';
+    var d = lastIso(c); if(!d) return dShort(l);
+    var n = Math.round((new Date(todayIso() + 'T12:00:00') - new Date(d + 'T12:00:00')) / 864e5);
+    if(n < 0) return 'prévue ' + dShort(l); if(n === 0) return 'aujourd’hui'; if(n === 1) return 'hier'; if(n < 14) return 'il y a ' + n + ' j';
+    if(n < 60) return 'il y a ' + Math.round(n / 7) + ' sem.';
+    return dShort(l);
+  }
+  function isActif(c){ var d = lastIso(c); if(!d) return false; var n = (new Date(todayIso() + 'T12:00:00') - new Date(d + 'T12:00:00')) / 864e5; return n <= ACTIF_J; }
+  function tile(c){ return '<button type="button" class="cl-tile" data-c="' + esc(c.id) + '"><em class="cl-av2" style="background:' + avCol(c.nom) + '">' + esc(ini(c.nom)) + '</em><span><b>' + esc(c.nom) + '</b><small>' + esc(ago(c)) + '</small></span></button>'; }
+  function dense(c){ var l = lastSess(c), y = l ? ((l.d || '').match(/^\d{4}/) || String(dShort(l)).match(/\d{4}/) || [''])[0] : ''; return '<button type="button" class="cl-dn" data-c="' + esc(c.id) + '" title="' + (l ? 'Dernière séance : ' + esc(dShort(l)) : 'Aucune séance') + '"><i style="background:' + avCol(c.nom) + '"></i><b>' + esc(c.nom) + '</b><small>' + esc(y) + '</small></button>'; }
   function listRows(){
     var box = pane.querySelector('#clList'); if(!box) return;
     var q = nz(V.q);
     var arr = D.clients.filter(function(c){ return !q || nz(c.nom).indexOf(q) >= 0; }).map(function(c){ var l = lastSess(c); return {c:c, k:l ? (l.d || l._k || '') : ''}; });
     arr.sort(function(a, b){ return a.k < b.k ? 1 : a.k > b.k ? -1 : a.c.nom.localeCompare(b.c.nom); });
-    box.innerHTML = arr.length ? arr.map(function(x){ var c = x.c, l = lastSess(c); return '<button type="button" class="cl-row" data-c="' + esc(c.id) + '"><em class="cl-av">' + esc(ini(c.nom)) + '</em><span><b>' + esc(c.nom) + '</b><small>' + c.s.length + ' séance' + (c.s.length > 1 ? 's' : '') + (l ? ' · dernière : ' + esc(dShort(l)) : '') + '</small></span><i>›</i></button>'; }).join('') : '<div class="cl-empty">Aucun client ne correspond.</div>';
+    if(!arr.length){ box.innerHTML = '<div class="cl-empty">Aucun client ne correspond.</div>'; return; }
+    if(q){ box.innerHTML = '<div class="cl-tiles">' + arr.map(function(x){ return tile(x.c); }).join('') + '</div>'; return; }
+    var act = arr.filter(function(x){ return isActif(x.c); }), old = arr.filter(function(x){ return !isActif(x.c); });
+    old.sort(function(a, b){ return a.c.nom.localeCompare(b.c.nom, 'fr'); });
+    var open = false; try{ open = localStorage.getItem(ARCH_K) === '1'; }catch(e){}
+    var h = act.length ? '<div class="cl-grp">Récents <span>' + act.length + '</span></div><div class="cl-tiles">' + act.map(function(x){ return tile(x.c); }).join('') + '</div>' : '';
+    if(old.length) h += '<button type="button" class="cl-grp cl-arch" data-a="arch" aria-expanded="' + open + '">Anciens clients <span>' + old.length + '</span><i>' + (open ? '▾' : '▸') + '</i></button>'
+      + (open ? '<div class="cl-dense">' + old.map(function(x){ return dense(x.c); }).join('') + '</div>' : '');
+    box.innerHTML = h;
   }
   function sessHtml(c, s){
     var w = s.w || 0, meta = fmtLine(s);
@@ -21101,6 +21141,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'export') return doExport();
     if(a === 'scan') return scanQR();
     if(a === 'sync'){ SY.run(); return; }
+    if(a === 'arch'){ try{ localStorage.setItem(ARCH_K, localStorage.getItem(ARCH_K) === '1' ? '0' : '1'); }catch(x){} listRows(); return; }
     if(a === 'newc') return askName('Nouveau client', '', function(n){ var nc = {id:uid(), nom:n, s:[]}; D.clients.push(nc); save(); V.c = nc.id; render(); });
     if(a === 'back'){ V.c = null; render(); return; }
     if(a === 'more'){ V.more += 30; render(); return; }
