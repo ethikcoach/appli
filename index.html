@@ -20726,6 +20726,32 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .clt-rest{flex-direction:column; gap:6px; background:linear-gradient(140deg, #13324A, #1E5A7A) !important; color:#fff; text-align:center; padding:16px;}
   .clt-rest.sw{background:linear-gradient(140deg, #4A2C7A, #7A4FB0) !important;} .clt-rest.wup{background:linear-gradient(140deg, #7A3A13, #C2661E) !important;}
   .clt-rest i{font-style:normal; font-size:3rem;} .clt-rest b{font:800 1.2rem/1.2 'Bricolage Grotesque', sans-serif;} .clt-rest span{font:600 .95rem/1.3 Inter, sans-serif; opacity:.9;}
+  .cl-pick{position:fixed; inset:0; z-index:1700; display:flex; flex-direction:column; background:var(--paper, #F6F3EC); color:var(--ink); padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 10px); box-sizing:border-box;}
+  .cl-pick-top{display:flex; align-items:center; gap:10px;} .cl-pick-top div{flex:1; min-width:0;} .cl-pick-top small{display:block; font:800 .7rem/1 Inter, sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--stone);} .cl-pick-top b{display:block; margin-top:4px; font:800 1.4rem/1.1 'Bricolage Grotesque', sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cl-pick-x{flex:none; width:42px; height:42px; border:none; border-radius:50%; background:rgba(127,127,127,.14); color:inherit; font-size:1rem; cursor:pointer;}
+  .cl-pick-cur{display:flex; align-items:center; gap:10px; margin:12px 0 10px; padding:8px; border-radius:16px; background:var(--card, #fff); border:1px solid var(--cl-b, rgba(127,127,127,.18));}
+  .cl-pick-th{flex:none; width:64px; height:44px; border-radius:10px; background:#F1F4EF center/contain no-repeat; display:grid; place-items:center; color:#9FB3A6; font-weight:800;}
+  .cl-pick-ci{flex:1; min-width:0;} .cl-pick-ci small{display:block; font-size:.7rem; color:var(--stone); font-weight:700;} .cl-pick-ci b{display:block; font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cl-pick-sb{flex:none; padding:8px 11px; border-radius:999px; border:1px solid var(--cl-b, rgba(127,127,127,.25)); background:transparent; color:inherit; font:700 .76rem/1 Inter, sans-serif; cursor:pointer;}
+  .cl-pick-sr input{width:100%; box-sizing:border-box; height:46px; padding:0 14px; border-radius:14px; border:1px solid var(--cl-b, rgba(127,127,127,.25)); background:var(--card, #fff); color:inherit; font:600 1rem/1 Inter, sans-serif;}
+  .cl-pick-eq{display:flex; gap:6px; overflow-x:auto; padding:10px 0 4px; scrollbar-width:none;} .cl-pick-eq::-webkit-scrollbar{display:none;}
+  .cl-pick-eq button{flex:none; padding:8px 12px; border-radius:999px; border:1px solid var(--cl-b, rgba(127,127,127,.25)); background:transparent; color:inherit; font:700 .8rem/1 Inter, sans-serif; cursor:pointer;}
+  .cl-pick-eq button[aria-pressed="true"]{background:#1F6B43; border-color:#1F6B43; color:#fff;}
+  .cl-pick-n{margin:6px 0 8px; font:700 .76rem/1.3 Inter, sans-serif; color:var(--stone);}
+  .cl-pick-g{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; align-content:start; padding-bottom:6px;}
+  .cl-pick-it{display:flex; flex-direction:column; gap:6px; padding:6px; border-radius:16px; border:2px solid transparent; background:var(--card, #fff); color:inherit; text-align:left; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .cl-pick-it span{display:block; aspect-ratio:3/2; border-radius:11px; background:#F4F6F2 center/contain no-repeat;}
+  .cl-pick-it b{padding:0 4px 4px; font:700 .8rem/1.2 Inter, sans-serif; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .cl-pick-it.on{border-color:#2FCB72;}
+  .cl-pick-more{grid-column:1 / -1; padding:12px; border-radius:14px; border:1px dashed var(--cl-b, rgba(127,127,127,.3)); background:transparent; color:inherit; font:700 .86rem/1 Inter, sans-serif; cursor:pointer;}
+  .cl-pick-tip{margin:6px 0 0; font-size:.74rem; color:var(--stone); text-align:center;}
+  @media (min-width:700px){ .cl-pick{padding-left:28px; padding-right:28px;} .cl-pick-g{grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px;} }
+  .cl-sug{margin:-2px 0 8px 46px; padding:4px; border-radius:14px; background:var(--card, #fff); border:1px solid var(--cl-b, rgba(127,127,127,.2)); box-shadow:0 10px 26px rgba(0,0,0,.12);}
+  .cl-sug button{display:flex; align-items:center; gap:10px; width:100%; padding:6px 8px; border:none; border-radius:10px; background:transparent; color:inherit; text-align:left; cursor:pointer; font:600 .9rem/1.2 Inter, sans-serif;}
+  .cl-sug button:active, .cl-sug button:hover{background:rgba(127,127,127,.1);}
+  .cl-sug i{flex:none; width:48px; height:32px; border-radius:8px; background:#F1F4EF center/contain no-repeat;}
+  .cl-sug span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cl-sug small{flex:none; font-size:.66rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--stone);}
   .cl-ai-b{background:linear-gradient(120deg, #6D4AFF, #2FCB72) !important; color:#fff !important; border:none !important;}
   .cl-ai-b:disabled{opacity:.85;}
   .cl-ai-t{width:100%; box-sizing:border-box; min-height:96px; padding:12px; border-radius:14px; font:600 .95rem/1.4 Inter, sans-serif; resize:vertical;}
@@ -21046,7 +21072,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function exFor(name){
     var k = nz(name); if(!k) return null;
-    if(D.map && Object.prototype.hasOwnProperty.call(D.map, k)){ var id = D.map[k]; return id ? (exList().find(function(e){ return e.id === id; }) || null) : null; }
+    if(D.map && Object.prototype.hasOwnProperty.call(D.map, k) && D.map[k] !== '@'){ var id = D.map[k]; return id ? (exList().find(function(e){ return e.id === id; }) || null) : null; }
     var i;
     for(i = 0; i < RULES.length; i++){ if(!RULES[i][1] && RULES[i][0].test(k)) return null; }
     var e = exByNameApp(name); if(e) return e;
@@ -21268,7 +21294,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var B = el.querySelector('#clEdB');
     function lines(sec){
       var arr = S[sec];
-      return arr.map(function(l, i){ return '<div class="cl-ln" data-sec="' + sec + '" data-i="' + i + '">' + thumbHtml(l[0], i) + '<input class="nm" list="clExL" value="' + esc(l[0]) + '" placeholder="Exercice" autocomplete="off" autocapitalize="sentences"><input class="v" list="clValL" value="' + esc(l[1]) + '" placeholder="30&quot;" autocomplete="off">' + (sec === 'ci' ? '<button type="button" class="sd" data-e="side" aria-label="Un côté puis l’autre" aria-pressed="' + sidesOf(l) + '">↔</button>' : '') + '<button type="button" data-e="up" aria-label="Monter"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-e="del" aria-label="Retirer">✕</button></div>'; }).join('');
+      return arr.map(function(l, i){ return '<div class="cl-ln" data-sec="' + sec + '" data-i="' + i + '">' + thumbHtml(l[0], i) + '<input class="nm" value="' + esc(l[0]) + '" placeholder="Exercice" autocomplete="off" autocapitalize="sentences" enterkeyhint="next"><input class="v" list="clValL" value="' + esc(l[1]) + '" placeholder="30&quot;" autocomplete="off">' + (sec === 'ci' ? '<button type="button" class="sd" data-e="side" aria-label="Un côté puis l’autre" aria-pressed="' + sidesOf(l) + '">↔</button>' : '') + '<button type="button" data-e="up" aria-label="Monter"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-e="del" aria-label="Retirer">✕</button></div>'; }).join('');
     }
     function thumbHtml(nm, i){ var p = photoOf(nm); return '<button type="button" class="ph" data-e="pk" aria-label="Image de l’exercice"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : (i + 1)) + '</button>'; }
     function thumbUpd(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')], b = ln.querySelector('.ph'), p = photoOf(l[0]); b.style.backgroundImage = p ? "url('" + p + "')" : ''; b.textContent = p ? '' : (+ln.getAttribute('data-i') + 1); }
@@ -21278,17 +21304,32 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         + '<span class="cl-lab">Récup entre les tours</span><div class="cl-chips" id="clEdR">' + [['', '⏱ Chrono'], ["1'", "1'"], ["1'30", "1'30"], ["2'", "2'"], ["3'", "3'"], ["5'", "5'"]].map(function(o){ return '<button type="button" class="cl-chip" data-r="' + esc(o[0]) + '" aria-pressed="' + (clean(S.r) === clean(o[0])) + '">' + o[1] + '</button>'; }).join('') + '</div>'
         + '<span class="cl-lab">🔸 Échauffement (fait une fois)</span>' + lines('wu') + '<button type="button" class="cl-add" data-e="add" data-sec="wu">＋ Ajouter un échauffement</button>'
         + '<span class="cl-lab">💪 Circuit</span>' + lines('ci') + '<button type="button" class="cl-add" data-e="add" data-sec="ci">＋ Ajouter un exercice</button>'
-        + '<p class="cl-tip">Valeur : <b>30"</b> ou <b>1\'</b> = compte à rebours · <b>12</b> = répétitions · <b>3X30"recup30"</b> = séries · <b>30"-10</b> = deux temps enchaînés · <b>↔</b> vert = un côté puis l’autre (repéré seul pour 1J, 1 bras, 1B1J…, sauf « Alt »). Les noms sont proposés d’après tes anciennes séances. La vignette à gauche montre l’image trouvée ; touche-la pour en choisir une autre.</p>'
+        + '<p class="cl-tip">Valeur : <b>30"</b> ou <b>1\'</b> = compte à rebours · <b>12</b> = répétitions · <b>3X30"recup30"</b> = séries · <b>30"-10</b> = deux temps enchaînés · <b>↔</b> vert = un côté puis l’autre (repéré seul pour 1J, 1 bras, 1B1J…, sauf « Alt »). Les noms sont proposés d’après tes anciennes séances. Pendant que tu tapes un nom, l’appli propose tes exercices habituels et ceux de la banque, avec leur image. La vignette à gauche montre l’image trouvée ; touche-la pour en choisir une autre.</p>'
         + '<button type="button" class="cl-btn go" data-e="save" style="width:100%;margin-top:14px;min-height:54px;font-size:1.05rem">💾 Enregistrer</button>'
         + '<div class="cl-grid2" style="margin-top:8px"><button type="button" class="cl-btn ghost" data-e="show">🖥️ Présenter</button><button type="button" class="cl-btn ghost" data-e="go">▶️ Enregistrer et lancer</button></div>';
     }
     draw();
     B.addEventListener('input', function(e){
       var ln = e.target.closest('.cl-ln');
-      if(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')]; if(e.target.classList.contains('nm')){ l[0] = e.target.value; thumbUpd(ln); } else l[1] = e.target.value; return; }
+      if(ln){ var l = S[ln.getAttribute('data-sec')][+ln.getAttribute('data-i')]; if(e.target.classList.contains('nm')){ l[0] = e.target.value; thumbUpd(ln); sugShow(ln, e.target); } else l[1] = e.target.value; return; }
       if(e.target.id === 'clEdD') S.d = e.target.value; if(e.target.id === 'clEdW') S.who = e.target.value;
     });
     B.addEventListener('change', function(e){ if(e.target.id === 'clEdD') S.d = e.target.value; });
+    // Suggestions pendant la saisie du nom : tes noms habituels puis la banque d'exercices, avec leur image
+    var SG = null;
+    function sugHide(){ if(SG){ SG.remove(); SG = null; } }
+    function sugShow(ln, inp){
+      var q = inp.value.trim(); if(q.length < 2){ sugHide(); return; }
+      var ws = qWords2(q), seen = {}, items = [];
+      suggestions().forEach(function(n){ if(items.length < 4 && nz(n) !== nz(q) && ws.every(function(w){ return wordHit(w, nz(n).split(' ')); })){ seen[nz(n)] = 1; items.push({n:n, ph:photoOf(n), mine:true}); } });
+      bankSearch(q, '', '').slice(0, 9).forEach(function(x){ if(items.length < 8 && !seen[nz(x.e.name)] && nz(x.e.name) !== nz(q)){ seen[nz(x.e.name)] = 1; items.push({n:x.e.name, ph:x.ph}); } });
+      if(!items.length){ sugHide(); return; }
+      if(!SG){ SG = document.createElement('div'); SG.className = 'cl-sug'; SG.addEventListener('pointerdown', function(ev){ ev.preventDefault(); var it = ev.target.closest('[data-n]'); if(!it || !SG) return; var tgt = SG._inp, l2 = SG._ln; tgt.value = it.getAttribute('data-n'); S[l2.getAttribute('data-sec')][+l2.getAttribute('data-i')][0] = tgt.value; thumbUpd(l2); sugHide(); var v = l2.querySelector('.v'); v && v.focus(); }); }
+      SG._inp = inp; SG._ln = ln;
+      SG.innerHTML = items.map(function(it){ return '<button type="button" data-n="' + esc(it.n) + '"><i' + (it.ph ? ' style="background-image:url(\'' + it.ph + '\')"' : '') + '></i><span>' + esc(it.n) + '</span><small>' + (it.mine ? 'mes séances' : 'banque') + '</small></button>'; }).join('');
+      if(SG.previousElementSibling !== ln) ln.insertAdjacentElement('afterend', SG);
+    }
+    B.addEventListener('focusout', function(e){ if(e.target.classList && e.target.classList.contains('nm')) setTimeout(function(){ if(SG && document.activeElement !== SG._inp) sugHide(); }, 150); });
     function build(){
       var wu = S.wu.filter(function(l){ return String(l[0]).trim() || String(l[1]).trim(); }), ci = S.ci.filter(function(l){ return String(l[0]).trim() || String(l[1]).trim(); });
       var o = {d:S.d || '', ex:wu.concat(ci).map(function(l){ var q = [String(l[0]).trim(), String(l[1]).trim()]; if((l[2] === 0 || l[2] === 1) && (l[2] === 1) !== autoSide(q[0])) q[2] = l[2]; return q; })};
@@ -21391,20 +21432,69 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     setTimeout(function(){ var t = d.querySelector('#clIaT'); if(t && !t.value) t.focus(); }, 80);
   }
 
-  function pickPhoto(name, done){
-    var cur = exFor(name);
-    var d = sheet('<h4>Image pour « ' + esc(name) + ' »</h4><p>Ton choix s’applique à toutes les séances où cet exercice apparaît.</p><input class="cl-in" style="width:100%;box-sizing:border-box" id="clPkQ" type="search" placeholder="Chercher (ex. rowing, gainage)" autocomplete="off"><div id="clPkL" style="margin-top:8px"></div><button type="button" class="cl-btn ghost" data-k="none">Pas d’image</button><button type="button" class="cl-btn ghost" data-k="x">Fermer</button>', function(k, dd, kb){
-      if(k === 'none'){ D.map[nz(name)] = ''; save(); done && done(); return; }
-      if(k === 'pick'){ D.map[nz(name)] = kb.getAttribute('data-id'); save(); done && done(); return; }
-    });
-    var q = d.querySelector('#clPkQ'), L = d.querySelector('#clPkL');
-    function draw(){
-      var t = nz(q.value), arr = exList().filter(function(e){ return !t || nz(e.name).indexOf(t) >= 0; });
-      if(!t && cur) arr = [cur].concat(arr.filter(function(e){ return e !== cur; }));
-      L.innerHTML = arr.slice(0, 30).map(function(e){ var p = ''; try{ p = window.ecExPhoto ? window.ecExPhoto(e) : ''; }catch(x){} return '<button type="button" class="cl-pk" data-k="pick" data-id="' + esc(e.id) + '"><i' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '></i><span>' + esc(e.name) + (e === cur ? ' · <b>actuelle</b>' : '') + '</span></button>'; }).join('') || '<p>Aucun exercice trouvé.</p>';
-    }
-    q.addEventListener('input', draw); q.value = nz(name).replace(/^trx /, '').split(' ')[0] || ''; draw();
+  // ---------- Banque d'exercices : recherche (mots dans n'importe quel ordre, accents ignorés) ----------
+  var EQ_CH = [['', 'Tout'], ['poids_du_corps', 'Poids du corps'], ['trx', 'TRX'], ['elastiques', 'Élastiques'], ['halteres', 'Haltères'], ['kettlebell', 'Kettlebell'], ['barre_traction', 'Barre'], ['autre', 'Autres']];
+  var PHL = null;
+  function bank(){
+    if(PHL && PHL.length) return PHL;
+    PHL = exList().map(function(e){ var ph = ''; try{ ph = window.ecExPhoto ? window.ecExPhoto(e) : ''; }catch(x){} return ph && ph.indexOf('data:image/svg') !== 0 ? {e:e, ph:ph, w:nz(e.name).split(' ')} : null; }).filter(Boolean);
+    return PHL;
   }
+  function qWords2(q){ return nz(q).split(' ').filter(function(w){ return w && !STOP[w]; }); }
+  function wordHit(w, ws){ return ws.some(function(t){ return t === w || t.indexOf(w) === 0 || (w.length >= 4 && t.indexOf(w.slice(0, -1)) === 0) || (w.length >= 3 && t.indexOf(w) >= 0); }); }
+  function bankSearch(q, eq, near, any){
+    var ws = qWords2(q), nearW = near ? qWords2(near) : [];
+    if(ws.length && !any){ var r0 = bankSearch(q, eq, near, 'and'); if(r0.length) return r0; var r1 = bankSearch(q, eq, near, 'or'); r1.approx = true; return r1; }
+    return bank().filter(function(x){
+      if(eq){ var e2 = x.e.equipment || ''; if(eq === 'autre' ? EQ_CH.some(function(c){ return c[0] && c[0] !== 'autre' && c[0] === e2; }) : e2 !== eq) return false; }
+      return !ws.length || (any === 'or' ? ws.some(function(w){ return w.length >= 3 && wordHit(w, x.w); }) : ws.every(function(w){ return wordHit(w, x.w); }));
+    }).map(function(x){
+      var sc = 0;
+      if(ws.length){ sc += nz(x.e.name).indexOf(nz(q)) === 0 ? 50 : 0; ws.forEach(function(w){ if(x.w.indexOf(w) >= 0) sc += 10; }); }
+      else if(nearW.length){ nearW.forEach(function(w){ if(w.length >= 3 && x.w.some(function(t){ return t === w || t.indexOf(w) === 0 || w.indexOf(t) === 0 && t.length >= 4; })) sc += 10; }); }
+      return {x:x, sc:sc - x.e.name.length / 100};
+    }).sort(function(a, b){ return b.sc - a.sc || a.x.e.name.localeCompare(b.x.e.name, 'fr'); }).map(function(o){ return o.x; });
+  }
+  // Choix de l'image d'un exercice : grande grille, recherche, filtre matériel ; le choix est mémorisé pour toutes les séances (et synchronisé)
+  function pickPhoto(name, done){
+    var k = nz(name), cur = exFor(name), eq = '', q = '', lim = 60;
+    var el = document.createElement('div'); el.className = 'cl-pick'; el.setAttribute('role', 'dialog');
+    function curHtml(){
+      var c2 = exFor(name), p = photoOf(name), mapped = Object.prototype.hasOwnProperty.call(D.map, k) && D.map[k] !== '@';
+      return '<span class="cl-pick-th"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '∅') + '</span><span class="cl-pick-ci"><small>Image actuelle' + (mapped ? ' · choisie par toi' : ' · automatique') + '</small><b>' + (c2 ? esc(c2.name) : 'Aucune image') + '</b></span>'
+        + (mapped ? '<button type="button" class="cl-pick-sb" data-pa="auto">↺ Auto</button>' : '') + '<button type="button" class="cl-pick-sb" data-pa="none">Sans image</button>';
+    }
+    el.innerHTML = '<div class="cl-pick-top"><div><small>Image pour</small><b>' + esc(name) + '</b></div><button type="button" class="cl-pick-x" data-pa="x" aria-label="Fermer">✕</button></div>'
+      + '<div class="cl-pick-cur" id="clPkCur"></div>'
+      + '<div class="cl-pick-sr"><input type="search" id="clPkQ" placeholder="Chercher dans la banque (ex. planche dos, rowing, fente)" autocomplete="off" autocapitalize="off"></div>'
+      + '<div class="cl-pick-eq" id="clPkEq">' + EQ_CH.map(function(c){ return '<button type="button" data-eq="' + c[0] + '" aria-pressed="' + (c[0] === '') + '">' + c[1] + '</button>'; }).join('') + '</div>'
+      + '<div class="cl-pick-n" id="clPkN"></div><div class="cl-pick-g" id="clPkG"></div>'
+      + '<p class="cl-pick-tip">Ton choix est mémorisé pour « ' + esc(name) + ' » dans toutes tes séances, et sur ton autre appareil.</p>';
+    document.body.appendChild(el);
+    var G = el.querySelector('#clPkG'), N = el.querySelector('#clPkN'), Q = el.querySelector('#clPkQ');
+    function draw(){
+      el.querySelector('#clPkCur').innerHTML = curHtml();
+      var c2 = exFor(name), arr = bankSearch(q, eq, q ? '' : name);
+      if(!q && c2){ var ix = arr.findIndex(function(x){ return x.e.id === c2.id; }); if(ix > 0) arr.unshift(arr.splice(ix, 1)[0]); }
+      N.textContent = arr.length ? (arr.approx ? 'Aucun exercice avec tous ces mots · ' + arr.length + ' exercices approchants' : q ? arr.length + ' résultat' + (arr.length > 1 ? 's' : '') : 'Suggestions pour « ' + name + ' » puis toute la banque · ' + arr.length + ' exercices') : 'Aucun exercice ne correspond. Essaie un autre mot.';
+      G.innerHTML = arr.slice(0, lim).map(function(x){ return '<button type="button" class="cl-pick-it' + (c2 && c2.id === x.e.id ? ' on' : '') + '" data-id="' + esc(x.e.id) + '"><span style="background-image:url(\'' + x.ph + '\')"></span><b>' + esc(x.e.name) + '</b></button>'; }).join('')
+        + (arr.length > lim ? '<button type="button" class="cl-pick-more" data-pa="more">Voir plus (' + (arr.length - lim) + ')</button>' : '');
+    }
+    function close(){ el.remove(); }
+    function pick(v, msg){ D.map[k] = v; save(); toast(msg); close(); done && done(); }
+    Q.addEventListener('input', function(){ q = Q.value; lim = 60; draw(); G.scrollTop = 0; });
+    el.addEventListener('click', function(e){
+      var it = e.target.closest('[data-id]'); if(it){ pick(it.getAttribute('data-id'), '✓ Image mémorisée pour « ' + name + ' »'); return; }
+      var c = e.target.closest('[data-eq]'); if(c){ eq = c.getAttribute('data-eq'); el.querySelectorAll('[data-eq]').forEach(function(b){ b.setAttribute('aria-pressed', b === c); }); lim = 60; draw(); return; }
+      var a = e.target.closest('[data-pa]'); if(!a) return; a = a.getAttribute('data-pa');
+      if(a === 'x'){ close(); return; }
+      if(a === 'more'){ lim += 60; draw(); return; }
+      if(a === 'none'){ pick('', 'Image retirée pour « ' + name + ' »'); return; }
+      if(a === 'auto'){ pick('@', '↺ Image automatique pour « ' + name + ' »'); return; }
+    });
+    draw();
+  }
+
 
   // ---------- QR hors réseau : téléphone → iPad ----------
   function qrLib(){ if(!window.qrcode || !window.jsQR){ try{ window.__ecQrLoad && window.__ecQrLoad.call(window); }catch(e){} } return !!(window.qrcode && window.jsQR); }
