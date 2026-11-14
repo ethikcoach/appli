@@ -21265,7 +21265,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return '<div class="cl-ss" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '')
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
-      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="dup">' + IC('copy') + 'Refaire</button><button type="button" data-a="copy">' + IC('send') + 'Copier vers…</button><button type="button" data-a="edit" aria-label="Modifier">' + IC('edit') + '</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '</button><button type="button" data-a="del" aria-label="Supprimer">' + IC('trash') + '</button></div></div>';
+      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" class="sec" data-a="dup">' + IC('copy') + '<span>Refaire</span></button><button type="button" class="sec" data-a="copy">' + IC('send') + '<span class="lg">Copier vers…</span><span class="sm">Copier</span></button><button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '<span class="sm">QR</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>';
   }
   function renderClient(c){
     var l = lastSess(c), list = c.s.slice().reverse(), shown = list.slice(0, V.more);
@@ -21378,7 +21378,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           x.fillStyle = '#0E1A14'; x.font = '800 42px ' + FB; x.fillText(fit(r.name || 'Exercice', maxw, '800 42px ' + FB), nx, y + 66);
           var px = nx;
           if(r.dose){ var vt = fit(r.dose, maxw - (r.side ? 220 : 0) - 40, '800 34px ' + FB); x.font = '800 34px ' + FB; var vw = x.measureText(vt).width + 40; rr(px, y + 86, vw, 52, 14); x.fillStyle = '#0E1A14'; x.fill(); x.fillStyle = '#F5C451'; x.fillText(vt, px + 20, y + 124); px += vw + 12; }
-          if(r.side){ x.font = '800 28px ' + FB; var st = '↔ par côté', sw = x.measureText(st).width + 36; rr(px, y + 86, sw, 52, 14); x.fillStyle = '#0E1A14'; x.fill(); x.fillStyle = '#9FE8BD'; x.fillText(st, px + 18, y + 121); }
+          if(r.side){ x.font = '800 28px ' + FB; var st = 'par côté', sw = x.measureText(st).width + 76; rr(px, y + 86, sw, 52, 14); x.fillStyle = '#0E1A14'; x.fill(); var ax = px + 18, ay = y + 112; x.strokeStyle = '#2FCB72'; x.lineWidth = 4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(ax, ay); x.lineTo(ax + 28, ay); x.moveTo(ax + 7, ay - 7); x.lineTo(ax, ay); x.lineTo(ax + 7, ay + 7); x.moveTo(ax + 21, ay - 7); x.lineTo(ax + 28, ay); x.lineTo(ax + 21, ay + 7); x.stroke(); x.fillStyle = '#9FE8BD'; x.fillText(st, px + 58, y + 121); }
           y += RH + GAP;
         });
         y += 18;
@@ -21449,7 +21449,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
               + '<button type="button" class="cl-btn go" data-k="app">' + IC('send') + 'Envoyer dans son appli</button><small>Elle la retrouve à sa prochaine ouverture de l’appli, avec les illustrations et le chrono.</small>'
               : '<small>Personne n’a encore d’accès à l’appli : crée un accès dans l’Espace coach (onglet Réglages).</small>') + '</div>';
         })()
-      + '<div class="cl-send-alt"><a class="cl-btn ghost" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(txt) + '">WhatsApp</a><a class="cl-btn ghost" href="sms:?&body=' + encodeURIComponent(txt) + '">SMS</a><button type="button" class="cl-btn ghost" data-k="copy">Copier</button></div>'
       + '<button type="button" class="cl-btn ghost" data-k="x">Fermer</button>', function(k){
         if(k === 'img'){
           var canFile = !!(file && navigator.canShare && navigator.canShare({files:[file]}));
@@ -22421,7 +22420,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-acts button[data-a="show"] .tmi{color:#2F6FB5;}
 .cl-acts button[data-a="dup"] .tmi, .cl-acts button[data-a="copy"] .tmi{color:#23874F;}
 .cl-acts button[data-a="edit"]{color:#2F6FB5; background:rgba(77,150,255,.12); border-color:transparent; box-shadow:none;}
-.cl-acts button[data-a="qr"]{color:#5B6B63;}
+.cl-acts button[data-a="qr"]{color:var(--ink);} .cl-acts button[data-a="qr"] .tmi{opacity:.75;}
 .cl-acts button[data-a="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-add{gap:8px; color:#23874F; border-color:rgba(46,158,94,.4); background:color-mix(in srgb, #2E9E5E 4%, transparent);}
 .cl-add .tmi{width:1.35em; height:1.35em; padding:3px; border-radius:50%; background:#23874F; color:#fff; box-sizing:border-box;}
@@ -22431,6 +22430,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
 .cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-ln button:disabled{opacity:.35; box-shadow:none;}
+/* Boutons d'une séance : rangée principale + rangée d'outils (téléphone) */
+.cl-acts .sm{display:none;}
+@media (max-width:600px){
+  .cl-acts{display:grid !important; grid-template-columns:repeat(15, minmax(0, 1fr)); gap:8px;}
+  .cl-acts > button{grid-column:span 5; min-width:0; padding:0 6px; justify-content:center; white-space:nowrap; min-height:46px; font-size:.86rem;}
+  .cl-acts > button.sec{grid-column:span 3; flex-direction:column; gap:3px; min-height:56px; padding:6px 2px; font-size:.68rem; font-weight:700; line-height:1;}
+  .cl-acts > button.sec .tmi{width:19px; height:19px;}
+  .cl-acts > button.sec .lg{display:none;} .cl-acts > button.sec .sm{display:inline;}
+}
 /* Présenter : badges harmonisés (même pastille sombre que la durée), sous le nom pour ne pas cacher l'image */
 .clp-tg{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:auto;}
 .clp-tg em{margin-top:0 !important;}
