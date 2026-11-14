@@ -22025,6 +22025,82 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .tmr-tot{margin:8px 0 0; text-align:center; font:700 .8rem/1 Inter, sans-serif; opacity:.6; font-variant-numeric:tabular-nums;}
 @media (min-width:700px){ .tm-grid{grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px;} .tm-time{font-size:3rem;} .tmr{padding-left:32px; padding-right:32px;} .tmr-ctl, .tmr-nx{max-width:640px; width:100%; margin-left:auto; margin-right:auto;} }
 @media (prefers-reduced-motion: reduce){ .tmr.hot::before, .tm-t.done{animation:none;} }
+
+/* ---- Timers · design 2 ---- */
+.tm-hero{position:relative; overflow:hidden; margin:0 0 12px; padding:16px 14px 12px; border-radius:24px; color:#fff; background:radial-gradient(120% 130% at 0% 0%, #23482F 0%, #0E1A14 62%); box-shadow:0 10px 30px rgba(14,26,20,.2);}
+.tm-hero::after{content:''; position:absolute; right:-40px; top:-40px; width:170px; height:170px; border-radius:50%; border:18px solid rgba(47,203,114,.12);}
+.tm-hero-t{position:relative; z-index:1; padding:0 4px;}
+.tm-hero-t small{display:block; font:800 .66rem/1 Inter, sans-serif; letter-spacing:.14em; text-transform:uppercase; color:#2FCB72;}
+.tm-hero-t h3{margin:6px 0 4px; font:800 1.7rem/1 'Bricolage Grotesque', sans-serif; letter-spacing:-.02em;}
+.tm-hero-t p{margin:0 0 12px; font:600 .84rem/1.35 Inter, sans-serif; color:rgba(255,255,255,.72);}
+.tm-hero .tm-seg{position:relative; z-index:1; margin:0; background:rgba(255,255,255,.07); box-shadow:none; border:1px solid rgba(255,255,255,.08);}
+.tm-hero .tm-seg button{display:flex; flex-direction:column; align-items:center; gap:3px; min-height:54px; color:rgba(255,255,255,.7); font-size:.78rem;}
+.tm-hero .tm-seg button span{font-size:1.1rem; line-height:1;}
+.tm-hero .tm-seg button[aria-pressed="true"]{background:#fff; color:#0E1A14; box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.tm-card{border-radius:22px; border:1px solid var(--tm-b);}
+.tm-btn{border-radius:16px;} .tm-btn.go{box-shadow:0 6px 18px rgba(46,158,94,.3);} .tm-btn.gold{box-shadow:0 6px 18px rgba(245,196,81,.3);}
+.tm-chk-sm{margin:10px 0 0; font-size:.82rem;}
+.tm-chk input{width:20px; height:20px; accent-color:#2E9E5E;}
+/* tuiles */
+.tm-t{border-radius:22px; border:1.5px solid color-mix(in srgb, var(--c) 22%, transparent); background:linear-gradient(165deg, color-mix(in srgb, var(--c) 9%, var(--card, #fff)) 0%, var(--card, #fff) 60%); overflow:hidden;}
+.tm-t::before{content:''; position:absolute; left:0; top:0; right:0; height:4px; background:var(--c); opacity:.85;}
+.tm-t.run{border-color:var(--c); box-shadow:0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent), 0 10px 24px color-mix(in srgb, var(--c) 18%, transparent);}
+.tm-t.run .tm-t-h i{animation:tmDot 1.2s ease-in-out infinite;}
+@keyframes tmDot{50%{box-shadow:0 0 0 6px color-mix(in srgb, var(--c) 25%, transparent);}}
+.tm-t.pause .tm-time{opacity:.6;}
+.tm-time{color:var(--ink);}
+.tm-t.run .tm-time{color:color-mix(in srgb, var(--c) 70%, var(--ink));}
+.tm-pb{height:6px; border-radius:999px; background:color-mix(in srgb, var(--c) 14%, transparent); overflow:hidden; margin-top:-2px;}
+.tm-pb i{display:block; height:100%; border-radius:inherit; background:var(--c);}
+.tm-t-b button{border-radius:14px; min-height:42px; background:color-mix(in srgb, var(--c) 10%, transparent);}
+.tm-t-b button.pp{box-shadow:0 4px 12px color-mix(in srgb, var(--c) 35%, transparent);}
+.tm-add{border-radius:22px; background:color-mix(in srgb, #2E9E5E 4%, transparent);}
+/* interval : réglages */
+.tm-f{grid-template-columns:repeat(2, minmax(0, 1fr));}
+.tm-st{min-width:0; border-radius:18px; padding:10px 8px 8px; background:var(--card, #fff); border:1.5px solid var(--tm-b);}
+.tm-st span{padding-left:4px;}
+.tm-st div{gap:4px;}
+.tm-st button{width:36px; height:40px; border-radius:12px;}
+.tm-st input{font-size:1.35rem;}
+.tm-st.w{background:linear-gradient(165deg, rgba(47,203,114,.12), transparent 70%); border-color:rgba(47,203,114,.4);}
+.tm-st.r{background:linear-gradient(165deg, rgba(77,178,255,.12), transparent 70%); border-color:rgba(77,178,255,.4);}
+.tm-sum{border-radius:16px; background:linear-gradient(120deg, rgba(47,203,114,.12), rgba(77,178,255,.1));}
+.tm-tl{display:flex; flex-wrap:wrap; gap:2px; margin:10px 0 0; padding:8px; border-radius:16px; background:#0E1A14;}
+.tm-tl i{height:18px; min-width:3px; border-radius:5px;}
+.tm-tl i.work{background:#2FCB72;} .tm-tl i.rest{background:#4DB2FF;} .tm-tl i.srest{background:#9B78FF;} .tm-tl i.prep{background:#FF9F43;}
+.tm-tl-lg{flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin-top:6px; font:700 .7rem/1 Inter, sans-serif; color:rgba(255,255,255,.7);}
+.tm-tl-lg b{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:-6px;}
+.tm-tl-lg b.work{background:#2FCB72;} .tm-tl-lg b.rest{background:#4DB2FF;} .tm-tl-lg b.srest{background:#9B78FF;} .tm-tl-lg b.prep{background:#FF9F43;}
+.tm-names em{border-radius:10px; background:linear-gradient(135deg, #2E9E5E, #1F6B43);}
+/* enregistrés */
+.tm-sv{border-radius:18px; padding:10px 10px 10px 12px; box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.tm-sv > i{width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, rgba(47,203,114,.2), rgba(77,178,255,.18));}
+/* écran interval */
+.tmr-sb{width:min(86%, 520px); height:8px; border-radius:999px; background:rgba(255,255,255,.1); overflow:hidden;}
+.tmr-sb i{display:block; height:100%; border-radius:inherit; background:var(--acc); box-shadow:0 0 12px var(--acc);}
+.tmr-ph{box-shadow:0 0 0 1px color-mix(in srgb, var(--acc) 35%, transparent);}
+.tmr-ring{position:relative; width:min(78vw, 44vh, 440px); aspect-ratio:1; display:grid; place-items:center;}
+.tmr-ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); overflow:visible;}
+.tmr-ring .tk{fill:none; stroke:var(--acc); stroke-width:13; opacity:.1; transition:stroke .3s;}
+.tmr-ring .tr{fill:rgba(255,255,255,.025); stroke:rgba(255,255,255,.09); stroke-width:5;}
+.tmr-ring .br{fill:none; stroke:var(--acc); stroke-width:6.5; stroke-linecap:round; stroke-dasharray:339.3; transition:stroke .3s;}
+.tmr-ring .gl{fill:none; stroke:var(--acc); stroke-width:14; stroke-linecap:round; stroke-dasharray:339.3; opacity:.18;}
+.tmr-ring .tmr-big{position:relative; font-size:clamp(3.4rem, 17vw, 7.6rem);}
+.tmr.pz .tmr-ring .br{opacity:.55;}
+.tmr-mid{gap:12px;}
+/* 3, 2, 1, GO */
+.tm321{position:fixed; inset:0; z-index:1700; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:radial-gradient(70% 55% at 50% 45%, #1C3A27 0%, #070D0A 70%); color:#fff; animation:tmIn .2s ease;}
+.tm321.out{animation:tmOut .25s ease forwards;}
+.tm321 small{font:800 .85rem/1 Inter, sans-serif; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.6); padding:0 20px; text-align:center;}
+.tm321-n{font:800 clamp(9rem, 48vw, 18rem)/1 'Bricolage Grotesque', sans-serif; letter-spacing:-.05em; color:#fff; text-shadow:0 0 60px rgba(47,203,114,.55);}
+.tm321-n.pop{animation:tmPop .9s cubic-bezier(.2,1.4,.4,1);}
+.tm321-n.go{color:#2FCB72; font-size:clamp(6rem, 32vw, 12rem); text-shadow:0 0 70px rgba(47,203,114,.8);}
+.tm321-skip{position:absolute; bottom:calc(env(safe-area-inset-bottom, 0px) + 28px); padding:12px 22px; border:1px solid rgba(255,255,255,.18); border-radius:999px; background:rgba(255,255,255,.06); color:rgba(255,255,255,.75); font:700 .85rem/1 Inter, sans-serif; cursor:pointer;}
+@keyframes tmPop{0%{transform:scale(1.9); opacity:0;} 35%{transform:scale(.92); opacity:1;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:.9;}}
+@keyframes tmIn{from{opacity:0;}} @keyframes tmOut{to{opacity:0; transform:scale(1.08);}}
+@media screen and (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tm-st{background:rgba(255,255,255,.04);} }
+:root[data-theme="dark"] .tm-st{background:rgba(255,255,255,.04);}
+@media (prefers-reduced-motion: reduce){ .tm321-n.pop, .tm-t.run .tm-t-h i{animation:none;} }
 </style>
 <script>
 /* ===== Espace coach · Timers ===== */
@@ -22045,6 +22121,21 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
   function say(t){ try{ if(!window.speechSynthesis || !t) return; speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); }catch(e){} }
   function awake(on){ try{ window.ecKeepAwake && window.ecKeepAwake(on); }catch(e){} }
+  // Décompte 3, 2, 1, GO avant le départ
+  function go321(cb, voice, title){
+    audio();
+    var o = document.createElement('div'); o.className = 'tm321'; o.innerHTML = '<small>' + esc(title || 'Prêt ?') + '</small><div class="tm321-n" id="tm321N">3</div><button type="button" class="tm321-skip">Passer</button>';
+    document.body.appendChild(o);
+    var n = 3, N = o.querySelector('#tm321N'), done = false, tmo;
+    function show(v, cls){ N.className = 'tm321-n'; void N.offsetWidth; N.textContent = v; N.className = 'tm321-n pop' + (cls ? ' ' + cls : ''); }
+    function finish(){ if(done) return; done = true; clearTimeout(tmo); o.classList.add('out'); setTimeout(function(){ o.remove(); }, 260); cb(); }
+    function step(){
+      if(n > 0){ show(n); beep(880, .14, .22); vib(60); if(voice) say(String(n)); n--; tmo = setTimeout(step, 1000); }
+      else { show('GO !', 'go'); beep(1318, .45, .26); vib([200]); if(voice) say('Go'); tmo = setTimeout(finish, 650); }
+    }
+    o.querySelector('.tm321-skip').addEventListener('click', finish);
+    step();
+  }
   function sheet(html, cb){
     var d = document.createElement('div'); d.className = 'tm-dlg'; d.innerHTML = '<div>' + html + '</div>'; document.body.appendChild(d);
     d.addEventListener('click', function(e){ if(e.target === d){ d.remove(); return; } var k = e.target.closest('[data-k]'); if(!k) return; var r = cb ? cb(k.getAttribute('data-k'), d, k) : null; if(r !== false) d.remove(); });
@@ -22078,12 +22169,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var c = COL[i % COL.length], lab = it.type === 'down' ? '↓ ' + fmtS(it.dur) : '';
     return '<div class="tm-t ' + it.st + '" data-id="' + it.id + '" style="--c:' + c + '"><div class="tm-t-h"><i></i><b data-a="ren">' + esc(it.n) + '</b><small>' + lab + '</small></div>'
       + '<button type="button" class="tm-time" data-a="pp" data-tt="' + it.id + '">' + fmt(shown(it), true) + '</button>'
+      + (it.type === 'down' ? '<div class="tm-pb"><i data-pb="' + it.id + '" style="width:' + (100 * shown(it) / (it.dur * 1000 || 1)).toFixed(1) + '%"></i></div>' : '')
       + '<div class="tm-t-b"><button type="button" class="pp" data-a="pp">' + (it.st === 'run' ? '⏸' : '▶') + '</button>' + (it.type === 'up' ? '<button type="button" data-a="lap" aria-label="Tour">🏁</button>' : '') + '<button type="button" data-a="rst" aria-label="Remettre à zéro">↺</button><button type="button" data-a="opt" aria-label="Réglages">⋯</button></div>'
       + (it.laps.length ? '<div class="tm-laps">' + it.laps.map(function(l, j){ return '<span>T' + (j + 1) + ' ' + fmt(l - (j ? it.laps[j - 1] : 0), true).replace(/<\/?small>/g, '') + '</span>'; }).join('') + '</div>' : '')
       + '</div>';
   }
   function multiHtml(){
     return '<div class="tm-card"><input class="tm-in" id="tmMN" value="' + esc(M.name) + '" placeholder="Nom de cette série de chronos (ex. Groupe trail mardi)" autocomplete="off">'
+      + '<label class="tm-chk tm-chk-sm"><input type="checkbox" id="tm321M"' + (M.c321 !== false ? ' checked' : '') + '> 3, 2, 1 avant « Tout démarrer »</label>'
       + '<div class="tm-row" style="margin-top:10px"><button type="button" class="tm-btn go" data-a="all">▶ Tout démarrer</button><button type="button" class="tm-btn" data-a="stopall">⏸ Tout arrêter</button><button type="button" class="tm-btn sm" data-a="rstall" aria-label="Tout remettre à zéro">↺</button></div></div>'
       + '<div class="tm-grid" id="tmGrid">' + M.items.map(tileHtml).join('') + '</div>'
       + '<button type="button" class="tm-add" data-a="add">＋ Ajouter un chrono</button>'
@@ -22128,20 +22221,25 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function stepper(id, lab, v, cls){ return '<div class="tm-st ' + (cls || '') + '"><span>' + lab + '</span><div><button type="button" data-st="' + id + '" data-dir="-1">−</button><input id="tmI_' + id + '" data-f="' + id + '" value="' + v + '" inputmode="text" autocomplete="off"><button type="button" data-st="' + id + '" data-dir="1">＋</button></div></div>'; }
   function intHtml(){
     var reps = Math.max(1, I.reps | 0), names = '';
-    for(var r = 0; r < reps; r++) names += '<div><em>' + (r + 1) + '</em><input class="tm-in" data-nm="' + r + '" value="' + esc(I.names[r] || '') + '" placeholder="Répétition ' + (r + 1) + ' (ex. Squat, 400 m seuil…)" autocomplete="off"></div>';
+    for(var r = 0; r < reps; r++) names += '<div><em>' + (r + 1) + '</em><input class="tm-in" data-nm="' + r + '" value="' + esc(I.names[r] || '') + '" placeholder="' + (r ? 'Répétition ' + (r + 1) : 'ex. Squat, 400 m seuil…') + '" autocomplete="off"></div>';
     return '<div class="tm-card"><input class="tm-in" id="tmIN" value="' + esc(I.name) + '" placeholder="Nom (ex. Fractionné 30/30, Circuit renfo)" autocomplete="off">'
       + '<div class="tm-f" style="margin-top:10px">' + stepper('work', '💪 Travail', fmtS(I.work), 'w') + stepper('rest', '😮‍💨 Récup', fmtS(I.rest), 'r') + stepper('reps', '🔁 Répétitions', I.reps) + stepper('sets', '📚 Séries', I.sets) + stepper('setRest', '⏸ Récup entre séries', fmtS(I.setRest), 'r') + stepper('prep', '⏳ Préparation', fmtS(I.prep)) + '</div>'
       + '<div class="tm-sum" id="tmSum"></div>'
+      + '<div class="tm-tl" id="tmTl"></div>'
       + '<label class="tm-chk"><input type="checkbox" id="tmVoice"' + (I.voice ? ' checked' : '') + '> 🔊 Annonce vocale des répétitions et des récups</label>'
+      + '<label class="tm-chk"><input type="checkbox" id="tm321I"' + (I.c321 !== false ? ' checked' : '') + '> 3, 2, 1, GO au lancement</label>'
       + '<div class="tm-row" style="margin-top:12px"><button type="button" class="tm-btn go" data-a="runi" style="min-height:56px;font-size:1rem">▶ Lancer</button><button type="button" class="tm-btn gold" data-a="savei">💾 Enregistrer</button></div></div>'
       + '<div class="tm-card"><h3>🏷️ Nom de chaque répétition</h3><p>Facultatif : exercices de renfo, distances ou allures pour le trail… Les mêmes noms reviennent à chaque série.</p><div class="tm-names">' + names + '</div></div>';
   }
+  function drawTl(){ var tl = pane.querySelector('#tmTl'); if(!tl) return; var S = steps(I), tot = total(I) || 1;
+    tl.innerHTML = S.map(function(x){ return '<i class="' + x.k + '" style="flex:' + x.d + '" title="' + esc(x.lab) + '"></i>'; }).join('') + '<span class="tm-tl-lg"><b class="work"></b>Travail <b class="rest"></b>Récup <b class="srest"></b>Entre séries' + (I.prep ? ' <b class="prep"></b>Prépa' : '') + '</span>'; }
   function sumTxt(){ var t = total(I), reps = Math.max(1, I.reps | 0), sets = Math.max(1, I.sets | 0); return '⏱ Durée totale ' + fmt(t * 1000) + ' · ' + sets + ' série' + (sets > 1 ? 's' : '') + ' de ' + reps + ' × ' + fmtS(I.work) + (I.rest ? ' / ' + fmtS(I.rest) : '') + (sets > 1 && I.setRest ? ' · ' + fmtS(I.setRest) + ' entre séries' : ''); }
   var LIM = {work:[5, 3600, 5], rest:[0, 3600, 5], reps:[1, 50, 1], sets:[1, 20, 1], setRest:[0, 3600, 15], prep:[0, 120, 5]};
   var TIMEF = {work:1, rest:1, setRest:1, prep:1};
 
   // Écran de l'interval timer
   var R = null;
+  function launchI(c){ if(c.c321 !== false) go321(function(){ runInterval(c); }, c.voice, c.name || 'Interval'); else runInterval(c); }
   function runInterval(c){
     var S = steps(c); if(!S.length) return;
     audio(); awake(true);
@@ -22149,12 +22247,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     R = {el:el, c:c, S:S, k:0, state:'run', endAt:Date.now() + S[0].d * 1000, left:S[0].d * 1000, t0:Date.now(), lastBeep:99};
     draw(); announce();
-    R.iv = setInterval(tick, 50);
+    R.iv = setInterval(tick, 40);
     el.addEventListener('click', function(e){ var b = e.target.closest('[data-r]'); if(!b || !R) return; var a = b.getAttribute('data-r');
       if(a === 'x'){ close(); return; }
       if(a === 'pp'){ if(R.state === 'run'){ R.left = R.endAt - Date.now(); R.state = 'pause'; } else if(R.state === 'pause'){ R.endAt = Date.now() + R.left; R.state = 'run'; } draw(); return; }
       if(a === 'nx'){ go(1); return; } if(a === 'pv'){ go(-1); return; }
-      if(a === 'again'){ R.k = 0; R.state = 'run'; R.endAt = Date.now() + R.S[0].d * 1000; R.t0 = Date.now(); draw(); announce(); return; }
+      if(a === 'again'){ var c0 = R.c; close(); launchI(c0); return; }
     });
     function close(){ clearInterval(R.iv); el.remove(); R = null; awake(false); try{ speechSynthesis.cancel(); }catch(e){} if(!document.querySelector('.tmr, .cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
   }
@@ -22175,7 +22273,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var left = R.endAt - Date.now(), s = Math.ceil(left / 1000);
     if(s <= 3 && s >= 1 && s !== R.lastBeep){ R.lastBeep = s; beep(880, .12); }
     if(left <= 0){ go(1); return; }
-    var t = R.el.querySelector('#tmrT'); if(t) t.innerHTML = fmt(left, true);
+    var t = R.el.querySelector('#tmrT'); if(t) t.innerHTML = fmt(left, true); var off2 = (339.3 * (1 - Math.max(0, Math.min(1, left / (cur().d * 1000))))).toFixed(2), bb = R.el.querySelector('#tmrB'), gg = R.el.querySelector('#tmrG'); if(bb) bb.style.strokeDashoffset = off2; if(gg) gg.style.strokeDashoffset = off2;
     R.el.classList.toggle('hot', left <= 3200 && cur().k === 'work');
     var tot = R.el.querySelector('#tmrTot'); if(tot){ var rest = left / 1000; for(var j = R.k + 1; j < R.S.length; j++) rest += R.S[j].d; tot.textContent = 'Reste ' + fmt(rest * 1000).replace(/<\/?small>/g, '') + ' · écoulé ' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, ''); }
   }
@@ -22190,7 +22288,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       + (fin
         ? '<div class="tmr-mid"><div style="font-size:4rem">🏆</div><div class="tmr-nm">Terminé, bravo !</div><div class="tmr-cnt"><span>' + sets + ' série' + (sets > 1 ? 's' : '') + '</span><span>' + reps * sets + ' répétitions</span><span>' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, '') + '</span></div></div><div class="tmr-ctl" style="grid-template-columns:1fr 1fr"><button type="button" data-r="again">↺ Recommencer</button><button type="button" class="pp" data-r="x">Terminer</button></div>'
         : '<div class="tmr-mid"><div class="tmr-ph">' + PH[st.k] + (R.state === 'pause' ? ' · en pause' : '') + '</div><div class="tmr-nm">' + esc(st.k === 'work' ? st.lab : st.k === 'prep' ? 'Prépare-toi' : (nxt && nxt.k === 'work' ? 'Ensuite : ' + nxt.lab : 'Souffle')) + '</div>'
-          + '<div class="tmr-big" id="tmrT">' + fmt(R.state === 'pause' ? R.left : R.endAt - Date.now(), true) + '</div>'
+          + '<div class="tmr-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tk"/><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="gl" id="tmrG" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/><circle cx="60" cy="60" r="54" class="br" id="tmrB" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/></svg><div class="tmr-big" id="tmrT">' + fmt(R.state === 'pause' ? R.left : R.endAt - Date.now(), true) + '</div></div>'
           + '<div class="tmr-cnt">' + (st.s ? '<span>Série ' + st.s + '/' + sets + '</span>' : '') + (st.r ? '<span>Rép ' + st.r + '/' + reps + '</span>' : '') + '</div></div>'
           + (nxt ? '<div class="tmr-nx"><span><small>Ensuite</small><b>' + esc(nxt.k === 'work' ? nxt.lab : PH[nxt.k]) + '</b></span><em>' + fmtS(nxt.d) + '</em></div>' : '')
           + '<div class="tmr-ctl"><button type="button" data-r="pv" aria-label="Précédent">⏮</button><button type="button" class="pp" data-r="pp">' + (R.state === 'pause' ? '▶ Reprendre' : '⏸ Pause') + '</button><button type="button" data-r="nx" aria-label="Suivant">⏭</button></div><div class="tmr-tot" id="tmrTot"></div>');
@@ -22216,9 +22314,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // ---------- Rendu et événements ----------
   function render(){
-    pane.innerHTML = '<div class="tm-seg" role="tablist"><button type="button" data-m="multi" aria-pressed="' + (mode === 'multi') + '">⏱ Multi-chronos</button><button type="button" data-m="int" aria-pressed="' + (mode === 'int') + '">🔁 Interval</button><button type="button" data-m="sav" aria-pressed="' + (mode === 'sav') + '">📁 Enregistrés</button></div>'
+    var sub = mode === 'multi' ? 'Plusieurs chronos nommés, lancés ensemble ou un par un.' : mode === 'int' ? 'Travail, récup, répétitions et séries, avec le nom de chaque exercice.' : 'Tes timers préparés, sur l’iPad comme sur l’iPhone.';
+    pane.innerHTML = '<div class="tm-hero"><div class="tm-hero-t"><small>Espace coach</small><h3>⏱ Timers</h3><p>' + sub + '</p></div><div class="tm-seg" role="tablist"><button type="button" data-m="multi" aria-pressed="' + (mode === 'multi') + '"><span>⏱</span>Multi-chronos</button><button type="button" data-m="int" aria-pressed="' + (mode === 'int') + '"><span>🔁</span>Interval</button><button type="button" data-m="sav" aria-pressed="' + (mode === 'sav') + '"><span>📁</span>Enregistrés</button></div></div>'
       + (mode === 'multi' ? multiHtml() : mode === 'int' ? intHtml() : savedHtml());
-    if(mode === 'int'){ var sm = pane.querySelector('#tmSum'); if(sm) sm.textContent = sumTxt(); }
+    if(mode === 'int'){ var sm = pane.querySelector('#tmSum'); if(sm) sm.textContent = sumTxt(); drawTl(); }
   }
   function refreshTile(it){ var t = pane.querySelector('.tm-t[data-id="' + it.id + '"]'); if(!t) return; var i = M.items.indexOf(it), tmp = document.createElement('div'); tmp.innerHTML = tileHtml(it, i); t.replaceWith(tmp.firstChild); }
   pane.addEventListener('click', function(e){
@@ -22226,7 +22325,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var stb = e.target.closest('[data-st]');
     if(stb){ var f = stb.getAttribute('data-st'), L = LIM[f], v = (+I[f] || 0) + (+stb.getAttribute('data-dir')) * L[2]; I[f] = Math.max(L[0], Math.min(L[1], v)); saveI();
       if(f === 'reps'){ render(); return; }
-      var inp = pane.querySelector('#tmI_' + f); if(inp) inp.value = TIMEF[f] ? fmtS(I[f]) : I[f]; pane.querySelector('#tmSum').textContent = sumTxt(); return; }
+      var inp = pane.querySelector('#tmI_' + f); if(inp) inp.value = TIMEF[f] ? fmtS(I[f]) : I[f]; pane.querySelector('#tmSum').textContent = sumTxt(); drawTl(); return; }
     var b = e.target.closest('[data-a]'); if(!b) return; var a = b.getAttribute('data-a');
     var tile = b.closest('.tm-t'), it = tile ? M.items.find(function(x){ return x.id === tile.getAttribute('data-id'); }) : null;
     if(it){
@@ -22236,15 +22335,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if(a === 'opt' || a === 'ren'){ chronoSheet(it); return; }
       return;
     }
-    if(a === 'all'){ M.items.forEach(function(x){ if(x.st !== 'run') start(x); }); beep(1046, .15); saveM(); render(); loop(); return; }
+    if(a === 'all'){ var doAll = function(){ M.items.forEach(function(x){ if(x.st !== 'run') start(x); }); saveM(); render(); loop(); }; if(M.c321 !== false) go321(doAll, false, M.name || 'Départ'); else { beep(1046, .15); doAll(); } return; }
     if(a === 'stopall'){ M.items.forEach(pause); saveM(); render(); return; }
     if(a === 'rstall'){ M.items.forEach(reset); saveM(); render(); return; }
     if(a === 'add'){ chronoSheet(null); return; }
     if(a === 'savem'){ M.name = (pane.querySelector('#tmMN').value || '').trim() || 'Mes chronos'; saveM(); storeSave('multi', M.name, M); return; }
-    if(a === 'runi'){ readI(); runInterval(JSON.parse(JSON.stringify(I))); return; }
+    if(a === 'runi'){ readI(); launchI(JSON.parse(JSON.stringify(I))); return; }
     if(a === 'savei'){ readI(); storeSave('int', I.name || 'Mon interval', I); return; }
     var row = b.closest('[data-sid]'); if(row){ var arr = saved(), x = arr.find(function(y){ return y.id === row.getAttribute('data-sid'); }); if(!x) return;
-      if(a === 'sgo'){ runInterval(JSON.parse(JSON.stringify(x.data))); return; }
+      if(a === 'sgo'){ launchI(JSON.parse(JSON.stringify(x.data))); return; }
       if(a === 'sopen'){ if(x.type === 'int'){ I = JSON.parse(JSON.stringify(x.data)); saveI(); mode = 'int'; } else { if(anyRun() && !confirmReplace()) return; M = JSON.parse(JSON.stringify(x.data)); saveM(); mode = 'multi'; } lsSet(MODE_K, mode); render(); return; }
       if(a === 'sdup'){ var c = JSON.parse(JSON.stringify(x)); c.id = uid(); c.name = x.name + ' (copie)'; arr.unshift(c); setSaved(arr); render(); return; }
       if(a === 'sdel'){ sheet('<h4>Supprimer « ' + esc(x.name) + ' » ?</h4><button type="button" class="tm-btn" data-k="ok" style="color:#fff;background:#C8302E">Supprimer</button><button type="button" class="tm-btn" data-k="x">Annuler</button>', function(k){ if(k === 'ok'){ setSaved(saved().filter(function(y){ return y.id !== x.id; })); render(); } }); return; }
@@ -22266,8 +22365,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   pane.addEventListener('change', function(e){
     var t = e.target;
     if(t.id === 'tmVoice'){ I.voice = t.checked; saveI(); return; }
+    if(t.id === 'tm321I'){ I.c321 = t.checked; saveI(); return; }
+    if(t.id === 'tm321M'){ M.c321 = t.checked; saveM(); return; }
     if(t.hasAttribute('data-f')){ var f = t.getAttribute('data-f'), L = LIM[f], v = TIMEF[f] ? parseT(t.value) : parseInt(t.value, 10);
-      if(v == null || isNaN(v)) v = I[f]; I[f] = Math.max(L[0], Math.min(L[1], v)); saveI(); if(f === 'reps'){ render(); return; } t.value = TIMEF[f] ? fmtS(I[f]) : I[f]; pane.querySelector('#tmSum').textContent = sumTxt(); }
+      if(v == null || isNaN(v)) v = I[f]; I[f] = Math.max(L[0], Math.min(L[1], v)); saveI(); if(f === 'reps'){ render(); return; } t.value = TIMEF[f] ? fmtS(I[f]) : I[f]; pane.querySelector('#tmSum').textContent = sumTxt(); drawTl(); }
   });
   pane.addEventListener('focusin', function(e){ var t = e.target; if(t.hasAttribute && t.hasAttribute('data-f')) setTimeout(function(){ try{ t.setSelectionRange(0, t.value.length); }catch(x){} }, 30); });
 
@@ -22278,7 +22379,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     M.items.forEach(function(it){
       if(it.st !== 'run') return; run = true;
       if(it.type === 'down' && el(it) >= it.dur * 1000){ it.acc = it.dur * 1000; it.st = 'done'; saveM(); beep(880, .3); setTimeout(function(){ beep(880, .3); }, 350); setTimeout(function(){ beep(1175, .6); }, 700); vib([300, 100, 300]); toast('⏰ ' + it.n + ' : temps écoulé'); if(vis) refreshTile(it); return; }
-      if(vis){ var t = pane.querySelector('[data-tt="' + it.id + '"]'); if(t) t.innerHTML = fmt(shown(it), true); }
+      if(vis){ var t = pane.querySelector('[data-tt="' + it.id + '"]'); if(t) t.innerHTML = fmt(shown(it), true); var pb = it.type === 'down' && pane.querySelector('[data-pb="' + it.id + '"]'); if(pb) pb.style.width = (100 * shown(it) / (it.dur * 1000 || 1)).toFixed(2) + '%'; }
     });
     if(run) requestAnimationFrame(f); else looping = false;
   })(); }
