@@ -20984,7 +20984,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         if(!lt){ if(!(dead[rt.id] >= (rt.u || 0))){ D.timers.push(copy(rt)); got = true; } return; }
         if((rt.u || 0) > (lt.u || 0)){ Object.keys(lt).forEach(function(q){ delete lt[q]; }); Object.assign(lt, copy(rt)); got = true; } else if((lt.u || 0) > (rt.u || 0)) mine = true; });
       D.timers = D.timers.filter(function(t){ if(dead[t.id] >= (t.u || 0)){ got = true; return false; } if(!rT[t.id]) mine = true; return true; });
-      D.timers.sort(function(a, b){ return (b.c || b.u || 0) - (a.c || a.u || 0); });
+      D.timers.sort(function(a, b){ var oa = a.o == null ? 1e9 : a.o, ob = b.o == null ? 1e9 : b.o; return oa - ob || (b.c || b.u || 0) - (a.c || a.u || 0); });
       return {got:got, mine:mine};
     }
     function quiet(){ return !document.querySelector('.cl-ov, .clp, .stx, .cl-dlg'); }
@@ -22088,6 +22088,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .tmr-ring .tmr-big{position:relative; font-size:clamp(3.4rem, 17vw, 7.6rem);}
 .tmr.pz .tmr-ring .br{opacity:.55;}
 .tmr-mid{gap:12px;}
+.tm-undo{position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom, 0px) + 86px); transform:translateX(-50%); z-index:1800; display:flex; align-items:center; gap:12px; padding:10px 10px 10px 16px; border-radius:16px; background:#0E1A14; color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.3); font:600 .88rem/1.2 Inter, sans-serif; max-width:calc(100vw - 32px);}
+.tm-undo button{flex:none; padding:8px 14px; border:none; border-radius:12px; background:#F5C451; color:#2A1A06; font:800 .85rem/1 Inter, sans-serif; cursor:pointer;}
+.tm-sv-h{display:flex; align-items:center; gap:8px; margin-bottom:4px;} .tm-sv-h h3{flex:1; margin:0;}
+.tm-sv.ro{border-style:dashed; border-color:rgba(46,158,94,.45);}
+.tm-sv.ro > i{font:800 1rem/1 'Bricolage Grotesque', sans-serif; background:#0E1A14; color:#fff;}
+.tm-sv.ro button{width:46px; height:46px; font-size:1.15rem;} .tm-sv button:disabled{opacity:.3;}
+.tm-sv.moved{animation:tmMoved .6s ease;} @keyframes tmMoved{0%{background:rgba(47,203,114,.25);} 100%{background:var(--card, #fff);}}
 /* 3, 2, 1, GO */
 .tm321{position:fixed; inset:0; z-index:1700; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:radial-gradient(70% 55% at 50% 45%, #1C3A27 0%, #070D0A 70%); color:#fff; animation:tmIn .2s ease;}
 .tm321.out{animation:tmOut .25s ease forwards;}
@@ -22119,7 +22126,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function audio(){ try{ if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); }catch(e){} return AC; }
   function beep(f, d, v){ var a = audio(); if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = f || 880; o.type = 'sine'; g.gain.value = v || .18; o.connect(g); g.connect(a.destination); var t = a.currentTime; g.gain.setValueAtTime(v || .18, t); g.gain.exponentialRampToValueAtTime(.0001, t + (d || .15)); o.start(t); o.stop(t + (d || .15) + .02); }catch(e){} }
   function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
-  function say(t){ try{ if(!window.speechSynthesis || !t) return; speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; u.rate = 1.05; speechSynthesis.speak(u); }catch(e){} }
+  var FRV = null;
+  function frVoice(){ if(FRV) return FRV; try{ var v = speechSynthesis.getVoices() || []; FRV = v.find(function(x){ return /^fr[-_]FR/i.test(x.lang) && /thomas|amelie|amélie|audrey|aurelie|google/i.test(x.name); }) || v.find(function(x){ return /^fr/i.test(x.lang); }) || null; }catch(e){} return FRV; }
+  try{ if(window.speechSynthesis) speechSynthesis.onvoiceschanged = function(){ FRV = null; frVoice(); }; }catch(e){}
+  // urgent : coupe ce qui est en cours (changement de phase) ; sinon s'ajoute à la suite
+  function say(t, urgent){ try{ if(!window.speechSynthesis || !t) return; if(urgent && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; var v = frVoice(); if(v) u.voice = v; u.rate = 1.05; u.volume = 1; speechSynthesis.speak(u); }catch(e){} }
   function awake(on){ try{ window.ecKeepAwake && window.ecKeepAwake(on); }catch(e){} }
   // Décompte 3, 2, 1, GO avant le départ
   function go321(cb, voice, title){
@@ -22150,8 +22161,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function saveM(){ lsSet(CUR_K, M); } function saveI(){ lsSet(INT_K, I); }
   // Chronos enregistrés : gardés avec les séances Coaching (synchro iPad ↔ iPhone, marche sans réseau) ; copie locale en secours
   function store(){ var S = window.ecTimerStore; return S && S.ready() ? S : null; }
-  function saved(){ var S = store(); return S ? JSON.parse(JSON.stringify(S.list())) : lsGet(SAV_K, []); }
-  function setSaved(a){ lsSet(SAV_K, a); var S = store(); if(S) S.set(a.map(function(x){ x.c = x.c || x.u || Date.now(); return x; })); }
+  function saved(){ var S = store(), a = S ? JSON.parse(JSON.stringify(S.list())) : lsGet(SAV_K, []); return a.sort(function(x, y){ var ox = x.o == null ? 1e9 : x.o, oy = y.o == null ? 1e9 : y.o; return ox - oy || (y.c || y.u || 0) - (x.c || x.u || 0); }); }
+  function setSaved(a){ a.forEach(function(x, i){ x.o = i; x.c = x.c || x.u || Date.now(); }); lsSet(SAV_K, a); var S = store(); if(S) S.set(a); }
   function migrate(){ var S = store(); if(!S) return; var cur = S.list(), ids = {}; cur.forEach(function(x){ ids[x.id] = 1; }); var loc = lsGet(SAV_K, []), add = loc.filter(function(x){ return !ids[x.id]; });
     if(add.length){ S.set(cur.concat(add.map(function(x){ x.c = x.c || x.u || Date.now(); return x; }))); } lsSet(SAV_K, S.list()); if(mode === 'sav') render(); }
   window.addEventListener('ec-timers-ready', migrate);
@@ -22226,10 +22237,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       + '<div class="tm-f" style="margin-top:10px">' + stepper('work', '💪 Travail', fmtS(I.work), 'w') + stepper('rest', '😮‍💨 Récup', fmtS(I.rest), 'r') + stepper('reps', '🔁 Répétitions', I.reps) + stepper('sets', '📚 Séries', I.sets) + stepper('setRest', '⏸ Récup entre séries', fmtS(I.setRest), 'r') + stepper('prep', '⏳ Préparation', fmtS(I.prep)) + '</div>'
       + '<div class="tm-sum" id="tmSum"></div>'
       + '<div class="tm-tl" id="tmTl"></div>'
-      + '<label class="tm-chk"><input type="checkbox" id="tmVoice"' + (I.voice ? ' checked' : '') + '> 🔊 Annonce vocale des répétitions et des récups</label>'
-      + '<label class="tm-chk"><input type="checkbox" id="tm321I"' + (I.c321 !== false ? ' checked' : '') + '> 3, 2, 1, GO au lancement</label>'
+      + '<label class="tm-chk"><input type="checkbox" id="tmVoice"' + (I.voice ? ' checked' : '') + '> 🔊 Voix : nom de chaque exercice, récups et « 3, 2, 1 » à la fin de chaque compte à rebours</label>'
+
       + '<div class="tm-row" style="margin-top:12px"><button type="button" class="tm-btn go" data-a="runi" style="min-height:56px;font-size:1rem">▶ Lancer</button><button type="button" class="tm-btn gold" data-a="savei">💾 Enregistrer</button></div></div>'
-      + '<div class="tm-card"><h3>🏷️ Nom de chaque répétition</h3><p>Facultatif : exercices de renfo, distances ou allures pour le trail… Les mêmes noms reviennent à chaque série.</p><div class="tm-names">' + names + '</div></div>';
+      + '<div class="tm-card"><h3>🏷️ Nom de chaque répétition</h3><p>Facultatif : exercices de renfo, distances ou allures pour le trail… Les mêmes noms reviennent à chaque série.</p><div class="tm-names">' + names + '</div>'
+      + ((I.names || []).some(function(n){ return n && String(n).trim(); }) ? '<button type="button" class="tm-btn" data-a="clrnames" style="width:100%;margin-top:10px">↺ Effacer tous les noms</button>' : '') + '</div>';
   }
   function drawTl(){ var tl = pane.querySelector('#tmTl'); if(!tl) return; var S = steps(I), tot = total(I) || 1;
     tl.innerHTML = S.map(function(x){ return '<i class="' + x.k + '" style="flex:' + x.d + '" title="' + esc(x.lab) + '"></i>'; }).join('') + '<span class="tm-tl-lg"><b class="work"></b>Travail <b class="rest"></b>Récup <b class="srest"></b>Entre séries' + (I.prep ? ' <b class="prep"></b>Prépa' : '') + '</span>'; }
@@ -22239,7 +22251,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // Écran de l'interval timer
   var R = null;
-  function launchI(c){ if(c.c321 !== false) go321(function(){ runInterval(c); }, c.voice, c.name || 'Interval'); else runInterval(c); }
+  function launchI(c){ runInterval(c); }   // la préparation sert de départ : la 1re annonce part dans le toucher (exigé par l'iPhone pour la voix)
   function runInterval(c){
     var S = steps(c); if(!S.length) return;
     audio(); awake(true);
@@ -22259,7 +22271,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function cur(){ return R.S[R.k]; }
   function announce(){
     var st = cur(); if(!R.c.voice) return;
-    if(st.k === 'work') say(st.lab); else if(st.k === 'rest') say('Récup'); else if(st.k === 'srest') say('Récup, fin de la série ' + st.s); else if(st.k === 'prep') say('Préparation');
+    var nx = R.S[R.k + 1], nxt = nx && nx.k === 'work' ? ', ensuite : ' + nx.lab : '';
+    if(st.k === 'work') say(st.lab, true); else if(st.k === 'rest') say('Récup' + nxt, true); else if(st.k === 'srest') say('Fin de la série ' + st.s + '. Récup' + nxt, true); else if(st.k === 'prep') say('Préparation' + (nx && nx.k === 'work' ? '. Premier exercice : ' + nx.lab : ''), true);
   }
   function go(d){
     var n = R.S.length;
@@ -22271,7 +22284,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function tick(){
     if(!R || R.state !== 'run') return;
     var left = R.endAt - Date.now(), s = Math.ceil(left / 1000);
-    if(s <= 3 && s >= 1 && s !== R.lastBeep){ R.lastBeep = s; beep(880, .12); }
+    if(s <= 3 && s >= 1 && s !== R.lastBeep){ R.lastBeep = s; if(R.c.voice && cur().d > 4) say(String(s), true); else beep(880, .12); }
     if(left <= 0){ go(1); return; }
     var t = R.el.querySelector('#tmrT'); if(t) t.innerHTML = fmt(left, true); var off2 = (339.3 * (1 - Math.max(0, Math.min(1, left / (cur().d * 1000))))).toFixed(2), bb = R.el.querySelector('#tmrB'), gg = R.el.querySelector('#tmrG'); if(bb) bb.style.strokeDashoffset = off2; if(gg) gg.style.strokeDashoffset = off2;
     R.el.classList.toggle('hot', left <= 3200 && cur().k === 'work');
@@ -22296,11 +22309,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
 
   // ---------- Enregistrés ----------
+  var reorder = false;
   function savedHtml(){
     var a = saved();
-    return '<div class="tm-card"><h3>📁 Mes chronos enregistrés</h3><p>Prépare tes séances à l’avance : interval timers et séries de chronos se retrouvent ici, sur ton iPad comme sur ton iPhone (synchro dès qu’il y a du réseau).</p>'
+    return '<div class="tm-card"><div class="tm-sv-h"><h3>📁 Mes chronos enregistrés</h3>' + (a.length > 1 ? '<button type="button" class="tm-btn sm' + (reorder ? ' go' : '') + '" data-a="reord">' + (reorder ? '✓ Terminé' : '↕ Réorganiser') + '</button>' : '') + '</div><p>Prépare tes séances à l’avance : interval timers et séries de chronos se retrouvent ici, sur ton iPad comme sur ton iPhone (synchro dès qu’il y a du réseau).</p>'
       + (a.length ? a.map(function(x){ var sum = x.type === 'int' ? fmtS(x.data.work) + ' / ' + fmtS(x.data.rest) + ' × ' + x.data.reps + (x.data.sets > 1 ? ' × ' + x.data.sets + ' séries' : '') + ' · ' + fmt(total(x.data) * 1000) : x.data.items.length + ' chrono' + (x.data.items.length > 1 ? 's' : '') + ' : ' + x.data.items.slice(0, 4).map(function(i){ return i.n; }).join(', ') + (x.data.items.length > 4 ? '…' : '');
-          return '<div class="tm-sv" data-sid="' + x.id + '"><i>' + (x.type === 'int' ? '🔁' : '⏱') + '</i><span><b>' + esc(x.name) + '</b><small>' + esc(sum) + '</small></span>' + (x.type === 'int' ? '<button type="button" class="go" data-a="sgo">▶</button>' : '') + '<button type="button" data-a="sopen" aria-label="Ouvrir">✏️</button><button type="button" data-a="sdup" aria-label="Dupliquer">⧉</button><button type="button" data-a="sdel" aria-label="Supprimer">🗑</button></div>'; }).join('')
+          return '<div class="tm-sv' + (reorder ? ' ro' : '') + '" data-sid="' + x.id + '"><i>' + (reorder ? (a.indexOf(x) + 1) : (x.type === 'int' ? '🔁' : '⏱')) + '</i><span><b>' + esc(x.name) + '</b><small>' + esc(sum) + '</small></span>'
+            + (reorder ? '<button type="button" data-a="sup" aria-label="Monter"' + (a.indexOf(x) === 0 ? ' disabled' : '') + '>↑</button><button type="button" data-a="sdown" aria-label="Descendre"' + (a.indexOf(x) === a.length - 1 ? ' disabled' : '') + '>↓</button>'
+              : (x.type === 'int' ? '<button type="button" class="go" data-a="sgo">▶</button>' : '') + '<button type="button" data-a="sopen" aria-label="Ouvrir">✏️</button><button type="button" data-a="sdup" aria-label="Dupliquer">⧉</button><button type="button" data-a="sdel" aria-label="Supprimer">🗑</button>') + '</div>'; }).join('')
         : '<div class="tm-empty">Rien d’enregistré pour l’instant. Prépare un interval timer ou une série de chronos, puis « 💾 Enregistrer ».</div>')
       + '</div>';
   }
@@ -22342,13 +22358,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'savem'){ M.name = (pane.querySelector('#tmMN').value || '').trim() || 'Mes chronos'; saveM(); storeSave('multi', M.name, M); return; }
     if(a === 'runi'){ readI(); launchI(JSON.parse(JSON.stringify(I))); return; }
     if(a === 'savei'){ readI(); storeSave('int', I.name || 'Mon interval', I); return; }
+    if(a === 'clrnames'){ readI(); var kept = I.names.slice(); I.names = []; saveI(); render(); toast('Noms effacés'); undoBar('Noms des exercices effacés', function(){ I.names = kept; saveI(); render(); }); return; }
+    if(a === 'reord'){ reorder = !reorder; render(); return; }
     var row = b.closest('[data-sid]'); if(row){ var arr = saved(), x = arr.find(function(y){ return y.id === row.getAttribute('data-sid'); }); if(!x) return;
+      if(a === 'sup' || a === 'sdown'){ var ix = arr.indexOf(x), j = ix + (a === 'sup' ? -1 : 1); if(j < 0 || j >= arr.length) return; arr.splice(ix, 1); arr.splice(j, 0, x); setSaved(arr); render(); var el2 = pane.querySelector('[data-sid="' + x.id + '"]'); if(el2){ el2.classList.add('moved'); el2.scrollIntoView({block:'nearest', behavior:'smooth'}); } return; }
       if(a === 'sgo'){ launchI(JSON.parse(JSON.stringify(x.data))); return; }
       if(a === 'sopen'){ if(x.type === 'int'){ I = JSON.parse(JSON.stringify(x.data)); saveI(); mode = 'int'; } else { if(anyRun() && !confirmReplace()) return; M = JSON.parse(JSON.stringify(x.data)); saveM(); mode = 'multi'; } lsSet(MODE_K, mode); render(); return; }
-      if(a === 'sdup'){ var c = JSON.parse(JSON.stringify(x)); c.id = uid(); c.name = x.name + ' (copie)'; arr.unshift(c); setSaved(arr); render(); return; }
+      if(a === 'sdup'){ var c = JSON.parse(JSON.stringify(x)); c.id = uid(); c.name = x.name + ' (copie)'; c.c = Date.now(); arr.splice(arr.indexOf(x) + 1, 0, c); setSaved(arr); render(); return; }
       if(a === 'sdel'){ sheet('<h4>Supprimer « ' + esc(x.name) + ' » ?</h4><button type="button" class="tm-btn" data-k="ok" style="color:#fff;background:#C8302E">Supprimer</button><button type="button" class="tm-btn" data-k="x">Annuler</button>', function(k){ if(k === 'ok'){ setSaved(saved().filter(function(y){ return y.id !== x.id; })); render(); } }); return; }
     }
   });
+  function undoBar(txt, undo){
+    var old = document.getElementById('tmUndo'); if(old) old.remove();
+    var d = document.createElement('div'); d.id = 'tmUndo'; d.className = 'tm-undo'; d.innerHTML = '<span>' + esc(txt) + '</span><button type="button">Annuler</button>';
+    document.body.appendChild(d); var t = setTimeout(function(){ d.remove(); }, 6000);
+    d.querySelector('button').addEventListener('click', function(){ clearTimeout(t); d.remove(); undo(); });
+  }
   function confirmReplace(){ return window.confirm ? true : true; }
   function readI(){
     var n = pane.querySelector('#tmIN'); if(n) I.name = n.value.trim() || 'Mon interval';
