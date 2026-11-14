@@ -22222,6 +22222,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .stx.clt .stp-ctl button[data-r="reset"]{flex-direction:column; gap:3px;}
 .clp .clp-ib.go, :root .clp .clp-ib.go{gap:0;} .clp-ib.go .tmi{margin-right:7px;}
 h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
+/* Chrono Coaching : logo en filigrane (même esprit que les bandeaux) */
+.stx.clt::after{content:''; position:absolute; top:50%; right:-34vw; width:min(118vw, 760px); aspect-ratio:520/440; transform:translateY(-50%) rotate(-6deg); background:var(--ec-wm) no-repeat center / contain; opacity:.07; pointer-events:none; z-index:-1; animation:tmWmIn 1s ease-out both;}
+.stx.clt.fin::after{opacity:.1;}
+.stx.clt .stp-ring .br{filter:none;} .stx.clt .stp-ring svg{filter:drop-shadow(0 0 6px var(--acc));}
+@media (min-width:700px){ .stx.clt::after{right:-90px; width:min(70vw, 720px);} }
 /* Présenter : logo en filigrane (bandeau + fond) */
 .clp-top{overflow:hidden;}
 .clp-top::after{content:''; position:absolute; top:50%; right:-50px; width:190px; height:161px; transform:translateY(-50%) rotate(-6deg); background:var(--ec-wm) no-repeat center / contain; opacity:.11; pointer-events:none; z-index:0;}
