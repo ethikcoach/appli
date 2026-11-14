@@ -22096,6 +22096,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .tm-sv.ro button{width:46px; height:46px; font-size:1.15rem;} .tm-sv button:disabled{opacity:.3;}
 .tm-sv.moved{animation:tmMoved .6s ease;} @keyframes tmMoved{0%{background:rgba(47,203,114,.25);} 100%{background:var(--card, #fff);}}
 .tmr.trans{--acc:#FFB347;}
+.tmr-ctl .pp.go{background:#FFB347; color:#1B1206; font-size:1.2rem; animation:tmGo 1.6s ease-in-out infinite;}
+@keyframes tmGo{0%,100%{box-shadow:0 0 0 0 rgba(255,179,71,.55);}50%{box-shadow:0 0 0 12px rgba(255,179,71,0);}}
+.tm-tl i.trans.free{background:repeating-linear-gradient(45deg,#FFB347 0 4px,rgba(255,179,71,.35) 4px 8px);}
 .tm-tl i.trans{background:#FFB347;} .tm-tl-lg b.trans{background:#FFB347;}
 .tmr-blk{padding:6px 12px; border-radius:12px; background:rgba(255,255,255,.07); font:800 .78rem/1.2 Inter, sans-serif; color:rgba(255,255,255,.8); max-width:90%;}
 .tm-sq-new{width:100%; margin:0 0 10px; background:linear-gradient(120deg, rgba(255,179,71,.18), rgba(47,203,114,.15)); border:1px solid rgba(255,179,71,.4);}
@@ -22258,8 +22261,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function seqSteps(sq){
     var out = [], parts = seqParts(sq);
     parts.forEach(function(x, bi){
-      var c = x.data, st = steps(Object.assign({}, c, {prep:bi ? 0 : c.prep}));
-      if(bi && sq.trans > 0) out.push({k:'trans', d:sq.trans, lab:'Transition', nb:x.name, bi:bi, bn:parts.length});
+      var c = x.data, st = steps(Object.assign({}, c, {prep:!bi || sq.tc ? c.prep : 0}));
+      if(bi && sq.tc) out.push({k:'trans', d:0, free:true, lab:'Transition', nb:x.name, bi:bi, bn:parts.length});
+      else if(bi && sq.trans > 0) out.push({k:'trans', d:sq.trans, lab:'Transition', nb:x.name, bi:bi, bn:parts.length});
       st.forEach(function(y){ y.blk = x.name; y.bi = bi; y.bn = parts.length; y.R = Math.max(1, c.reps | 0); y.T = Math.max(1, c.sets | 0); out.push(y); });
     });
     return out;
@@ -22292,12 +22296,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     audio(); awake(true);
     var el = document.createElement('div'); el.className = 'tmr'; el.setAttribute('role', 'dialog');
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
-    R = {el:el, c:c, S:S, k:0, state:'run', endAt:Date.now() + S[0].d * 1000, left:S[0].d * 1000, t0:Date.now(), lastBeep:99};
+    R = {el:el, c:c, S:S, k:0, state:'run', endAt:Date.now() + S[0].d * 1000, left:S[0].d * 1000, t0:Date.now(), lastBeep:99, sw:Date.now(), el2:0};
     draw(); announce();
     R.iv = setInterval(tick, 40);
     el.addEventListener('click', function(e){ var b = e.target.closest('[data-r]'); if(!b || !R) return; var a = b.getAttribute('data-r');
       if(a === 'x'){ close(); return; }
-      if(a === 'pp'){ if(R.state === 'run'){ R.left = R.endAt - Date.now(); R.state = 'pause'; try{ speechSynthesis.cancel(); }catch(x){} } else if(R.state === 'pause'){ R.endAt = Date.now() + R.left; R.state = 'run'; } draw(); return; }
+      if(a === 'pp'){ if(R.state === 'run'){ R.left = R.endAt - Date.now(); R.el2 = Date.now() - R.sw; R.state = 'pause'; try{ speechSynthesis.cancel(); }catch(x){} } else if(R.state === 'pause'){ R.endAt = Date.now() + R.left; R.sw = Date.now() - R.el2; R.state = 'run'; } draw(); return; }
       if(a === 'nx' || a === 'pv'){ R.pre = false; }
       if(a === 'nx'){ go(1); return; } if(a === 'pv'){ go(-1); return; }
       if(a === 'again'){ var c0 = R.c; close(); launchI(c0); return; }
@@ -22308,6 +22312,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function announce(k){
     if(k == null) k = R.k; var st = R.S[k]; if(!R.c.voice || !st) return;
     var nx = R.S[k + 1], nxt = nx && nx.k === 'work' ? ', ensuite : ' + nx.lab : '';
+    if(st.k === 'trans' && st.free){ say('Transition libre. Ensuite : ' + st.nb + '. Touche continuer quand tu es prêt.', true); return; }
     if(st.k === 'trans'){ say('Transition. Ensuite : ' + st.nb + (nx && nx.k === 'work' ? '. Premier exercice : ' + nx.lab : ''), true); return; }
     if(st.k === 'work') say(st.lab, true); else if(st.k === 'rest') say('Récup' + nxt, true); else if(st.k === 'srest') say('Fin de la série ' + st.s + '. Récup' + nxt, true); else if(st.k === 'prep') say('Préparation' + (nx && nx.k === 'work' ? '. Premier exercice : ' + nx.lab : ''), true);
   }
@@ -22315,12 +22320,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var n = R.S.length;
     if(d > 0 && R.k + 1 >= n){ R.state = 'fin'; beep(660, .25); setTimeout(function(){ beep(880, .25); }, 260); setTimeout(function(){ beep(1175, .5); }, 520); vib([200, 100, 200]); if(R.c.voice) say('Terminé, bravo !'); draw(); return; }
     var wasPre = R.pre && d > 0; R.pre = false;
-    R.k = Math.max(0, Math.min(n - 1, R.k + d)); R.endAt = Date.now() + cur().d * 1000; R.left = cur().d * 1000; R.lastBeep = 99; if(R.state === 'fin') R.state = 'run';
+    R.k = Math.max(0, Math.min(n - 1, R.k + d)); R.endAt = Date.now() + cur().d * 1000; R.left = cur().d * 1000; R.lastBeep = 99; R.sw = Date.now(); R.el2 = 0; if(R.state === 'fin' || (R.state === 'pause' && cur().free)) R.state = 'run';
     beep(cur().k === 'work' ? 1046 : 660, .35, .22); vib(cur().k === 'work' ? [300] : [120, 80, 120]);
     draw(); if(!wasPre) announce();
   }
   function tick(){
     if(!R || R.state !== 'run') return;
+    if(cur().free){ var tf = R.el.querySelector('#tmrT'); if(tf) tf.innerHTML = fmt(Date.now() - R.sw, true); var tt = R.el.querySelector('#tmrTot'); if(tt){ var rs = 0; for(var q = R.k + 1; q < R.S.length; q++) rs += R.S[q].d; tt.textContent = 'Reste ' + fmt(rs * 1000).replace(/<\/?small>/g, '') + ' · écoulé ' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, ''); } return; }
     var left = R.endAt - Date.now(), voice = R.c.voice && window.speechSynthesis, lead = voice ? LAT - 80 : -40;
     // « 3, 2, 1 » entendus quand l'écran passe à 0:03, 0:02, 0:01
     var s = Math.floor((left - lead) / 1000);
@@ -22337,16 +22343,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     el.className = 'tmr ' + (fin ? 'fin' : st.k) + (R.state === 'pause' ? ' pz' : '');
     var nxt = null; for(var j = R.k + 1; j < R.S.length; j++){ nxt = R.S[j]; break; }
     var reps = st.R || Math.max(1, R.c.reps | 0), sets = st.T || Math.max(1, R.c.sets | 0);
-    var PH = {prep:'Préparation', work:'Travail', rest:'Récup', srest:'Récup entre séries', trans:'Transition'};
+    var PH = {prep:'Préparation', work:'Travail', rest:'Récup', srest:'Récup entre séries', trans:'Transition'}, fr = !fin && st.free;
+    if(fr) el.className += ' free';
     el.innerHTML = '<div class="tmr-top"><div><small>Interval timer</small><b>' + esc(R.c.name || 'Interval') + '</b></div><button type="button" data-r="x" aria-label="Fermer">✕</button></div>'
       + '<div class="tmr-pg">' + R.S.map(function(x, j){ return '<i class="' + (fin || j < R.k ? 'ok' : j === R.k ? 'on' : '') + (x.k !== 'work' ? ' r' : '') + '"></i>'; }).join('') + '</div>'
       + (fin
         ? '<div class="tmr-mid"><div style="font-size:4rem">🏆</div><div class="tmr-nm">Terminé, bravo !</div><div class="tmr-cnt">' + (R.c.seq ? '<span>' + (st.bn || 1) + ' timers enchaînés</span><span>' + R.S.filter(function(x){ return x.k === 'work'; }).length + ' répétitions</span>' : '<span>' + sets + ' série' + (sets > 1 ? 's' : '') + '</span><span>' + reps * sets + ' répétitions</span>') + '<span>' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, '') + '</span></div></div><div class="tmr-ctl" style="grid-template-columns:1fr 1fr"><button type="button" data-r="again">↺ Recommencer</button><button type="button" class="pp" data-r="x">Terminer</button></div>'
-        : '<div class="tmr-mid">' + (st.bn > 1 ? '<div class="tmr-blk">🔗 Timer ' + (st.bi + 1) + '/' + st.bn + ' · ' + esc(st.k === 'trans' ? st.nb : st.blk) + '</div>' : '') + '<div class="tmr-ph">' + PH[st.k] + (R.state === 'pause' ? ' · en pause' : '') + '</div><div class="tmr-nm">' + esc(st.k === 'work' ? st.lab : st.k === 'prep' ? 'Prépare-toi' : st.k === 'trans' ? 'Ensuite : ' + st.nb : (nxt && nxt.k === 'work' ? 'Ensuite : ' + nxt.lab : 'Souffle')) + '</div>'
-          + '<div class="tmr-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tk"/><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="gl" id="tmrG" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/><circle cx="60" cy="60" r="54" class="br" id="tmrB" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/></svg><div class="tmr-big" id="tmrT">' + fmt(R.state === 'pause' ? R.left : R.endAt - Date.now(), true) + '</div></div>'
-          + '<div class="tmr-cnt">' + (st.s ? '<span>Série ' + st.s + '/' + sets + '</span>' : '') + (st.r ? '<span>Rép ' + st.r + '/' + reps + '</span>' : '') + '</div></div>'
-          + (nxt ? '<div class="tmr-nx"><span><small>Ensuite</small><b>' + esc(nxt.k === 'work' ? nxt.lab : nxt.k === 'trans' ? 'Transition · ' + nxt.nb : PH[nxt.k]) + '</b></span><em>' + fmtS(nxt.d) + '</em></div>' : '')
-          + '<div class="tmr-ctl"><button type="button" data-r="pv" aria-label="Précédent">⏮</button><button type="button" class="pp" data-r="pp">' + (R.state === 'pause' ? '▶ Reprendre' : '⏸ Pause') + '</button><button type="button" data-r="nx" aria-label="Suivant">⏭</button></div><div class="tmr-tot" id="tmrTot"></div>');
+        : '<div class="tmr-mid">' + (st.bn > 1 ? '<div class="tmr-blk">🔗 Timer ' + (st.bi + 1) + '/' + st.bn + ' · ' + esc(st.k === 'trans' ? st.nb : st.blk) + '</div>' : '') + '<div class="tmr-ph">' + (fr ? '⏱ Transition libre' : PH[st.k]) + (R.state === 'pause' ? ' · en pause' : '') + '</div><div class="tmr-nm">' + esc(st.k === 'work' ? st.lab : st.k === 'prep' ? 'Prépare-toi' : st.k === 'trans' ? 'Ensuite : ' + st.nb : (nxt && nxt.k === 'work' ? 'Ensuite : ' + nxt.lab : 'Souffle')) + '</div>'
+          + '<div class="tmr-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tk"/><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="gl" id="tmrG" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, fr ? 1 : (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/><circle cx="60" cy="60" r="54" class="br" id="tmrB" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, fr ? 1 : (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/></svg><div class="tmr-big" id="tmrT">' + fmt(R.state === 'pause' ? R.left : R.endAt - Date.now(), true) + '</div></div>'
+          + '<div class="tmr-cnt">' + (fr ? '<span>Chrono · touche Continuer quand tu es prêt</span>' : '') + (st.s ? '<span>Série ' + st.s + '/' + sets + '</span>' : '') + (st.r ? '<span>Rép ' + st.r + '/' + reps + '</span>' : '') + '</div></div>'
+          + (nxt ? '<div class="tmr-nx"><span><small>Ensuite</small><b>' + esc(nxt.k === 'work' ? nxt.lab : nxt.k === 'trans' ? 'Transition · ' + nxt.nb : PH[nxt.k]) + '</b></span><em>' + (nxt.free ? 'libre' : fmtS(nxt.d)) + '</em></div>' : '')
+          + '<div class="tmr-ctl"><button type="button" data-r="pv" aria-label="Précédent">⏮</button>' + (fr ? '<button type="button" class="pp go" data-r="nx">▶ Continuer</button>' : '<button type="button" class="pp" data-r="pp">' + (R.state === 'pause' ? '▶ Reprendre' : '⏸ Pause') + '</button>') + '<button type="button" data-r="nx" aria-label="Suivant">⏭</button></div><div class="tmr-tot" id="tmrTot"></div>');
     tick();
   }
 
@@ -22354,16 +22361,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   var reorder = false, SQ = null;   // SQ : enchaînement en cours de préparation
   var TR_CH = [0, 10, 15, 30, 45, 60, 90, 120, 180];
   function seqEditorHtml(){
-    var all = saved(), ints = all.filter(function(x){ return x.type === 'int'; }), parts = seqParts(SQ), tot = total({seq:1, ids:SQ.ids, trans:SQ.trans});
-    var segs = seqSteps({seq:1, ids:SQ.ids, trans:SQ.trans});
+    var all = saved(), ints = all.filter(function(x){ return x.type === 'int'; }), parts = seqParts(SQ), tot = total({seq:1, ids:SQ.ids, trans:SQ.trans, tc:SQ.tc});
+    var segs = seqSteps({seq:1, ids:SQ.ids, trans:SQ.trans, tc:SQ.tc});
     return '<div class="tm-card tm-seq"><h3>🔗 ' + (SQ.id ? 'Modifier l’enchaînement' : 'Nouvel enchaînement') + '</h3><p>Assemble tes interval timers enregistrés, dans l’ordre, avec une transition entre chacun.</p>'
       + '<input class="tm-in" id="tmSqN" value="' + esc(SQ.name) + '" placeholder="Nom (ex. Séance trail complète)" autocomplete="off">'
-      + '<span class="tm-lab">⏳ Transition entre les timers</span><div class="tm-chips" id="tmSqT">' + TR_CH.map(function(v){ return '<button type="button" data-tr="' + v + '" aria-pressed="' + (SQ.trans === v) + '">' + (v ? fmtS(v) : 'Aucune') + '</button>'; }).join('') + '</div>'
+      + '<span class="tm-lab">Transition entre les timers</span><div class="tm-chips" id="tmSqM"><button type="button" data-tm="0" aria-pressed="' + !SQ.tc + '">⏳ Timer (durée fixe)</button><button type="button" data-tm="1" aria-pressed="' + !!SQ.tc + '">⏱ Chrono (je relance)</button></div>'
+      + (SQ.tc ? '<p class="tm-hint" style="margin:6px 0 0;font-size:.82rem;opacity:.75">Entre deux timers, un chrono tourne librement : touche « Continuer » quand tu es prêt. La préparation du timer suivant s’applique ensuite.</p>' : '<div class="tm-chips" id="tmSqT">' + TR_CH.map(function(v){ return '<button type="button" data-tr="' + v + '" aria-pressed="' + (SQ.trans === v) + '">' + (v ? fmtS(v) : 'Aucune') + '</button>'; }).join('') + '</div>')
       + '<span class="tm-lab">Ordre des timers</span>'
-      + (parts.length ? '<div class="tm-sq-l">' + parts.map(function(x, i){ var d = x.data; return (i && SQ.trans ? '<div class="tm-sq-tr">⏳ Transition ' + fmtS(SQ.trans) + '</div>' : '') + '<div class="tm-sq-it" data-qi="' + i + '"><em>' + (i + 1) + '</em><span><b>' + esc(x.name) + '</b><small>' + fmtS(d.work) + ' / ' + fmtS(d.rest) + ' × ' + d.reps + (d.sets > 1 ? ' × ' + d.sets : '') + ' · ' + fmt(total(d) * 1000).replace(/<\/?small>/g, '') + '</small></span><button type="button" data-a="qup"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-a="qdn"' + (i < parts.length - 1 ? '' : ' disabled') + '>↓</button><button type="button" data-a="qrm" aria-label="Retirer">✕</button></div>'; }).join('') + '</div>'
+      + (parts.length ? '<div class="tm-sq-l">' + parts.map(function(x, i){ var d = x.data; return (i && SQ.tc ? '<div class="tm-sq-tr">⏱ Transition chrono · tu relances</div>' : i && SQ.trans ? '<div class="tm-sq-tr">⏳ Transition ' + fmtS(SQ.trans) + '</div>' : '') + '<div class="tm-sq-it" data-qi="' + i + '"><em>' + (i + 1) + '</em><span><b>' + esc(x.name) + '</b><small>' + fmtS(d.work) + ' / ' + fmtS(d.rest) + ' × ' + d.reps + (d.sets > 1 ? ' × ' + d.sets : '') + ' · ' + fmt(total(d) * 1000).replace(/<\/?small>/g, '') + '</small></span><button type="button" data-a="qup"' + (i ? '' : ' disabled') + '>↑</button><button type="button" data-a="qdn"' + (i < parts.length - 1 ? '' : ' disabled') + '>↓</button><button type="button" data-a="qrm" aria-label="Retirer">✕</button></div>'; }).join('') + '</div>'
         : '<div class="tm-empty" style="padding:12px">Ajoute des timers ci-dessous.</div>')
-      + (segs.length ? '<div class="tm-tl" style="margin-top:10px">' + segs.map(function(x){ return '<i class="' + x.k + '" style="flex:' + x.d + '"></i>'; }).join('') + '<span class="tm-tl-lg"><b class="work"></b>Travail <b class="rest"></b>Récup <b class="srest"></b>Entre séries <b class="trans"></b>Transition</span></div>' : '')
-      + '<div class="tm-sum">⏱ Durée totale ' + fmt(tot * 1000).replace(/<\/?small>/g, '') + ' · ' + parts.length + ' timer' + (parts.length > 1 ? 's' : '') + '</div>'
+      + (segs.length ? '<div class="tm-tl" style="margin-top:10px">' + segs.map(function(x){ return '<i class="' + x.k + (x.free ? ' free' : '') + '" style="flex:' + (x.free ? Math.max(10, Math.round(tot * .04)) : x.d) + '"></i>'; }).join('') + '<span class="tm-tl-lg"><b class="work"></b>Travail <b class="rest"></b>Récup <b class="srest"></b>Entre séries <b class="trans"></b>Transition</span></div>' : '')
+      + '<div class="tm-sum">⏱ Durée totale ' + fmt(tot * 1000).replace(/<\/?small>/g, '') + (SQ.tc && parts.length > 1 ? ' + transitions libres' : '') + ' · ' + parts.length + ' timer' + (parts.length > 1 ? 's' : '') + '</div>'
       + '<span class="tm-lab">＋ Ajouter un timer</span><div class="tm-sq-add">' + (ints.length ? ints.map(function(x){ return '<button type="button" data-qadd="' + x.id + '">＋ ' + esc(x.name) + '</button>'; }).join('') : '<p class="tm-empty">Enregistre d’abord des interval timers (onglet 🔁 Interval).</p>') + '</div>'
       + '<label class="tm-chk"><input type="checkbox" id="tmSqV"' + (SQ.voice !== false ? ' checked' : '') + '> 🔊 Voix (exercices, récups, transitions, « 3, 2, 1 »)</label>'
       + '<div class="tm-row" style="margin-top:12px"><button type="button" class="tm-btn go" data-a="qrun"' + (parts.length ? '' : ' disabled') + '>▶ Lancer</button><button type="button" class="tm-btn gold" data-a="qsave"' + (parts.length ? '' : ' disabled') + '>💾 Enregistrer</button><button type="button" class="tm-btn sm" data-a="qx">Fermer</button></div></div>';
@@ -22373,7 +22381,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(SQ) return seqEditorHtml();
     return '<div class="tm-card"><div class="tm-sv-h"><h3>📁 Mes chronos enregistrés</h3>' + (a.length > 1 ? '<button type="button" class="tm-btn sm' + (reorder ? ' go' : '') + '" data-a="reord">' + (reorder ? '✓ Terminé' : '↕ Réorganiser') + '</button>' : '') + '</div><p>Prépare tes séances à l’avance : interval timers et séries de chronos se retrouvent ici, sur ton iPad comme sur ton iPhone (synchro dès qu’il y a du réseau).</p>'
       + (a.some(function(x){ return x.type === 'int'; }) && !reorder ? '<button type="button" class="tm-btn tm-sq-new" data-a="qnew">🔗 Enchaîner des timers</button>' : '')
-      + (a.length ? a.map(function(x){ var sum = x.type === 'seq' ? (function(){ var ps = seqParts(x.data); return ps.length + ' timer' + (ps.length > 1 ? 's' : '') + (x.data.trans ? ' · transition ' + fmtS(x.data.trans) : '') + ' · ' + fmt(total(x.data) * 1000).replace(/<\/?small>/g, '') + ' : ' + ps.map(function(p){ return p.name; }).join(' → '); })() : x.type === 'int' ? fmtS(x.data.work) + ' / ' + fmtS(x.data.rest) + ' × ' + x.data.reps + (x.data.sets > 1 ? ' × ' + x.data.sets + ' séries' : '') + ' · ' + fmt(total(x.data) * 1000) : x.data.items.length + ' chrono' + (x.data.items.length > 1 ? 's' : '') + ' : ' + x.data.items.slice(0, 4).map(function(i){ return i.n; }).join(', ') + (x.data.items.length > 4 ? '…' : '');
+      + (a.length ? a.map(function(x){ var sum = x.type === 'seq' ? (function(){ var ps = seqParts(x.data); return ps.length + ' timer' + (ps.length > 1 ? 's' : '') + (x.data.tc ? ' · transition chrono libre' : x.data.trans ? ' · transition ' + fmtS(x.data.trans) : '') + ' · ' + fmt(total(x.data) * 1000).replace(/<\/?small>/g, '') + ' : ' + ps.map(function(p){ return p.name; }).join(' → '); })() : x.type === 'int' ? fmtS(x.data.work) + ' / ' + fmtS(x.data.rest) + ' × ' + x.data.reps + (x.data.sets > 1 ? ' × ' + x.data.sets + ' séries' : '') + ' · ' + fmt(total(x.data) * 1000) : x.data.items.length + ' chrono' + (x.data.items.length > 1 ? 's' : '') + ' : ' + x.data.items.slice(0, 4).map(function(i){ return i.n; }).join(', ') + (x.data.items.length > 4 ? '…' : '');
           return '<div class="tm-sv' + (reorder ? ' ro' : '') + (x.type === 'seq' ? ' sq' : '') + '" data-sid="' + x.id + '"><i>' + (reorder ? (a.indexOf(x) + 1) : (x.type === 'seq' ? '🔗' : x.type === 'int' ? '🔁' : '⏱')) + '</i><span><b>' + esc(x.name) + '</b><small>' + esc(sum) + '</small></span>'
             + (reorder ? '<button type="button" data-a="sup" aria-label="Monter"' + (a.indexOf(x) === 0 ? ' disabled' : '') + '>↑</button><button type="button" data-a="sdown" aria-label="Descendre"' + (a.indexOf(x) === a.length - 1 ? ' disabled' : '') + '>↓</button>'
               : (x.type !== 'multi' ? '<button type="button" class="go" data-a="sgo">▶</button>' : '') + '<button type="button" data-a="sopen" aria-label="Ouvrir">✏️</button><button type="button" data-a="sdup" aria-label="Dupliquer">⧉</button><button type="button" data-a="sdel" aria-label="Supprimer">🗑</button>') + '</div>'; }).join('')
@@ -22399,6 +22407,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   pane.addEventListener('click', function(e){
     var m = e.target.closest('[data-m]'); if(m){ mode = m.getAttribute('data-m'); lsSet(MODE_K, mode); render(); return; }
     var trb = e.target.closest('[data-tr]'); if(trb && SQ){ readSQ(); SQ.trans = +trb.getAttribute('data-tr'); render(); return; }
+    var tmb = e.target.closest('[data-tm]'); if(tmb && SQ){ readSQ(); SQ.tc = tmb.getAttribute('data-tm') === '1'; if(!SQ.tc && !SQ.trans) SQ.trans = 30; render(); return; }
     var qa = e.target.closest('[data-qadd]'); if(qa && SQ){ readSQ(); SQ.ids.push(qa.getAttribute('data-qadd')); render(); return; }
     var stb = e.target.closest('[data-st]');
     if(stb){ var f = stb.getAttribute('data-st'), L = LIM[f], v = (+I[f] || 0) + (+stb.getAttribute('data-dir')) * L[2]; I[f] = Math.max(L[0], Math.min(L[1], v)); saveI();
@@ -22422,22 +22431,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'savei'){ readI(); storeSave('int', I.name || 'Mon interval', I); return; }
     if(a === 'clrnames'){ readI(); var kept = I.names.slice(); I.names = []; saveI(); render(); toast('Noms effacés'); undoBar('Noms des exercices effacés', function(){ I.names = kept; saveI(); render(); }); return; }
     if(a === 'reord'){ reorder = !reorder; render(); return; }
-    if(a === 'qnew'){ SQ = {name:'Mon enchaînement', ids:[], trans:30, voice:true}; render(); window.scrollTo({top:pane.getBoundingClientRect().top + window.scrollY - 70}); return; }
+    if(a === 'qnew'){ SQ = {name:'Mon enchaînement', ids:[], trans:30, tc:false, voice:true}; render(); window.scrollTo({top:pane.getBoundingClientRect().top + window.scrollY - 70}); return; }
     if(SQ){
       if(a === 'qx'){ SQ = null; render(); return; }
       var qi = b.closest('[data-qi]'), ix = qi ? +qi.getAttribute('data-qi') : -1;
       if(a === 'qup' && ix > 0){ SQ.ids.splice(ix - 1, 0, SQ.ids.splice(ix, 1)[0]); render(); return; }
       if(a === 'qdn' && ix > -1 && ix < SQ.ids.length - 1){ SQ.ids.splice(ix + 1, 0, SQ.ids.splice(ix, 1)[0]); render(); return; }
       if(a === 'qrm' && ix > -1){ SQ.ids.splice(ix, 1); render(); return; }
-      if(a === 'qrun'){ readSQ(); launchI({seq:1, name:SQ.name, ids:SQ.ids.slice(), trans:SQ.trans, voice:SQ.voice !== false}); return; }
-      if(a === 'qsave'){ readSQ(); var arr2 = saved(), data = {seq:1, name:SQ.name, ids:SQ.ids.slice(), trans:SQ.trans, voice:SQ.voice !== false}, ex = SQ.id && arr2.find(function(y){ return y.id === SQ.id; });
+      if(a === 'qrun'){ readSQ(); launchI({seq:1, name:SQ.name, ids:SQ.ids.slice(), trans:SQ.trans, tc:!!SQ.tc, voice:SQ.voice !== false}); return; }
+      if(a === 'qsave'){ readSQ(); var arr2 = saved(), data = {seq:1, name:SQ.name, ids:SQ.ids.slice(), trans:SQ.trans, tc:!!SQ.tc, voice:SQ.voice !== false}, ex = SQ.id && arr2.find(function(y){ return y.id === SQ.id; });
         if(ex){ ex.name = SQ.name; ex.data = data; ex.u = Date.now(); } else arr2.unshift({id:uid(), type:'seq', name:SQ.name, data:data, u:Date.now(), c:Date.now()});
         setSaved(arr2); toast('💾 « ' + SQ.name + ' » enregistré'); SQ = null; render(); return; }
     }
     var row = b.closest('[data-sid]'); if(row){ var arr = saved(), x = arr.find(function(y){ return y.id === row.getAttribute('data-sid'); }); if(!x) return;
       if(a === 'sup' || a === 'sdown'){ var ix = arr.indexOf(x), j = ix + (a === 'sup' ? -1 : 1); if(j < 0 || j >= arr.length) return; arr.splice(ix, 1); arr.splice(j, 0, x); setSaved(arr); render(); var el2 = pane.querySelector('[data-sid="' + x.id + '"]'); if(el2){ el2.classList.add('moved'); el2.scrollIntoView({block:'nearest', behavior:'smooth'}); } return; }
       if(a === 'sgo'){ launchI(JSON.parse(JSON.stringify(x.data))); return; }
-      if(a === 'sopen' && x.type === 'seq'){ SQ = {id:x.id, name:x.name, ids:(x.data.ids || []).slice(), trans:x.data.trans || 0, voice:x.data.voice !== false}; render(); return; }
+      if(a === 'sopen' && x.type === 'seq'){ SQ = {id:x.id, name:x.name, ids:(x.data.ids || []).slice(), trans:x.data.trans || 0, tc:!!x.data.tc, voice:x.data.voice !== false}; render(); return; }
       if(a === 'sopen'){ if(x.type === 'int'){ I = JSON.parse(JSON.stringify(x.data)); saveI(); mode = 'int'; } else { if(anyRun() && !confirmReplace()) return; M = JSON.parse(JSON.stringify(x.data)); saveM(); mode = 'multi'; } lsSet(MODE_K, mode); render(); return; }
       if(a === 'sdup'){ var c = JSON.parse(JSON.stringify(x)); c.id = uid(); c.name = x.name + ' (copie)'; c.c = Date.now(); arr.splice(arr.indexOf(x) + 1, 0, c); setSaved(arr); render(); return; }
       if(a === 'sdel'){ sheet('<h4>Supprimer « ' + esc(x.name) + ' » ?</h4><button type="button" class="tm-btn" data-k="ok" style="color:#fff;background:#C8302E">Supprimer</button><button type="button" class="tm-btn" data-k="x">Annuler</button>', function(k){ if(k === 'ok'){ setSaved(saved().filter(function(y){ return y.id !== x.id; })); render(); } }); return; }
