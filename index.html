@@ -21273,12 +21273,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var w = s.w || 0, wu = s.ex.slice(0, w), ci = s.ex.slice(w);
       return (wu.length ? '<div class="clp-sec">🔸 Échauffement</div><div class="clp-wu">' + wu.map(function(l){ return '<span>' + esc(l[0]) + (l[1] ? '<em>' + esc(showVal(l[1])) + '</em>' : '') + '</span>'; }).join('') + '</div>' : '')
         + '<div class="clp-sec">💪 Circuit' + (s.t ? ' · ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '</div><div class="clp-grid">'
-        + ci.map(function(l, i){ var p = photoOf(l[0]); return '<div class="clp-c"><button type="button" class="clp-ph" data-pk="' + esc(l[0]) + '" aria-label="Choisir l’image"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '<span class="ini">' + esc(ini(l[0])) + '</span>') + '<span class="clp-n">' + (i + 1) + '</span></button><div><b>' + esc(l[0] || 'Exercice') + '</b>' + (l[1] ? '<em>' + esc(showVal(l[1])) + (sidesOf(l) ? ' · ↔ par côté' : '') + '</em>' : '') + '</div></div>'; }).join('') + '</div>'
+        + ci.map(function(l, i){ var p = photoOf(l[0]), pv = parseVal(l[1]), ic = pv.sec ? '⏱' : pv.reps ? '🔁' : ''; return '<div class="clp-c"><button type="button" class="clp-ph" data-pk="' + esc(l[0]) + '" aria-label="Choisir l’image"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '<span class="ini">' + esc(ini(l[0])) + '</span>') + '<span class="clp-n">' + ('0' + (i + 1)).slice(-2) + '</span>' + (sidesOf(l) ? '<span class="clp-side">↔ par côté</span>' : '') + '</button><div><b>' + esc(l[0] || 'Exercice') + '</b>' + (l[1] ? '<em>' + (ic ? '<i>' + ic + '</i>' : '') + esc(showVal(l[1])) + (pv.reps && !pv.txt ? '<small> rép.</small>' : '') + '</em>' : '') + '</div></div>'; }).join('') + '</div>'
         + (opts.saveTo ? '<div class="clp-save"><span>Séance reçue par QR. L’enregistrer dans les séances de <b>' + esc(nom) + '</b> sur cet appareil ?</span><button type="button" class="cl-btn" data-p="keep">💾 Enregistrer</button></div>' : '');
     }
-    var meta = [dLong(s)]; if(s.t) meta.push('<b>' + s.t + ' tour' + (s.t > 1 ? 's' : '') + '</b>'); if(s.r) meta.push('récup ' + esc(showVal(s.r))); if(s.who && nz(s.who).indexOf(nz(nom)) < 0) meta.push(esc(s.who));
-    el.innerHTML = '<div class="clp-top"><div><h2>' + esc(nom) + '</h2><p>' + meta.map(function(m, i){ return i ? m : esc(m); }).join(' · ') + '</p></div>'
-      + (opts.saveTo ? '' : '<button type="button" class="clp-ib" data-p="qr" aria-label="QR pour l’autre appareil">📷</button>') + '<button type="button" class="clp-ib go" data-p="go">▶️ Chrono</button><button type="button" class="clp-ib" data-p="x" aria-label="Fermer">✕</button></div>'
+    var nEx = s.ex.length - (s.w || 0), chips = ['<span>📅 ' + esc(dLong(s)) + '</span>'];
+    if(s.t) chips.push('<span>🔁 <b>' + s.t + ' tour' + (s.t > 1 ? 's' : '') + '</b></span>');
+    chips.push('<span>💪 ' + nEx + ' exercice' + (nEx > 1 ? 's' : '') + '</span>');
+    if(s.r) chips.push('<span>😮‍💨 récup ' + esc(showVal(s.r)) + '</span>');
+    if(s.who && nz(s.who).indexOf(nz(nom)) < 0) chips.push('<span>👥 ' + esc(s.who) + '</span>');
+    el.innerHTML = '<div class="clp-top"><div class="clp-hd"><small>Séance</small><h2>' + esc(nom) + '</h2></div>'
+      + '<div class="clp-acts">' + (opts.saveTo ? '' : '<button type="button" class="clp-ib" data-p="qr" aria-label="QR pour l’autre appareil">📷</button>') + '<button type="button" class="clp-ib go" data-p="go">▶ <span class="lg">Lancer le c</span><span class="sm">C</span>hrono</button><button type="button" class="clp-ib" data-p="x" aria-label="Fermer">✕</button></div>'
+      + '<div class="clp-chips">' + chips.join('') + '</div></div>'
       + '<div class="clp-body" id="clpB">' + cards() + '</div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     var lazy = setTimeout(function(){ if(el.isConnected) el.querySelector('#clpB').innerHTML = cards(); }, 900);   // images chargées à la demande
@@ -21405,7 +21410,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var steps = buildSteps(s, o);
     if(!steps.length){ toast('Séance vide'); return; }
     var el = document.createElement('div'); el.className = 'stx stp clt'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Chrono de ' + nom);
-    el.innerHTML = '<div class="stx-top"><div class="stx-tour" id="cltT">' + esc(nom) + '<small></small></div><span class="stx-sp"></span><button type="button" class="stx-ib" data-r="show" aria-label="Voir la séance">📋</button><button type="button" class="stx-ib" data-r="close" aria-label="Fermer">✕</button></div><div class="stp-body" id="cltB"></div>';
+    el.innerHTML = '<div class="stx-top"><div class="stx-tour" id="cltT">' + esc(nom) + '<small></small></div><span class="stx-sp"></span><button type="button" class="stx-ib" data-r="show" aria-label="Voir la séance">📋</button><button type="button" class="stx-ib" data-r="close" aria-label="Fermer">✕</button></div><div class="clt-pg" id="cltPg" aria-hidden="true"></div><div class="stp-body" id="cltB"></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     CT = {el:el, nom:nom, s:s, o:o, steps:steps, k:0, state:'pret', left:0, endAt:0, sw:0, el2:0, done:0};
     // Écran toujours allumé pendant le chrono (verrou officiel + vidéo muette sur iPhone, repris au retour dans l'appli)
@@ -21423,21 +21428,24 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!CT) return;
     var st = cur(), nT = CT.o.t, ns = CT.steps[CT.k + 1] || null, nx = nextEx(CT.k + 1);
     var sub = CT.state === 'fin' ? 'Séance terminée' : st.wup ? 'Échauffement' : st.wu ? 'Échauffement' : st.k === 'rest' ? st.lab : ('Tour ' + st.tour + '/' + nT + ' · Exercice ' + (st.i + 1) + '/' + st.n);
-    CT.el.querySelector('#cltT small').textContent = sub + (CT.state !== 'fin' ? ' · ' + (CT.k + 1) + '/' + CT.steps.length : '');
+    CT.el.querySelector('#cltT small').textContent = sub;
+    CT.el.querySelector('#cltPg').innerHTML = CT.steps.map(function(x, j){ return '<i class="' + (CT.state === 'fin' || j < CT.k ? 'ok' : j === CT.k ? 'on' : '') + (x.k === 'rest' ? ' r' : '') + '"></i>'; }).join('');
+    CT.el.classList.toggle('wupm', CT.state !== 'fin' && !!st.wup); CT.el.classList.toggle('fin', CT.state === 'fin');
     var h;
     if(CT.state === 'fin'){
-      h = '<div class="stp-wait"><i>🎉</i><b>Bravo ' + esc(CT.nom) + ' !</b><span>Séance terminée en ' + mmss((Date.now() - CT.t0) / 1000) + '.</span><button type="button" class="stp-sm" data-r="restart">↺ Recommencer</button><button type="button" class="stp-sm" data-r="close">Fermer</button></div>';
+      var nEx2 = 0, seenI = {}; CT.steps.forEach(function(x){ if(x.k === 'ex' && !x.wu && !seenI[x.i]){ seenI[x.i] = 1; nEx2++; } });
+      h = '<div class="stp-wait clt-end"><i>🏆</i><b>Bravo ' + esc(CT.nom) + ' !</b><span>Séance terminée</span><div class="clt-stats"><div><b>' + mmss((Date.now() - (CT.t0 || Date.now())) / 1000) + '</b><small>durée</small></div><div><b>' + (CT.o.t || 1) + '</b><small>tour' + ((CT.o.t || 1) > 1 ? 's' : '') + '</small></div><div><b>' + nEx2 + '</b><small>exercices</small></div></div><button type="button" class="stp-sm pri" data-r="close">Terminer</button><button type="button" class="stp-sm" data-r="restart">↺ Recommencer</button></div>';
     } else {
       var isRest = st.k === 'rest', p = isRest ? '' : photoOf(st.name), tag = [st.side ? '↔ ' + st.side : '', st.set ? 'Série ' + st.set : st.part ? 'Partie ' + st.part : ''].filter(Boolean).join(' · ');
       var hint = isRest ? '' : st.sec ? (st.txt ? st.txt : '') : st.reps ? st.reps + ' répétitions' : (st.txt || 'À ton rythme');
       h = (isRest
-          ? '<div class="stp-ph clt-rest' + (st.sw ? ' sw' : st.wup ? ' wup' : '') + '"><i>' + (st.sw ? '↔️' : st.wup ? '🔥' : st.tourRest ? '😮‍💨' : '⏱️') + '</i><b>' + esc(st.lab) + '</b>' + (st.sw ? '<span>' + esc(st.nm || '') + ' · côté 2 démarre tout seul</span>' : st.wup ? '<span>Chronomètre pour tes exercices d’échauffement : pause et ↺ remise à zéro à volonté. « Passer à la séance » quand c’est fini.</span>' : nx ? '<span>Ensuite : ' + esc(nx.name) + '</span>' : '') + '</div>'
+          ? '<div class="stp-ph clt-rest' + (st.sw ? ' sw' : st.wup ? ' wup' : '') + '"><i>' + (st.sw ? '↔️' : st.wup ? '🔥' : st.tourRest ? '😮‍💨' : '⏱️') + '</i><b>' + esc(st.lab) + '</b>' + (st.sw ? '<span>' + esc(st.nm || '') + ' · côté 2 démarre tout seul</span>' : st.wup ? '<span>Chrono libre · pause et ↺ Zéro à volonté</span>' : nx ? '<span>Ensuite : ' + esc(nx.name) + '</span>' : '') + '</div>'
           : '<div class="stp-ph"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '<span class="clt-ini">' + esc(ini(st.name)) + '</span>') + (st.wu ? '<span class="stp-n">🔸</span>' : '<span class="stp-n">' + (st.i + 1) + '/' + st.n + '</span>') + '</div>')
         + (isRest ? '' : '<div class="stp-name">' + esc(st.name || 'Exercice') + (tag ? '<span class="stp-cote">' + esc(tag) + '</span>' : '') + '</div>' + (hint ? '<div class="clt-val">' + esc(hint) + '</div>' : ''))
         + '<button type="button" class="stp-ring" data-r="toggle" aria-label="Démarrer ou mettre en pause"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="br" id="cltBar"/></svg><b id="cltTime">' + mmss(CT.left) + '</b><small id="cltState"></small></button>'
         + '<div class="stp-ctl">' + (st.wup ? '<button type="button" data-r="reset" aria-label="Remettre à zéro">↺ Zéro</button>' : '<button type="button" data-r="prev" aria-label="Précédent"' + (CT.k === 0 ? ' disabled' : '') + '>⏮</button>') + '<button type="button" class="pp" data-r="toggle" id="cltPP">▶️ Démarrer</button><button type="button" class="nx" data-r="next">' + (ns ? (st.wup ? 'Passer à la séance ⏭' : st.tourRest ? 'Tour suivant ⏭' : isRest ? 'Passer ⏭' : 'Suivant ⏭') : 'Terminer ✓') + '</button></div>'
         + (ns ? '<div class="stp-next"><span class="stp-tn"' + (nx && photoOf(nx.name) ? ' style="background-image:url(\'' + photoOf(nx.name) + '\')"' : '') + '></span><span><small>Ensuite</small><b>' + (ns.k === 'rest' ? esc(ns.lab) + (nx ? ' puis ' + esc(nx.name) : '') : esc(ns.name || 'Exercice') + (ns.side ? ' · ' + ns.side.toLowerCase() : '') + (ns.set ? ' · série ' + ns.set : '')) + '</b></span><em>' + (ns.k === 'rest' ? (ns.sec ? mmss(ns.sec) : 'libre') : ns.sec ? mmss(ns.sec) : ns.reps ? ns.reps + ' rép.' : 'libre') + '</em></div>' : '')
-        + '<button type="button" class="stp-auto" data-r="auto" aria-pressed="' + CT.o.auto + '">' + (CT.o.auto ? '✓' : '○') + ' Tout s’enchaîne seul</button>';
+        + '<button type="button" class="stp-auto" data-r="auto" aria-pressed="' + CT.o.auto + '"><span class="sw"></span>Tout s’enchaîne seul</button>';
     }
     CT.el.querySelector('#cltB').innerHTML = h;
     tickT(true);
@@ -21474,6 +21482,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!tEl) return;
     CT.el.classList.toggle('rec', st.k === 'rest' || CT.state === 'over');
     CT.el.classList.toggle('run', CT.state === 'chrono');
+    CT.el.classList.toggle('hot', CT.state === 'chrono' && !free && st.k !== 'rest' && CT.left <= 3.2);
+    CT.el.classList.toggle('pz', CT.state === 'pause');
     if(free){
       tEl.textContent = mmss(Math.floor(CT.el2 || 0));
       sEl.textContent = CT.state === 'chrono' ? (st.wup ? 'Chronomètre en marche' : st.k === 'rest' ? 'Récup libre' : (st.reps ? 'Go ! ' + st.reps + ' rép.' : 'C’est parti !')) : CT.state === 'pause' ? 'En pause' : (st.k === 'rest' && !st.wup ? 'Récup libre' : 'Touche pour démarrer');
@@ -21497,7 +21507,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'reset'){ CT.el2 = 0; CT.sw = Date.now(); if(CT.state !== 'chrono') CT.state = 'pret'; tickT(true); return; }
     if(a === 'prev'){ goT(-1); return; }
     if(a === 'restart'){ CT.k = 0; CT.state = 'pret'; CT.left = CT.steps[0].sec || 0; CT.el2 = 0; CT.t0 = 0; renderT(); return; }
-    if(a === 'auto'){ CT.o.auto = !CT.o.auto; CO.auto = CT.o.auto; saveCO(); b.setAttribute('aria-pressed', CT.o.auto); b.textContent = (CT.o.auto ? '✓' : '○') + ' Tout s’enchaîne seul'; return; }
+    if(a === 'auto'){ CT.o.auto = !CT.o.auto; CO.auto = CT.o.auto; saveCO(); b.setAttribute('aria-pressed', CT.o.auto); return; }
   }
 
   window.ecClientsTest = {sync:SY, stamp:stamp, fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
@@ -21506,5 +21516,141 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 })();
 </script>
 
+<style id="ec-coaching-v2">
+/* ===== Coaching · Présenter & Chrono — design 2 ===== */
+.clp{--pk:#0E1A14; --pk2:#18301F; --acc:#2FCB72; --gold:#F5C451; --bg:#F3F1EA; --cd:#FFFFFF; --ln:rgba(14,26,20,.08); --mut:#66746B; background:var(--bg); color:var(--pk);}
+.clp-top{position:relative; display:grid; grid-template-columns:1fr auto; align-items:end; gap:10px 14px; padding:calc(env(safe-area-inset-top, 0px) + 16px) 18px 16px; background:radial-gradient(120% 140% at 0% 0%, #23482F 0%, var(--pk) 60%); color:#fff; border-radius:0 0 28px 28px; box-shadow:0 10px 30px rgba(14,26,20,.18);}
+.clp-hd{min-width:0;}
+.clp-hd small{display:block; font:800 .7rem/1 Inter, sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--acc);}
+.clp-top h2{margin:6px 0 0; font:800 clamp(1.5rem, 5vw, 3rem)/1.02 'Bricolage Grotesque', sans-serif; letter-spacing:-.025em; color:#fff; overflow-wrap:anywhere;}
+@media (max-width:599px){ .clp-acts{gap:6px;} .clp-ib{min-width:40px; height:40px; padding:0 12px;} .clp .clp-ib.go{padding:0 14px;} }
+.clp-acts{display:flex; gap:8px; align-items:center;}
+.clp-ib{height:44px; min-width:44px; padding:0 14px; border:1px solid rgba(255,255,255,.14); border-radius:999px; background:rgba(255,255,255,.08); color:#fff; font:800 .9rem/1 Inter, sans-serif; cursor:pointer; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); transition:transform .15s, background .2s;}
+.clp-ib:active{transform:scale(.95);}
+.clp .clp-ib.go, :root .clp .clp-ib.go{padding:0 18px; border:none; background:var(--acc); color:#06210F; box-shadow:0 6px 18px rgba(47,203,114,.35);}
+.clp-ib.go .lg{display:none;} @media (min-width:600px){ .clp-ib.go .lg{display:inline;} .clp-ib.go .sm{display:none;} }
+.clp-chips{grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px;}
+.clp-chips > span > .ui-ico.ui-ico{width:15px !important; height:15px !important; margin:0 !important; color:var(--acc); flex:none;} .clp-chips > span > .ui-ico svg{display:block; width:15px !important; height:15px !important; min-width:15px;}
+.clp-chips > span{display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); font:600 .8rem/1 Inter, sans-serif; color:rgba(255,255,255,.88); white-space:nowrap;}
+.clp-chips b{color:var(--gold);}
+.clp-body{padding:18px 16px calc(env(safe-area-inset-bottom, 0px) + 22px);}
+.clp-sec{display:flex; align-items:center; gap:10px; margin:4px 0 12px; font:800 .72rem/1 Inter, sans-serif; letter-spacing:.14em; color:var(--mut);}
+.clp-sec::after{content:''; flex:1; height:1px; background:var(--ln);}
+.clp-wu span{padding:9px 14px; border-radius:14px; background:var(--cd); border:1px solid var(--ln); box-shadow:none;}
+.clp-wu em{color:#178A4A;}
+.clp-grid{gap:14px;}
+.clp-c{border-radius:24px; background:var(--cd); border:1px solid var(--ln); box-shadow:0 1px 2px rgba(14,26,20,.04), 0 10px 26px rgba(14,26,20,.06); padding:8px; transition:transform .2s;}
+.clp-c:active{transform:scale(.985);}
+.clp-ph{border-radius:18px; background-color:#F4F6F2; background-size:contain; box-shadow:inset 0 0 0 1px rgba(14,26,20,.04);}
+.clp-ph .ini{color:#B7C4BB; font-size:2.2rem;}
+.clp-n{top:8px; left:8px; min-width:34px; height:34px; padding:0 8px; border-radius:12px; background:var(--pk); color:#fff; font:800 .95rem/1 'Bricolage Grotesque', sans-serif; letter-spacing:.02em; box-shadow:0 4px 10px rgba(14,26,20,.25);}
+.clp-side{position:absolute; top:8px; right:8px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.95); color:#5B3FB0; font:800 .72rem/1 Inter, sans-serif; box-shadow:0 2px 8px rgba(14,26,20,.12);}
+.clp-c > div{padding:12px 8px 6px; gap:10px;}
+.clp-c b{font:800 clamp(1.02rem, 1.9vw, 1.25rem)/1.15 'Bricolage Grotesque', sans-serif; letter-spacing:-.01em;}
+.clp-c em{display:inline-flex; align-items:center; gap:6px; padding:7px 13px 7px 10px; border-radius:12px; background:var(--pk); color:var(--gold); font:800 clamp(1rem, 1.9vw, 1.2rem)/1 'Bricolage Grotesque', sans-serif; font-variant-numeric:tabular-nums;}
+.clp-c em i{font-style:normal; font-size:.85em;} .clp-c em small{font:700 .72em/1 Inter, sans-serif; color:rgba(245,196,81,.75);}
+@media (min-width:700px){
+  .clp-top{padding-left:26px; padding-right:26px; border-radius:0 0 34px 34px;}
+  .clp-body{padding:22px 24px 28px;}
+  .clp-grid{grid-template-columns:repeat(auto-fill, minmax(236px, 1fr)); gap:18px;}
+  .clp-c{border-radius:28px; padding:10px;}
+  .clp-ph{border-radius:20px;}
+  .clp-n{top:10px; left:10px; min-width:44px; height:44px; border-radius:14px; font-size:1.25rem;}
+  .clp-side{top:10px; right:10px; font-size:.85rem; padding:8px 12px;}
+  .clp-c > div{padding:14px 10px 8px; gap:12px;}
+  .clp-c b{font-size:clamp(1.3rem, 2.3vw, 1.65rem);}
+  .clp-c em{padding:9px 16px 9px 12px; border-radius:14px; font-size:clamp(1.25rem, 2.3vw, 1.6rem);}
+  .clp-chips span{font-size:.92rem; padding:9px 14px;}
+}
+@media screen and (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .clp{--bg:#0A120D; --cd:#132019; --ln:rgba(255,255,255,.07); --mut:#8FA196; color:#EEF3EF;} :root:not([data-theme="light"]) .clp-top{background:radial-gradient(120% 140% at 0% 0%, #1F4A30 0%, #0F1D15 65%);} :root:not([data-theme="light"]) .clp-ib{background:rgba(255,255,255,.08); color:#fff;} :root:not([data-theme="light"]) .clp-wu em{color:#7FE0A6;} :root:not([data-theme="light"]) .clp-c em{background:#0A120D;} }
+:root[data-theme="dark"] .clp{--bg:#0A120D; --cd:#132019; --ln:rgba(255,255,255,.07); --mut:#8FA196; color:#EEF3EF;} :root[data-theme="dark"] .clp-top{background:radial-gradient(120% 140% at 0% 0%, #1F4A30 0%, #0F1D15 65%);} :root[data-theme="dark"] .clp-ib{background:rgba(255,255,255,.08); color:#fff;} :root[data-theme="dark"] .clp-wu em{color:#7FE0A6;} :root[data-theme="dark"] .clp-c em{background:#0A120D;}
+
+/* ---------- Chrono ---------- */
+.stx.clt{--acc:#8FA39A; --gold:#F5C451; background:#070D0A; padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 12px); transition:background .4s;}
+.stx.clt::before{content:''; position:absolute; inset:-20% -20% 40% -20%; background:radial-gradient(closest-side, var(--acc), transparent); opacity:.22; pointer-events:none; transition:background .4s, opacity .4s; z-index:0;}
+.stx.clt.run{--acc:#2FCB72;} .stx.clt.run::before{opacity:.32;}
+.stx.clt.hot{--acc:#FF7A2F;} .stx.clt.hot::before{opacity:.5; animation:cltPulse 1s ease-in-out infinite;}
+.stx.clt.rec{--acc:#4DB2FF;}
+.stx.clt.wupm{--acc:#FF9F43;}
+.stx.clt.pz{--acc:#F5C451;}
+.stx.clt.fin{--acc:#F5C451;} .stx.clt.fin::before{opacity:.35;}
+@keyframes cltPulse{50%{opacity:.25;}}
+.stx.clt .stx-top{gap:8px;}
+.stx.clt .stx-tour{font:700 .82rem/1 Inter, sans-serif; letter-spacing:.02em; color:rgba(255,255,255,.65);}
+.stx.clt .stx-tour small{margin-top:5px; font:800 1.2rem/1.1 'Bricolage Grotesque', sans-serif; letter-spacing:-.01em; color:#fff; opacity:1;}
+.stx.clt .stx-ib{width:42px; height:42px; min-width:0; padding:0; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.06); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);}
+.clt-pg{position:relative; z-index:2; display:flex; gap:3px; margin:12px 0 4px;}
+.clt-pg i{flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,.12); transition:background .3s;}
+.clt-pg i.r{flex:.45;}
+.clt-pg i.ok{background:rgba(255,255,255,.75);}
+.clt-pg i.on{background:var(--acc); box-shadow:0 0 10px var(--acc);}
+.stx.clt .stp-body{gap:12px; padding-top:10px;}
+.stx.clt .stp-ph{border-radius:26px; background-color:#fff; max-height:30vh; box-shadow:0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06);}
+.stx.clt .stp-n{top:12px; left:12px; padding:6px 11px; border-radius:11px; background:#070D0A; font-size:.85rem;}
+.stx.clt .stp-name{font:800 clamp(1.45rem, 6vw, 2.1rem)/1.05 'Bricolage Grotesque', sans-serif; letter-spacing:-.02em;}
+.stx.clt .stp-cote{display:table; margin:8px auto 0; padding:5px 12px; border-radius:999px; background:rgba(155,120,255,.18); color:#CDBBFF; border:1px solid rgba(155,120,255,.35); font-size:.8rem;}
+.stx.clt .clt-val{margin-top:-4px; padding:6px 14px; border-radius:999px; background:rgba(245,196,81,.12); color:var(--gold); font-size:1rem;}
+.clt-rest{border-radius:26px !important; gap:10px !important; background:linear-gradient(150deg, #10324D, #0B1E2E) !important; border:1px solid rgba(77,178,255,.25);}
+.clt-rest.wup{background:linear-gradient(150deg, #5A2A0C, #2A1406) !important; border-color:rgba(255,159,67,.3);}
+.clt-rest.sw{background:linear-gradient(150deg, #3A2470, #1C1236) !important;}
+.clt-rest i{font-size:3.4rem !important;} .clt-rest b{font-size:1.6rem !important; letter-spacing:-.01em;} .clt-rest span{opacity:.75 !important;}
+.stx.clt .stp-ring{width:min(60vw, 32vh, 250px);}
+.stx.clt .stp-ring .tk{fill:none; stroke:var(--acc); stroke-width:14; opacity:.08; transition:stroke .4s;}
+.stx.clt .stp-ring .tr{fill:rgba(255,255,255,.03); stroke:rgba(255,255,255,.08); stroke-width:6;}
+.stx.clt .stp-ring .br{stroke:var(--acc); stroke-width:7; filter:drop-shadow(0 0 6px var(--acc)); transition:stroke-dashoffset .2s linear, stroke .4s;}
+.stx.clt.rec .stp-ring .tr{stroke:rgba(77,178,255,.35); stroke-dasharray:3 6;}
+.stx.clt .stp-ring b{font:800 clamp(3rem, 16vw, 4.6rem)/1 'Bricolage Grotesque', sans-serif; letter-spacing:-.04em; font-variant-numeric:tabular-nums; color:#fff;}
+.stx.clt.rec .stp-ring b{color:#BFE3FF;}
+.stx.clt.hot .stp-ring b{color:#FFB37A;}
+.stx.clt .stp-ring small{margin-top:8px; font:800 .72rem/1 Inter, sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--acc); opacity:1;}
+.stx.clt .stp-ctl{display:grid; grid-template-columns:60px 1fr 1.25fr; gap:10px;}
+.stx.clt .stp-ctl button{min-height:60px; border-radius:20px; font:800 1rem/1.1 Inter, sans-serif; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.09); transition:transform .12s;}
+.stx.clt .stp-ctl button:active{transform:scale(.96);}
+.stx.clt .stp-ctl button[data-r="prev"]{border-radius:50%; width:60px; font-size:1.1rem;}
+.stx.clt .stp-ctl button[data-r="reset"]{grid-column:auto; background:rgba(255,159,67,.14); border-color:rgba(255,159,67,.35); color:#FFC99A; min-height:60px; font-size:1rem;}
+.stx.clt .stp-ctl .pp{background:#fff; color:#070D0A; border:none; box-shadow:0 8px 24px rgba(255,255,255,.12);}
+.stx.clt.run .stp-ctl .pp{background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.18); box-shadow:none;}
+.stx.clt .stp-ctl .nx{background:var(--gold); color:#2A1A06; border:none; box-shadow:0 8px 22px rgba(245,196,81,.25);}
+.stx.clt .stp-next{padding:10px 14px 10px 10px; border-radius:20px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);}
+.stx.clt .stp-next .stp-tn{width:54px; height:44px; border-radius:12px;}
+.stx.clt .stp-next small{letter-spacing:.12em; opacity:.55;}
+.stx.clt .stp-next b{font:800 1rem/1.2 'Bricolage Grotesque', sans-serif;}
+.stx.clt .stp-next em{padding:5px 10px; border-radius:10px; background:rgba(245,196,81,.12); font-variant-numeric:tabular-nums;}
+.stx.clt .stp-auto{display:inline-flex; align-items:center; gap:9px; opacity:.85; font-size:.82rem;}
+.stx.clt .stp-auto .sw{position:relative; width:36px; height:20px; border-radius:999px; background:rgba(255,255,255,.18); transition:background .2s;}
+.stx.clt .stp-auto .sw::after{content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .2s;}
+.stx.clt .stp-auto[aria-pressed="true"] .sw{background:#2FCB72;} .stx.clt .stp-auto[aria-pressed="true"] .sw::after{transform:translateX(16px);}
+.clt-end{gap:10px !important;}
+.clt-end > i{font-size:4.2rem !important; filter:drop-shadow(0 10px 30px rgba(245,196,81,.45));}
+.clt-end > b{font-size:2rem !important; letter-spacing:-.02em;}
+.clt-end > span{font:800 .75rem/1 Inter, sans-serif !important; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); opacity:1 !important;}
+.clt-stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:min(100%, 360px); margin:10px 0 6px;}
+.clt-stats div{padding:14px 6px; border-radius:18px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08);}
+.clt-stats b{display:block; font:800 1.6rem/1 'Bricolage Grotesque', sans-serif; font-variant-numeric:tabular-nums;}
+.clt-stats small{display:block; margin-top:6px; font:700 .7rem/1 Inter, sans-serif; letter-spacing:.1em; text-transform:uppercase; opacity:.6;}
+.clt-end .stp-sm{min-width:220px; padding:15px 20px; border-radius:18px; font-size:.95rem;}
+.clt-end .stp-sm.pri{background:var(--gold); color:#2A1A06;}
+@media (min-width:700px){
+  .stx.clt{padding-left:28px; padding-right:28px;}
+  .stx.clt .stp-body{max-width:640px; width:100%; margin:0 auto;}
+  .stx.clt .stp-ph{max-height:36vh;}
+  .stx.clt .stp-ring{width:min(46vw, 33vh, 330px);}
+  .stx.clt .stp-ring b{font-size:clamp(4rem, 9vw, 6rem);}
+  .stx.clt .stp-ctl button{min-height:70px; font-size:1.1rem;} .stx.clt .stp-ctl{grid-template-columns:70px 1fr 1.25fr;} .stx.clt .stp-ctl button[data-r="prev"]{width:70px;}
+  .stx.clt .stp-name{font-size:2.3rem;}
+}
+@media (prefers-reduced-motion: reduce){ .stx.clt.hot::before{animation:none;} }
+@media (min-width:900px){
+  .clp-top{grid-template-columns:auto 1fr auto; align-items:center; padding-top:calc(env(safe-area-inset-top, 0px) + 14px); padding-bottom:14px;}
+  .clp-chips{grid-column:2; grid-row:1; justify-content:flex-start; padding-left:8px;}
+  .clp-acts{grid-column:3; grid-row:1;}
+}
+@media (min-width:900px) and (orientation:landscape){
+  .clp-body{padding-top:16px;}
+  .clp-ph{aspect-ratio:16/10;}
+  .clp-c > div{padding:10px 8px 4px; gap:8px;}
+  .clp-sec{margin-bottom:10px;}
+}
+</style>
 </body>
 </html>
