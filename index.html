@@ -1505,7 +1505,7 @@
   }
   // « Séance seule » : lien signé qui ouvre uniquement cette séance, sans donner accès au reste de l'appli
   function ecGuestSig(p){ return (ecHash('seance|' + p + '|' + EC_SIGN) + '00000000').slice(0, 8); }
-  var EC_GUEST = (function(){ var m = /^#[spre]=([A-Za-z0-9_-]+)&g=([a-z0-9]{8})$/.exec(location.hash || ''); return !!(m && ecGuestSig(m[1]) === m[2]); })();
+  var EC_GUEST = (function(){ var m = /^#[sprec]=([A-Za-z0-9_-]+)&g=([a-z0-9]{8})$/.exec(location.hash || ''); return !!(m && ecGuestSig(m[1]) === m[2]); })();
   // « Calendrier de l'Avent seul » : lien signé par groupe (ex. École de Trail), valable jusqu'au 31 décembre de l'année du lien.
   // Donne accès uniquement au calendrier et aux séances de ses cases, sans abonnement. Gardé sur le téléphone pour l'icône d'accueil.
   var EC_AVP_GROUPES = {edt:'l’École de Trail Pont-Audemer'};
@@ -4571,6 +4571,7 @@
     <div class="share-channels">
       <button type="button" class="share-channel primary" id="shareNative">Partager…</button>
       <button type="button" class="share-channel pdf" id="sharePdf">📄 En PDF</button>
+      <button type="button" class="share-channel img" id="shareImg">🖼️ En image</button>
       <a class="share-channel" id="shareWhatsapp" target="_blank" rel="noopener">WhatsApp</a>
       <a class="share-channel" id="shareSms">SMS</a>
       <a class="share-channel" id="shareMail">E-mail</a>
@@ -11002,6 +11003,24 @@
     }
     var pb = document.getElementById('sharePdf');
     if(pb) pb.addEventListener('click', function(){ sharePdf(pb); });
+    // ----- Image de la séance (même fiche que l'Espace coach) -----
+    var ib = document.getElementById('shareImg');
+    function syncImg(){ if(ib && pb) ib.style.display = pb.style.display; }
+    if(ib){
+      new MutationObserver(syncImg).observe(pb, {attributes:true, attributeFilter:['style']}); syncImg();
+      ib.addEventListener('click', function(){
+        if((!lastSession && window.__ecShareMode === 'renfo') || !window.ecSessionCard) return;
+        var d = collect(), old = ib.textContent; ib.textContent = 'Création de l’image…'; ib.disabled = true;
+        var dt = ((document.getElementById('athleteDate') || {}).value || '').trim();
+        var card = {kicker:window.__ecShareMode === 'breath' ? 'Respiration' : 'Séance', title:d.title || 'Séance', sub:(d.forName ? 'Pour ' + d.forName : '') + (d.forName && dt ? ' · ' : '') + dt,
+          chips:(d.tags || []).filter(Boolean).slice(0, 3).map(function(t, i){ return {t:t, gold:i === 0}; }), note:d.consigne || '',
+          blocks:d.blocks.map(function(b){ return {title:String(b.title || '').replace(/\s*Passer\s*$/i, '').replace(/\s*\d+\s*min(\s*\d+\s*s)?\s*$/i, '').replace(/\s*\d+\s*s\s*$/i, '').trim(), rows:b.rows.map(function(r){ return {name:r.name, dose:r.dose, img:r.img}; })}; })};
+        var txt = ($('#shareMessage') || {}).value || '', fname = 'seance-' + String(d.title || 'ethikcoach').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) + '.png';
+        window.ecSessionCard(card).then(function(c){ return window.ecCardShare(c, fname, txt, d.title); })
+          .catch(function(){ showToast('Image indisponible, essaie le PDF', false); })
+          .then(function(){ ib.textContent = old; ib.disabled = false; });
+      });
+    }
     window.ecBuildPdf = buildPdf;
   })();
 
@@ -11154,6 +11173,7 @@
     function openItem(id){
       var it = items.filter(function(x){ return x.id === id; })[0]; if(!it) return;
       markSeen(id); render();
+      if(it.k === 'c'){ if(window.ecCoachingOpen) window.ecCoachingOpen(it.p, it.cm); return; }
       if(window.ecShowView) window.ecShowView(it.k === 'r' ? 'breath' : (it.k === 'e' ? 'lib' : 'renfo'));
       var h = '#' + it.k + '=' + it.p;
       if(location.hash === h){ history.replaceState(null, '', location.pathname + location.search); }
@@ -11174,7 +11194,7 @@
         card.addEventListener('click', onClick);
       }
       card.hidden = !fresh.length;
-      card.innerHTML = fresh.length ? '<div class="ib-head">📩 ' + (fresh.length > 1 ? (fresh.every(function(x){ return x.k === 's' || x.k === 'r'; }) ? fresh.length + ' nouvelles séances de Benoît' : fresh.length + ' nouveaux envois de Benoît') : (fresh[0].k === 'e' ? 'Nouvel exercice de Benoît' : (fresh[0].k === 'p' ? 'Nouveau programme de Benoît' : 'Nouvelle séance de Benoît'))) + '</div>' + fresh.slice(0, 3).map(function(x){ return rowHtml(x, true); }).join('') : '';
+      card.innerHTML = fresh.length ? '<div class="ib-head">📩 ' + (fresh.length > 1 ? (fresh.every(function(x){ return x.k === 's' || x.k === 'r' || x.k === 'c'; }) ? fresh.length + ' nouvelles séances de Benoît' : fresh.length + ' nouveaux envois de Benoît') : (fresh[0].k === 'e' ? 'Nouvel exercice de Benoît' : (fresh[0].k === 'p' ? 'Nouveau programme de Benoît' : 'Nouvelle séance de Benoît'))) + '</div>' + fresh.slice(0, 3).map(function(x){ return rowHtml(x, true); }).join('') : '';
       var sv = document.getElementById('svCoachCard');
       if(!sv){
         var anchor = document.querySelector('#suiviView .sv-stats');
@@ -20847,6 +20867,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   var D = {v:1, clients:[], map:{}}, READY = false, saveT = 0, LSK = 'ec_coach_clients_ls';
   var ICP = {"play": "<path d=\"M8 5.6v12.8a1 1 0 0 0 1.53.85l10.1-6.4a1 1 0 0 0 0-1.7L9.53 4.75A1 1 0 0 0 8 5.6z\" fill=\"currentColor\" stroke=\"none\"/>", "pause": "<rect x=\"6\" y=\"5\" width=\"4.2\" height=\"14\" rx=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"13.8\" y=\"5\" width=\"4.2\" height=\"14\" rx=\"1.3\" fill=\"currentColor\" stroke=\"none\"/>", "reset": "<path d=\"M3.6 12a8.4 8.4 0 1 0 2.6-6.1\"/><path d=\"M3.6 4v4.6h4.6\"/>", "flag": "<path d=\"M5 21V4\"/><path d=\"M5 4h12l-2.6 4L17 12H5\"/>", "more": "<circle cx=\"5\" cy=\"12\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"19\" cy=\"12\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/>", "edit": "<path d=\"M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16z\"/><path d=\"M13.5 6.5l4 4\"/>", "copy": "<rect x=\"8.5\" y=\"8.5\" width=\"11.5\" height=\"11.5\" rx=\"2.5\"/><path d=\"M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5\"/>", "trash": "<path d=\"M4 7h16\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12\"/><path d=\"M9 7V4h6v3\"/>", "save": "<path d=\"M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z\"/><path d=\"M8 4v5h7V4\"/><rect x=\"8\" y=\"13\" width=\"8\" height=\"5\" rx=\"1\"/>", "up": "<path d=\"M12 19V5M6 11l6-6 6 6\"/>", "down": "<path d=\"M12 5v14M6 13l6 6 6-6\"/>", "x": "<path d=\"M6 6l12 12M18 6L6 18\"/>", "prev": "<path d=\"M6 5v14\"/><path d=\"M19 6v12a.8.8 0 0 1-1.25.66L9.5 12.66a.8.8 0 0 1 0-1.32l8.25-6A.8.8 0 0 1 19 6z\" fill=\"currentColor\"/>", "next": "<path d=\"M18 5v14\"/><path d=\"M5 6v12a.8.8 0 0 0 1.25.66l8.25-6a.8.8 0 0 0 0-1.32l-8.25-6A.8.8 0 0 0 5 6z\" fill=\"currentColor\"/>", "link": "<path d=\"M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1\"/>", "plus": "<path d=\"M12 5v14M5 12h14\"/>", "minus": "<path d=\"M5 12h14\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7\"/>", "watch": "<circle cx=\"12\" cy=\"13.5\" r=\"7.5\"/><path d=\"M12 13.5V9.5M9.5 2.5h5M18.6 6.4l1.6-1.6\"/>", "repeat": "<path d=\"M4 11.5V10a3.5 3.5 0 0 1 3.5-3.5H20l-3-3\"/><path d=\"M20 12.5V14a3.5 3.5 0 0 1-3.5 3.5H4l3 3\"/>", "folder": "<path d=\"M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z\"/>", "sort": "<path d=\"M8 20V4M4 8l4-4 4 4M16 4v16M12 16l4 4 4-4\"/>", "hourglass": "<path d=\"M6.5 3h11M6.5 21h11M8 3c0 4.6 8 4.8 8 9s-8 4.4-8 9M16 3c0 4.6-8 4.8-8 9s8 4.4 8 9\"/>", "screen": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 20h8M12 16v4\"/>", "camera": "<path d=\"M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z\"/><circle cx=\"12\" cy=\"13\" r=\"3.5\"/>", "list": "<rect x=\"5\" y=\"4\" width=\"14\" height=\"17\" rx=\"2\"/><path d=\"M9 2.5h6v3H9zM9 11h6M9 15h4\"/>", "send": "<path d=\"M7 17L17 7M9 7h8v8\"/>", "spark": "<path d=\"M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z\"/><path d=\"M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z\"/>", "file": "<path d=\"M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z\"/><path d=\"M14 3v4h4\"/>", "import": "<path d=\"M12 4v11M7 10l5 5 5-5M5 20h14\"/>", "export": "<path d=\"M12 15V4M7 9l5-5 5 5M5 20h14\"/>", "sync": "<path d=\"M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9\"/><path d=\"M18.5 3v4.5H14M5.5 21v-4.5H10\"/>", "sides": "<path d=\"M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4\"/>", "back": "<path d=\"M15 5l-7 7 7 7\"/>", "userplus": "<circle cx=\"10\" cy=\"8\" r=\"4\"/><path d=\"M3 20a7 7 0 0 1 14 0M19 8v6M16 11h6\"/>"};
   function IC(n){ return '<svg class="tmi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICP[n] || '') + '</svg>'; }
+  ICP.plane = '<path d="M21 3L10.5 13.5"/><path d="M21 3l-6.5 18-4-7.5L3 9.5z"/>';
+  ICP.calendar = '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>';
+  ICP.dumbbell = '<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>';
+  ICP.wind = '<path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/>';
+  ICP.users = '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/>';
   window.ecIC = IC;
   function setH(el, h){ if(el && el._h !== h){ el._h = h; el.innerHTML = h; } }
   function idb(){ return new Promise(function(res, rej){ try{ var r = indexedDB.open('ec_clients', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); }; r.onsuccess = function(){ res(r.result); }; r.onerror = function(){ rej(r.error); }; }catch(e){ rej(e); } }); }
@@ -21233,7 +21258,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return '<div class="cl-ss" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '')
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
-      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="dup">' + IC('copy') + 'Refaire</button><button type="button" data-a="copy">' + IC('send') + 'Copier vers…</button><button type="button" data-a="edit" aria-label="Modifier">' + IC('edit') + '</button><button type="button" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '</button><button type="button" data-a="del" aria-label="Supprimer">' + IC('trash') + '</button></div></div>';
+      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="dup">' + IC('copy') + 'Refaire</button><button type="button" data-a="copy">' + IC('send') + 'Copier vers…</button><button type="button" data-a="edit" aria-label="Modifier">' + IC('edit') + '</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '</button><button type="button" data-a="del" aria-label="Supprimer">' + IC('trash') + '</button></div></div>';
   }
   function renderClient(c){
     var l = lastSess(c), list = c.s.slice().reverse(), shown = list.slice(0, V.more);
@@ -21277,10 +21302,183 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'edit') return openEditor(c, s, false);
     if(a === 'dup') return openEditor(c, {d:todayIso(), t:s.t, r:s.r, w:s.w, who:s.who, ex:s.ex.map(function(x){ return x.slice(); })}, true);
     if(a === 'qr') return showQR(c.nom, s);
+    if(a === 'send') return sendSession(c.nom, s);
     if(a === 'copy') return copyTo(c, s);
     if(a === 'del') return sheet('<h4>Supprimer cette séance ?</h4><p>' + esc(dLong(s)) + ' · ' + esc(c.nom) + '</p><button type="button" class="cl-btn red" data-k="ok">Supprimer</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k){ if(k === 'ok'){ c.s = c.s.filter(function(x){ return x !== s; }); save(); render(); toast('Séance supprimée'); } });
   });
 
+
+  // ---------- Envoyer une séance au client (image soignée + texte), depuis la fiche client ou Présenter ----------
+  function sendText(nom, s){
+    var w = s.w || 0, wu = s.ex.slice(0, w), ci = s.ex.slice(w), L = [];
+    L.push('💪 Ta séance du ' + dLong(s));
+    if(s.t || s.r) L.push((s.t ? s.t + ' tour' + (s.t > 1 ? 's' : '') + ' du circuit' : 'Circuit') + (s.r ? ' · récup ' + showVal(s.r) + ' entre les tours' : ''));
+    if(wu.length){ L.push(''); L.push('🔸 Échauffement'); wu.forEach(function(l){ L.push('• ' + (l[0] || 'Exercice') + (l[1] ? ' — ' + showVal(l[1]) : '')); }); }
+    L.push(''); L.push('🔁 Circuit');
+    ci.forEach(function(l, i){ L.push((i + 1) + '. ' + (l[0] || 'Exercice') + (l[1] ? ' — ' + showVal(l[1]) : '') + (sidesOf(l) ? ' (par côté)' : '')); });
+    L.push(''); L.push('Bonne séance ' + nom + ' !'); L.push('Ethik’Coach · coaching sur mesure');
+    return L.join('\n');
+  }
+  function loadImg(src){ return new Promise(function(res){ if(!src){ res(null); return; } var im = new Image(); var t = setTimeout(function(){ res(null); }, 4000); im.onload = function(){ clearTimeout(t); res(im); }; im.onerror = function(){ clearTimeout(t); res(null); }; im.src = src; }); }
+  function cssUrl(v){ var m = /url\(["']?([^"')]+)["']?\)/.exec(v || ''); return m ? m[1] : ''; }
+  // Fiche image d'une séance (coaching ou appli) : bandeau, exercices illustrés, logo. d = {kicker, title, sub, chips:[{t, gold}], note, blocks:[{title, compact, rows:[{name, dose, img, side}]}]}
+  window.ecSessionCard = function(d){
+    var wm = cssUrl(getComputedStyle(document.documentElement).getPropertyValue('--ec-wm'));
+    var lg = document.querySelector('.site-logo'); lg = lg && lg.src;
+    var rows = []; (d.blocks || []).forEach(function(b){ if(!b.compact) (b.rows || []).forEach(function(r){ rows.push(r); }); });
+    var fontsReady = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 80px 'Bricolage Grotesque'"), document.fonts.load("600 36px 'Inter'"), document.fonts.load("800 36px 'Inter'")]).catch(function(){}) : Promise.resolve();
+    return fontsReady.then(function(){ return Promise.all([loadImg(wm), loadImg(lg)].concat(rows.map(function(r){ return loadImg(r.img); }))); }).then(function(imgs){
+      rows.forEach(function(r, i){ r._im = imgs[i + 2]; });
+      var W = 1080, P = 56, RH = 156, GAP = 16, HH = d.note ? 450 : 400;
+      var H = HH + 40;
+      (d.blocks || []).forEach(function(b){ var n = (b.rows || []).length; if(!n) return; H += 58 + (b.compact ? n * 54 + 24 + 34 : n * (RH + GAP) + 18); });
+      H += 170;
+      var c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d');
+      var FB = "'Bricolage Grotesque', 'Inter', sans-serif", FI = "'Inter', -apple-system, sans-serif";
+      function rr(a, b, ww, hh, r){ x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + ww, b, a + ww, b + hh, r); x.arcTo(a + ww, b + hh, a, b + hh, r); x.arcTo(a, b + hh, a, b, r); x.arcTo(a, b, a + ww, b, r); x.closePath(); }
+      function fit(t, max, font){ t = String(t || ''); x.font = font; if(x.measureText(t).width <= max) return t; while(t.length > 1 && x.measureText(t + '…').width > max) t = t.slice(0, -1); return t + '…'; }
+      x.fillStyle = '#F3F1EA'; x.fillRect(0, 0, W, H);
+      var g = x.createRadialGradient(0, 0, 40, 0, 0, 1100); g.addColorStop(0, '#23482F'); g.addColorStop(.62, '#0E1A14'); g.addColorStop(1, '#0E1A14');
+      x.save(); rr(0, -60, W, HH + 60, 64); x.fillStyle = g; x.fill(); x.clip();
+      if(imgs[0]){ x.save(); x.globalAlpha = .12; x.translate(W - 150, HH / 2); x.rotate(-6 * Math.PI / 180); var ww2 = 470, hh2 = ww2 * imgs[0].height / imgs[0].width; x.drawImage(imgs[0], -ww2 / 2, -hh2 / 2, ww2, hh2); x.restore(); }
+      x.restore();
+      x.fillStyle = '#2FCB72'; x.font = '800 30px ' + FI; x.fillText((d.kicker || 'Séance').toUpperCase().split('').join(' '), P, 98);
+      var ts = 92; x.font = '800 ' + ts + 'px ' + FB; while(ts > 54 && x.measureText(d.title || '').width > W - 2 * P - 30){ ts -= 4; x.font = '800 ' + ts + 'px ' + FB; }
+      x.fillStyle = '#FFFFFF'; x.fillText(fit(d.title || 'Séance', W - 2 * P - 30, '800 ' + ts + 'px ' + FB), P, 196);
+      if(d.sub){ x.fillStyle = 'rgba(255,255,255,.75)'; x.font = '600 38px ' + FI; x.fillText(fit(d.sub, W - 2 * P, '600 38px ' + FI), P, 256); }
+      var cx = P; x.font = '700 32px ' + FI;
+      (d.chips || []).forEach(function(ch){ var t = fit(ch.t, 420, '700 32px ' + FI), tw = x.measureText(t).width + 52; if(cx + tw > W - P) return; rr(cx, 296, tw, 62, 31); x.fillStyle = ch.gold ? 'rgba(245,196,81,.16)' : 'rgba(255,255,255,.1)'; x.fill(); x.fillStyle = ch.gold ? '#F5C451' : 'rgba(255,255,255,.9)'; x.fillText(t, cx + 26, 338); cx += tw + 14; });
+      if(d.note){ x.fillStyle = '#F5C451'; x.font = 'italic 600 32px ' + FI; x.fillText(fit('« ' + d.note + ' »', W - 2 * P, 'italic 600 32px ' + FI), P, 412); }
+      var y = HH + 40;
+      function label(t){ var sp = String(t).toUpperCase().split('').join(' '); x.font = '800 28px ' + FI; sp = fit(sp, W - 2 * P - 120, '800 28px ' + FI); x.fillStyle = '#66746B'; x.fillText(sp, P, y + 28); var lw = x.measureText(sp).width; x.fillStyle = 'rgba(14,26,20,.1)'; x.fillRect(P + lw + 22, y + 18, Math.max(0, W - 2 * P - lw - 22), 3); y += 58; }
+      (d.blocks || []).forEach(function(b){
+        var list = b.rows || []; if(!list.length) return;
+        label(b.title || 'Exercices');
+        if(b.compact){
+          rr(P, y, W - 2 * P, list.length * 54 + 24, 28); x.fillStyle = '#FFFFFF'; x.fill();
+          list.forEach(function(r, i){ var yy = y + 52 + i * 54; x.fillStyle = '#FF9F43'; x.beginPath(); x.arc(P + 34, yy - 12, 8, 0, Math.PI * 2); x.fill(); x.fillStyle = '#0E1A14'; x.font = '700 34px ' + FI; x.fillText(fit(r.name || 'Exercice', W - 2 * P - 280, '700 34px ' + FI), P + 60, yy); if(r.dose){ x.fillStyle = '#B86A00'; x.font = '800 34px ' + FB; x.textAlign = 'right'; x.fillText(fit(r.dose, 220, '800 34px ' + FB), W - P - 30, yy); x.textAlign = 'left'; } });
+          y += list.length * 54 + 24 + 34; return;
+        }
+        list.forEach(function(r, i){
+          var im = r._im;
+          x.save(); x.shadowColor = 'rgba(14,26,20,.08)'; x.shadowBlur = 24; x.shadowOffsetY = 6; rr(P, y, W - 2 * P, RH, 30); x.fillStyle = '#FFFFFF'; x.fill(); x.restore();
+          var tx = P + 20, th = RH - 28, tw2 = th * 1.3;
+          x.save(); rr(tx, y + 14, tw2, th, 20); x.fillStyle = '#F6F7F4'; x.fill(); x.clip();
+          if(im){ var sc = Math.min(tw2 / im.width, th / im.height), iw = im.width * sc, ih = im.height * sc; x.drawImage(im, tx + (tw2 - iw) / 2, y + 14 + (th - ih) / 2, iw, ih); }
+          x.restore();
+          rr(tx + 8, y + 22, 54, 44, 13); x.fillStyle = '#0E1A14'; x.fill(); x.fillStyle = '#FFFFFF'; x.font = '800 26px ' + FB; x.textAlign = 'center'; x.fillText(('0' + (i + 1)).slice(-2), tx + 35, y + 53); x.textAlign = 'left';
+          var nx = tx + tw2 + 28, maxw = W - P - nx - 24;
+          x.fillStyle = '#0E1A14'; x.font = '800 42px ' + FB; x.fillText(fit(r.name || 'Exercice', maxw, '800 42px ' + FB), nx, y + 66);
+          var px = nx;
+          if(r.dose){ var vt = fit(r.dose, maxw - (r.side ? 220 : 0) - 40, '800 34px ' + FB); x.font = '800 34px ' + FB; var vw = x.measureText(vt).width + 40; rr(px, y + 86, vw, 52, 14); x.fillStyle = '#0E1A14'; x.fill(); x.fillStyle = '#F5C451'; x.fillText(vt, px + 20, y + 124); px += vw + 12; }
+          if(r.side){ x.font = '800 28px ' + FB; var st = '↔ par côté', sw = x.measureText(st).width + 36; rr(px, y + 86, sw, 52, 14); x.fillStyle = '#0E1A14'; x.fill(); x.fillStyle = '#9FE8BD'; x.fillText(st, px + 18, y + 121); }
+          y += RH + GAP;
+        });
+        y += 18;
+      });
+      y += 6; rr(P, y, W - 2 * P, 120, 60); x.fillStyle = '#0E1A14'; x.fill();
+      if(imgs[1]){ var lh = 84, lw2 = lh * imgs[1].width / imgs[1].height; x.drawImage(imgs[1], P + 30, y + 18, lw2, lh); }
+      x.fillStyle = '#FFFFFF'; x.font = '800 34px ' + FB; x.textAlign = 'right'; x.fillText(d.foot || 'Bonne séance !', W - P - 40, y + 56); x.fillStyle = '#2FCB72'; x.font = '700 28px ' + FI; x.fillText('ethikcoach.fr', W - P - 40, y + 94); x.textAlign = 'left';
+      return c;
+    });
+  };
+  window.ecCardShare = function(canvas, fname, text, title){
+    return new Promise(function(res){ canvas.toBlob(function(blob){
+      if(!blob){ res(false); return; }
+      var file = null; try{ file = new File([blob], fname, {type:'image/png'}); }catch(e){}
+      if(file && navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file], text:text || '', title:title || ''}).then(function(){ res(true); }, function(){ res(false); }); return; }
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); toast('Image enregistrée : envoie-la depuis tes photos'); res(true);
+    }, 'image/png'); });
+  };
+  function sendImage(nom, s){
+    var w = s.w || 0, wu = s.ex.slice(0, w), ci = s.ex.slice(w), dl = dLong(s);
+    var chips = []; if(s.t) chips.push({t:s.t + ' tour' + (s.t > 1 ? 's' : ''), gold:true}); chips.push({t:ci.length + ' exercice' + (ci.length > 1 ? 's' : '')}); if(s.r) chips.push({t:'récup ' + showVal(s.r)});
+    var blocks = [];
+    if(wu.length) blocks.push({title:'Échauffement', compact:true, rows:wu.map(function(l){ return {name:l[0] || 'Exercice', dose:l[1] ? showVal(l[1]) : ''}; })});
+    blocks.push({title:'Circuit' + (s.t ? ' · ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : ''), rows:ci.map(function(l){ return {name:l[0] || 'Exercice', dose:l[1] ? showVal(l[1]) : '', img:photoOf(l[0]), side:sidesOf(l)}; })});
+    return window.ecSessionCard({kicker:'Séance', title:nom, sub:dl.charAt(0).toUpperCase() + dl.slice(1), chips:chips, blocks:blocks});
+  }
+  // Lien « séance seule » : la personne fait uniquement cette séance (chrono, illustrations), sans accès au reste de l'appli
+  function b64e(t){ return btoa(unescape(encodeURIComponent(t))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function b64d(t){ t = String(t).replace(/-/g, '+').replace(/_/g, '/'); while(t.length % 4) t += '='; return decodeURIComponent(escape(atob(t))); }
+  function guestLink(s){
+    var s2 = {d:s.d, lab:s.lab, t:s.t, r:s.r, w:s.w, ex:s.ex.map(function(l){ var a = [l[0], l[1]]; if(l[2] === 0 || l[2] === 1) a.push(l[2]); return a; })};
+    var p = b64e(codeOf('Ta séance', s2)), base = 'https://appli.ethikcoach.fr/';
+    try{ if(/(^|\.)ethikcoach\.fr$/i.test(location.hostname)) base = location.origin + '/'; }catch(e){}
+    return base + '#c=' + p + (typeof ecGuestSig === 'function' ? '&g=' + ecGuestSig(p) : '');
+  }
+  function guestCta(){ return '<div class="clp-guest"><b>Cette séance t’est offerte par Benoît, coach Ethik’Coach.</b><p>Envie de continuer ? Avec l’appli, tu as des séances de renfo, récup et respiration guidées à la voix, faites pour toi.</p><div><a class="cl-btn go" href="https://www.ethikcoach.fr/appli-renfo-relax.html" target="_blank" rel="noopener">' + IC('spark') + 'Découvrir l’abonnement</a><a class="cl-btn ghost" href="https://wa.me/33611323245?text=' + encodeURIComponent('Bonjour Benoît, j’ai fait la séance que tu m’as envoyée et je voudrais en savoir plus sur l’appli Ethik’Coach.') + '" target="_blank" rel="noopener">Écrire à Benoît</a></div></div>'; }
+  window.ecCoachingOpen = function(code, note, guest){ var r = parseCC(code); if(!r){ toast('Séance illisible'); return; } present(r.nom || 'Ta séance', r.s, {athlete:true, note:note || '', guest:!!guest}); };
+  (function(){ var m = /^#c=([A-Za-z0-9_-]+)(?:&g=[a-z0-9]{8})?$/.exec(location.hash || ''); if(!m) return; var code = ''; try{ code = b64d(m[1]); }catch(e){}
+    var guest = document.documentElement.classList.contains('ec-guest');
+    if(code) setTimeout(function(){ window.ecCoachingOpen(code, '', guest); }, 400); })();
+  // Personnes qui ont l'appli (accès créés dans l'Espace coach) : envoi dans leur boîte de réception
+  function appRecipients(){
+    var out = [], seen = {}, today = new Date(); today.setHours(0, 0, 0, 0);
+    function lg(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+    function live(u){ if(!u || u.b || u.d) return false; if(u.exp){ var p = String(u.exp).split('-'); if(new Date(+p[0], +p[1] - 1, +p[2]) < today) return false; } return true; }
+    var dr = (lg('ec_coach_acl_draft', {}) || {}), users = dr.users || {}, H = typeof ecHash === 'function' ? ecHash : null, CH = typeof EC_COACH_H !== 'undefined' ? EC_COACH_H : '';
+    (lg('ec_coach_keys', []) || []).forEach(function(r){ if(!H || !r || !r.k) return; var h = H(r.k), u = users[h] || {}; if(!live({b:u.b, d:u.d, exp:u.exp || r.exp}) || seen[h] || h === CH) return; seen[h] = 1; out.push({v:'h:' + h, n:r.n || u.n || 'Athlète'}); });
+    Object.keys(users).forEach(function(h){ var u = users[h]; if(seen[h] || h === CH || !u || !u.n || !live(u)) return; seen[h] = 1; out.push({v:'h:' + h, n:u.n}); });
+    try{ (typeof EC_ACCESS !== 'undefined' ? EC_ACCESS : []).forEach(function(e){ if(e && e.n && e.h && !seen[e.h] && e.h !== CH && live(e)){ seen[e.h] = 1; out.push({v:'h:' + e.h, n:e.n}); } }); }catch(e){}
+    out.sort(function(a, b){ return a.n.localeCompare(b.n, 'fr'); });
+    var G = dr.groups || {}; Object.keys(G).forEach(function(id){ var m = window.ecGroupActive ? window.ecGroupActive(id) : (G[id].m || []); if(m.length) out.push({v:'g:' + id, n:'👥 ' + (G[id].n || 'Groupe') + ' (' + m.length + ')', g:m, gn:G[id].n}); });
+    return out;
+  }
+  function sendSession(nom, s){
+    var link = guestLink(s), txt = sendText(nom, s) + '\n\n▶️ Fais-la avec le chrono et les exercices illustrés : ' + link, file = null, url = '', fname = 'seance-' + (nz(nom).replace(/[^a-z0-9]+/g, '-') || 'client') + '-' + (s.d || 'ethikcoach') + '.png';
+    var d = sheet('<h4>' + IC('plane') + ' Envoyer la séance</h4><p>À <b>' + esc(nom) + '</b> · ' + esc(dLong(s)) + '. La personne reçoit la fiche en image et un lien : il ouvre uniquement cette séance dans l’appli (chrono, illustrations), avec une invitation à s’abonner.</p>'
+      + '<div class="cl-send-pv" id="clSendPv"><span>Préparation de l’image…</span></div>'
+      + '<button type="button" class="cl-btn go" data-k="img" id="clSendImg" disabled>' + IC('plane') + 'Envoyer l’image + le lien</button>'
+      + '<button type="button" class="cl-btn ghost" data-k="txt">' + IC('file') + 'Envoyer le texte + le lien</button>'
+      + (function(){
+          var L = appRecipients(), first = nz(nom).split(' ')[0], pre = '';
+          L.forEach(function(r){ if(!pre && r.v.indexOf('h:') === 0 && first && nz(r.n).split(' ')[0] === first) pre = r.v; });
+          return '<div class="cl-send-app"><b>' + IC('send') + 'Dans son appli Ethik’Coach</b>'
+            + (L.length ? '<select class="cl-in" id="clSendTo"><option value="">Choisir la personne…</option>' + L.map(function(r){ return '<option value="' + esc(r.v) + '"' + (r.v === pre ? ' selected' : '') + '>' + esc(r.n) + '</option>'; }).join('') + '</select>'
+              + '<input class="cl-in" id="clSendMsg" maxlength="140" placeholder="Petit mot (facultatif)" autocomplete="off">'
+              + '<button type="button" class="cl-btn go" data-k="app">' + IC('send') + 'Envoyer dans son appli</button><small>Elle la retrouve à sa prochaine ouverture de l’appli, avec les illustrations et le chrono.</small>'
+              : '<small>Personne n’a encore d’accès à l’appli : crée un accès dans l’Espace coach (onglet Réglages).</small>') + '</div>';
+        })()
+      + '<div class="cl-send-alt"><a class="cl-btn ghost" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(txt) + '">WhatsApp</a><a class="cl-btn ghost" href="sms:?&body=' + encodeURIComponent(txt) + '">SMS</a><button type="button" class="cl-btn ghost" data-k="copy">Copier</button></div>'
+      + '<button type="button" class="cl-btn ghost" data-k="x">Fermer</button>', function(k){
+        if(k === 'img'){
+          var canFile = !!(file && navigator.canShare && navigator.canShare({files:[file]}));
+          if(canFile){ navigator.share({files:[file], text:'Ta séance du ' + dLong(s) + ' 💪\n▶️ Fais-la avec le chrono : ' + link}).catch(function(){}); return false; }
+          if(url){ var a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); toast('Image enregistrée : envoie-la depuis tes photos'); }
+          return false;
+        }
+        if(k === 'app'){
+          var sel = d.querySelector('#clSendTo'), v = sel && sel.value; if(!v){ toast('Choisis la personne'); if(sel) sel.focus(); return false; }
+          var r = appRecipients().filter(function(x){ return x.v === v; })[0]; if(!r) return false;
+          var s2 = {d:s.d, lab:s.lab, t:s.t, r:s.r, w:s.w, ex:s.ex.map(function(l){ var a = [l[0], l[1]]; if(l[2] === 0 || l[2] === 1) a.push(l[2]); return a; })};
+          var item = {k:'c', p:codeOf('Ta séance', s2), t:'Séance coaching · ' + dShort(s), cm:((d.querySelector('#clSendMsg') || {}).value || '').trim() || undefined};
+          if(!window.ecInboxSend){ toast('Envoi indisponible ici'); return false; }
+          window.ecInboxSend(r.g || r.v.slice(2), item, r.g ? r.gn : r.n);
+          return true;
+        }
+        if(k === 'txt'){
+          if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return false; }
+          k = 'copy';
+        }
+        if(k === 'copy'){
+          var done = function(){ toast('Texte copié : colle-le dans ton message'); };
+          try{ navigator.clipboard.writeText(txt).then(done, function(){ fallback(); }); }catch(e){ fallback(); }
+          function fallback(){ var ta = document.createElement('textarea'); ta.value = txt; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} ta.remove(); }
+          return false;
+        }
+        if(k === 'x'){ setTimeout(function(){ if(url) URL.revokeObjectURL(url); }, 1000); }
+      });
+    sendImage(nom, s).then(function(c){
+      c.toBlob(function(blob){
+        if(!blob || !d.isConnected) return;
+        url = URL.createObjectURL(blob);
+        try{ file = new File([blob], fname, {type:'image/png'}); }catch(e){}
+        var pv = d.querySelector('#clSendPv'); if(pv) pv.innerHTML = '<img alt="Aperçu de la séance" src="' + url + '">';
+        var bi = d.querySelector('#clSendImg'); if(bi) bi.disabled = false;
+      }, 'image/png');
+    }).catch(function(){ var pv = d.querySelector('#clSendPv'); if(pv) pv.innerHTML = '<span>Image indisponible : envoie le texte.</span>'; });
+  }
   // ---------- Petites feuilles ----------
   function sheet(html, cb){
     var d = document.createElement('div'); d.className = 'cl-dlg'; d.innerHTML = '<div>' + html + '</div>';
@@ -21468,17 +21666,18 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return (wu.length ? '<div class="clp-sec">🔸 Échauffement</div><div class="clp-wu">' + wu.map(function(l){ return '<span>' + esc(l[0]) + (l[1] ? '<em>' + esc(showVal(l[1])) + '</em>' : '') + '</span>'; }).join('') + '</div>' : '')
         + '<div class="clp-sec">💪 Circuit' + (s.t ? ' · ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '</div><div class="clp-grid">'
         + ci.map(function(l, i){ var p = photoOf(l[0]), pv = parseVal(l[1]), ic = pv.sec ? IC('watch') : pv.reps ? IC('repeat') : ''; return '<div class="clp-c"><button type="button" class="clp-ph" data-pk="' + esc(l[0]) + '" aria-label="Choisir l’image"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '<span class="ini">' + esc(ini(l[0])) + '</span>') + '<span class="clp-n">' + ('0' + (i + 1)).slice(-2) + '</span></button><div><b>' + esc(l[0] || 'Exercice') + '</b>' + (l[1] || sidesOf(l) ? '<div class="clp-tg">' + (l[1] ? '<em>' + ic + esc(showVal(l[1])) + (pv.reps && !pv.txt ? '<small> rép.</small>' : '') + '</em>' : '') + (sidesOf(l) ? '<span class="clp-side">' + IC('sides') + 'par côté</span>' : '') + '</div>' : '') + '</div></div>'; }).join('') + '</div>'
-        + (opts.saveTo ? '<div class="clp-save"><span>Séance reçue par QR. L’enregistrer dans les séances de <b>' + esc(nom) + '</b> sur cet appareil ?</span><button type="button" class="cl-btn" data-p="keep">' + IC('save') + 'Enregistrer</button></div>' : '');
+        + (opts.guest ? guestCta() : '') + (opts.saveTo ? '<div class="clp-save"><span>Séance reçue par QR. L’enregistrer dans les séances de <b>' + esc(nom) + '</b> sur cet appareil ?</span><button type="button" class="cl-btn" data-p="keep">' + IC('save') + 'Enregistrer</button></div>' : '');
     }
-    var nEx = s.ex.length - (s.w || 0), chips = ['<span>📅 ' + esc(dLong(s)) + '</span>'];
-    if(s.t) chips.push('<span>🔁 <b>' + s.t + ' tour' + (s.t > 1 ? 's' : '') + '</b></span>');
-    chips.push('<span>💪 ' + nEx + ' exercice' + (nEx > 1 ? 's' : '') + '</span>');
-    if(s.r) chips.push('<span>😮‍💨 récup ' + esc(showVal(s.r)) + '</span>');
-    if(s.who && nz(s.who).indexOf(nz(nom)) < 0) chips.push('<span>👥 ' + esc(s.who) + '</span>');
+    var nEx = s.ex.length - (s.w || 0), chips = ['<span>' + IC('calendar') + esc(dLong(s)) + '</span>'];
+    if(s.t) chips.push('<span>' + IC('repeat') + '<b>' + s.t + ' tour' + (s.t > 1 ? 's' : '') + '</b></span>');
+    chips.push('<span>' + IC('dumbbell') + nEx + ' exercice' + (nEx > 1 ? 's' : '') + '</span>');
+    if(s.r) chips.push('<span>' + IC('wind') + 'récup ' + esc(showVal(s.r)) + '</span>');
+    if(s.who && nz(s.who).indexOf(nz(nom)) < 0) chips.push('<span>' + IC('users') + esc(s.who) + '</span>');
     el.innerHTML = '<div class="clp-top"><div class="clp-hd"><small>Séance</small><h2>' + esc(nom) + '</h2></div>'
-      + '<div class="clp-acts">' + (opts.saveTo ? '' : '<button type="button" class="clp-ib" data-p="qr" aria-label="QR pour l’autre appareil">' + IC('camera') + '</button>') + '<button type="button" class="clp-ib go" data-p="go">' + IC('play') + '<span class="lg">Lancer le c</span><span class="sm">C</span>hrono</button><button type="button" class="clp-ib" data-p="x" aria-label="Fermer">' + IC('x') + '</button></div>'
-      + '<div class="clp-chips">' + chips.join('') + '</div></div>'
+      + '<div class="clp-acts">' + (opts.athlete ? '' : '<button type="button" class="clp-ib" data-p="send" aria-label="Envoyer la séance">' + IC('plane') + '</button>') + (opts.saveTo || opts.athlete ? '' : '<button type="button" class="clp-ib" data-p="qr" aria-label="QR pour l’autre appareil">' + IC('camera') + '</button>') + '<button type="button" class="clp-ib go" data-p="go">' + IC('play') + '<span class="lg">Lancer le c</span><span class="sm">C</span>hrono</button>' + (opts.guest ? '' : '<button type="button" class="clp-ib" data-p="x" aria-label="Fermer">' + IC('x') + '</button>') + '</div>'
+      + '<div class="clp-chips">' + chips.join('') + '</div>' + (opts.note ? '<p class="clp-note">« ' + esc(opts.note) + ' »</p>' : '') + '</div>'
       + '<div class="clp-body" id="clpB">' + cards() + '</div>';
+    if(opts.guest){ el.classList.add('clp-g'); }
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     var lazy = setTimeout(function(){ if(el.isConnected) el.querySelector('#clpB').innerHTML = cards(); }, 900);   // images chargées à la demande
     function close(){ clearTimeout(lazy); el.remove(); if(!document.querySelector('.cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
@@ -21487,6 +21686,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var b = e.target.closest('[data-p]'); if(!b) return; var a = b.getAttribute('data-p');
       if(a === 'x'){ close(); return; }
       if(a === 'qr'){ showQR(nom, s); return; }
+      if(a === 'send'){ sendSession(nom, s); return; }
       if(a === 'go'){ launchSheet(nom, s, null); return; }
       if(a === 'keep'){ var c = opts.saveTo(); b.closest('.clp-save').remove(); toast('💾 Séance enregistrée pour ' + (c ? c.nom : nom)); return; }
     });
@@ -21597,7 +21797,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // ---------- QR hors réseau : téléphone → iPad ----------
   function qrLib(){ if(!window.qrcode || !window.jsQR){ try{ window.__ecQrLoad && window.__ecQrLoad.call(window); }catch(e){} } return !!(window.qrcode && window.jsQR); }
   function codeOf(nom, s){ var o = {c:nom, d:s.d || '', l:s.lab || '', t:s.t || 0, r:s.r || '', w:s.w || 0, p:s.who || '', e:s.ex}; return 'ECC1' + JSON.stringify(o).replace(/[\u0080-￿]/g, function(ch){ return '\\u' + ('000' + ch.charCodeAt(0).toString(16)).slice(-4); }); }
-  function parseCC(txt){ txt = String(txt || ''); if(txt.indexOf('ECC1') !== 0) return null; try{ var o = JSON.parse(txt.slice(4)); if(!o || !Array.isArray(o.e) || !o.c) return null; var s = {d:String(o.d || ''), ex:o.e.slice(0, 40).map(function(l){ return [String(l[0] || '').slice(0, 80), String(l[1] == null ? '' : l[1]).slice(0, 40)]; })}; if(o.l) s.lab = String(o.l); if(o.t) s.t = +o.t || 0; if(o.r) s.r = String(o.r); if(o.w) s.w = +o.w || 0; if(o.p) s.who = String(o.p); return {nom:String(o.c).slice(0, 60), s:s}; }catch(e){ return null; } }
+  function parseCC(txt){ txt = String(txt || ''); if(txt.indexOf('ECC1') !== 0) return null; try{ var o = JSON.parse(txt.slice(4)); if(!o || !Array.isArray(o.e) || !o.c) return null; var s = {d:String(o.d || ''), ex:o.e.slice(0, 40).map(function(l){ var a = [String(l[0] || '').slice(0, 80), String(l[1] == null ? '' : l[1]).slice(0, 40)]; if(l[2] === 0 || l[2] === 1) a.push(l[2]); return a; })}; if(o.l) s.lab = String(o.l); if(o.t) s.t = +o.t || 0; if(o.r) s.r = String(o.r); if(o.w) s.w = +o.w || 0; if(o.p) s.who = String(o.p); return {nom:String(o.c).slice(0, 60), s:s}; }catch(e){ return null; } }
   function showQR(nom, s){
     var svg = '';
     if(qrLib()){ try{ var q = window.qrcode(0, 'L'); q.addData(codeOf(nom, s)); q.make(); svg = q.createSvgTag({cellSize:6, margin:2, scalable:true}); }catch(e){ svg = ''; } }
@@ -22228,6 +22428,32 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .clp .clp-side{position:static; display:inline-flex; align-items:center; gap:5px; padding:7px 11px 7px 9px; border-radius:12px; background:var(--pk, #0E1A14); color:#9FE8BD; font:800 clamp(.8rem, 1.5vw, .95rem)/1 'Bricolage Grotesque', sans-serif; box-shadow:none; top:auto; right:auto;}
 .clp .clp-side .tmi{width:1.05em; height:1.05em; flex:none; color:var(--acc, #2FCB72);}
 .clp-c em .tmi{width:.9em; height:.9em; flex:none;}
+.clp-chips > span > .tmi{width:15px; height:15px; color:var(--acc, #2FCB72);}
+/* Envoyer une séance */
+.cl-send-pv{display:grid; place-items:center; min-height:120px; max-height:46vh; overflow:auto; margin:4px 0 12px; border-radius:16px; background:#F3F1EA; border:1px solid var(--cl-b, rgba(127,127,127,.2));}
+.cl-send-pv span{font:600 .86rem/1.3 Inter, sans-serif; color:var(--stone);}
+.cl-send-pv img{display:block; width:100%; height:auto;}
+.cl-send-alt{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
+.cl-send-alt .cl-btn{text-decoration:none; font-size:.84rem; padding:0 8px;}
+.clp-guest{margin:22px 0 10px; padding:18px; border-radius:22px; background:radial-gradient(120% 140% at 0% 0%, #23482F 0%, #0E1A14 60%); color:#fff; position:relative; overflow:hidden;}
+.clp-guest::after{content:''; position:absolute; top:50%; right:-40px; width:170px; height:144px; transform:translateY(-50%) rotate(-6deg); background:var(--ec-wm) no-repeat center / contain; opacity:.1; pointer-events:none;}
+.clp-guest > *{position:relative; z-index:1;}
+.clp-guest b{display:block; font:800 1.1rem/1.25 'Bricolage Grotesque', sans-serif;}
+.clp-guest p{margin:6px 0 12px; font:600 .9rem/1.4 Inter, sans-serif; color:rgba(255,255,255,.78);}
+.clp-guest div{display:grid; grid-template-columns:1fr 1fr; gap:8px;} .clp-guest .cl-btn{text-decoration:none; margin:0; font-size:.88rem;}
+.clp-guest .cl-btn.ghost{background:rgba(255,255,255,.1); color:#fff; border-color:rgba(255,255,255,.18); box-shadow:none;}
+@media (max-width:420px){ .clp-guest div{grid-template-columns:1fr;} }
+
+.cl-send-app{display:grid; gap:8px; margin:14px 0 6px; padding:12px; border-radius:16px; background:color-mix(in srgb, #2E9E5E 7%, var(--card, #fff)); border:1px solid rgba(46,158,94,.25);}
+.cl-send-app > b{display:flex; align-items:center; gap:7px; font:800 .95rem/1.2 'Bricolage Grotesque', sans-serif; color:#1F6B43;} .cl-send-app > b .tmi{width:18px; height:18px;}
+.cl-send-app .cl-in{width:100%; box-sizing:border-box; min-height:46px; padding:0 12px; border:1.5px solid rgba(46,158,94,.3); border-radius:12px; background:var(--card, #fff); color:var(--ink); font:600 16px/1.2 Inter, sans-serif;}
+.cl-send-app .cl-btn{margin-top:0;}
+.cl-send-app small{font:600 .76rem/1.35 Inter, sans-serif; color:var(--stone);}
+.clp-note{grid-column:1 / -1; margin:2px 0 0; font:600 .9rem/1.35 Inter, sans-serif; color:#F5C451; position:relative; z-index:1;}
+
+@media (max-width:480px){ .clp-acts{gap:6px !important;} .clp .clp-ib{min-width:38px; width:38px; height:38px; padding:0;} .clp .clp-ib.go, :root .clp .clp-ib.go{width:auto; padding:0 13px; font-size:.9rem;} .clp .clp-top h2{font-size:1.3rem;} }
+
+@media (min-width:900px){ .clp-chips > span > .tmi{width:17px; height:17px;} }
 @media (min-width:900px){ .clp .clp-side{padding:9px 14px 9px 12px; border-radius:14px; font-size:1.05rem;} }
 .cl-back .tmi{width:20px; height:20px;}
 .clp-ib{gap:6px;} .clp-ib .tmi{width:19px; height:19px;}
@@ -22285,6 +22511,9 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   function say(t, urgent){ try{ if(!window.speechSynthesis || !t) return; if(urgent && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; var v = frVoice(); if(v) u.voice = v; u.rate = 1.1; u.volume = 1;
     var t0 = performance.now(); u.onstart = function(){ var d = performance.now() - t0; if(d > 20 && d < 1500) LAT = Math.round(LAT * .7 + d * .3); }; speechSynthesis.speak(u); }catch(e){} }
   function awake(on){ try{ window.ecKeepAwake && window.ecKeepAwake(on); }catch(e){} }
+  // Écran allumé tant qu'un interval est ouvert ou qu'un chrono tourne (multi-chronos compris)
+  var KA = false;
+  function keepSync(run){ var need = !!R || (run != null ? !!run : anyRun()); if(need !== KA){ KA = need; awake(need); } }
   // Décompte 3, 2, 1, GO avant le départ
   function go321(cb, voice, title){
     audio();
@@ -22419,7 +22648,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   function launchI(c){ runInterval(c); }   // la préparation sert de départ : la 1re annonce part dans le toucher (exigé par l'iPhone pour la voix)
   function runInterval(c){
     var S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
-    audio(); awake(true);
+    audio(); KA = true; awake(true);
     var el = document.createElement('div'); el.className = 'tmr'; el.setAttribute('role', 'dialog');
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     R = {el:el, c:c, S:S, k:0, state:'run', endAt:Date.now() + S[0].d * 1000, left:S[0].d * 1000, t0:Date.now(), lastBeep:99, sw:Date.now(), el2:0};
@@ -22432,7 +22661,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       if(a === 'nx'){ go(1); return; } if(a === 'pv'){ go(-1); return; }
       if(a === 'again'){ var c0 = R.c; close(); launchI(c0); return; }
     });
-    function close(){ clearInterval(R.iv); el.remove(); R = null; awake(false); try{ speechSynthesis.cancel(); }catch(e){} if(!document.querySelector('.tmr, .cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
+    function close(){ clearInterval(R.iv); el.remove(); R = null; keepSync(); try{ speechSynthesis.cancel(); }catch(e){} if(!document.querySelector('.tmr, .cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
   }
   function cur(){ return R.S[R.k]; }
   function announce(k){
@@ -22548,7 +22777,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       if(a === 'opt' || a === 'ren'){ chronoSheet(it); return; }
       return;
     }
-    if(a === 'all'){ var doAll = function(){ M.items.forEach(function(x){ if(x.st !== 'run') start(x); }); saveM(); render(); loop(); }; if(M.c321 !== false) go321(doAll, false, M.name || 'Départ'); else { beep(1046, .15); doAll(); } return; }
+    if(a === 'all'){ KA = true; awake(true); var doAll = function(){ M.items.forEach(function(x){ if(x.st !== 'run') start(x); }); saveM(); render(); loop(); }; if(M.c321 !== false) go321(doAll, false, M.name || 'Départ'); else { beep(1046, .15); doAll(); } return; }
     if(a === 'stopall'){ M.items.forEach(pause); saveM(); render(); return; }
     if(a === 'rstall'){ M.items.forEach(reset); saveM(); render(); return; }
     if(a === 'add'){ chronoSheet(null); return; }
@@ -22618,6 +22847,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       if(it.type === 'down' && el(it) >= it.dur * 1000){ it.acc = it.dur * 1000; it.st = 'done'; saveM(); beep(880, .3); setTimeout(function(){ beep(880, .3); }, 350); setTimeout(function(){ beep(1175, .6); }, 700); vib([300, 100, 300]); toast('⏰ ' + it.n + ' : temps écoulé'); if(vis) refreshTile(it); return; }
       if(vis){ var t = pane.querySelector('[data-tt="' + it.id + '"]'); if(t) t.innerHTML = fmt(shown(it), true); var pb = it.type === 'down' && pane.querySelector('[data-pb="' + it.id + '"]'); if(pb) pb.style.width = (100 * shown(it) / (it.dur * 1000 || 1)).toFixed(2) + '%'; }
     });
+    keepSync(run);
     if(run) requestAnimationFrame(f); else looping = false;
   })(); }
   document.addEventListener('visibilitychange', function(){ if(!document.hidden && anyRun()) loop(); });
