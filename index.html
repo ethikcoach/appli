@@ -22208,7 +22208,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-add{gap:8px; color:#23874F; border-color:rgba(46,158,94,.4); background:color-mix(in srgb, #2E9E5E 4%, transparent);}
 .cl-add .tmi{width:1.35em; height:1.35em; padding:3px; border-radius:50%; background:#23874F; color:#fff; box-sizing:border-box;}
 .cl-ln button .tmi{width:17px; height:17px;}
-.cl-ln button[data-e="del"]{color:#C8302E;}
+.cl-ln button:not(.ph){height:42px; border-radius:12px; border:1px solid var(--cl-b, rgba(127,127,127,.2)); background:linear-gradient(180deg, color-mix(in srgb, var(--card, #fff) 94%, #8FA39A), color-mix(in srgb, var(--card, #fff) 82%, #8FA39A)); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 2px 5px rgba(14,26,20,.06); color:#5B6B63;}
+.cl-ln button.sd{color:#23874F;}
+.cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
+.cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
+.cl-ln button:disabled{opacity:.35; box-shadow:none;}
 .cl-back .tmi{width:20px; height:20px;}
 .clp-ib{gap:6px;} .clp-ib .tmi{width:19px; height:19px;}
 .clp .clp-ib.go, :root .clp .clp-ib.go{background:linear-gradient(160deg, #5BE494, #2FCB72); box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 8px 20px rgba(47,203,114,.35);}
