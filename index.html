@@ -4494,7 +4494,7 @@
     </div>
   </div>
   <div class="ec-print">Ethik'Coach · Benoît, éducateur sportif · 06 11 32 32 45 · ethik.coach@gmail.com</div>
-  <p class="app-version" id="appVersion">Version 10 · mise à jour du 2 novembre 2026</p>
+  <p class="app-version" id="appVersion">Version 10 · mise à jour du 15 novembre 2026</p>
 </footer>
 <nav class="bnav" id="bottomNav" aria-label="Menu principal">
   <button type="button" data-bn="renfo" class="active"><span class="bn-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>Renfo</button>
@@ -14985,7 +14985,7 @@
       var k = a.getAttribute('data-set');
       if(k === 'voice'){ closeSet(); setTimeout(function(){ if(window.ecOpenVoice) window.ecOpenVoice(); }, 220); }
       else if(k === 'install'){ closeSet(); var ib = document.getElementById('installBtn'); if(ib) setTimeout(function(){ ib.click(); }, 220); }
-      else if(k === 'data'){ closeSet(); if(window.ecShowView) window.ecShowView('suivi'); if(window.ecSuiviTab) window.ecSuiviTab('mine'); setTimeout(function(){ var x = document.getElementById('svExport'); if(x) x.scrollIntoView({behavior:'smooth', block:'center'}); }, 250); }
+      else if(k === 'data'){ closeSet(); setTimeout(function(){ if(window.ecOpenData) window.ecOpenData(); }, 180); }
       else if(k === 'notifs'){ closeSet(); setTimeout(function(){ if(window.ecNotifs) window.ecNotifs(); }, 220); }
       else if(k === 'rappels'){ closeSet(); setTimeout(function(){ if(window.ecRappels) window.ecRappels(); }, 220); }
       else if(k === 'help'){ closeSet(); var hb = document.querySelector('.header-right .help-btn-head:not(.voice-head):not(.set-btn)'); if(hb) setTimeout(function(){ hb.click(); }, 220); }
@@ -22465,6 +22465,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
 .cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-ln button:disabled{opacity:.35; box-shadow:none;}
+/* Côté client : Mes données (feuille) + renvoi voix vers Réglages + bibliothèque plus fluide */
+.dt-sheet{position:fixed; inset:0; z-index:1700; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,14,11,0); transition:background .2s;}
+.dt-sheet.open{background:rgba(8,14,11,.5);}
+.dt-card{width:min(560px, 100%); max-height:88vh; overflow:auto; border-radius:24px 24px 0 0; background:var(--bg, #F3F1EA); padding:14px 14px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .22s ease;}
+.dt-sheet.open .dt-card{transform:none;}
+@media (min-width:700px){ .dt-sheet{align-items:center;} .dt-card{border-radius:24px;} }
+.dt-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 2px 10px;} .dt-head b{font:800 1.15rem/1.2 'Bricolage Grotesque', sans-serif;}
+.dt-x{width:38px; height:38px; border:none; border-radius:50%; background:var(--card); color:var(--ink); font-size:1.4rem; line-height:1;}
+.dt-body .sv-card{margin:0; box-shadow:none;}
+.mob-guide .voice-link, .mob-guide .mg-explain, #breathGuideGroup ~ .voice-link{display:none !important;}
+.guide-set{display:flex; align-items:center; gap:8px; width:100%; margin-top:10px; min-height:44px; padding:0 14px; border:1px solid var(--line, rgba(14,26,20,.1)); border-radius:14px; background:var(--card); color:var(--ink); font:700 .86rem/1.2 Inter, sans-serif; text-align:left; -webkit-tap-highlight-color:transparent;}
+.guide-set span{flex:1;} .guide-set em{font-style:normal; color:var(--acc, #2E9E5E); font-weight:800;}
+.lib-item{content-visibility:auto; contain-intrinsic-size:auto 230px;}
+
 /* ===== Espace coach : bandeau compact, 5 onglets, sous-barres ===== */
 #coachTools .ct-hero{padding:16px 18px 14px; border-radius:20px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
 #coachTools .ct-hero h1{font-size:1.35rem;}
@@ -22937,6 +22951,35 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   if(tabs){ tabs.addEventListener('click', function(){ setTimeout(showActive, 30); }); setTimeout(showActive, 400); new MutationObserver(function(){ showActive(); }).observe(tabs, {subtree:true, attributes:true, attributeFilter:['class']}); if('IntersectionObserver' in window) new IntersectionObserver(function(es){ if(es[0] && es[0].isIntersecting){ var a = tabs.querySelector('.active'); if(a && tabs.scrollWidth > tabs.clientWidth) tabs.scrollLeft = Math.max(0, a.offsetLeft - (tabs.clientWidth - a.offsetWidth) / 2); } }).observe(tabs); }
   window.ecTimersTest = {steps:steps, total:total, M:function(){ return M; }, I:function(){ return I; }, parseT:parseT};
 })();
+</script>
+<script>
+  // ---------- Côté client : un seul endroit pour « Mes données » et pour la voix (Réglages) ----------
+  (function(){
+    // 1) « Mes données » : sortie de Suivi, ouverte depuis Réglages › Mes données et sauvegarde
+    var ex = document.getElementById('svExport'), card = ex && ex.closest('.sv-card');
+    if(card){
+      var home = document.createElement('div'); home.id = 'ecDataHome'; home.hidden = true; document.body.appendChild(home); home.appendChild(card);
+      window.ecOpenData = function(){
+        var o = document.createElement('div'); o.className = 'dt-sheet'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Mes données');
+        o.innerHTML = '<div class="dt-card"><div class="dt-head"><b>Mes données et sauvegarde</b><button type="button" class="dt-x" aria-label="Fermer">&times;</button></div><div class="dt-body"></div></div>';
+        o.querySelector('.dt-body').appendChild(card); card.querySelector('h2') && (card.querySelector('h2').hidden = true);
+        document.body.appendChild(o); requestAnimationFrame(function(){ o.classList.add('open'); });
+        function close(){ o.classList.remove('open'); setTimeout(function(){ var h = card.querySelector('h2'); if(h) h.hidden = false; home.appendChild(card); o.remove(); }, 200); }
+        o.addEventListener('click', function(e){ if(e.target === o || e.target.closest('.dt-x')) close(); });
+      };
+    }
+    // 2) Voix et explications audio : réglées dans Réglages ; dans Récup, un simple renvoi
+    function link(g){
+      if(!g || g.parentNode.querySelector('.guide-set')) return;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'guide-set';
+      b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"></path></svg><span>Voix et explications audio</span><em>Réglages ›</em>';
+      b.addEventListener('click', function(){ if(window.ecOpenSettings) window.ecOpenSettings(); });
+      g.parentNode.insertBefore(b, g.nextSibling);
+    }
+    function place(){ link(document.getElementById('mobGuideGroup')); link(document.getElementById('breathGuideGroup')); }
+    place(); setTimeout(place, 1500);
+    document.addEventListener('click', function(e){ if(e.target.closest('[data-w=recup], [data-w=breath]')) setTimeout(place, 80); });
+  })();
 </script>
 </body>
 </html>
