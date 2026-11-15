@@ -4197,8 +4197,7 @@
 
     <button class="generate-btn" id="generateBtn">Générer ma séance</button>
     <div class="form-msg" id="formMsg"></div>
-    <button type="button" class="compose-btn coach-only" data-compose>✍️ Composer une séance moi-même</button>
-    <button type="button" class="compose-btn coach-only" data-compose-prog>📅 Composer un programme</button>
+
 
     <div class="current-program" id="currentProgram" hidden></div>
 
@@ -4328,14 +4327,17 @@
     </div>
 
     <div class="ct-tabs" id="ctTabs" role="tablist">
-      <button type="button" role="tab" data-pane="ath"><span>👤</span>Athlètes</button>
-      <button type="button" role="tab" data-pane="abo"><span>💳</span>Abonnés</button>
-      <button type="button" role="tab" data-pane="grp"><span>👥</span>Groupes</button>
-      <button type="button" role="tab" data-pane="send"><span>✍️</span>Séances</button>
+      <button type="button" role="tab" data-pane="ath"><span>👥</span>Athlètes</button>
+      <button type="button" role="tab" data-pane="send"><span>📨</span>Envois</button>
       <button type="button" role="tab" data-pane="clients"><span>🏋️</span>Coaching</button>
-      <button type="button" role="tab" data-pane="studio"><span>🎲</span>Tirage</button>
       <button type="button" role="tab" data-pane="timers"><span>⏱️</span>Timers</button>
       <button type="button" role="tab" data-pane="set"><span>⚙️</span>Réglages</button>
+    </div>
+    <div class="ct-sub" id="ctPeople" hidden role="group" aria-label="Afficher">
+      <button type="button" data-pf="all">Tout</button><button type="button" data-pf="keys">Accès</button><button type="button" data-pf="abo">Abonnés</button><button type="button" data-pf="grp">Groupes</button>
+    </div>
+    <div class="ct-sub" id="ctCoSub" hidden role="group" aria-label="Coaching">
+      <button type="button" data-sub="cl">Mes clients</button><button type="button" data-sub="tirage">Tirage studio</button>
     </div>
 
     <div class="ct-pane" data-pane="ath">
@@ -10301,12 +10303,40 @@
     // Sous-onglets de l'Espace coach
     var ctPane = 'ath';
     try{ ctPane = localStorage.getItem('ec_coach_pane') || 'ath'; }catch(e){}
+    // 5 onglets : Athlètes (accès + abonnés + groupes), Envois, Coaching (clients + tirage), Timers, Réglages
+    var ctPf = 'all', ctCo = 'cl';
+    try{ ctPf = localStorage.getItem('ec_coach_pf') || 'all'; ctCo = localStorage.getItem('ec_coach_cosub') || 'cl'; }catch(e){}
     function setPane(p){
+      if(p === 'abo' || p === 'grp'){ ctPf = p; p = 'ath'; }
+      if(p === 'studio'){ ctCo = 'tirage'; p = 'clients'; }
+      if(['ath', 'send', 'clients', 'timers', 'set'].indexOf(p) < 0) p = 'ath';
       ctPane = p;
       document.querySelectorAll('#ctTabs [data-pane]').forEach(function(b){ var on = b.getAttribute('data-pane') === p; b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-      document.querySelectorAll('#coachTools .ct-pane').forEach(function(x){ x.hidden = x.getAttribute('data-pane') !== p; });
-      try{ localStorage.setItem('ec_coach_pane', p); }catch(e){}
+      document.querySelectorAll('#coachTools .ct-pane').forEach(function(x){
+        var d = x.getAttribute('data-pane'), on;
+        if(p === 'ath') on = (d === 'ath' && (ctPf === 'all' || ctPf === 'keys')) || (d === 'abo' && (ctPf === 'all' || ctPf === 'abo')) || (d === 'grp' && (ctPf === 'all' || ctPf === 'grp'));
+        else if(p === 'clients') on = (d === 'clients' && ctCo !== 'tirage') || (d === 'studio' && ctCo === 'tirage');
+        else on = d === p;
+        x.hidden = !on;
+      });
+      var pe = document.getElementById('ctPeople'), co = document.getElementById('ctCoSub');
+      if(pe){ pe.hidden = p !== 'ath'; pe.querySelectorAll('[data-pf]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-pf') === ctPf); }); }
+      if(co){ co.hidden = p !== 'clients'; co.querySelectorAll('[data-sub]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-sub') === (ctCo === 'tirage' ? 'tirage' : 'cl')); }); }
+      if(p === 'ath' && (ctPf === 'all' || ctPf === 'abo') && window.ecAboLoadOnce) window.ecAboLoadOnce();
+      if(p === 'set' && window.ecCoachDataCard){ var dc = document.getElementById('ctDataCard'); if(dc) window.ecCoachDataCard(dc); }
+      try{ localStorage.setItem('ec_coach_pane', p); localStorage.setItem('ec_coach_pf', ctPf); localStorage.setItem('ec_coach_cosub', ctCo); }catch(e){}
     }
+    (function(){
+      var pe = document.getElementById('ctPeople'), co = document.getElementById('ctCoSub');
+      if(pe) pe.addEventListener('click', function(e){ var b = e.target.closest('[data-pf]'); if(b){ ctPf = b.getAttribute('data-pf'); setPane('ath'); } });
+      if(co) co.addEventListener('click', function(e){ var b = e.target.closest('[data-sub]'); if(b){ ctCo = b.getAttribute('data-sub'); setPane('clients'); window.scrollTo(0, 0); } });
+      // Calendrier de l'Avent : rangé avec les envois (après le défi)
+      var av = document.getElementById('ctAvpCard'), sp = document.querySelector('#coachTools .ct-pane[data-pane="send"]');
+      if(av && sp){ var first = sp.querySelector('.ct-card'); if(first && first.nextSibling) sp.insertBefore(av, first.nextSibling); else sp.appendChild(av); }
+      // Réglages : carte « Données Coaching » en tête
+      var st = document.querySelector('#coachTools .ct-pane[data-pane="set"]');
+      if(st && !document.getElementById('ctDataCard')){ var dc = document.createElement('div'); dc.className = 'ct-card cl-datacard'; dc.id = 'ctDataCard'; st.insertBefore(dc, st.firstChild); }
+    })();
     setPane(ctPane);
     $('#ctTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-pane]'); if(b){ setPane(b.getAttribute('data-pane')); } });
     window.ecCoachRender = function(){ renderCoach(); };
@@ -10440,9 +10470,10 @@
           .then(function(){ showToast('Lien renvoyé à ' + m + ' (un envoi toutes les 10 min au plus)', false); })
           .catch(function(){ showToast('Pas de connexion : réessaie dans un instant.', false); b.disabled = false; });
       });
-      $('#ctTabs').addEventListener('click', function(e){ var b = e.target.closest('[data-pane="abo"]'); if(b) load(); });
+      var aboDone = false;
+      window.ecAboLoadOnce = function(){ if(aboDone || !document.documentElement.classList.contains('ec-coach')) return; aboDone = true; load(); };
       show();
-      if(ctPane === 'abo') setTimeout(function(){ if(document.documentElement.classList.contains('ec-coach')) load(); }, 1200);
+      if(ctPane === 'ath') setTimeout(function(){ window.ecAboLoadOnce(); }, 1200);
     })();
     $('#coachTools').addEventListener('click', function(e){
       var g = e.target.closest('[data-ct-go]'); if(!g) return;
@@ -15553,7 +15584,6 @@
     var tv = document.getElementById('todayView'), cr = tv && tv.querySelector('.td-create');
     if(cr){ var a = make(); cr.parentNode.insertBefore(a, cr); boxes.push(a); }
     var want = document.querySelector('#renfoView .want');
-    if(want){ var b = make(); want.appendChild(b); boxes.push(b); }
     function paint(){
       var i = window.ecTests.info(), sub, badge = '';
       if(!i.last){ sub = 'Ton point de départ pour mesurer tes progrès · ≈ ' + (i.n * 2) + ' min'; badge = '<span class="et-badge">À faire</span>'; }
@@ -21223,9 +21253,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       h += '<div class="cl-bar"><input class="cl-in" id="clQ" type="search" placeholder="Rechercher un client" value="' + esc(V.q) + '" autocomplete="off"><button type="button" class="cl-btn" data-a="newc" aria-label="Nouveau client">' + IC('plus') + '</button></div><div class="cl-list" id="clList"></div>';
     }
     h += '</div>';
-    h += '<div class="cl-card"><h3>📲 iPad ↔ iPhone</h3><p class="cl-sync" id="clSyncSt">' + SY.label() + '</p><p>Tes séances se synchronisent toutes seules entre tes appareils (avec ta clé coach) dès qu’il y a du réseau. Sans réseau, tout reste enregistré sur l’appareil et part au retour de la connexion. Dépannage sur place : <b>QR</b> d’une séance, ou <b>Exporter</b> / <b>Importer</b>.</p>'
-      + '<button type="button" class="cl-btn ghost" data-a="sync" style="width:100%;margin-bottom:8px">' + IC('sync') + 'Synchroniser maintenant</button>'
-      + '<div class="cl-grid3"><button type="button" class="cl-btn ghost" data-a="import">' + IC('import') + 'Importer</button><button type="button" class="cl-btn ghost" data-a="export"' + (D.clients.length ? '' : ' disabled') + '>' + IC('export') + 'Exporter</button><button type="button" class="cl-btn ghost" data-a="scan">' + IC('camera') + 'Scanner</button></div></div>';
     pane.innerHTML = h;
     listRows();
   }
@@ -21276,6 +21303,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     pane.innerHTML = h;
   }
 
+  // Carte « Données Coaching » affichée dans Espace coach > Réglages (synchro, import, export, scan)
+  window.ecCoachDataCard = function(el){
+    el.innerHTML = '<h3>📲 Coaching · iPad ↔ iPhone</h3><p class="cl-sync" id="clSyncSt">' + SY.label() + '</p><p class="ct-note" style="margin-top:0">Tes séances clients se synchronisent toutes seules entre tes appareils (avec ta clé coach) dès qu’il y a du réseau. Sans réseau, tout reste enregistré et part au retour de la connexion. Dépannage : <b>QR</b> d’une séance, ou <b>Exporter</b> / <b>Importer</b> le fichier.</p>'
+      + '<button type="button" class="cl-btn ghost" data-a="sync" style="width:100%;margin-bottom:8px">' + IC('sync') + 'Synchroniser maintenant</button>'
+      + '<div class="cl-grid3"><button type="button" class="cl-btn ghost" data-a="import">' + IC('import') + 'Importer</button><button type="button" class="cl-btn ghost" data-a="export"' + (D.clients.length ? '' : ' disabled') + '>' + IC('export') + 'Exporter</button><button type="button" class="cl-btn ghost" data-a="scan">' + IC('camera') + 'Scanner</button></div>';
+    if(!el._b){ el._b = 1; el.addEventListener('click', function(e){ var b = e.target.closest('[data-a]'); if(!b) return; var a = b.getAttribute('data-a');
+      if(a === 'import') pickImport(); else if(a === 'export') doExport(); else if(a === 'scan') scanQR(); else if(a === 'sync') SY.run(); }); }
+  };
   pane.addEventListener('input', function(e){ if(e.target.id === 'clQ'){ V.q = e.target.value; listRows(); } });
   pane.addEventListener('click', function(e){
     var row = e.target.closest('[data-c]'); if(row){ V.c = row.getAttribute('data-c'); V.more = 15; render(); window.scrollTo(0, 0); return; }
@@ -22430,6 +22465,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
 .cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-ln button:disabled{opacity:.35; box-shadow:none;}
+/* ===== Espace coach : bandeau compact, 5 onglets, sous-barres ===== */
+#coachTools .ct-hero{padding:16px 18px 14px; border-radius:20px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+#coachTools .ct-hero h1{font-size:1.35rem;}
+#coachTools .ct-hero p{display:none;}
+#coachTools .ct-hero-stats{margin-top:0;}
+#coachTools .ct-hero-stats span{padding:5px 10px; font-size:.74rem;}
+#coachTools .ct-pub{padding:8px 12px; margin-bottom:10px; font-size:.78rem; border-radius:14px;}
+#coachTools .ct-tabs, #ctTabs{display:grid !important; grid-template-columns:repeat(5, minmax(0, 1fr)) !important; overflow:visible !important; -webkit-mask-image:none !important; mask-image:none !important; margin-bottom:10px;}
+#coachTools .ct-tabs button{min-height:54px; font-size:.74rem; font-weight:800;}
+.ct-sub{display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:-2px 0 12px; padding:2px;}
+.ct-sub::-webkit-scrollbar{display:none;}
+.ct-sub[hidden]{display:none;}
+.ct-sub button{flex:none; min-height:38px; padding:0 14px; border-radius:999px; border:1px solid var(--line, rgba(14,26,20,.1)); background:var(--card); color:var(--stone); font:800 .8rem/1 Inter, sans-serif; -webkit-tap-highlight-color:transparent; transition:transform .12s, background .2s;}
+.ct-sub button:active{transform:scale(.96);}
+.ct-sub button.on{background:linear-gradient(160deg, #2D5C44, #1F4030); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(31,64,48,.22);}
+#ctCoSub, #ctPeople{display:grid; grid-template-columns:1fr 1fr;} #ctPeople{grid-template-columns:repeat(4, minmax(0, 1fr));} #ctCoSub[hidden], #ctPeople[hidden]{display:none;} #ctCoSub button, #ctPeople button{width:100%; padding:0 6px;}
+#ctAvpCard .ct-rowbtns > *{flex:1 1 0; min-width:0; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; margin:0;}
+.cl-datacard h3{margin:0 0 6px;}
+@media screen and (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .ct-sub button.on{background:#357D51;} }
+:root[data-theme="dark"] .ct-sub button.on{background:#357D51;}
+
 /* Boutons d'une séance : rangée principale + rangée d'outils (téléphone) */
 .cl-acts .sm{display:none;}
 @media (max-width:600px){
