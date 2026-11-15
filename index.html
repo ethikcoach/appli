@@ -22465,6 +22465,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
 .cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-ln button:disabled{opacity:.35; box-shadow:none;}
+/* Timers : modification en cours + aperçu avant de lancer */
+.tm-editing{display:flex; align-items:center; gap:8px; margin:0 0 10px; padding:10px 12px; border-radius:14px; background:rgba(77,150,255,.12); color:#2F6FB5; font:600 .84rem/1.35 Inter, sans-serif;}
+.tm-editing .tmi{width:18px; height:18px; flex:none;} .tm-editing span{flex:1; color:var(--ink);} .tm-editing b{color:#2F6FB5;}
+.tm-editing button{flex:none; min-height:34px; padding:0 12px; border:1px solid rgba(47,111,181,.35); border-radius:10px; background:var(--card, #fff); color:#2F6FB5; font:800 .78rem/1 Inter, sans-serif;}
+.tmp-top small{font:800 .72rem/1 Inter, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#2E9E5E;}
+.tmp-top h4{margin:4px 0 8px !important;}
+.tmp-sum{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;} .tmp-sum span{display:inline-flex; align-items:center; gap:5px; padding:6px 10px; border-radius:999px; background:color-mix(in srgb, var(--card, #fff) 85%, #8FA39A); font:800 .8rem/1 Inter, sans-serif;} .tmp-sum .tmi{width:15px; height:15px;}
+.tmp-tl{margin:0 0 12px;}
+.tmp-list{max-height:46vh; overflow:auto; margin:0 -4px 12px; padding:0 4px; border-top:1px solid var(--line, rgba(14,26,20,.08));}
+.tmp-h{display:flex; align-items:center; gap:6px; margin:12px 0 4px; font:800 .74rem/1 Inter, sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--stone);} .tmp-h.blk{color:#B86A00; font-size:.8rem;} .tmp-h .tmi{width:15px; height:15px;}
+.tmp-r{display:flex; align-items:center; gap:10px; min-height:38px; border-bottom:1px dashed var(--line, rgba(14,26,20,.08)); font:600 .92rem/1.25 Inter, sans-serif;}
+.tmp-r i{width:10px; height:10px; border-radius:50%; flex:none; background:#2E9E5E;} .tmp-r.rest i, .tmp-r.srest i{background:#3A7BC8;} .tmp-r.prep i{background:#F5C451;} .tmp-r.trans i{background:#FFB347;}
+.tmp-r span{flex:1; min-width:0;} .tmp-r.work span{font-weight:800;} .tmp-r:not(.work) span{color:var(--stone);}
+.tmp-r b{font:800 .92rem/1 'Bricolage Grotesque', sans-serif; font-variant-numeric:tabular-nums;}
+.tmp-acts{display:grid; grid-template-columns:1fr 2fr; gap:8px; position:sticky; bottom:0;} .tmp-acts .tm-btn{min-height:52px; width:100%;}
+
 /* Côté client : Mes données (feuille) + renvoi voix vers Réglages + bibliothèque plus fluide */
 .dt-sheet{position:fixed; inset:0; z-index:1700; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,14,11,0); transition:background .2s;}
 .dt-sheet.open{background:rgba(8,14,11,.5);}
@@ -22660,7 +22676,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       + '</div>';
   }
   function multiHtml(){
-    return '<div class="tm-card"><input class="tm-in" id="tmMN" value="' + esc(M.name) + '" placeholder="Nom de cette série de chronos (ex. Groupe trail mardi)" autocomplete="off">'
+    return editBar(M) + '<div class="tm-card"><input class="tm-in" id="tmMN" value="' + esc(M.name) + '" placeholder="Nom de cette série de chronos (ex. Groupe trail mardi)" autocomplete="off">'
       + '<label class="tm-chk tm-chk-sm"><input type="checkbox" id="tm321M"' + (M.c321 !== false ? ' checked' : '') + '> 3, 2, 1 avant « Tout démarrer »</label>'
       + '<div class="tm-row" style="margin-top:10px"><button type="button" class="tm-btn go" data-a="all">' + IC('play') + 'Tout démarrer</button><button type="button" class="tm-btn" data-a="stopall">' + IC('pause') + 'Tout arrêter</button><button type="button" class="tm-btn sm" data-a="rstall" aria-label="Tout remettre à zéro">' + IC('reset') + '</button></div></div>'
       + '<div class="tm-grid" id="tmGrid">' + M.items.map(tileHtml).join('') + '</div>'
@@ -22719,7 +22735,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   function intHtml(){
     var reps = Math.max(1, I.reps | 0), names = '';
     for(var r = 0; r < reps; r++) names += '<div><em>' + (r + 1) + '</em><input class="tm-in" data-nm="' + r + '" value="' + esc(I.names[r] || '') + '" placeholder="' + (r ? 'Répétition ' + (r + 1) : 'ex. Squat, 400 m seuil…') + '" autocomplete="off"></div>';
-    return '<div class="tm-card"><input class="tm-in" id="tmIN" value="' + esc(I.name) + '" placeholder="Nom (ex. Fractionné 30/30, Circuit renfo)" autocomplete="off">'
+    return editBar(I) + '<div class="tm-card"><input class="tm-in" id="tmIN" value="' + esc(I.name) + '" placeholder="Nom (ex. Fractionné 30/30, Circuit renfo)" autocomplete="off">'
       + '<div class="tm-f" style="margin-top:10px">' + stepper('work', '💪 Travail', fmtS(I.work), 'w') + stepper('rest', '😮‍💨 Récup', fmtS(I.rest), 'r') + stepper('reps', '🔁 Répétitions', I.reps) + stepper('sets', '📚 Séries', I.sets) + stepper('setRest', '⏸ Récup entre séries', fmtS(I.setRest), 'r') + stepper('prep', '⏳ Préparation', fmtS(I.prep)) + '</div>'
       + '<div class="tm-sum" id="tmSum"></div>'
       + '<div class="tm-tl" id="tmTl"></div>'
@@ -22737,7 +22753,24 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 
   // Écran de l'interval timer
   var R = null;
-  function launchI(c){ runInterval(c); }   // la préparation sert de départ : la 1re annonce part dans le toucher (exigé par l'iPhone pour la voix)
+  // Aperçu du déroulé avant de commencer ; « Démarrer » lance le timer dans le toucher (voix autorisée sur iPhone)
+  function launchI(c){
+    var S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
+    var tot = S.reduce(function(a, x){ return a + x.d; }, 0), free = S.some(function(x){ return x.free; });
+    var LAB = {prep:'Préparation', work:'', rest:'Récup', srest:'Récup entre séries', trans:'Transition'};
+    var rows = '', lastBlk = null, lastSet = null, nWork = 0;
+    S.forEach(function(x){
+      if(c.seq && x.blk !== lastBlk && x.k !== 'trans'){ rows += '<div class="tmp-h blk">' + IC('repeat') + esc(x.blk || 'Timer') + '</div>'; lastBlk = x.blk; lastSet = null; }
+      if(x.k === 'work' && (x.T || Math.max(1, c.sets | 0)) > 1 && x.s !== lastSet){ rows += '<div class="tmp-h">Série ' + x.s + '/' + (x.T || Math.max(1, c.sets | 0)) + '</div>'; lastSet = x.s; }
+      if(x.k === 'work') nWork++;
+      var nm = x.k === 'work' ? esc(x.lab) : x.k === 'trans' ? (x.free ? 'Transition libre (chrono)' : 'Transition') + ' → ' + esc(x.nb || '') : LAB[x.k];
+      rows += '<div class="tmp-r ' + x.k + '"><i></i><span>' + nm + '</span><b>' + (x.free ? 'libre' : fmtS(x.d)) + '</b></div>';
+    });
+    var tl = '<div class="tm-tl tmp-tl">' + S.map(function(x){ return '<i class="' + x.k + (x.free ? ' free' : '') + '" style="flex:' + (x.free ? Math.max(10, Math.round(tot * .04)) : x.d) + '"></i>'; }).join('') + '</div>';
+    sheet('<div class="tmp-top"><small>' + (c.seq ? 'Enchaînement' : 'Interval timer') + '</small><h4>' + esc(c.name || 'Timer') + '</h4><div class="tmp-sum"><span>' + IC('watch') + fmt(tot * 1000).replace(/<\/?small>/g, '') + (free ? ' + libre' : '') + '</span><span>' + nWork + ' exercice' + (nWork > 1 ? 's' : '') + '</span>' + (c.voice !== false ? '<span>Avec la voix</span>' : '<span>Sans voix</span>') + '</div>' + tl + '</div>'
+      + '<div class="tmp-list">' + rows + '</div>'
+      + '<div class="tmp-acts"><button type="button" class="tm-btn" data-k="x">Annuler</button><button type="button" class="tm-btn go" data-k="go">' + IC('play') + 'Démarrer</button></div>', function(k){ if(k === 'go') runInterval(c); });
+  }   // la préparation sert de départ : la 1re annonce part dans le toucher (exigé par l'iPhone pour la voix)
   function runInterval(c){
     var S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
     audio(); KA = true; awake(true);
@@ -22751,7 +22784,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       if(a === 'pp'){ if(R.state === 'run'){ R.left = R.endAt - Date.now(); R.el2 = Date.now() - R.sw; R.state = 'pause'; try{ speechSynthesis.cancel(); }catch(x){} } else if(R.state === 'pause'){ R.endAt = Date.now() + R.left; R.sw = Date.now() - R.el2; R.state = 'run'; } draw(); return; }
       if(a === 'nx' || a === 'pv'){ R.pre = false; }
       if(a === 'nx'){ go(1); return; } if(a === 'pv'){ go(-1); return; }
-      if(a === 'again'){ var c0 = R.c; close(); launchI(c0); return; }
+      if(a === 'again'){ var c0 = R.c; close(); runInterval(c0); return; }
     });
     function close(){ clearInterval(R.iv); el.remove(); R = null; keepSync(); try{ speechSynthesis.cancel(); }catch(e){} if(!document.querySelector('.tmr, .cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
   }
@@ -22835,12 +22868,21 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
         : '<div class="tm-empty">Rien d’enregistré pour l’instant. Prépare un interval timer ou une série de chronos, puis « 💾 Enregistrer ».</div>')
       + '</div>';
   }
-  function storeSave(type, name, data){
-    var a = saved(), ex = a.find(function(x){ return x.type === type && x.name === name; });
-    var copy = JSON.parse(JSON.stringify(data));
+  // Enregistrer : si on modifie un timer ouvert depuis « Enregistrés », on met à jour CELUI-LÀ (même si on l'a renommé)
+  function storeSave(type, name, data, asNew){
+    var a = saved(), ex = !asNew && data._sid ? a.find(function(x){ return x.id === data._sid && x.type === type; }) : null;
+    if(!ex && !asNew && !data._sid) ex = a.find(function(x){ return x.type === type && x.name === name; });
+    var copy = JSON.parse(JSON.stringify(data)); delete copy._sid;
     if(type === 'multi') copy.items.forEach(function(i){ i.st = 'idle'; i.acc = 0; i.t0 = 0; i.laps = []; });
-    if(ex){ ex.data = copy; ex.u = Date.now(); } else a.unshift({id:uid(), type:type, name:name, data:copy, u:Date.now()});
-    setSaved(a); toast('💾 « ' + name + ' » enregistré' + (ex ? ' (mis à jour)' : ''));
+    if(ex){ ex.name = name; ex.data = copy; ex.u = Date.now(); data._sid = ex.id; }
+    else { var nid = uid(); a.unshift({id:nid, type:type, name:name, data:copy, u:Date.now(), c:Date.now()}); data._sid = nid; }
+    setSaved(a); if(type === 'int') saveI(); else saveM();
+    toast('💾 « ' + name + ' » ' + (ex ? 'mis à jour' : 'enregistré')); render();
+  }
+  function editBar(o){
+    var x = o._sid && saved().find(function(y){ return y.id === o._sid; });
+    if(o._sid && !x){ delete o._sid; return ''; }
+    return x ? '<div class="tm-editing">' + IC('edit') + '<span>Modification de <b>« ' + esc(x.name) + ' »</b> : « Enregistrer » met à jour ce timer.</span><button type="button" data-a="detach">Nouveau</button></div>' : '';
   }
 
   // ---------- Rendu et événements ----------
@@ -22876,6 +22918,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
     if(a === 'savem'){ M.name = (pane.querySelector('#tmMN').value || '').trim() || 'Mes chronos'; saveM(); storeSave('multi', M.name, M); return; }
     if(a === 'runi'){ readI(); launchI(JSON.parse(JSON.stringify(I))); return; }
     if(a === 'savei'){ readI(); storeSave('int', I.name || 'Mon interval', I); return; }
+    if(a === 'detach'){ if(mode === 'int'){ readI(); delete I._sid; I.name = (I.name || 'Mon interval') + ' (nouveau)'; saveI(); } else { delete M._sid; M.name = (M.name || 'Mes chronos') + ' (nouveau)'; saveM(); } toast('Nouveau timer : « Enregistrer » en créera un autre'); render(); return; }
     if(a === 'clrnames'){ readI(); var kept = I.names.slice(); I.names = []; saveI(); render(); toast('Noms effacés'); undoBar('Noms des exercices effacés', function(){ I.names = kept; saveI(); render(); }); return; }
     if(a === 'reord'){ reorder = !reorder; render(); return; }
     if(a === 'qnew'){ SQ = {name:'Mon enchaînement', ids:[], trans:30, tc:false, voice:true}; render(); window.scrollTo({top:pane.getBoundingClientRect().top + window.scrollY - 70}); return; }
@@ -22894,7 +22937,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       if(a === 'sup' || a === 'sdown'){ var ix = arr.indexOf(x), j = ix + (a === 'sup' ? -1 : 1); if(j < 0 || j >= arr.length) return; arr.splice(ix, 1); arr.splice(j, 0, x); setSaved(arr); render(); var el2 = pane.querySelector('[data-sid="' + x.id + '"]'); if(el2){ el2.classList.add('moved'); el2.scrollIntoView({block:'nearest', behavior:'smooth'}); } return; }
       if(a === 'sgo'){ launchI(JSON.parse(JSON.stringify(x.data))); return; }
       if(a === 'sopen' && x.type === 'seq'){ SQ = {id:x.id, name:x.name, ids:(x.data.ids || []).slice(), trans:x.data.trans || 0, tc:!!x.data.tc, voice:x.data.voice !== false}; render(); return; }
-      if(a === 'sopen'){ if(x.type === 'int'){ I = JSON.parse(JSON.stringify(x.data)); saveI(); mode = 'int'; } else { if(anyRun() && !confirmReplace()) return; M = JSON.parse(JSON.stringify(x.data)); saveM(); mode = 'multi'; } lsSet(MODE_K, mode); render(); return; }
+      if(a === 'sopen'){ if(x.type === 'int'){ I = JSON.parse(JSON.stringify(x.data)); I._sid = x.id; I.name = x.name; saveI(); mode = 'int'; } else { if(anyRun() && !confirmReplace()) return; M = JSON.parse(JSON.stringify(x.data)); M._sid = x.id; M.name = x.name; saveM(); mode = 'multi'; } lsSet(MODE_K, mode); render(); window.scrollTo(0, 0); return; }
       if(a === 'sdup'){ var c = JSON.parse(JSON.stringify(x)); c.id = uid(); c.name = x.name + ' (copie)'; c.c = Date.now(); arr.splice(arr.indexOf(x) + 1, 0, c); setSaved(arr); render(); return; }
       if(a === 'sdel'){ sheet('<h4>Supprimer « ' + esc(x.name) + ' » ?</h4><button type="button" class="tm-btn" data-k="ok" style="color:#fff;background:#C8302E">Supprimer</button><button type="button" class="tm-btn" data-k="x">Annuler</button>', function(k){ if(k === 'ok'){ setSaved(saved().filter(function(y){ return y.id !== x.id; })); render(); } }); return; }
     }
