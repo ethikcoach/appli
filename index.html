@@ -22465,6 +22465,94 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
 .cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-ln button:disabled{opacity:.35; box-shadow:none;}
+/* ===== Timer lancé : suit le mode clair / sombre du téléphone ===== */
+@media (prefers-color-scheme: light){
+:root:not([data-theme="dark"]) .tmr{background:#F3F1EA; color:#0E1A14;}
+:root:not([data-theme="dark"]) .tmr::before{opacity:.22;}
+:root:not([data-theme="dark"]) .tmr.work{--acc:#1E9E57;}
+:root:not([data-theme="dark"]) .tmr.rest{--acc:#2A86D6;}
+:root:not([data-theme="dark"]) .tmr.srest{--acc:#7A5BE0;}
+:root:not([data-theme="dark"]) .tmr.prep{--acc:#E0761C;}
+:root:not([data-theme="dark"]) .tmr.trans{--acc:#E08A1A;}
+:root:not([data-theme="dark"]) .tmr.fin{--acc:#C9971E;}
+:root:not([data-theme="dark"]) .tmr-top button{border-color:rgba(14,26,20,.12); background:#fff; color:#0E1A14; box-shadow:0 2px 8px rgba(14,26,20,.08);}
+:root:not([data-theme="dark"]) .tmr-pg i{background:rgba(14,26,20,.1);}
+:root:not([data-theme="dark"]) .tmr-pg i.ok{background:rgba(14,26,20,.45);}
+:root:not([data-theme="dark"]) .tmr.hot .tmr-big{color:#E0601F;}
+:root:not([data-theme="dark"]) .tmr-cnt span{background:rgba(14,26,20,.05); border-color:rgba(14,26,20,.08);}
+:root:not([data-theme="dark"]) .tmr-nx{background:#fff; border-color:rgba(14,26,20,.08); box-shadow:0 2px 10px rgba(14,26,20,.05);}
+:root:not([data-theme="dark"]) .tmr-nx em{color:#B07A12;}
+:root:not([data-theme="dark"]) .tmr-ctl button{background:linear-gradient(180deg, #fff, #EDF0ED); color:#0E1A14; border-color:rgba(14,26,20,.1); box-shadow:inset 0 1px 0 #fff, 0 6px 18px rgba(14,26,20,.1);}
+:root:not([data-theme="dark"]) .tmr-ctl .pp{background:linear-gradient(160deg, #2D5C44, #17322A); color:#fff; box-shadow:0 10px 26px rgba(23,50,42,.3);}
+:root:not([data-theme="dark"]) .tmr.pz .tmr-ctl .pp{background:linear-gradient(180deg, #FFD978, #F5C451); color:#2A1A06;}
+:root:not([data-theme="dark"]) .tmr-ctl .pp.go{background:linear-gradient(180deg, #FFC56E, #FFA22E); color:#1B1206;}
+:root:not([data-theme="dark"]) .tmr-ring .tr{fill:rgba(14,26,20,.025); stroke:rgba(14,26,20,.1);}
+:root:not([data-theme="dark"]) .tmr-ring .tk{opacity:.14;}
+:root:not([data-theme="dark"]) .tmr-tap{color:rgba(14,26,20,.5);}
+:root:not([data-theme="dark"]) .tmr.pz .tmr-tap{color:#B07A12;}
+:root:not([data-theme="dark"]) .tmr-blk{background:rgba(14,26,20,.06); color:rgba(14,26,20,.75);}
+:root:not([data-theme="dark"]) .tmr-sb{background:rgba(14,26,20,.1);}
+:root:not([data-theme="dark"]) .tmr::after{background:#0E1A14; -webkit-mask:var(--ec-wm) no-repeat center / contain; mask:var(--ec-wm) no-repeat center / contain; opacity:.05;}
+:root:not([data-theme="dark"]) .tmr.fin::after{opacity:.07;}
+:root:not([data-theme="dark"]) .tmr-up{background:#fff; border-color:rgba(14,26,20,.08); box-shadow:0 4px 16px rgba(14,26,20,.06);}
+:root:not([data-theme="dark"]) .tmu-top{border-bottom-color:rgba(14,26,20,.08);}
+:root:not([data-theme="dark"]) .tmu-top small{color:#C26A0A;}
+:root:not([data-theme="dark"]) .tmu-r{border-bottom-color:rgba(14,26,20,.08);}
+:root:not([data-theme="dark"]) .tmu-r i{background:#1E9E57;}
+:root:not([data-theme="dark"]) .tmu-r.rest i, :root:not([data-theme="dark"]) .tmu-r.srest i{background:#2A86D6;}
+:root:not([data-theme="dark"]) .tm321{background:radial-gradient(70% 55% at 50% 45%, #DDEFE3 0%, #F3F1EA 70%); color:#0E1A14;}
+:root:not([data-theme="dark"]) .tm321 small{color:rgba(14,26,20,.6);}
+:root:not([data-theme="dark"]) .tm321-n{color:#0E1A14; text-shadow:0 0 50px rgba(47,203,114,.35);}
+:root:not([data-theme="dark"]) .tm321-n.go{color:#1E9E57;}
+:root:not([data-theme="dark"]) .tm321-skip{border-color:rgba(14,26,20,.15); background:#fff; color:rgba(14,26,20,.75);}
+:root:not([data-theme="dark"]) .tm321::before{background:#0E1A14; -webkit-mask:var(--ec-wm) no-repeat center / contain; mask:var(--ec-wm) no-repeat center / contain; opacity:.05;}
+}
+:root[data-theme="light"] .tmr{background:#F3F1EA; color:#0E1A14;}
+:root[data-theme="light"] .tmr::before{opacity:.22;}
+:root[data-theme="light"] .tmr.work{--acc:#1E9E57;}
+:root[data-theme="light"] .tmr.rest{--acc:#2A86D6;}
+:root[data-theme="light"] .tmr.srest{--acc:#7A5BE0;}
+:root[data-theme="light"] .tmr.prep{--acc:#E0761C;}
+:root[data-theme="light"] .tmr.trans{--acc:#E08A1A;}
+:root[data-theme="light"] .tmr.fin{--acc:#C9971E;}
+:root[data-theme="light"] .tmr-top button{border-color:rgba(14,26,20,.12); background:#fff; color:#0E1A14; box-shadow:0 2px 8px rgba(14,26,20,.08);}
+:root[data-theme="light"] .tmr-pg i{background:rgba(14,26,20,.1);}
+:root[data-theme="light"] .tmr-pg i.ok{background:rgba(14,26,20,.45);}
+:root[data-theme="light"] .tmr.hot .tmr-big{color:#E0601F;}
+:root[data-theme="light"] .tmr-cnt span{background:rgba(14,26,20,.05); border-color:rgba(14,26,20,.08);}
+:root[data-theme="light"] .tmr-nx{background:#fff; border-color:rgba(14,26,20,.08); box-shadow:0 2px 10px rgba(14,26,20,.05);}
+:root[data-theme="light"] .tmr-nx em{color:#B07A12;}
+:root[data-theme="light"] .tmr-ctl button{background:linear-gradient(180deg, #fff, #EDF0ED); color:#0E1A14; border-color:rgba(14,26,20,.1); box-shadow:inset 0 1px 0 #fff, 0 6px 18px rgba(14,26,20,.1);}
+:root[data-theme="light"] .tmr-ctl .pp{background:linear-gradient(160deg, #2D5C44, #17322A); color:#fff; box-shadow:0 10px 26px rgba(23,50,42,.3);}
+:root[data-theme="light"] .tmr.pz .tmr-ctl .pp{background:linear-gradient(180deg, #FFD978, #F5C451); color:#2A1A06;}
+:root[data-theme="light"] .tmr-ctl .pp.go{background:linear-gradient(180deg, #FFC56E, #FFA22E); color:#1B1206;}
+:root[data-theme="light"] .tmr-ring .tr{fill:rgba(14,26,20,.025); stroke:rgba(14,26,20,.1);}
+:root[data-theme="light"] .tmr-ring .tk{opacity:.14;}
+:root[data-theme="light"] .tmr-tap{color:rgba(14,26,20,.5);}
+:root[data-theme="light"] .tmr.pz .tmr-tap{color:#B07A12;}
+:root[data-theme="light"] .tmr-blk{background:rgba(14,26,20,.06); color:rgba(14,26,20,.75);}
+:root[data-theme="light"] .tmr-sb{background:rgba(14,26,20,.1);}
+:root[data-theme="light"] .tmr::after{background:#0E1A14; -webkit-mask:var(--ec-wm) no-repeat center / contain; mask:var(--ec-wm) no-repeat center / contain; opacity:.05;}
+:root[data-theme="light"] .tmr.fin::after{opacity:.07;}
+:root[data-theme="light"] .tmr-up{background:#fff; border-color:rgba(14,26,20,.08); box-shadow:0 4px 16px rgba(14,26,20,.06);}
+:root[data-theme="light"] .tmu-top{border-bottom-color:rgba(14,26,20,.08);}
+:root[data-theme="light"] .tmu-top small{color:#C26A0A;}
+:root[data-theme="light"] .tmu-r{border-bottom-color:rgba(14,26,20,.08);}
+:root[data-theme="light"] .tmu-r i{background:#1E9E57;}
+:root[data-theme="light"] .tmu-r.rest i, :root[data-theme="light"] .tmu-r.srest i{background:#2A86D6;}
+:root[data-theme="light"] .tm321{background:radial-gradient(70% 55% at 50% 45%, #DDEFE3 0%, #F3F1EA 70%); color:#0E1A14;}
+:root[data-theme="light"] .tm321 small{color:rgba(14,26,20,.6);}
+:root[data-theme="light"] .tm321-n{color:#0E1A14; text-shadow:0 0 50px rgba(47,203,114,.35);}
+:root[data-theme="light"] .tm321-n.go{color:#1E9E57;}
+:root[data-theme="light"] .tm321-skip{border-color:rgba(14,26,20,.15); background:#fff; color:rgba(14,26,20,.75);}
+:root[data-theme="light"] .tm321::before{background:#0E1A14; -webkit-mask:var(--ec-wm) no-repeat center / contain; mask:var(--ec-wm) no-repeat center / contain; opacity:.05;}
+/* Réorganiser en glissant */
+.tm-sv.ro .tm-grip{position:relative; cursor:grab; touch-action:none; display:grid; place-items:center; gap:0;}
+.tm-sv.ro .tm-grip .tmi{width:20px; height:20px; opacity:.85;}
+.tm-sv.ro .tm-grip em{position:absolute; right:-5px; bottom:-5px; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:#2FCB72; color:#0E1A14; font:800 .66rem/18px Inter, sans-serif; font-style:normal; text-align:center;}
+.tm-sv.ro{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
+.tm-sv.drag{position:relative; z-index:6; box-shadow:0 18px 40px rgba(0,0,0,.22) !important; border-style:solid !important; border-color:#2FCB72 !important; transition:none !important; cursor:grabbing; scale:1.02;}
+
 /* Transition d'enchaînement : aperçu du timer suivant */
 .tmr.trans .tmr-mid{flex:0 0 auto; gap:8px; padding-top:6px;}
 .tmr.trans .tmr-ring{width:min(48vw, 24vh, 260px);}
@@ -22903,10 +22991,10 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   function savedHtml(){
     var a = saved();
     if(SQ) return seqEditorHtml();
-    return '<div class="tm-card"><div class="tm-sv-h"><h3>📁 Mes chronos enregistrés</h3>' + (a.length > 1 ? '<button type="button" class="tm-btn sm' + (reorder ? ' go' : '') + '" data-a="reord">' + (reorder ? IC('check') + 'Terminé' : IC('sort') + 'Réorganiser') + '</button>' : '') + '</div><p>Prépare tes séances à l’avance : interval timers et séries de chronos se retrouvent ici, sur ton iPad comme sur ton iPhone (synchro dès qu’il y a du réseau).</p>'
+    return '<div class="tm-card"><div class="tm-sv-h"><h3>📁 Mes chronos enregistrés</h3>' + (a.length > 1 ? '<button type="button" class="tm-btn sm' + (reorder ? ' go' : '') + '" data-a="reord">' + (reorder ? IC('check') + 'Terminé' : IC('sort') + 'Réorganiser') + '</button>' : '') + '</div><p>' + (reorder ? '<b>Glisse un timer</b> (poignée à gauche, ou appui long) pour le déplacer, ou utilise les flèches.' : 'Prépare tes séances à l’avance : interval timers et séries de chronos se retrouvent ici, sur ton iPad comme sur ton iPhone (synchro dès qu’il y a du réseau).') + '</p>'
       + (a.some(function(x){ return x.type === 'int'; }) && !reorder ? '<button type="button" class="tm-btn tm-sq-new" data-a="qnew">' + IC('link') + 'Enchaîner des timers</button>' : '')
       + (a.length ? a.map(function(x){ var sum = x.type === 'seq' ? (function(){ var ps = seqParts(x.data); return ps.length + ' timer' + (ps.length > 1 ? 's' : '') + (x.data.tc ? ' · transition chrono libre' : x.data.trans ? ' · transition ' + fmtS(x.data.trans) : '') + ' · ' + fmt(total(x.data) * 1000).replace(/<\/?small>/g, '') + ' : ' + ps.map(function(p){ return p.name; }).join(' → '); })() : x.type === 'int' ? fmtS(x.data.work) + ' / ' + fmtS(x.data.rest) + ' × ' + x.data.reps + (x.data.sets > 1 ? ' × ' + x.data.sets + ' séries' : '') + ' · ' + fmt(total(x.data) * 1000) : x.data.items.length + ' chrono' + (x.data.items.length > 1 ? 's' : '') + ' : ' + x.data.items.slice(0, 4).map(function(i){ return i.n; }).join(', ') + (x.data.items.length > 4 ? '…' : '');
-          return '<div class="tm-sv' + (reorder ? ' ro' : '') + (x.type === 'seq' ? ' sq' : '') + '" data-sid="' + x.id + '"><i>' + (reorder ? (a.indexOf(x) + 1) : IC(x.type === 'seq' ? 'link' : x.type === 'int' ? 'repeat' : 'watch')) + '</i><span><b>' + esc(x.name) + '</b><small>' + esc(sum) + '</small></span>'
+          return '<div class="tm-sv' + (reorder ? ' ro' : '') + (x.type === 'seq' ? ' sq' : '') + '" data-sid="' + x.id + '"><i' + (reorder ? ' class="tm-grip" aria-label="Glisser pour déplacer"' : '') + '>' + (reorder ? '<svg class="tmi" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></g></svg><em>' + (a.indexOf(x) + 1) + '</em>' : IC(x.type === 'seq' ? 'link' : x.type === 'int' ? 'repeat' : 'watch')) + '</i><span><b>' + esc(x.name) + '</b><small>' + esc(sum) + '</small></span>'
             + (reorder ? '<button type="button" data-a="sup" aria-label="Monter"' + (a.indexOf(x) === 0 ? ' disabled' : '') + '>' + IC('up') + '</button><button type="button" data-a="sdown" aria-label="Descendre"' + (a.indexOf(x) === a.length - 1 ? ' disabled' : '') + '>' + IC('down') + '</button>'
               : (x.type !== 'multi' ? '<button type="button" class="go" data-a="sgo">' + IC('play') + '<span>Lancer</span></button>' : '') + '<button type="button" data-a="sopen" aria-label="Ouvrir">' + IC('edit') + '</button><button type="button" data-a="sdup" aria-label="Dupliquer">' + IC('copy') + '</button><button type="button" data-a="sdel" aria-label="Supprimer">' + IC('trash') + '</button>') + '</div>'; }).join('')
         : '<div class="tm-empty">Rien d’enregistré pour l’instant. Prépare un interval timer ou une série de chronos, puis « 💾 Enregistrer ».</div>')
@@ -23036,6 +23124,35 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   var tabs = document.getElementById('ctTabs');
   function showActive(){ var a = tabs && tabs.querySelector('.active'); if(a && tabs.scrollWidth > tabs.clientWidth) tabs.scrollTo({left:Math.max(0, a.offsetLeft - (tabs.clientWidth - a.offsetWidth) / 2), behavior:'smooth'}); }
   if(tabs){ tabs.addEventListener('click', function(){ setTimeout(showActive, 30); }); setTimeout(showActive, 400); new MutationObserver(function(){ showActive(); }).observe(tabs, {subtree:true, attributes:true, attributeFilter:['class']}); if('IntersectionObserver' in window) new IntersectionObserver(function(es){ if(es[0] && es[0].isIntersecting){ var a = tabs.querySelector('.active'); if(a && tabs.scrollWidth > tabs.clientWidth) tabs.scrollLeft = Math.max(0, a.offsetLeft - (tabs.clientWidth - a.offsetWidth) / 2); } }).observe(tabs); }
+  // Réorganiser en glissant : poignée = déplacement immédiat, ailleurs sur la ligne = appui long
+  (function(){
+    var DG = null;
+    function start(){ DG.on = true; DG.row.classList.add('drag'); try{ DG.row.setPointerCapture(DG.pid); }catch(x){} vib(12); }
+    pane.addEventListener('pointerdown', function(e){
+      var row = e.target.closest('.tm-sv.ro'); if(!row || e.target.closest('button')) return;
+      DG = {row:row, y0:e.clientY, base:e.clientY, pid:e.pointerId, on:false, tm:null};
+      if(e.target.closest('.tm-grip')){ e.preventDefault(); start(); } else DG.tm = setTimeout(function(){ if(DG && !DG.on) start(); }, 300);
+    });
+    pane.addEventListener('pointermove', function(e){
+      if(!DG) return;
+      if(!DG.on){ if(Math.abs(e.clientY - DG.y0) > 8){ clearTimeout(DG.tm); DG = null; } return; }
+      var r = DG.row, dy = e.clientY - DG.base, nx = r.nextElementSibling, pv = r.previousElementSibling;
+      if(nx && nx.classList.contains('tm-sv') && dy > nx.offsetHeight / 2){ var h = nx.offsetHeight + 8; nx.after(r); DG.base += h; dy -= h; }
+      else if(pv && pv.classList.contains('tm-sv') && -dy > pv.offsetHeight / 2){ var h2 = pv.offsetHeight + 8; pv.before(r); DG.base -= h2; dy += h2; }
+      r.style.transform = 'translateY(' + dy + 'px)';
+      var vh = window.innerHeight; if(e.clientY > vh - 70) window.scrollBy(0, 12); else if(e.clientY < 90) window.scrollBy(0, -12);
+    });
+    function end(){
+      if(!DG) return; clearTimeout(DG.tm); var was = DG.on, row = DG.row; DG = null; if(!was) return;
+      row.style.transform = ''; row.classList.remove('drag');
+      var ids = [].map.call(pane.querySelectorAll('.tm-sv[data-sid]'), function(x){ return x.getAttribute('data-sid'); });
+      var arr = saved(); arr.sort(function(a, b){ return ids.indexOf(a.id) - ids.indexOf(b.id); }); setSaved(arr); render();
+      var el2 = pane.querySelector('[data-sid="' + row.getAttribute('data-sid') + '"]'); if(el2) el2.classList.add('moved');
+    }
+    pane.addEventListener('pointerup', end); pane.addEventListener('pointercancel', end);
+    document.addEventListener('touchmove', function(e){ if(DG && DG.on) e.preventDefault(); }, {passive:false});
+    pane.addEventListener('contextmenu', function(e){ if(e.target.closest('.tm-sv.ro')) e.preventDefault(); });
+  })();
   window.ecTimersTest = {steps:steps, total:total, M:function(){ return M; }, I:function(){ return I; }, parseT:parseT};
 })();
 </script>
