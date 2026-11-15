@@ -22496,6 +22496,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .tmp-r i{width:10px; height:10px; border-radius:50%; flex:none; background:#2E9E5E;} .tmp-r.rest i, .tmp-r.srest i{background:#3A7BC8;} .tmp-r.prep i{background:#F5C451;} .tmp-r.trans i{background:#FFB347;}
 .tmp-r span{flex:1; min-width:0;} .tmp-r.work span{font-weight:800;} .tmp-r:not(.work) span{color:var(--stone);}
 .tmp-r b{font:800 .92rem/1 'Bricolage Grotesque', sans-serif; font-variant-numeric:tabular-nums;}
+.tmp-seq{display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin:0 0 10px;}
+.tmp-seq span{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:12px; background:color-mix(in srgb, var(--card, #fff) 88%, #8FA39A); font:700 .8rem/1.1 Inter, sans-serif; color:var(--stone);}
+.tmp-seq span.on{background:linear-gradient(160deg, #3CC377, #1A6A3E); color:#fff;}
+.tmp-seq em{font-style:normal; display:inline-grid; place-items:center; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.12); font:800 .7rem/1 Inter, sans-serif;}
+.tmp-seq i{font-style:normal; opacity:.45; font-weight:800;}
+.tmp-first{padding:10px 12px; margin:0 0 4px; border-radius:14px; background:rgba(46,158,94,.1);}
+.tmp-first small{display:block; font:800 .7rem/1 Inter, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#2E9E5E;}
+.tmp-first b{display:block; margin:4px 0 2px; font:800 1.05rem/1.2 'Bricolage Grotesque', sans-serif;}
+.tmp-first span{font:700 .8rem/1 Inter, sans-serif; color:var(--stone);}
 .tmp-acts{display:grid; grid-template-columns:1fr 2fr; gap:8px; position:sticky; bottom:0;} .tmp-acts .tm-btn{min-height:52px; width:100%;}
 
 /* Côté client : Mes données (feuille) + renvoi voix vers Réglages + bibliothèque plus fluide */
@@ -22772,21 +22781,27 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   var R = null;
   // Aperçu du déroulé avant de commencer ; « Démarrer » lance le timer dans le toucher (voix autorisée sur iPhone)
   function launchI(c){
-    var S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
+    var c0 = c, S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
     var tot = S.reduce(function(a, x){ return a + x.d; }, 0), free = S.some(function(x){ return x.free; });
     var LAB = {prep:'Préparation', work:'', rest:'Récup', srest:'Récup entre séries', trans:'Transition'};
-    var rows = '', lastBlk = null, lastSet = null, nWork = 0;
+    var rows = '', lastBlk = null, lastSet = null, nWork = 0, seqHead = '';
+    // Enchaînement : on présente le 1er timer (les suivants s'affichent pendant chaque transition)
+    if(c.seq){
+      var parts = seqParts(c), first = S.filter(function(x){ return x.bi === 0 && x.k !== 'trans'; }), ftot = first.reduce(function(a, x){ return a + x.d; }, 0);
+      seqHead = '<div class="tmp-seq">' + parts.map(function(p, i){ return '<span class="' + (i ? '' : 'on') + '"><em>' + (i + 1) + '</em>' + esc(p.name) + '</span>'; }).join('<i>›</i>') + '</div>'
+        + '<div class="tmp-first"><small>Premier timer</small><b>' + esc(parts[0] ? parts[0].name : '') + '</b><span>' + fmt(ftot * 1000).replace(/<\/?small>/g, '') + ' · ' + first.filter(function(x){ return x.k === 'work'; }).length + ' exercices</span></div>';
+      S = first; c = Object.assign({}, c, {_T:first[0] && first[0].T});
+    }
     S.forEach(function(x){
-      if(c.seq && x.blk !== lastBlk && x.k !== 'trans'){ rows += '<div class="tmp-h blk">' + IC('repeat') + esc(x.blk || 'Timer') + '</div>'; lastBlk = x.blk; lastSet = null; }
       if(x.k === 'work' && (x.T || Math.max(1, c.sets | 0)) > 1 && x.s !== lastSet){ rows += '<div class="tmp-h">Série ' + x.s + '/' + (x.T || Math.max(1, c.sets | 0)) + '</div>'; lastSet = x.s; }
       if(x.k === 'work') nWork++;
       var nm = x.k === 'work' ? esc(x.lab) : x.k === 'trans' ? (x.free ? 'Transition libre (chrono)' : 'Transition') + ' → ' + esc(x.nb || '') : LAB[x.k];
       rows += '<div class="tmp-r ' + x.k + '"><i></i><span>' + nm + '</span><b>' + (x.free ? 'libre' : fmtS(x.d)) + '</b></div>';
     });
     var tl = '<div class="tm-tl tmp-tl">' + S.map(function(x){ return '<i class="' + x.k + (x.free ? ' free' : '') + '" style="flex:' + (x.free ? Math.max(10, Math.round(tot * .04)) : x.d) + '"></i>'; }).join('') + '</div>';
-    sheet('<div class="tmp-top"><small>' + (c.seq ? 'Enchaînement' : 'Interval timer') + '</small><h4>' + esc(c.name || 'Timer') + '</h4><div class="tmp-sum"><span>' + IC('watch') + fmt(tot * 1000).replace(/<\/?small>/g, '') + (free ? ' + libre' : '') + '</span><span>' + nWork + ' exercice' + (nWork > 1 ? 's' : '') + '</span>' + (c.voice !== false ? '<span>Avec la voix</span>' : '<span>Sans voix</span>') + '</div>' + tl + '</div>'
+    sheet('<div class="tmp-top"><small>' + (c0.seq ? 'Enchaînement' : 'Interval timer') + '</small><h4>' + esc(c0.name || 'Timer') + '</h4><div class="tmp-sum"><span>' + IC('watch') + fmt(tot * 1000).replace(/<\/?small>/g, '') + (free ? ' + libre' : '') + '</span>' + (c0.seq ? '<span>' + seqParts(c0).length + ' timers</span>' : '<span>' + nWork + ' exercice' + (nWork > 1 ? 's' : '') + '</span>') + (c0.voice !== false ? '<span>Avec la voix</span>' : '<span>Sans voix</span>') + '</div>' + (c0.seq ? seqHead : tl) + '</div>'
       + '<div class="tmp-list">' + rows + '</div>'
-      + '<div class="tmp-acts"><button type="button" class="tm-btn" data-k="x">Annuler</button><button type="button" class="tm-btn go" data-k="go">' + IC('play') + 'Démarrer</button></div>', function(k){ if(k === 'go') runInterval(c); });
+      + '<div class="tmp-acts"><button type="button" class="tm-btn" data-k="x">Annuler</button><button type="button" class="tm-btn go" data-k="go">' + IC('play') + (c0.seq ? 'Démarrer l’enchaînement' : 'Démarrer') + '</button></div>', function(k){ if(k === 'go') runInterval(c0); });
   }   // la préparation sert de départ : la 1re annonce part dans le toucher (exigé par l'iPhone pour la voix)
   function runInterval(c){
     var S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
