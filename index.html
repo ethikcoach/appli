@@ -22465,6 +22465,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 .cl-ln button.sd[aria-pressed="true"]{background:linear-gradient(160deg, #3CC377 0%, #23874F 55%, #1A6A3E 100%); color:#fff; border-color:transparent; box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 6px 14px rgba(35,135,79,.3);}
 .cl-ln button[data-e="del"]{color:#C8302E; background:rgba(200,48,46,.09); border-color:transparent; box-shadow:none;}
 .cl-ln button:disabled{opacity:.35; box-shadow:none;}
+/* Enchaînement : glisser pour réordonner */
+.tm-sq-it{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; position:relative;}
+.tm-sq-it .tm-qgrip{position:relative; cursor:grab; touch-action:none; width:36px; height:36px;}
+.tm-sq-it .tm-qgrip .tmi{width:19px; height:19px;}
+.tm-sq-it .tm-qgrip u{position:absolute; right:-5px; bottom:-5px; min-width:17px; height:17px; padding:0 3px; border-radius:9px; background:#F5C451; color:#2A1A06; font:800 .64rem/17px Inter, sans-serif; text-decoration:none; text-align:center;}
+.tm-sq-it.drag{z-index:6; box-shadow:0 18px 40px rgba(0,0,0,.22); border-color:#2FCB72; transition:none; scale:1.02; cursor:grabbing;}
+.tm-sq-it.drop-b{box-shadow:0 -4px 0 0 #2FCB72;} .tm-sq-it.drop-a{box-shadow:0 4px 0 0 #2FCB72;}
+.tm-sq-it.moved{animation:tmMoved .6s ease;}
+@keyframes tmMoved{0%{background:rgba(47,203,114,.25);} 100%{background:var(--card, #fff);}}
+
 /* ===== Timer lancé : suit le mode clair / sombre du téléphone ===== */
 @media (prefers-color-scheme: light){
 :root:not([data-theme="dark"]) .tmr{background:#F3F1EA; color:#0E1A14;}
@@ -22980,7 +22990,7 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
       + '<span class="tm-lab">Transition entre les timers</span><div class="tm-chips" id="tmSqM"><button type="button" data-tm="0" aria-pressed="' + !SQ.tc + '">' + IC('hourglass') + 'Timer (durée fixe)</button><button type="button" data-tm="1" aria-pressed="' + !!SQ.tc + '">' + IC('watch') + 'Chrono (je relance)</button></div>'
       + (SQ.tc ? '<p class="tm-hint" style="margin:6px 0 0;font-size:.82rem;opacity:.75">Entre deux timers, un chrono tourne librement : touche « Continuer » quand tu es prêt. La préparation du timer suivant s’applique ensuite.</p>' : '<div class="tm-chips" id="tmSqT">' + TR_CH.map(function(v){ return '<button type="button" data-tr="' + v + '" aria-pressed="' + (SQ.trans === v) + '">' + (v ? fmtS(v) : 'Aucune') + '</button>'; }).join('') + '</div>')
       + '<span class="tm-lab">Ordre des timers</span>'
-      + (parts.length ? '<div class="tm-sq-l">' + parts.map(function(x, i){ var d = x.data; return (i && SQ.tc ? '<div class="tm-sq-tr">⏱ Transition chrono · tu relances</div>' : i && SQ.trans ? '<div class="tm-sq-tr">⏳ Transition ' + fmtS(SQ.trans) + '</div>' : '') + '<div class="tm-sq-it" data-qi="' + i + '"><em>' + (i + 1) + '</em><span><b>' + esc(x.name) + '</b><small>' + fmtS(d.work) + ' / ' + fmtS(d.rest) + ' × ' + d.reps + (d.sets > 1 ? ' × ' + d.sets : '') + ' · ' + fmt(total(d) * 1000).replace(/<\/?small>/g, '') + '</small></span><button type="button" data-a="qup"' + (i ? '' : ' disabled') + '>' + IC('up') + '</button><button type="button" data-a="qdn"' + (i < parts.length - 1 ? '' : ' disabled') + '>' + IC('down') + '</button><button type="button" data-a="qrm" aria-label="Retirer">' + IC('x') + '</button></div>'; }).join('') + '</div>'
+      + (parts.length ? '<div class="tm-sq-l">' + parts.map(function(x, i){ var d = x.data; return (i && SQ.tc ? '<div class="tm-sq-tr">⏱ Transition chrono · tu relances</div>' : i && SQ.trans ? '<div class="tm-sq-tr">⏳ Transition ' + fmtS(SQ.trans) + '</div>' : '') + '<div class="tm-sq-it" data-qi="' + i + '"><em class="tm-qgrip" aria-label="Glisser pour déplacer"><svg class="tmi" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></g></svg><u>' + (i + 1) + '</u></em><span><b>' + esc(x.name) + '</b><small>' + fmtS(d.work) + ' / ' + fmtS(d.rest) + ' × ' + d.reps + (d.sets > 1 ? ' × ' + d.sets : '') + ' · ' + fmt(total(d) * 1000).replace(/<\/?small>/g, '') + '</small></span><button type="button" data-a="qup"' + (i ? '' : ' disabled') + '>' + IC('up') + '</button><button type="button" data-a="qdn"' + (i < parts.length - 1 ? '' : ' disabled') + '>' + IC('down') + '</button><button type="button" data-a="qrm" aria-label="Retirer">' + IC('x') + '</button></div>'; }).join('') + '</div>'
         : '<div class="tm-empty" style="padding:12px">Ajoute des timers ci-dessous.</div>')
       + (segs.length ? '<div class="tm-tl" style="margin-top:10px">' + segs.map(function(x){ return '<i class="' + x.k + (x.free ? ' free' : '') + '" style="flex:' + (x.free ? Math.max(10, Math.round(tot * .04)) : x.d) + '"></i>'; }).join('') + '<span class="tm-tl-lg"><b class="work"></b>Travail <b class="rest"></b>Récup <b class="srest"></b>Entre séries <b class="trans"></b>Transition</span></div>' : '')
       + '<div class="tm-sum">⏱ Durée totale ' + fmt(tot * 1000).replace(/<\/?small>/g, '') + (SQ.tc && parts.length > 1 ? ' + transitions libres' : '') + ' · ' + parts.length + ' timer' + (parts.length > 1 ? 's' : '') + '</div>'
@@ -23152,6 +23162,37 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
     pane.addEventListener('pointerup', end); pane.addEventListener('pointercancel', end);
     document.addEventListener('touchmove', function(e){ if(DG && DG.on) e.preventDefault(); }, {passive:false});
     pane.addEventListener('contextmenu', function(e){ if(e.target.closest('.tm-sv.ro')) e.preventDefault(); });
+  })();
+  // Enchaînement en cours de modification : glisser les timers pour changer l'ordre (poignée, ou appui long)
+  (function(){
+    var Q = null;
+    function items(){ return [].slice.call(pane.querySelectorAll('.tm-sq-it[data-qi]')); }
+    function start(){ Q.on = true; Q.row.classList.add('drag'); Q.rects = items().map(function(x){ var r = x.getBoundingClientRect(); return {el:x, mid:r.top + r.height / 2 + window.scrollY}; }); try{ Q.row.setPointerCapture(Q.pid); }catch(x){} vib(12); }
+    pane.addEventListener('pointerdown', function(e){
+      var row = e.target.closest('.tm-sq-it'); if(!row || !SQ || e.target.closest('button')) return;
+      Q = {row:row, from:+row.getAttribute('data-qi'), y0:e.clientY, sy:window.scrollY, pid:e.pointerId, on:false, to:+row.getAttribute('data-qi')};
+      if(e.target.closest('.tm-qgrip')){ e.preventDefault(); start(); } else Q.tm = setTimeout(function(){ if(Q && !Q.on) start(); }, 300);
+    });
+    pane.addEventListener('pointermove', function(e){
+      if(!Q) return;
+      if(!Q.on){ if(Math.abs(e.clientY - Q.y0) > 8){ clearTimeout(Q.tm); Q = null; } return; }
+      var vh = window.innerHeight; if(e.clientY > vh - 70) window.scrollBy(0, 12); else if(e.clientY < 90) window.scrollBy(0, -12);
+      var y = e.clientY + window.scrollY, dy = e.clientY - Q.y0 + (window.scrollY - Q.sy);
+      Q.row.style.transform = 'translateY(' + dy + 'px)';
+      var to = 0; Q.rects.forEach(function(r){ if(r.el !== Q.row && y > r.mid) to++; }); Q.to = to;
+      Q.rects.forEach(function(r){ r.el.classList.remove('drop-b', 'drop-a'); });
+      var others = Q.rects.filter(function(r){ return r.el !== Q.row; });
+      if(to < others.length) others[to].el.classList.add('drop-b'); else if(others.length) others[others.length - 1].el.classList.add('drop-a');
+    });
+    function end(){
+      if(!Q) return; clearTimeout(Q.tm); var q = Q; Q = null; if(!q.on) return;
+      if(q.to !== q.from && SQ){ readSQ(); var id = SQ.ids.splice(q.from, 1)[0]; SQ.ids.splice(q.to, 0, id); }
+      render();
+      var el2 = pane.querySelector('.tm-sq-it[data-qi="' + q.to + '"]'); if(el2) el2.classList.add('moved');
+    }
+    pane.addEventListener('pointerup', end); pane.addEventListener('pointercancel', end);
+    document.addEventListener('touchmove', function(e){ if(Q && Q.on) e.preventDefault(); }, {passive:false});
+    pane.addEventListener('contextmenu', function(e){ if(e.target.closest('.tm-sq-it')) e.preventDefault(); });
   })();
   window.ecTimersTest = {steps:steps, total:total, M:function(){ return M; }, I:function(){ return I; }, parseT:parseT};
 })();
