@@ -20529,6 +20529,9 @@
   function bigPos(p){
     // Dès que le téléphone est sur un exercice (avant même le chrono), l'iPad l'affiche en grand
     var show = p && /^(pret|chrono|pause|recup)$/.test(p.etat);
+    // Après un tirage, la série reste affichée tant que le chrono n'a pas démarré sur le téléphone
+    if(p && st && (/^(chrono|pause|recup)$/.test(p.etat) || p.i > 0 || p.c === 2)){ st.bigOk = st.bigOk || {}; st.bigOk[p.n] = 1; }
+    if(show && !(st.bigOk && st.bigOk[p.n])) show = false;
     if(show && st.revealUntil && Date.now() < st.revealUntil) return;   // on laisse finir l'animation du tirage
     if(!show){ bigClose(); BIG.hide = ''; return; }
     var k = bigKey(p); if(BIG.hide && BIG.hide === k) return;
