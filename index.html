@@ -20493,13 +20493,26 @@
     }).catch(function(){}).then(function(){ pollT = setTimeout(pollPos, 1500); });
   }
   // ---------- Fin de tour : animation de réussite avant le tirage suivant ----------
+  // L'écran « Bravo » reste par-dessus, en transparence, pendant que le tirage du tour suivant se fait derrière
+  function winAuto(n){
+    var w = st.winEl; if(!w) return;
+    var acts = w.querySelector('.stx-win-acts'); if(acts) acts.outerHTML = '<span class="stx-win-nx">' + I('dice') + 'Tirage du tour ' + (n + 1) + '…</span>';
+    w.classList.add('auto'); st.winAuto = true; clearTimeout(st.winT);
+    st.winT = setTimeout(function(){ if(st && st.winEl === w){ w.classList.add('out'); st.winT = setTimeout(winClose, 450); } }, reduce ? 1200 : 3400);
+  }
+  // « Bravo » en transparence par-dessus la série du tour qui vient d'être fait, puis tirage du tour suivant
   function nextTour(){
-    if(!st) return; st.cur = st.tours.length - 1; st.req[st.cur + 2] = 1;
-    if(st.winEl){ winClose(); newTour(); return; }
-    if(st.tours.length && !st.won[st.cur + 1]){ tourWin(st.cur + 1, function(){ newTour(); }); return; }
+    if(!st) return; st.cur = st.tours.length - 1; st.req[st.cur + 2] = 1; var n = st.cur + 1;
+    if(st.winEl && !st.winAuto){ winClose(); newTour(); return; }
+    if(st.winEl) return;   // animation déjà en cours
+    if(st.tours.length && !st.won[n]){
+      tourWin(n, true); var w = st.winEl; st.winAuto = true;
+      st.winT = setTimeout(function(){ if(!st || st.winEl !== w) return; w.classList.add('out'); st.winT = setTimeout(function(){ winClose(); newTour(); }, 450); }, reduce ? 1200 : 3000);
+      return;
+    }
     newTour();
   }
-  function winClose(){ if(st && st.winEl){ clearTimeout(st.winT); st.winEl.remove(); st.winEl = null; } }
+  function winClose(){ if(st){ st.winAuto = false; st.el.classList.remove('winning'); if(st.winEl){ clearTimeout(st.winT); st.winEl.remove(); st.winEl = null; } } }
   function tourWin(n, cb){
     if(!st) return; st.won[n] = 1; winClose(); bigClose();
     var C = ['#F5C451', '#FF9F43', '#2FCB72', '#4DB2FF', '#FF5C8A', '#B58CFF', '#FFFFFF', '#FFD978'], cf = '';
@@ -20507,9 +20520,8 @@
     var w = document.createElement('div'); w.className = 'stx-win';
     w.innerHTML = '<div class="clv-party" aria-hidden="true">' + cf + '</div><div class="clv-fin"><div class="clv-cup"><span class="clv-rays"></span><span class="clv-glow"></span><i>🏆</i></div><b class="clv-bravo">Bravo !</b><span class="clv-sub">Tour ' + n + ' terminé</span>'
       + (cb ? '<span class="stx-win-nx">' + I('dice') + 'Tirage du tour ' + (n + 1) + '…</span>' : '<div class="stx-win-acts"><button type="button" class="stx-win-b" data-a="winx">' + I('list') + 'Voir la série</button><button type="button" class="stx-win-b go" data-a="next">' + I('dice') + 'Tour suivant</button></div>') + '</div>';
-    st.el.appendChild(w); st.winEl = w;
+    st.el.appendChild(w); st.winEl = w; st.el.classList.add('winning');
     fanfare(); setTimeout(ding, 450); try{ navigator.vibrate && navigator.vibrate([60, 40, 60]); }catch(x){}
-    if(cb) st.winT = setTimeout(function(){ winClose(); cb(); }, reduce ? 900 : 2600);
   }
   // ---------- Grand chrono sur l'iPad (lancé depuis le téléphone) ----------
   var BIG = {p:null, el:null, iv:0, hide:'', last:-1};
@@ -23139,7 +23151,15 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 .stx:not(.clt) .stx-dfc.now .stx-f{transform:none;}
 .stx:not(.clt) .stx-dfc.now::after{bottom:-6px;}
 /* ===== Tirage studio : réussite en fin de tour ===== */
-.stx-win{position:absolute; inset:0; z-index:9; display:flex; align-items:center; justify-content:center; padding:20px; background:radial-gradient(ellipse 80% 70% at 50% 40%, color-mix(in srgb, var(--a1) 70%, var(--a2)), var(--a2) 75%); animation:tmIn .3s ease;}
+.stx-win{position:absolute; inset:0; z-index:9; display:flex; align-items:center; justify-content:center; padding:20px; background:radial-gradient(ellipse 70% 60% at 50% 42%, color-mix(in srgb, var(--a2) 78%, transparent), color-mix(in srgb, var(--a2) 52%, transparent) 80%); animation:tmIn .3s ease;}
+.stx-win.auto{pointer-events:none;}
+.stx.winning .stx-c.done .stx-f{opacity:1; filter:none;}
+.stx.winning .stx-c.now .stx-f{transform:none;}
+.stx.winning .stx-c.now::after{display:none;}
+.stx-win.out{animation:winOut .45s ease forwards;}
+@keyframes winOut{to{opacity:0;}}
+.stx-win .clv-sub, .stx-win .stx-win-nx{text-shadow:0 2px 12px rgba(0,0,0,.55);}
+.stx-win .clv-bravo{filter:drop-shadow(0 4px 18px rgba(0,0,0,.45));}
 .stx-win .clv-fin{z-index:3;}
 .stx-win .clv-party{z-index:2;}
 .stx-win-nx{display:inline-flex; align-items:center; gap:8px; margin-top:2vh; font:700 1rem/1 Inter, sans-serif; opacity:.8; animation:clvUp .5s ease 1s both;}
@@ -23148,8 +23168,10 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 .stx-win-b{display:inline-flex; align-items:center; gap:9px; min-height:56px; padding:0 22px; border-radius:18px; border:1px solid rgba(255,255,255,.14); background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06)); color:#fff; font:800 1rem/1 Inter, sans-serif; cursor:pointer;}
 .stx-win-b.go{border:none; background:linear-gradient(180deg, color-mix(in srgb, var(--gold) 78%, #fff), color-mix(in srgb, var(--gold) 82%, #B07A12)); color:#2A1A06; box-shadow:0 10px 26px color-mix(in srgb, var(--gold) 40%, transparent);}
 .stx-win-b .tmi{width:21px; height:21px;}
-@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .stx-win{background:radial-gradient(ellipse 80% 70% at 50% 40%, color-mix(in srgb, var(--a1) 22%, #FFFFFF), #F3F1EA 75%); color:#0E1A14;} :root:not([data-theme="dark"]) .stx-win-b:not(.go){background:#fff; color:#0E1A14; border-color:rgba(14,26,20,.12);} }
-:root[data-theme="light"] .stx-win{background:radial-gradient(ellipse 80% 70% at 50% 40%, color-mix(in srgb, var(--a1) 22%, #FFFFFF), #F3F1EA 75%); color:#0E1A14;}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .stx-win{background:radial-gradient(ellipse 70% 60% at 50% 42%, rgba(255,255,255,.82), rgba(243,241,234,.55) 80%); color:#0E1A14;} :root:not([data-theme="dark"]) .stx-win .clv-sub, :root:not([data-theme="dark"]) .stx-win .stx-win-nx{text-shadow:0 1px 10px rgba(255,255,255,.9);} :root:not([data-theme="dark"]) .stx-win .clv-bravo{filter:drop-shadow(0 3px 14px rgba(255,255,255,.9));} :root:not([data-theme="dark"]) .stx-win-b:not(.go){background:#fff; color:#0E1A14; border-color:rgba(14,26,20,.12);} }
+:root[data-theme="light"] .stx-win{background:radial-gradient(ellipse 70% 60% at 50% 42%, rgba(255,255,255,.82), rgba(243,241,234,.55) 80%); color:#0E1A14;}
+:root[data-theme="light"] .stx-win .clv-sub, :root[data-theme="light"] .stx-win .stx-win-nx{text-shadow:0 1px 10px rgba(255,255,255,.9);}
+:root[data-theme="light"] .stx-win .clv-bravo{filter:drop-shadow(0 3px 14px rgba(255,255,255,.9));}
 :root[data-theme="light"] .stx-win-b:not(.go){background:#fff; color:#0E1A14; border-color:rgba(14,26,20,.12);}
 /* ===== Tirage studio : harmonisé avec Coaching et Timers ===== */
 .ss-hero{margin-bottom:12px;}
