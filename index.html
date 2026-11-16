@@ -21859,7 +21859,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function showQR(nom, s){
     var svg = '';
     if(qrLib()){ try{ var q = window.qrcode(0, 'L'); q.addData(codeOf(nom, s)); q.make(); svg = q.createSvgTag({cellSize:6, margin:2, scalable:true}); }catch(e){ svg = ''; } }
-    sheet('<h4>📷 Séance de ' + esc(nom) + '</h4><p>Sur l’iPad : <b>Espace coach › Clients › 📷 Scanner</b>, puis vise ce code. La séance s’affiche en grand, sans internet.</p><div class="qr-box">' + (svg || '<p>QR indisponible (séance trop longue)</p>') + '</div><button type="button" class="cl-btn ghost" data-k="x">Fermer</button>');
+    sheet('<h4>📷 Séance de ' + esc(nom) + '</h4><p>Sur l’autre appareil : <b>Espace coach › Réglages › Coaching · iPad ↔ iPhone › Scanner</b>, puis vise ce code avec l’appareil photo. La séance s’affiche en grand, sans internet.</p><div class="qr-box">' + (svg || '<p>QR indisponible (séance trop longue)</p>') + '</div><button type="button" class="cl-btn ghost" data-k="x">Fermer</button>');
   }
   function scanQR(){
     if(!qrLib()){ toast('Lecteur de QR indisponible'); return; }
