@@ -20592,7 +20592,7 @@
     var p = D ? '' : photo(e), pn = nx && !ND ? photo(nx) : '';
     var h;
     if(R.state === 'fin'){
-      h = '<div class="stp-wait"><i>🎉</i><b>Tour ' + t.n + ' terminé !</b><span>Récup <b id="stpRec">+0:00</b></span><span>Le prochain tour arrivera ici dès que tu le tires sur l’iPad.</span><button type="button" class="stp-sm" data-r="restart">' + I('reset') + 'Refaire ce tour</button></div>';
+      h = '<div class="stp-wait"><i>🎉</i><b>Tour ' + t.n + ' terminé !</b><span>Le prochain tour arrivera ici dès que tu le tires sur l’iPad.</span><button type="button" class="stp-sm" data-r="restart">' + I('reset') + 'Refaire ce tour</button></div>';
     } else {
       h = (D ? '<div class="stp-ph stp-dph"><i>' + D.ic + '</i><b>' + esc(D.t) + '</b></div>' : '<div class="stp-ph"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '🔥') + '<span class="stp-n">' + (i + 1) + '/' + n + '</span></div>')
         + '<div class="stp-name">' + esc(e.name) + cote + '</div>'
@@ -20613,7 +20613,8 @@
     else if(R.state === 'chrono'){
       var left = (R.endAt - now) / 1000, prev = R.left; R.left = left;
       if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0) tick(1000, .08);
-      if(left <= 0){ R.state = 'recup'; R.recup = now; R.left = 0; ding(); vibrate([400, 120, 400]); }
+      // Fin du compte à rebours : pas de chrono de récup, on passe directement au suivant (en attente du coach)
+      if(left <= 0){ R.left = 0; ding(); vibrate([400, 120, 400]); var au = R.auto; R.auto = false; go(1); R.auto = au; return; }
     }
     var tEl = R.el.querySelector('#stpTime'), sEl = R.el.querySelector('#stpState'), bar = R.el.querySelector('#stpBar'), pp = R.el.querySelector('#stpPP'), rec = R.el.querySelector('#stpRec');
     if(rec) rec.textContent = '+' + mmss((now - R.recup) / 1000);
@@ -22018,7 +22019,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if(left <= 0){
         CT.left = 0; ding(); vib([400, 120, 400]);
         if(st.k === 'rest' || CT.o.auto || st.chain){ goT(1); return; }
-        CT.state = 'over'; CT.overAt = now;
+        // Pas de chrono « + » entre deux comptes à rebours : on affiche directement la suite, en attente
+        var au = CT.o.auto; CT.o.auto = false; goT(1); CT.o.auto = au; return;
       }
     }
     var tEl = CT.el.querySelector('#cltTime'), sEl = CT.el.querySelector('#cltState'), bar = CT.el.querySelector('#cltBar'), pp = CT.el.querySelector('#cltPP');
