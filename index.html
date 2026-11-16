@@ -22208,7 +22208,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       left:timed ? Math.max(0, run ? (CT.endAt - now) / 1000 : CT.left) : 0, el:timed ? 0 : (run ? (now - CT.sw) / 1000 : (CT.el2 || 0)), dur:st.sec || 0,
       cur:{k:st.k, name:st.name || '', lab:st.lab || '', hint:hintOf(st), side:st.side || '', set:st.set || 0, part:st.part || 0, tour:st.tour || 0, i:st.i || 0, nEx:st.n || 0, wu:!!st.wu, wup:!!st.wup, sw:!!st.sw, tr:!!st.tourRest, nm:st.nm || '', reps:isRep(st) ? st.reps : 0, cnt:CT.cnt || 0},
       nx:ns ? {k:ns.k, name:ns.name || '', lab:ns.lab || '', side:ns.side || '', set:ns.set || 0, sec:ns.sec || 0, reps:ns.reps || 0, ex:nx ? nx.name : ''} : null,
-      t:CT.o.t || 1, date:dLong(CT.s), at:now, tot:CT.t0 ? Math.round(((CT.state === 'fin' && CT.tEnd) ? CT.tEnd : now) - CT.t0) / 1000 : 0,
+      t:CT.o.t || 1, date:dLong(CT.s), at:now, cid:(function(){ var cc = D.clients.find(function(x){ return x.s.indexOf(CT.s) >= 0; }); return cc ? cc.id : ''; })(), tot:CT.t0 ? Math.round(((CT.state === 'fin' && CT.tEnd) ? CT.tEnd : now) - CT.t0) / 1000 : 0,
       nEx:(function(){ var m = {}, c = 0; CT.steps.forEach(function(x){ if(x.k === 'ex' && !x.wu && !m[x.i]){ m[x.i] = 1; c++; } }); return c; })()};
   }
   function liveSend(close){
@@ -22279,7 +22279,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         + '<div class="clv-pg" aria-hidden="true"><i style="width:' + Math.round(100 * (p.st === 'fin' ? 1 : p.k / Math.max(1, p.n))) + '%"></i></div>';
       if(p.st === 'fin'){
         var tt = Math.max(0, Math.round(p.tot || 0)), dur = tt >= 3600 ? Math.floor(tt / 3600) + ' h ' + ('0' + Math.floor(tt % 3600 / 60)).slice(-2) : tt >= 60 ? Math.floor(tt / 60) + ' min ' + (tt % 60 ? ('0' + tt % 60).slice(-2) : '') : tt + ' s';
-        h += '<div class="stp-body"><div class="clv-fin"><div class="clv-cup"><span class="clv-rays"></span><span class="clv-glow"></span><i>🏆</i></div><b class="clv-bravo">Bravo !</b><span class="clv-sub">Séance terminée</span>'
+        h += '<div class="stp-body"><div class="clv-fin"><div class="clv-cup"><span class="clv-rays"></span><span class="clv-glow"></span><i>🏆</i></div><b class="clv-bravo">Bravo' + (function(){ var cc = p.cid && clientById(p.cid); return cc ? ' ' + esc(cc.nom) : ''; })() + ' !</b><span class="clv-sub">Séance terminée</span>'
           + '<div class="clt-stats clv-stats"><div><b>' + (tt ? dur : '–') + '</b><small>durée</small></div><div><b>' + p.t + '</b><small>tour' + (p.t > 1 ? 's' : '') + '</small></div><div><b>' + (p.nEx || c.nEx || '–') + '</b><small>exercices</small></div></div></div></div>'
           + '<div class="clv-party" aria-hidden="true">' + (function(){ var C = ['#F5C451', '#FF9F43', '#2FCB72', '#4DB2FF', '#FF5C8A', '#B58CFF', '#FFFFFF', '#FFD978'], o = ''; for(var i = 0; i < 90; i++){ o += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;background:' + C[i % C.length] + ';--dx:' + ((Math.random() - .5) * 220).toFixed(0) + 'px;--r:' + ((Math.random() - .5) * 1080).toFixed(0) + 'deg;--d:' + (2.6 + Math.random() * 2.4).toFixed(2) + 's;--dl:' + (Math.random() * 2.5).toFixed(2) + 's;' + (i % 3 === 0 ? 'border-radius:50%;width:11px;height:11px;' : '') + '"></i>'; } return o; })() + '</div>';
       } else {
