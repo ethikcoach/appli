@@ -22090,12 +22090,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var W = {on:true, pt:0, el:null, p:null, hide:''};
     var chip = document.createElement('span'); chip.className = 'clp-live'; chip.setAttribute('aria-live', 'polite'); chip.innerHTML = IC('phone') + '<span>Direct</span>';
     var acts = host.querySelector('.clp-acts'); if(acts) acts.insertBefore(chip, acts.firstChild);
+    // Petit message quand l'appareil n'a pas internet (2 échecs de suite ou hors ligne)
+    var off = document.createElement('div'); off.className = 'clp-off'; off.hidden = true; off.setAttribute('role', 'status');
+    off.innerHTML = '<b>' + IC('phone') + 'Pas d’internet</b><span>Le direct du chrono ne peut pas arriver. Active le partage de connexion de ton téléphone et connecte cet appareil dessus.</span>';
+    var top = host.querySelector('.clp-top'); if(top && top.parentNode) top.parentNode.insertBefore(off, top.nextSibling);
+    var fails = 0;
+    function net(ok){
+      fails = ok ? 0 : fails + 1;
+      var down = navigator.onLine === false || fails >= 2;
+      off.hidden = !down; chip.classList.toggle('off', down);
+      var sp = chip.querySelector('span'); if(sp) sp.textContent = down ? 'Hors ligne' : 'Direct';
+      if(W.el){ var on = W.el.querySelector('.clv-on'); if(on){ on.classList.toggle('off', down); on.lastChild.textContent = down ? 'Connexion perdue' : 'En direct'; } }
+    }
+    W.net = net;
     function key(p){ return p.sid + ':' + p.k + (p.st === 'fin' ? ':f' : ''); }
     function poll(){
       if(!W.on) return;
       if(document.hidden){ W.pt = setTimeout(poll, 3000); return; }
+      if(navigator.onLine === false){ net(false); W.pt = setTimeout(poll, 3000); return; }
       SY.post('/coaching/direct/lire', {}).then(function(r){
         if(!W.on) return;
+        net(!!(r && r._s));
         if(!r || !r.ok || !r.x){ chip.classList.remove('ok'); show(null); return; }
         var age = Math.max(0, ((r.now || 0) - (r.x.at || 0)) / 1000);
         return SY.dec(r.x.d, r.x.iv).then(function(p){
@@ -22105,7 +22120,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           p.lt = Date.now() - age * 1000;   // heure du serveur : pas de décalage entre les horloges des deux appareils
           show(p);
         });
-      }).catch(function(){ chip.classList.remove('ok'); }).then(function(){ if(W.on) W.pt = setTimeout(poll, 1500); });
+      }).catch(function(){ chip.classList.remove('ok'); net(false); }).then(function(){ if(W.on) W.pt = setTimeout(poll, 1500); });
     }
     function show(p){
       if(!p){ W.p = null; if(W.el){ W.el.remove(); W.el = null; } return; }
@@ -22123,7 +22138,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function draw(p){
       var c = p.cur, n = p.nx, rest = c.k === 'rest';
       var kick = p.st === 'fin' ? 'Séance terminée' : c.wup || c.wu ? 'Échauffement' : rest ? (c.tr ? 'Récup entre les tours' : 'Récup') : 'Tour ' + c.tour + '/' + p.t + ' · Exercice ' + (c.i + 1) + '/' + c.nEx;
-      var h = '<div class="stx-top"><div class="stx-tour">Séance · ' + esc(p.date) + '<small>' + esc(kick) + '</small></div><span class="stx-sp"></span><span class="clv-on">' + IC('phone') + 'En direct</span><button type="button" class="stx-ib wide" data-lv="hide">' + IC('list') + 'Voir la séance</button></div>'
+      var h = '<div class="stx-top"><div class="stx-tour">Séance · ' + esc(p.date) + '<small>' + esc(kick) + '</small></div><span class="stx-sp"></span><span class="clv-on">' + IC('phone') + '<span>En direct</span></span><button type="button" class="stx-ib wide" data-lv="hide">' + IC('list') + 'Voir la séance</button></div>'
         + '<div class="clv-pg" aria-hidden="true"><i style="width:' + Math.round(100 * (p.st === 'fin' ? 1 : p.k / Math.max(1, p.n))) + '%"></i></div>';
       if(p.st === 'fin'){
         h += '<div class="stp-body"><div class="stp-wait clt-end"><i>🏆</i><b>Bravo !</b><span>Séance terminée</span><div class="clt-stats"><div><b>' + p.t + '</b><small>tour' + (p.t > 1 ? 's' : '') + '</small></div><div><b>' + (c.nEx || '–') + '</b><small>exercices</small></div></div></div></div>';
@@ -22149,7 +22164,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       sEl.textContent = run ? (c.wup ? 'Échauffement' : c.sw ? 'Change de côté' : c.k === 'rest' ? 'Récup' : (c.side ? c.side + ' · go !' : 'C’est parti !')) : p.st === 'pause' ? 'En pause' : 'Prêt';
     }
     function loop(){ if(!W.on || !W.el) return; tickV(); requestAnimationFrame(loop); }
-    W.stop = function(){ W.on = false; clearTimeout(W.pt); if(W.el){ W.el.remove(); W.el = null; } };
+    function onNet(){ net(navigator.onLine !== false); if(navigator.onLine !== false){ clearTimeout(W.pt); poll(); } }
+    window.addEventListener('online', onNet); window.addEventListener('offline', onNet);
+    W.stop = function(){ W.on = false; clearTimeout(W.pt); window.removeEventListener('online', onNet); window.removeEventListener('offline', onNet); if(W.el){ W.el.remove(); W.el = null; } };
     poll();
     return W;
   }
@@ -22914,6 +22931,14 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 .stx.clt .stx-ib.wide{width:auto; padding:0 15px; gap:8px; font:700 .86rem/1 Inter, sans-serif;}
 .clv-on{display:inline-flex; align-items:center; gap:6px; margin-right:6px; padding:7px 12px; border-radius:999px; background:rgba(47,203,114,.16); color:#7FE3A1; font:800 .74rem/1 Inter, sans-serif; letter-spacing:.04em; text-transform:uppercase;}
 .clv-on .tmi{width:15px; height:15px;}
+.clv-on.off{background:rgba(255,159,67,.18); color:#FFB46A;}
+.clp-live.off{background:rgba(255,159,67,.16); color:#C26A0A; opacity:1;}
+.clp-off{display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; margin:8px 16px 0; padding:10px 14px; border-radius:16px; background:#FFF1E2; border:1px solid rgba(224,118,28,.3); color:#7A3E08; font:600 .84rem/1.35 Inter, sans-serif;}
+.clp-off[hidden]{display:none;}
+.clp-off b{display:inline-flex; align-items:center; gap:6px; font-weight:800;}
+.clp-off .tmi{width:16px; height:16px;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .clp-off{background:rgba(255,159,67,.12); color:#FFC99A; border-color:rgba(255,159,67,.3);} }
+:root[data-theme="dark"] .clp-off{background:rgba(255,159,67,.12); color:#FFC99A; border-color:rgba(255,159,67,.3);}
 .clv-pg{position:relative; z-index:2; height:5px; margin:12px 0 4px; border-radius:3px; background:rgba(255,255,255,.12); overflow:hidden;}
 .clv-pg i{display:block; height:100%; border-radius:3px; background:var(--acc); box-shadow:0 0 10px var(--acc); transition:width .4s ease;}
 .clv .clv-body{max-width:1180px; width:100%; margin:0 auto;}
@@ -22941,9 +22966,11 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 @media (min-width:700px) and (orientation:portrait){ .stx.clt.clv .clv-l .stp-ph{height:40vh;} .stx.clt.clv .stp-ring{width:min(56vw, 34vh, 420px);} .stx.clt.clv .stp-name{font-size:2.6rem;} }
 @media (prefers-color-scheme: light){
 :root:not([data-theme="dark"]) .clv-on{background:rgba(30,158,87,.12); color:#1A6A3E;}
+:root:not([data-theme="dark"]) .clv-on.off{background:#FFF1E2; color:#B0600A;}
 :root:not([data-theme="dark"]) .clv-pg{background:rgba(14,26,20,.1);}
 }
 :root[data-theme="light"] .clv-on{background:rgba(30,158,87,.12); color:#1A6A3E;}
+:root[data-theme="light"] .clv-on.off{background:#FFF1E2; color:#B0600A;}
 :root[data-theme="light"] .clv-pg{background:rgba(14,26,20,.1);}
 /* ===== Tirage studio : harmonisé avec Coaching et Timers ===== */
 .ss-hero{margin-bottom:12px;}
