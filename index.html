@@ -20298,7 +20298,7 @@
       + '<div class="stx-hist" id="stxHist"></div>'
       + '<div class="stx-bar"><button type="button" class="rr" data-a="redraw">' + I('repeat') + 'Retirer</button><button type="button" class="nx" data-a="next">' + I('dice') + 'Tour suivant</button></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
-    st = {el:el, tours:[], secs:[], ambs:[], jk:[], df:[], cur:-1, locks:{}, next:S.amb, sid:Date.now().toString(36), won:{}};
+    st = {el:el, tours:[], secs:[], ambs:[], jk:[], df:[], cur:-1, locks:{}, next:S.amb, sid:Date.now().toString(36), won:{}, req:{}};
     setTimeout(pollPos, 1500);
     el.addEventListener('click', onStage);
     newTour();
@@ -20447,12 +20447,7 @@
     if(a === 'qr'){ showQR(); return; }
     if(a === 'dfswap'){ st.df[st.cur] = rollDefi(st.df[st.cur]); var dc = st.el.querySelector('.stx-dfc'); if(dc) spinDefi(dc, false); head(); pushTour(); return; }
     if(a === 'close'){ closeStage(); return; }
-    if(a === 'next'){
-      st.cur = st.tours.length - 1;
-      if(st.winEl){ winClose(); newTour(); return; }
-      if(st.tours.length && !st.won[st.cur + 1]){ tourWin(st.cur + 1, function(){ newTour(); }); return; }
-      newTour(); return;
-    }
+    if(a === 'next'){ nextTour(); return; }
     if(a === 'winx'){ winClose(); return; }
     if(a === 'redraw'){ st.cur = st.cur; redraw(); return; }
     if(a === 'fs'){ var el = st.el; try{ if(document.fullscreenElement || document.webkitFullscreenElement){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); } else (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }catch(x){} return; }
@@ -20488,13 +20483,22 @@
     post('/studio/lire', {}).then(function(r){
       if(!st || !r || !r.ok) return;
       var p = r.pos, fresh = p && p.s === st.sid && Date.now() - p.at < 15 * 60000;
-      st.el.querySelectorAll('.stx-c').forEach(function(c){ var i = +c.getAttribute('data-i'); c.classList.toggle('now', !!(fresh && p.n === st.cur + 1 && p.etat !== 'fin' && i === p.i)); c.classList.toggle('done', !!(fresh && p.n === st.cur + 1 && (i < p.i || p.etat === 'fin'))); });
+      st.el.querySelectorAll('.stx-c[data-i]').forEach(function(c){ var i = +c.getAttribute('data-i'); c.classList.toggle('now', !!(fresh && p.n === st.cur + 1 && p.etat !== 'fin' && i === p.i)); c.classList.toggle('done', !!(fresh && p.n === st.cur + 1 && (i < p.i || p.etat === 'fin'))); });
       if(fresh) setLive(p.n === st.cur + 1 ? (p.etat === 'fin' ? '📱 Tour terminé' : '📱 Exercice ' + Math.min(p.i + 1, (st.tours[st.cur] || []).length) + '/' + (st.tours[st.cur] || []).length) : '📱 En direct', true);
+      var dfc = st.el.querySelector('.stx-dfc'); if(dfc){ var nT = (st.tours[st.cur] || []).length; dfc.classList.toggle('now', !!(fresh && p.n === st.cur + 1 && p.etat !== 'fin' && p.i >= nT)); dfc.classList.toggle('done', !!(fresh && p.n === st.cur + 1 && p.etat === 'fin')); }
+      // Le téléphone demande le tour suivant (à partir du 2e tirage)
+      if(fresh && p.n === st.tours.length + 1 && st.cur === st.tours.length - 1 && p.etat === 'pret' && !st.req[p.n]){ st.req[p.n] = 1; nextTour(); }
       bigPos(fresh && p.n === st.cur + 1 ? p : null);
       if(fresh && p.etat === 'fin' && p.n === st.cur + 1 && !st.won[p.n] && st.cur === st.tours.length - 1) tourWin(p.n, null);
     }).catch(function(){}).then(function(){ pollT = setTimeout(pollPos, 1500); });
   }
   // ---------- Fin de tour : animation de réussite avant le tirage suivant ----------
+  function nextTour(){
+    if(!st) return; st.cur = st.tours.length - 1; st.req[st.cur + 2] = 1;
+    if(st.winEl){ winClose(); newTour(); return; }
+    if(st.tours.length && !st.won[st.cur + 1]){ tourWin(st.cur + 1, function(){ newTour(); }); return; }
+    newTour();
+  }
   function winClose(){ if(st && st.winEl){ clearTimeout(st.winT); st.winEl.remove(); st.winEl = null; } }
   function tourWin(n, cb){
     if(!st) return; st.won[n] = 1; winClose(); bigClose();
@@ -20585,7 +20589,7 @@
     R.steps = []; t.ids.forEach(function(id, i){ var ex = exById(id); if(ex && ex.perSide){ R.steps.push({i:i, c:1}, {i:i, c:2}); } else R.steps.push({i:i, c:0}); });
     if(t.df && defOf(t.df)) R.steps.push({i:t.ids.length, c:0, df:t.df});
     var jm = /^(\d{1,2}):([a-z0-9]+)$/.exec(t.jk || ''); R.jk = jm && jokOf(jm[2]) ? {i:+jm[1], k:jm[2]} : null;
-    if(isNew){ R.k = 0; R.state = 'pret'; R.recup = 0; vibrate([80, 60, 80]); ding(); }
+    if(isNew){ R.k = 0; R.state = 'pret'; R.recup = 0; R.askN = 0; vibrate([80, 60, 80]); ding(); }
     else { var kk = oldStep ? R.steps.findIndex(function(x){ return x.i === oldStep.i && (x.c === oldStep.c || x.c === 0 || oldStep.c === 0); }) : 0; R.k = kk < 0 ? Math.min(R.k, R.steps.length - 1) : kk; }
     R.i = R.steps[R.k].i; if(isNew || R.state === 'pret'){ R.left = curSec(); R.el2 = 0; }
     renderRemote();
@@ -20615,7 +20619,7 @@
     var p = D ? '' : photo(e), pn = nx && !ND ? photo(nx) : '';
     var h;
     if(R.state === 'fin'){
-      h = '<div class="stp-wait"><i>🎉</i><b>Tour ' + t.n + ' terminé !</b><span>Le prochain tour arrivera ici dès que tu le tires sur l’iPad.</span><button type="button" class="stp-sm" data-r="restart">' + I('reset') + 'Refaire ce tour</button></div>';
+      h = '<div class="stp-wait"><i>🎉</i><b>Tour ' + t.n + ' terminé !</b>' + (R.askN === t.n + 1 ? '<span class="stp-ask">' + I('dice') + 'Tirage du tour ' + (t.n + 1) + ' sur l’iPad…</span>' : '<span>Lance le tour suivant d’ici : l’iPad fait le tirage et il arrive tout seul.</span><button type="button" class="stp-sm pri" data-r="nexttour">' + I('dice') + 'Tirer le tour ' + (t.n + 1) + '</button>') + '<button type="button" class="stp-sm" data-r="restart">' + I('reset') + 'Refaire ce tour</button></div>';
     } else {
       h = (D ? '<div class="stp-ph stp-dph"><i>' + D.ic + '</i><b>' + esc(D.t) + '</b></div>' : '<div class="stp-ph"' + (p ? ' style="background-image:url(\'' + p + '\')"' : '') + '>' + (p ? '' : '🔥') + '<span class="stp-n">' + (i + 1) + '/' + n + '</span></div>')
         + '<div class="stp-name">' + esc(e.name) + cote + '</div>'
@@ -20672,6 +20676,9 @@
     if(a === 'toggle'){ if(R.state === 'chrono'){ if(curSec()) R.left = Math.max(0, (R.endAt - Date.now()) / 1000); else R.el2 = (Date.now() - R.swStart) / 1000; R.state = 'pause'; sendPos(); } else start(); tickRemote(true); return; }
     if(a === 'next'){ go(1); return; }
     if(a === 'prev'){ go(-1); return; }
+    if(a === 'nexttour'){ if(!R.tour) return; R.askN = R.tour.n + 1; vibrate(40);
+      post('/studio/pos', {s:R.tour.s, n:R.tour.n + 1, i:0, c:0, etat:'pret', end:0, sw:0, left:0, dur:0}).catch(function(){ R.askN = 0; toast('Pas de réseau : touche « Tour suivant » sur l’iPad'); renderRemote(); });
+      renderRemote(); return; }
     if(a === 'restart'){ R.k = 0; R.i = R.steps[0] ? R.steps[0].i : 0; R.state = 'pret'; R.left = curSec(); R.el2 = 0; renderRemote(); sendPos(); return; }
     if(a === 'auto'){ R.auto = !R.auto; try{ localStorage.setItem('ec_coach_stauto2', R.auto ? '1' : '0'); }catch(x){} b.setAttribute('aria-pressed', R.auto); return; }
   }
@@ -23124,6 +23131,13 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
   .stx:not(.clt) .stx-t b{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   .stx:not(.clt) .stx-jk{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
 }
+
+.stx.clt.stp .stp-sm.pri{background:linear-gradient(180deg, #FFDB7A, #F0B43A); color:#2A1A06; min-width:240px; padding:15px 20px; border-radius:18px; font-size:1rem;}
+.stx.clt.stp .stp-wait .stp-sm{display:inline-flex; align-items:center; justify-content:center; gap:8px;}
+.stp-ask{display:inline-flex; align-items:center; gap:8px; font-weight:700;}
+.stp-ask .tmi{width:20px; height:20px; animation:raysSpin 1.2s linear infinite;}
+.stx:not(.clt) .stx-dfc.now .stx-f{transform:none;}
+.stx:not(.clt) .stx-dfc.now::after{bottom:-6px;}
 /* ===== Tirage studio : réussite en fin de tour ===== */
 .stx-win{position:absolute; inset:0; z-index:9; display:flex; align-items:center; justify-content:center; padding:20px; background:radial-gradient(ellipse 80% 70% at 50% 40%, color-mix(in srgb, var(--a1) 70%, var(--a2)), var(--a2) 75%); animation:tmIn .3s ease;}
 .stx-win .clv-fin{z-index:3;}
