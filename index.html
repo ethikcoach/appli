@@ -21318,13 +21318,37 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!tot) return '<div class="cl-bil empty">' + IC('calendar') + '<span>Aucune séance réalisée pour l’instant.</span></div>';
     var open = V.bil === c.id, yr = todayIso().slice(0, 4), ny = 0; ks.forEach(function(k){ if(k.slice(0, 4) === yr) ny += m[k].length; });
     var h = '<div class="cl-bil"><button type="button" class="cl-bil-h" data-a="bil" aria-expanded="' + open + '">' + IC('calendar') + '<span><b>' + tot + ' séance' + (tot > 1 ? 's' : '') + ' réalisée' + (tot > 1 ? 's' : '') + '</b><small>' + (m[cur] ? m[cur].length : 0) + ' ce mois-ci · ' + ny + ' en ' + yr + '</small></span><i>' + (open ? '▾' : '▸') + '</i></button>';
+    var yrs = {}; ks.forEach(function(k){ yrs[k.slice(0, 4)] = (yrs[k.slice(0, 4)] || 0) + m[k].length; });
+    var yk = Object.keys(yrs).sort().reverse(), ymx = Math.max.apply(null, yk.map(function(k){ return yrs[k]; }).concat([1]));
+    if(open && yk.length) h += '<div class="cl-bil-y"><small>Par année</small>' + yk.map(function(k){ return '<div><span>' + k + '</span><i><u style="width:' + Math.round(yrs[k] / ymx * 100) + '%"></u></i><b>' + yrs[k] + '</b></div>'; }).join('') + '</div>';
     if(open) h += '<div class="cl-bil-l">' + ks.slice(0, V.bilMore || 12).map(function(k){ return '<div class="cl-bil-m"><div><b>' + esc(mCap(k)) + '</b><em>' + m[k].length + '</em></div><p>' + m[k].map(function(x){ return '<button type="button" data-a="goto" data-g="' + esc(x.id) + '">' + esc(dayLab(x.d)) + '</button>'; }).join('') + '</p></div>'; }).join('')
       + (ks.length > (V.bilMore || 12) ? '<button type="button" class="cl-btn ghost cl-more" data-a="bilmore">Mois plus anciens (' + (ks.length - (V.bilMore || 12)) + ')</button>' : '') + '</div>';
     return h + '</div>';
   }
   // Bilan de tous les clients, mois par mois
   function bilanAll(){
-    var ym = todayIso().slice(0, 7);
+    var ym = todayIso().slice(0, 7), mode = 'm', yr = +todayIso().slice(0, 4);
+    function tabs(){ return '<div class="cl-ball-tabs" role="tablist"><button type="button" data-k="mode:m" aria-pressed="' + (mode === 'm') + '">Mois</button><button type="button" data-k="mode:y" aria-pressed="' + (mode === 'y') + '">Année</button></div>'; }
+    function yearBody(){
+      var Y = String(yr), Yp = String(yr - 1), per = {}, rows = [], tot = 0, totP = 0, totPP = 0, firstY = yr, cutMD = yr === +todayIso().slice(0, 4) ? todayIso().slice(5) : '12-31';
+      D.clients.forEach(function(c){
+        var mm = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], n = 0;
+        c.s.forEach(function(x){ var d = isoD(x); if(!d || !isDone(x)) return; var y0 = +d.slice(0, 4); if(y0 < firstY) firstY = y0;
+          if(d.slice(0, 4) === Y){ var mo = +d.slice(5, 7) - 1; mm[mo]++; n++; per[mo] = (per[mo] || 0) + 1; } else if(d.slice(0, 4) === Yp){ totP++; if(d.slice(5) <= cutMD) totPP++; } });
+        if(n){ rows.push({c:c, n:n, mm:mm}); tot += n; }
+      });
+      rows.sort(function(a, b){ return b.n - a.n || a.c.nom.localeCompare(b.c.nom, 'fr'); });
+      var nowY = +todayIso().slice(0, 4), nbM = yr < nowY ? 12 : +todayIso().slice(5, 7), moy = nbM ? Math.round(tot / nbM * 10) / 10 : 0;
+      var mx = Math.max.apply(null, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function(i){ return per[i] || 0; }).concat([1])), best = -1, bv = 0;
+      for(var i = 0; i < 12; i++){ if((per[i] || 0) > bv){ bv = per[i]; best = i; } }
+      var evo = totPP ? Math.round((tot - totPP) / totPP * 100) : null, part = cutMD !== '12-31';
+      return '<div class="cl-ball-nav"><button type="button" data-k="yprev" aria-label="Année précédente"' + (yr <= firstY ? ' disabled' : '') + '>' + IC('prev') + '</button><b>' + Y + '</b><button type="button" data-k="ynext" aria-label="Année suivante"' + (yr >= nowY ? ' disabled' : '') + '>' + IC('next') + '</button></div>'
+        + '<div class="cl-ball-kpi y4"><div><b>' + tot + '</b><small>séance' + (tot > 1 ? 's' : '') + '</small></div><div><b>' + rows.length + '</b><small>client' + (rows.length > 1 ? 's' : '') + '</small></div><div><b>' + String(moy).replace('.', ',') + '</b><small>par mois</small></div><div><b class="' + (evo == null ? '' : evo >= 0 ? 'up' : 'down') + '">' + (evo == null ? '–' : (evo > 0 ? '+' : '') + evo + ' %') + '</b><small>vs ' + Yp + (part ? '*' : '') + '</small></div></div>'
+        + (best >= 0 ? '<p class="cl-ball-note">Meilleur mois : <b>' + MOIS[best] + '</b> avec ' + bv + ' séance' + (bv > 1 ? 's' : '') + (totP ? ' · ' + totP + ' séance' + (totP > 1 ? 's' : '') + ' sur toute l’année ' + Yp : '') + (part && totPP ? '<br><small>* comparé à la même période de ' + Yp + ' (' + totPP + ' séances au ' + new Date(todayIso() + 'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) + ')</small>' : '') + '</p>' : '')
+        + '<div class="cl-ball-ch" role="img" aria-label="Séances réalisées par mois en ' + Y + '">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function(i){ var v = per[i] || 0, k = Y + '-' + ('0' + (i + 1)).slice(-2); return '<button type="button" data-k="m:' + k + '" class="' + (i === best ? 'on' : '') + '" title="' + esc(mCap(k)) + ' : ' + v + '"><i style="height:' + Math.max(4, Math.round(v / mx * 100)) + '%"></i><em>' + (v || '') + '</em><small>' + MOIS[i].slice(0, 3) + '</small></button>'; }).join('') + '</div>'
+        + (rows.length ? '<div class="cl-ball-l">' + rows.map(function(r){ var mxc = Math.max.apply(null, r.mm.concat([1])); return '<div class="cl-ball-r"><button type="button" class="cl-ball-c" data-k="c:' + esc(r.c.id) + '"><em class="cl-av2" style="background:' + avCol(r.c.nom) + '">' + esc(ini(r.c.nom)) + '</em><b>' + esc(r.c.nom) + '</b><span>' + r.n + '</span></button><div class="cl-ball-yr">' + r.mm.map(function(v, i){ return '<i title="' + esc(MOIS[i]) + ' : ' + v + '" style="--v:' + (v ? (0.25 + 0.75 * v / mxc).toFixed(2) : 0) + '">' + (v || '') + '</i>'; }).join('') + '</div></div>'; }).join('') + '</div>'
+          : '<div class="cl-empty">Aucune séance réalisée en ' + Y + '.</div>');
+    }
     function months(){ var all = {}; D.clients.forEach(function(c){ c.s.forEach(function(x){ var d = isoD(x); if(d && isDone(x)) all[d.slice(0, 7)] = (all[d.slice(0, 7)] || 0) + 1; }); }); return all; }
     function shift(k, n){ var p = k.split('-'), y = +p[0], mo = +p[1] - 1 + n; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); }
     function body(){
@@ -21339,10 +21363,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         + (rows.length ? '<div class="cl-ball-l">' + rows.map(function(r){ return '<div class="cl-ball-r"><button type="button" class="cl-ball-c" data-k="c:' + esc(r.c.id) + '"><em class="cl-av2" style="background:' + avCol(r.c.nom) + '">' + esc(ini(r.c.nom)) + '</em><b>' + esc(r.c.nom) + '</b><span>' + r.L.length + '</span></button><p>' + r.L.map(function(x){ return '<span>' + esc(dayLab(x.d)) + '</span>'; }).join('') + '</p></div>'; }).join('') + '</div>'
           : '<div class="cl-empty">Aucune séance réalisée en ' + esc(mLab(ym)) + '.</div>');
     }
-    var d = sheet('<div class="cl-ball"><h4>' + IC('calendar') + 'Bilan des séances</h4><div id="clBall">' + body() + '</div><button type="button" class="cl-btn ghost" data-k="x">Fermer</button></div>', function(k, dd){
-      if(k === 'prev'){ ym = shift(ym, -1); dd.querySelector('#clBall').innerHTML = body(); return false; }
-      if(k === 'next'){ if(ym < todayIso().slice(0, 7)){ ym = shift(ym, 1); dd.querySelector('#clBall').innerHTML = body(); } return false; }
-      if(k.indexOf('m:') === 0){ ym = k.slice(2); dd.querySelector('#clBall').innerHTML = body(); return false; }
+    function paint(dd){ dd.querySelector('#clBall').innerHTML = tabs() + (mode === 'y' ? yearBody() : body()); }
+    var d = sheet('<div class="cl-ball"><h4>' + IC('calendar') + 'Bilan des séances</h4><div id="clBall">' + tabs() + body() + '</div><button type="button" class="cl-btn ghost" data-k="x">Fermer</button></div>', function(k, dd){
+      if(k === 'mode:m' || k === 'mode:y'){ mode = k.slice(5); if(mode === 'y') yr = +ym.slice(0, 4); paint(dd); return false; }
+      if(k === 'yprev'){ yr--; paint(dd); return false; }
+      if(k === 'ynext'){ if(yr < +todayIso().slice(0, 4)) yr++; paint(dd); return false; }
+      if(k === 'prev'){ ym = shift(ym, -1); paint(dd); return false; }
+      if(k === 'next'){ if(ym < todayIso().slice(0, 7)){ ym = shift(ym, 1); paint(dd); } return false; }
+      if(k.indexOf('m:') === 0){ ym = k.slice(2); mode = 'm'; paint(dd); return false; }
       if(k.indexOf('c:') === 0){ V.c = k.slice(2); V.bil = V.c; V.more = 15; render(); window.scrollTo(0, 0); return; }
     });
     d.classList.add('cl-dlg-wide');
@@ -22240,6 +22268,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if(W.el){ var on = W.el.querySelector('.clv-on'); if(on){ on.classList.toggle('off', down); on.lastChild.textContent = down ? 'Connexion perdue' : 'En direct'; } }
     }
     W.net = net;
+    // Après « Voir la séance » : bouton pour revenir à l'exercice en cours
+    var back = document.createElement('button'); back.type = 'button'; back.className = 'clv-back'; back.hidden = true; host.appendChild(back);
+    function backShow(p){
+      if(!p){ back.hidden = true; return; }
+      var c = p.cur, t = p.st === 'fin' ? 'Séance terminée' : c.k === 'rest' ? (c.wup ? 'Échauffement' : 'Récup') : 'Tour ' + c.tour + '/' + p.t + ' · Exercice ' + (c.i + 1) + '/' + c.nEx;
+      back.innerHTML = '<i></i>' + IC('screen') + '<span><b>Revenir à la séance en cours</b><small>' + esc(t) + (c.name && c.k !== 'rest' && p.st !== 'fin' ? ' · ' + esc(c.name) : '') + '</small></span>';
+      back.hidden = false;
+    }
+    function backGo(){ if(!W.p) return; var p = W.p; W.hide = ''; back.hidden = true; if(W.el){ W.el.remove(); W.el = null; } show(p); }
+    back.addEventListener('click', backGo);
+    chip.addEventListener('click', function(){ if(W.p && !W.el) backGo(); });
     function key(p){ return p.sid + ':' + p.k + (p.st === 'fin' ? ':f' : ''); }
     function poll(){
       if(!W.on) return;
@@ -22260,13 +22299,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       }).catch(function(){ chip.classList.remove('ok'); net(false); }).then(function(){ if(W.on) W.pt = setTimeout(poll, 1500); });
     }
     function show(p){
-      if(!p){ W.p = null; if(W.el){ W.el.remove(); W.el = null; } return; }
-      var k = key(p); if(W.hide === k){ W.p = p; return; } W.hide = '';
+      if(!p){ W.p = null; backShow(null); if(W.el){ W.el.remove(); W.el = null; } return; }
+      var k = key(p); if(W.hide === k){ W.p = p; backShow(p); return; } W.hide = ''; backShow(null);
       var same = W.el && W.p && key(W.p) === k; W.p = p;
       if(!W.el){
         W.el = document.createElement('div'); W.el.className = 'stx stp clt clv'; W.el.setAttribute('role', 'dialog'); W.el.setAttribute('aria-label', 'Chrono en direct');
         document.body.appendChild(W.el);
-        W.el.addEventListener('click', function(ev){ if(ev.target.closest('[data-lv="hide"]') && W.p){ W.hide = key(W.p); W.el.remove(); W.el = null; } });
+        W.el.addEventListener('click', function(ev){ if(ev.target.closest('[data-lv="hide"]') && W.p){ W.hide = key(W.p); W.el.remove(); W.el = null; backShow(W.p); } });
         same = false; requestAnimationFrame(loop);
       }
       if(!same) draw(p);
@@ -22307,7 +22346,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function loop(){ if(!W.on || !W.el) return; tickV(); requestAnimationFrame(loop); }
     function onNet(){ net(navigator.onLine !== false); if(navigator.onLine !== false){ clearTimeout(W.pt); poll(); } }
     window.addEventListener('online', onNet); window.addEventListener('offline', onNet);
-    W.stop = function(){ W.on = false; clearTimeout(W.pt); window.removeEventListener('online', onNet); window.removeEventListener('offline', onNet); if(W.el){ W.el.remove(); W.el = null; } };
+    W.stop = function(){ W.on = false; clearTimeout(W.pt); back.remove(); window.removeEventListener('online', onNet); window.removeEventListener('offline', onNet); if(W.el){ W.el.remove(); W.el = null; } };
     poll();
     return W;
   }
@@ -23124,6 +23163,14 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 /* Le filigrane dépasse : l'écran du chrono ne doit jamais glisser sur le côté */
 .stx{overflow:hidden; overflow:clip;}
 
+
+.clv-back{position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom, 0px) + 18px); z-index:1460; transform:translateX(-50%); display:flex; align-items:center; gap:12px; max-width:calc(100vw - 32px); padding:12px 20px 12px 16px; border:none; border-radius:999px; background:linear-gradient(160deg, #2D5C44, #17322A); color:#fff; box-shadow:0 12px 32px rgba(14,26,20,.35); text-align:left; cursor:pointer; animation:clvUp .35s ease both;}
+.clv-back[hidden]{display:none;}
+.clv-back > i{flex:none; width:9px; height:9px; border-radius:50%; background:#2FCB72; box-shadow:0 0 0 4px rgba(47,203,114,.3); animation:clvBlink 1.6s ease-in-out infinite;}
+.clv-back .tmi{width:22px; height:22px; flex:none;}
+.clv-back b{display:block; font:800 .95rem/1.2 Inter, sans-serif;}
+.clv-back small{display:block; margin-top:2px; font:600 .78rem/1.2 Inter, sans-serif; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60vw;}
+.clp-live.ok{cursor:pointer;}
 /* ===== iPad : fin de séance festive ===== */
 .clv-fin{position:relative; z-index:3; margin:auto; display:flex; flex-direction:column; align-items:center; text-align:center; gap:1.4vh;}
 .clv-cup{position:relative; width:min(36vh, 280px); aspect-ratio:1; display:grid; place-items:center;}
@@ -23154,6 +23201,22 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 :root[data-theme="light"] .clv-rays{background:repeating-conic-gradient(from 0deg, rgba(224,150,30,.22) 0deg 9deg, transparent 9deg 24deg);}
 
 
+
+.cl-ball-tabs{display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; margin:2px 0 12px; border-radius:14px; background:rgba(127,127,127,.1);}
+.cl-ball-tabs button{min-height:38px; border:none; border-radius:11px; background:transparent; color:var(--ink); font:800 .88rem/1 Inter, sans-serif; cursor:pointer;}
+.cl-ball-tabs button[aria-pressed="true"]{background:linear-gradient(160deg, #2D5C44, #17322A); color:#fff; box-shadow:0 4px 12px rgba(23,50,42,.25);}
+.cl-ball-kpi.y4{grid-template-columns:repeat(4, 1fr);} .cl-ball-kpi.y4 b{font-size:clamp(1.05rem, 5vw, 1.5rem); white-space:nowrap;}
+.cl-ball-kpi b.up{color:#1E8A4E;} .cl-ball-kpi b.down{color:#C8302E;}
+.cl-ball-note{margin:-4px 0 10px; font-size:.82rem; color:var(--stone);} .cl-ball-note b{color:var(--ink);}
+.cl-ball-yr{display:grid; grid-template-columns:repeat(12, 1fr); gap:3px; margin-top:8px;}
+.cl-ball-yr i{display:grid; place-items:center; height:22px; border-radius:6px; background:rgba(35,135,79,calc(.08 + var(--v) * .85)); color:#fff; font:800 .66rem/1 Inter, sans-serif; font-style:normal;}
+.cl-ball-yr i[style*="--v:0;"]{background:rgba(127,127,127,.1);}
+.cl-bil-y{padding:2px 14px 10px;}
+.cl-bil-y > small{display:block; margin-bottom:6px; font:800 .7rem/1 Inter, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--stone);}
+.cl-bil-y div{display:grid; grid-template-columns:44px 1fr 34px; align-items:center; gap:8px; margin:4px 0;}
+.cl-bil-y span{font:700 .82rem/1 Inter, sans-serif;} .cl-bil-y b{font:800 .82rem/1 Inter, sans-serif; text-align:right;}
+.cl-bil-y i{display:block; height:8px; border-radius:4px; background:rgba(127,127,127,.12); overflow:hidden;}
+.cl-bil-y u{display:block; height:100%; border-radius:4px; background:#23874F; text-decoration:none;}
 /* ===== Mode discret (Coaching) ===== */
 .cl-bar .cl-eye{flex:none; width:48px; padding:0;}
 .cl-bar .cl-eye .tmi{width:20px; height:20px;}
@@ -23198,12 +23261,12 @@ html.cl-hide #ctMini{visibility:hidden;}
 .cl-ball-kpi{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px;}
 .cl-ball-kpi div{padding:12px 6px; border-radius:14px; background:rgba(35,135,79,.08); text-align:center;}
 .cl-ball-kpi b{display:block; font:800 1.5rem/1 'Bricolage Grotesque', sans-serif; color:#1E8A4E;} .cl-ball-kpi small{display:block; margin-top:4px; font:700 .7rem/1 Inter, sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--stone);}
-.cl-ball-ch{display:grid; grid-template-columns:repeat(12, 1fr); gap:4px; align-items:end; height:110px; margin:0 0 14px; padding:6px 2px 0;}
+.cl-ball-ch{display:grid; grid-template-columns:repeat(12, 1fr); gap:4px; align-items:end; height:124px; margin:0 0 14px; padding:16px 2px 0;}
 .cl-ball-ch button{position:relative; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; padding:0 0 16px; border:none; background:transparent; cursor:pointer; color:var(--ink);}
 .cl-ball-ch i{display:block; width:100%; max-width:26px; border-radius:6px 6px 3px 3px; background:rgba(35,135,79,.3);}
 .cl-ball-ch button.on i{background:#23874F;}
-.cl-ball-ch em{position:absolute; font-style:normal; font:800 .66rem/1 Inter, sans-serif; color:var(--stone); top:-2px;}
-.cl-ball-ch small{position:absolute; bottom:0; font:700 .62rem/1 Inter, sans-serif; color:var(--stone); text-transform:capitalize;}
+.cl-ball-ch em{position:absolute; font-style:normal; font:800 .66rem/1 Inter, sans-serif; color:var(--stone); top:-13px;}
+.cl-ball-ch small{position:absolute; bottom:0; font:700 .62rem/1 Inter, sans-serif; color:var(--stone); text-transform:none;}
 .cl-ball-ch button.on small{color:#1E8A4E; font-weight:800;}
 .cl-ball-l{display:flex; flex-direction:column; gap:8px; max-height:44vh; overflow:auto; margin-bottom:10px;}
 .cl-ball-r{padding:10px 12px; border-radius:14px; border:1px solid rgba(127,127,127,.16);}
