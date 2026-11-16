@@ -21299,6 +21299,52 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // ---------- Vue : liste des clients / un client ----------
   var V = {c:null, q:'', more:15};
+
+  // ---------- Séances réalisées et bilan ----------
+  // s.ok : 1 = réalisée, 0 = non réalisée, absent = automatique (réalisée si la date est passée)
+  function isoD(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s.d || '') ? s.d : ''; }
+  function isDone(s){ if(s.ok === 1) return true; if(s.ok === 0) return false; var d = isoD(s); return !!d && d < todayIso(); }
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  function mLab(ym){ var p = ym.split('-'); return MOIS[+p[1] - 1] + ' ' + p[0]; }
+  function mCap(ym){ var t = mLab(ym); return t.charAt(0).toUpperCase() + t.slice(1); }
+  function dayLab(d){ var x = new Date(d + 'T12:00:00'); return x.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric'}).replace('.', ''); }
+  function doneByMonth(c){ var m = {}; c.s.forEach(function(x){ var d = isoD(x); if(d && isDone(x)){ var k = d.slice(0, 7); (m[k] = m[k] || []).push(x); } }); Object.keys(m).forEach(function(k){ m[k].sort(function(a, b){ return a.d < b.d ? -1 : 1; }); }); return m; }
+  function doneBtn(s){ var ok = isDone(s), auto = s.ok == null; return '<button type="button" class="cl-done' + (ok ? ' on' : '') + '" data-a="done" aria-pressed="' + ok + '" title="' + (ok ? (auto ? 'Réalisée (date passée) · touche pour corriger' : 'Réalisée · touche pour annuler') : 'Marquer comme réalisée') + '">' + IC('check') + (ok ? 'Réalisée' : 'À faire') + '</button>'; }
+  function clientBilan(c){
+    var m = doneByMonth(c), ks = Object.keys(m).sort().reverse(), tot = 0, cur = todayIso().slice(0, 7);
+    ks.forEach(function(k){ tot += m[k].length; });
+    if(!tot) return '<div class="cl-bil empty">' + IC('calendar') + '<span>Aucune séance réalisée pour l’instant.</span></div>';
+    var open = V.bil === c.id, yr = todayIso().slice(0, 4), ny = 0; ks.forEach(function(k){ if(k.slice(0, 4) === yr) ny += m[k].length; });
+    var h = '<div class="cl-bil"><button type="button" class="cl-bil-h" data-a="bil" aria-expanded="' + open + '">' + IC('calendar') + '<span><b>' + tot + ' séance' + (tot > 1 ? 's' : '') + ' réalisée' + (tot > 1 ? 's' : '') + '</b><small>' + (m[cur] ? m[cur].length : 0) + ' ce mois-ci · ' + ny + ' en ' + yr + '</small></span><i>' + (open ? '▾' : '▸') + '</i></button>';
+    if(open) h += '<div class="cl-bil-l">' + ks.slice(0, V.bilMore || 12).map(function(k){ return '<div class="cl-bil-m"><div><b>' + esc(mCap(k)) + '</b><em>' + m[k].length + '</em></div><p>' + m[k].map(function(x){ return '<button type="button" data-a="goto" data-g="' + esc(x.id) + '">' + esc(dayLab(x.d)) + '</button>'; }).join('') + '</p></div>'; }).join('')
+      + (ks.length > (V.bilMore || 12) ? '<button type="button" class="cl-btn ghost cl-more" data-a="bilmore">Mois plus anciens (' + (ks.length - (V.bilMore || 12)) + ')</button>' : '') + '</div>';
+    return h + '</div>';
+  }
+  // Bilan de tous les clients, mois par mois
+  function bilanAll(){
+    var ym = todayIso().slice(0, 7);
+    function months(){ var all = {}; D.clients.forEach(function(c){ c.s.forEach(function(x){ var d = isoD(x); if(d && isDone(x)) all[d.slice(0, 7)] = (all[d.slice(0, 7)] || 0) + 1; }); }); return all; }
+    function shift(k, n){ var p = k.split('-'), y = +p[0], mo = +p[1] - 1 + n; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); }
+    function body(){
+      var all = months(), rows = [], tot = 0;
+      D.clients.forEach(function(c){ var L = c.s.filter(function(x){ var d = isoD(x); return d && d.slice(0, 7) === ym && isDone(x); }).sort(function(a, b){ return a.d < b.d ? -1 : 1; }); if(L.length){ rows.push({c:c, L:L}); tot += L.length; } });
+      rows.sort(function(a, b){ return b.L.length - a.L.length || a.c.nom.localeCompare(b.c.nom, 'fr'); });
+      var last12 = []; for(var i = 11; i >= 0; i--) last12.push(shift(ym, -i));
+      var mx = Math.max.apply(null, last12.map(function(k){ return all[k] || 0; }).concat([1])), y = ym.slice(0, 4), ty = 0; Object.keys(all).forEach(function(k){ if(k.slice(0, 4) === y) ty += all[k]; });
+      return '<div class="cl-ball-nav"><button type="button" data-k="prev" aria-label="Mois précédent">' + IC('prev') + '</button><b>' + esc(mCap(ym)) + '</b><button type="button" data-k="next" aria-label="Mois suivant"' + (ym >= todayIso().slice(0, 7) ? ' disabled' : '') + '>' + IC('next') + '</button></div>'
+        + '<div class="cl-ball-kpi"><div><b>' + tot + '</b><small>séance' + (tot > 1 ? 's' : '') + '</small></div><div><b>' + rows.length + '</b><small>client' + (rows.length > 1 ? 's' : '') + '</small></div><div><b>' + ty + '</b><small>en ' + y + '</small></div></div>'
+        + '<div class="cl-ball-ch" role="img" aria-label="Séances réalisées sur 12 mois">' + last12.map(function(k){ var v = all[k] || 0; return '<button type="button" data-k="m:' + k + '" class="' + (k === ym ? 'on' : '') + '" title="' + esc(mCap(k)) + ' : ' + v + '"><i style="height:' + Math.max(4, Math.round(v / mx * 100)) + '%"></i><em>' + (v || '') + '</em><small>' + MOIS[+k.slice(5) - 1].slice(0, 3) + '</small></button>'; }).join('') + '</div>'
+        + (rows.length ? '<div class="cl-ball-l">' + rows.map(function(r){ return '<div class="cl-ball-r"><button type="button" class="cl-ball-c" data-k="c:' + esc(r.c.id) + '"><em class="cl-av2" style="background:' + avCol(r.c.nom) + '">' + esc(ini(r.c.nom)) + '</em><b>' + esc(r.c.nom) + '</b><span>' + r.L.length + '</span></button><p>' + r.L.map(function(x){ return '<span>' + esc(dayLab(x.d)) + '</span>'; }).join('') + '</p></div>'; }).join('') + '</div>'
+          : '<div class="cl-empty">Aucune séance réalisée en ' + esc(mLab(ym)) + '.</div>');
+    }
+    var d = sheet('<div class="cl-ball"><h4>' + IC('calendar') + 'Bilan des séances</h4><div id="clBall">' + body() + '</div><button type="button" class="cl-btn ghost" data-k="x">Fermer</button></div>', function(k, dd){
+      if(k === 'prev'){ ym = shift(ym, -1); dd.querySelector('#clBall').innerHTML = body(); return false; }
+      if(k === 'next'){ if(ym < todayIso().slice(0, 7)){ ym = shift(ym, 1); dd.querySelector('#clBall').innerHTML = body(); } return false; }
+      if(k.indexOf('m:') === 0){ ym = k.slice(2); dd.querySelector('#clBall').innerHTML = body(); return false; }
+      if(k.indexOf('c:') === 0){ V.c = k.slice(2); V.bil = V.c; V.more = 15; render(); window.scrollTo(0, 0); return; }
+    });
+    d.classList.add('cl-dlg-wide');
+  }
   function render(){
     if(!READY){ pane.innerHTML = '<div class="cl-card"><p>Chargement…</p></div>'; return; }
     var c = V.c && clientById(V.c);
@@ -21309,7 +21355,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       h += '<div class="cl-empty"><b>📥</b>Aucun client pour l’instant.<br>Importe le fichier de tes séances, ou crée ton premier client.</div>'
         + '<div class="cl-grid2"><button type="button" class="cl-btn go" data-a="import">' + IC('import') + 'Importer</button><button type="button" class="cl-btn ghost" data-a="newc">' + IC('userplus') + 'Nouveau client</button></div>';
     } else {
-      h += '<div class="cl-bar"><input class="cl-in" id="clQ" type="search" placeholder="Rechercher un client" value="' + esc(V.q) + '" autocomplete="off"><button type="button" class="cl-btn" data-a="newc" aria-label="Nouveau client">' + IC('plus') + '</button></div><div class="cl-list" id="clList"></div>';
+      h += '<div class="cl-bar"><input class="cl-in" id="clQ" type="search" placeholder="Rechercher un client" value="' + esc(V.q) + '" autocomplete="off"><button type="button" class="cl-btn" data-a="newc" aria-label="Nouveau client">' + IC('plus') + '</button></div><button type="button" class="cl-bil-all" data-a="bilall">' + IC('calendar') + '<span><b>Bilan des séances</b><small>' + (function(){ var ym = todayIso().slice(0, 7), n = 0, cs = 0; D.clients.forEach(function(c){ var k = c.s.filter(function(x){ var d = isoD(x); return d && d.slice(0, 7) === ym && isDone(x); }).length; n += k; if(k) cs++; }); return n + ' séance' + (n > 1 ? 's' : '') + ' réalisée' + (n > 1 ? 's' : '') + ' en ' + mLab(ym) + (cs ? ' · ' + cs + ' client' + (cs > 1 ? 's' : '') : ''); })() + '</small></span><i>' + IC('next') + '</i></button><div class="cl-list" id="clList"></div>';
     }
     h += '</div>';
     pane.innerHTML = h;
@@ -21348,7 +21394,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function sessHtml(c, s){
     var w = s.w || 0, meta = fmtLine(s);
-    return '<div class="cl-ss" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + '</div>'
+    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '')
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
       + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" class="sec" data-a="dup">' + IC('copy') + '<span>Refaire</span></button><button type="button" class="sec" data-a="copy">' + IC('send') + '<span class="lg">Copier vers…</span><span class="sm">Copier</span></button><button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '<span class="sm">QR</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>';
@@ -21357,6 +21403,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var l = lastSess(c), list = c.s.slice().reverse(), shown = list.slice(0, V.more);
     var h = '<div class="cl-head"><button type="button" class="cl-back" data-a="back" aria-label="Retour">' + IC('back') + '</button><span><h3>' + esc(c.nom) + '</h3><small>' + c.s.length + ' séance' + (c.s.length > 1 ? 's' : '') + (l ? ' · dernière : ' + esc(dShort(l)) : '') + '</small></span><button type="button" class="cl-btn ghost" data-a="cmenu" aria-label="Options du client">' + IC('more') + '</button></div>'
       + '<div class="cl-grid2" style="margin:0 0 12px"><button type="button" class="cl-btn go" data-a="new" style="grid-column:1 / -1">' + IC('plus') + 'Nouvelle séance</button></div>';
+    h += clientBilan(c);
     h += shown.length ? shown.map(function(s){ return sessHtml(c, s); }).join('') : '<div class="cl-card cl-empty"><b>📝</b>Pas encore de séance pour ' + esc(c.nom) + '.</div>';
     if(list.length > shown.length) h += '<button type="button" class="cl-btn ghost cl-more" data-a="more">Voir les séances plus anciennes (' + (list.length - shown.length) + ')</button>';
     pane.innerHTML = h;
@@ -21383,6 +21430,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'newc') return askName('Nouveau client', '', function(n){ var nc = {id:uid(), nom:n, s:[]}; D.clients.push(nc); save(); V.c = nc.id; render(); });
     if(a === 'back'){ V.c = null; render(); return; }
     if(a === 'more'){ V.more += 30; render(); return; }
+    if(a === 'bilall') return bilanAll();
+    if(a === 'bil'){ V.bil = V.bil === V.c ? null : V.c; V.bilMore = 12; render(); return; }
+    if(a === 'bilmore'){ V.bilMore = (V.bilMore || 12) + 12; render(); return; }
+    if(a === 'goto'){ var gid = b.getAttribute('data-g'), cc = clientById(V.c); if(!cc) return; var pos = cc.s.slice().reverse().findIndex(function(x){ return x.id === gid; }); if(pos >= V.more){ V.more = pos + 5; render(); }
+      var el = pane.querySelector('.cl-ss[data-s="' + gid + '"]'); if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } return; }
     if(!c) return;
     if(a === 'cmenu') return clientMenu(c);
     if(a === 'new'){ var l0 = lastSess(c);
@@ -21398,6 +21450,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'newlast_unused'){ var l = lastSess(c); return openEditor(c, l ? {d:todayIso(), t:l.t, r:l.r, w:l.w, who:l.who, ex:l.ex.map(function(x){ return x.slice(); })} : {d:todayIso(), ex:[['', '30"']]}, true); }
     if(a === 'blank') return openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true);
     if(!s) return;
+    if(a === 'done'){ s.ok = isDone(s) ? 0 : 1; save(); var oc = pane.querySelector('.cl-ss[data-s="' + s.id + '"]'); if(oc){ oc.classList.toggle('done', isDone(s)); var ob = oc.querySelector('.cl-done'); if(ob) ob.outerHTML = doneBtn(s); } var bl = pane.querySelector('.cl-bil'); if(bl) bl.outerHTML = clientBilan(c); toast(isDone(s) ? '✓ Séance réalisée' : 'Séance remise « à faire »'); return; }
     if(a === 'go') return launchSheet(c.nom, s, c);
     if(a === 'show') return present(c.nom, s, null);
     if(a === 'edit') return openEditor(c, s, false);
@@ -21969,6 +22022,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Carte d'échauffement : flamme dessinée + idées d'échauffement (la carte orange n'est plus vide)
   var WUP_ART = '<svg class="clt-flame" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="cltFg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF5A14"/><stop offset=".6" stop-color="#FF9A2E"/><stop offset="1" stop-color="#FFD25A"/></linearGradient></defs><circle cx="32" cy="36" r="27" fill="rgba(255,255,255,.12)"/><path d="M32 6c2.5 9.5 14 14.5 14 28.5a14 14 0 0 1-28 0c0-7.5 4.2-11.8 6.4-16 1.1 4.2 3.1 6.4 5.3 7.4C28.6 17.4 29.7 11.6 32 6z" fill="url(#cltFg)"/><path d="M32 31c1.2 4.2 6.4 6.6 6.4 12.6a6.4 6.4 0 0 1-12.8 0c0-3.2 1.9-5.3 3-7.4.6 2.1 1.6 3.2 2.7 3.7-.5-3.2 0-6.2.7-8.9z" fill="#FFF3C4"/></svg>';
   function wupIdeas(){ return ''; }
+  function markDone(s0){ try{ var hit = D.clients.some(function(c){ return c.s.indexOf(s0) >= 0; }); if(hit && s0.ok !== 1){ s0.ok = 1; save(); if(!document.querySelector('.stx.clt')) render(); else setTimeout(render, 0); } }catch(e){} }
   function isRep(st){ return !!(st && st.k === 'ex' && st.reps > 0 && !st.sec); }
   function buildSteps(s, o){
     var w = s.w || 0, wu = s.ex.slice(0, w), ci = s.ex.slice(w), out = [];
@@ -22059,7 +22113,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function goT(d){
     var n = CT.steps.length;
-    if(d > 0 && CT.k + 1 >= n){ CT.state = 'fin'; CT.tEnd = Date.now(); ding(); vib([200, 100, 200]); try{ if(window.ecConfetti) window.ecConfetti(); }catch(x){} renderT(); liveSend(); return; }
+    if(d > 0 && CT.k + 1 >= n){ CT.state = 'fin'; CT.tEnd = Date.now(); markDone(CT.s); ding(); vib([200, 100, 200]); try{ if(window.ecConfetti) window.ecConfetti(); }catch(x){} renderT(); liveSend(); return; }
     CT.k = Math.max(0, Math.min(n - 1, CT.k + d)); var st = cur(); CT.left = st.sec || 0; CT.el2 = 0; CT.state = 'pret'; CT.cnt = 0; CT.repLock = false;
     renderT();
     if(st.k === 'rest' && d > 0) startT();
@@ -23086,6 +23140,58 @@ h4 > .tmi{display:inline-block; vertical-align:-.12em; margin-right:4px;}
 :root[data-theme="light"] .clv-bravo{background-image:linear-gradient(90deg, #C9971E, #E0761C, #F0A830, #E0761C, #C9971E);}
 :root[data-theme="light"] .clv-sub{color:#B07A12;}
 :root[data-theme="light"] .clv-rays{background:repeating-conic-gradient(from 0deg, rgba(224,150,30,.22) 0deg 9deg, transparent 9deg 24deg);}
+
+/* ===== Coaching : séances réalisées et bilan ===== */
+.cl-ss-h .cl-done{margin-left:auto;}
+.cl-done{display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:999px; border:1.5px dashed rgba(127,127,127,.4); background:transparent; color:var(--stone, #66746B); font:700 .76rem/1 Inter, sans-serif; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .12s ease, background .2s ease;}
+.cl-done .tmi{width:14px; height:14px; opacity:.5;}
+.cl-done.on{border:1.5px solid transparent; background:rgba(35,135,79,.12); color:#1E8A4E;}
+.cl-done.on .tmi{opacity:1;}
+.cl-done:active{transform:scale(.94);}
+.cl-ss.done{box-shadow:inset 3px 0 0 #2E9E5E, var(--shadow-1, 0 1px 3px rgba(0,0,0,.06));}
+.cl-ss.flash{animation:clFlash 1.4s ease;}
+@keyframes clFlash{0%,40%{box-shadow:0 0 0 3px #F5C451;}}
+.cl-bil-all{display:flex; align-items:center; gap:12px; width:100%; margin:10px 0 4px; padding:12px 14px; border-radius:16px; border:1px solid rgba(35,135,79,.22); background:linear-gradient(135deg, rgba(47,203,114,.1), rgba(47,203,114,.03)); color:var(--ink); text-align:left; cursor:pointer;}
+.cl-bil-all > .tmi{width:24px; height:24px; color:#23874F; flex:none;}
+.cl-bil-all span{flex:1; min-width:0;} .cl-bil-all b{display:block; font:800 .95rem/1.2 'Bricolage Grotesque', sans-serif;} .cl-bil-all small{display:block; margin-top:2px; font-size:.78rem; color:var(--stone);}
+.cl-bil-all i .tmi{width:18px; height:18px; opacity:.5;}
+.cl-bil{margin:0 0 12px; border-radius:18px; background:var(--card, #fff); box-shadow:var(--shadow-1); overflow:hidden;}
+.cl-bil.empty{display:flex; align-items:center; gap:10px; padding:12px 14px; font-size:.84rem; color:var(--stone);}
+.cl-bil.empty .tmi{width:20px; height:20px;}
+.cl-bil-h{display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; border:none; background:transparent; color:var(--ink); text-align:left; cursor:pointer;}
+.cl-bil-h > .tmi{width:22px; height:22px; color:#23874F; flex:none;}
+.cl-bil-h span{flex:1;} .cl-bil-h b{display:block; font:800 .95rem/1.2 'Bricolage Grotesque', sans-serif;} .cl-bil-h small{display:block; margin-top:2px; font-size:.78rem; color:var(--stone);}
+.cl-bil-h i{font-style:normal; opacity:.5;}
+.cl-bil-l{padding:0 14px 12px;}
+.cl-bil-m{padding:10px 0; border-top:1px solid rgba(127,127,127,.14);}
+.cl-bil-m > div{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+.cl-bil-m b{font:800 .86rem/1 Inter, sans-serif;} .cl-bil-m em{font-style:normal; min-width:24px; padding:3px 8px; border-radius:999px; background:#23874F; color:#fff; font:800 .74rem/1 Inter, sans-serif; text-align:center;}
+.cl-bil-m p{display:flex; flex-wrap:wrap; gap:5px; margin:0;}
+.cl-bil-m p button{padding:5px 9px; border-radius:9px; border:1px solid rgba(127,127,127,.2); background:transparent; color:var(--ink); font:700 .76rem/1 Inter, sans-serif; cursor:pointer;}
+.cl-dlg.cl-dlg-wide > div{max-width:640px;}
+.cl-ball h4{display:flex; align-items:center; gap:8px;} .cl-ball h4 .tmi{width:20px; height:20px; color:#23874F;}
+.cl-ball-nav{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:4px 0 12px;}
+.cl-ball-nav b{font:800 1.1rem/1 'Bricolage Grotesque', sans-serif;}
+.cl-ball-nav button{display:grid; place-items:center; width:40px; height:40px; border-radius:50%; border:1px solid rgba(127,127,127,.22); background:transparent; color:var(--ink); cursor:pointer;}
+.cl-ball-nav button:disabled{opacity:.3;} .cl-ball-nav .tmi{width:18px; height:18px;}
+.cl-ball-kpi{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px;}
+.cl-ball-kpi div{padding:12px 6px; border-radius:14px; background:rgba(35,135,79,.08); text-align:center;}
+.cl-ball-kpi b{display:block; font:800 1.5rem/1 'Bricolage Grotesque', sans-serif; color:#1E8A4E;} .cl-ball-kpi small{display:block; margin-top:4px; font:700 .7rem/1 Inter, sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--stone);}
+.cl-ball-ch{display:grid; grid-template-columns:repeat(12, 1fr); gap:4px; align-items:end; height:110px; margin:0 0 14px; padding:6px 2px 0;}
+.cl-ball-ch button{position:relative; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; padding:0 0 16px; border:none; background:transparent; cursor:pointer; color:var(--ink);}
+.cl-ball-ch i{display:block; width:100%; max-width:26px; border-radius:6px 6px 3px 3px; background:rgba(35,135,79,.3);}
+.cl-ball-ch button.on i{background:#23874F;}
+.cl-ball-ch em{position:absolute; font-style:normal; font:800 .66rem/1 Inter, sans-serif; color:var(--stone); top:-2px;}
+.cl-ball-ch small{position:absolute; bottom:0; font:700 .62rem/1 Inter, sans-serif; color:var(--stone); text-transform:capitalize;}
+.cl-ball-ch button.on small{color:#1E8A4E; font-weight:800;}
+.cl-ball-l{display:flex; flex-direction:column; gap:8px; max-height:44vh; overflow:auto; margin-bottom:10px;}
+.cl-ball-r{padding:10px 12px; border-radius:14px; border:1px solid rgba(127,127,127,.16);}
+.cl-ball-c{display:flex; align-items:center; gap:10px; width:100%; padding:0; border:none; background:transparent; color:var(--ink); text-align:left; cursor:pointer;}
+.cl-ball-c .cl-av2{width:30px; height:30px; font-size:.75rem;}
+.cl-ball-c b{flex:1; font:800 .92rem/1.2 Inter, sans-serif;}
+.cl-ball-c span{min-width:26px; padding:4px 9px; border-radius:999px; background:#23874F; color:#fff; font:800 .78rem/1 Inter, sans-serif; text-align:center;}
+.cl-ball-r p{display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 0;}
+.cl-ball-r p span{padding:4px 8px; border-radius:8px; background:rgba(127,127,127,.1); font:700 .74rem/1 Inter, sans-serif;}
 /* ===== Coaching en direct sur l'iPad ===== */
 .clp-live{display:inline-flex; align-items:center; gap:6px; height:40px; padding:0 12px; border-radius:999px; background:rgba(127,127,127,.12); font:700 .76rem/1 Inter, sans-serif; opacity:.6; white-space:nowrap;}
 .clp-live .tmi{width:16px; height:16px;}
