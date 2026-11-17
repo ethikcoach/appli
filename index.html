@@ -2965,10 +2965,10 @@
   .ec-p1 #renfoView .panel > .q-step{counter-increment:qstep;}
   .ec-p1 #renfoView .panel > .q-step .field-label::before{content:counter(qstep); display:inline-grid; place-items:center; width:24px; height:24px; margin-right:8px; border-radius:50%; background:var(--forest); color:#fff; font-size:0.78rem; font-weight:700; vertical-align:1px;}
   .ec-p1 #renfoView:not(.quick):not(.collapsed) .panel.opts-closed #zoneField{display:block !important;}
-  .ec-p1 #renfoView .panel-summary .ps-tags{display:flex; flex-wrap:wrap; gap:6px;}
-  .ec-p1 #renfoView .panel-summary .ps-tags span{font-size:0.8rem; background:var(--sage-light); color:var(--forest); padding:4px 10px; border-radius:10px; white-space:nowrap;}
-  .ec-p1 #renfoView .panel-summary .ps-edit{flex:none; min-height:44px; padding:0 18px; border-radius:999px; border:1.5px solid var(--forest); background:none; color:var(--forest); font-family:'Inter',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer;}
-  @media screen and (prefers-color-scheme: dark){ .ec-p1 #renfoView .panel-summary .ps-tags span{background:#1E3528; color:#A7D8B4;} .ec-p1 #renfoView .panel-summary .ps-edit{color:#A7D8B4; border-color:#8FC49E;} }
+  .ec-p1 .app .panel-summary .ps-tags{display:flex; flex-wrap:wrap; gap:6px;}
+  .ec-p1 .app .panel-summary .ps-tags span{font-size:0.8rem; background:var(--sage-light); color:var(--forest); padding:4px 10px; border-radius:10px; white-space:nowrap;}
+  .ec-p1 .app .panel-summary .ps-edit{flex:none; min-height:44px; padding:0 18px; border-radius:999px; border:1.5px solid var(--forest); background:none; color:var(--forest); font-family:'Inter',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer;}
+  @media screen and (prefers-color-scheme: dark){ .ec-p1 .app .panel-summary .ps-tags span{background:#1E3528; color:#A7D8B4;} .ec-p1 .app .panel-summary .ps-edit{color:#A7D8B4; border-color:#8FC49E;} }
   .ec-p1 #renfoView > .intro{margin-bottom:0 !important;}
   .ec-p1 #renfoView.quick .results .empty-state{display:none;}
   /* Bandeau d'accueil Renfo : simple salutation, la carte du jour prend la vedette */
@@ -16905,7 +16905,7 @@
       var expanded = false;
       function update(){
         var has = !results.querySelector('.empty-state') && results.children.length > 0;
-        if(has && !expanded){ view.classList.add('collapsed'); requestAnimationFrame(function(){ setTimeout(function(){ summary(view); }, 0); }); }
+        if(false && has && !expanded){ view.classList.add('collapsed'); requestAnimationFrame(function(){ setTimeout(function(){ summary(view); }, 0); }); }
         if(!has) view.classList.remove('collapsed');
       }
       new MutationObserver(update).observe(results, {childList:true});
@@ -16913,7 +16913,8 @@
       var hasSettings = false; try{ hasSettings = !!localStorage.getItem('ec_settings_v1') && !!localStorage.getItem('ec_history_v1'); }catch(e){}
       var prog = document.getElementById('modeProgram');
       if((hasSettings || (viewId === 'renfoView' && window.matchMedia && window.matchMedia('(max-width:860px)').matches)) && !/^#[a-z]+=/.test(location.hash || '') && !(prog && prog.classList.contains('active') && viewId === 'renfoView')){
-        summary(view); view.classList.add('quick');
+        // Résumé replié supprimé : les réglages restent toujours affichés en entier, comme sur les autres pages
+        if(false){ summary(view); view.classList.add('quick'); }
       }
       view.querySelector('.ps-edit').addEventListener('click', function(){
         view.classList.remove('quick');
