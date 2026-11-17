@@ -2032,6 +2032,9 @@
   .ct-filter .chip.active::before{display:none !important;}
   .coach-tools .ct-row{display:block; padding:12px 0;}
   .ct-row-top{display:flex; align-items:center; gap:8px;}
+  .ct-lnk{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--card); border-radius:12px; padding:8px 8px 8px 12px; margin-top:6px;}
+  .ct-lnk span{flex:1 1 180px; min-width:0; font-size:0.78rem; word-break:break-all; color:var(--forest); user-select:all; -webkit-user-select:all;}
+  .ct-lnk button{flex:none;}
   .ct-row .info b{font-size:0.95rem;}
   .ct-row .info b em{font-style:normal; font-weight:500; font-size:0.74rem; color:var(--stone); margin-left:4px;}
   .ct-row .st{display:inline-block; margin-top:4px; font-size:0.74rem !important; font-weight:700; padding:3px 9px; border-radius:999px; word-break:normal !important;}
@@ -10285,7 +10288,22 @@
       return usersStr(draft) !== usersStr(remote) || (draft && grpStr(draft) !== grpStr(remote)) || (draft && JSON.stringify(draft.challenge || null) !== JSON.stringify((remote && remote.challenge) || null)) || (remoteMissing && draft && (Object.keys(draft.users).length > 0 || ib !== '{}')) || ib !== (pub || '{}'); }
     function saveDraft(){ lsSet(CT_DRAFT, draft); }
     function localKeys(){ return lsGet(CT_KEY, []); }
-    function keyOf(h){ var l = localKeys(); for(var i = 0; i < l.length; i++) if(ecHash(l[i].k) === h) return l[i]; return null; }
+    function keyOf(h){ var l = localKeys(); for(var i = 0; i < l.length; i++) if(ecHash(l[i].k) === h) return l[i]; return recoverKey(h); }
+    // Clé créée sur un autre appareil du coach : on la retrouve à partir du prénom et de sa date de création (la clé n'est jamais publiée)
+    var KEY_MISS = {};
+    function recoverKey(h){
+      if(KEY_MISS[h] || !draft || !draft.users || !draft.users[h]) return null;
+      var u = draft.users[h], p = slug(u.n || ''); if(!p){ KEY_MISS[h] = 1; return null; }
+      function hit(d){ var k = ecMakeKey(p, d); return ecHash(k) === h ? k : null; }
+      var key = (u.exp && /^\d{4}-\d{2}-\d{2}$/.test(u.exp) ? hit(u.exp) : null) || hit(EC_NEVER), exp = key ? (hit(u.exp || '') ? u.exp : EC_NEVER) : '';
+      if(!key){
+        for(var t = new Date(2025, 0, 1), end = new Date(2034, 0, 1); t < end && !key; t.setDate(t.getDate() + 1)){ var d = iso(t); key = hit(d); if(key) exp = d; }
+      }
+      if(!key){ KEY_MISS[h] = 1; return null; }
+      var r = {n:u.n, k:key, exp:exp, at:Date.now()};
+      lsSet(CT_KEY, [r].concat(localKeys().filter(function(x){ return x.k !== key; })).slice(0, 300));
+      return r;
+    }
     // Les clés créées avant cette version entrent dans la liste
     function migrate(){
       if(!draft) draft = remote ? clone(remote) : emptyAcl();
@@ -10418,7 +10436,7 @@
         var k = keyOf(r.h), u = r.u;
         var html = '<div class="ct-row" data-h="' + r.h + '"><div class="ct-row-top"><div class="info"><b>' + esc(u.n) + (r.stat && STATIC_LABEL[r.h].n ? ' <em>' + esc(r.label) + '</em>' : '') + '</b><span class="st ' + r.st.cls + '">' + esc(r.st.txt) + '</span>' + '</div></div>'
           + '<div class="ct-row-acts"><button type="button" data-ct="sess" class="send">📲 Séance</button><button type="button" data-ct="ext">Prolonger</button><button type="button" data-ct="blk">' + (u.b ? 'Débloquer' : 'Bloquer') + '</button>'
-          + (k ? '<button type="button" data-ct="send" class="send">📨 Envoyer l\u2019accès</button>' : '') + '<button type="button" data-ct="del" class="del">Supprimer</button></div>';
+          + (k || !r.stat ? '<button type="button" data-ct="send" class="send">🔗 Lien d\u2019accès</button>' : '') + '<button type="button" data-ct="del" class="del">Supprimer</button></div>';
         if(openSess === r.h){
           var ch = sessChoices();
           html += '<div class="ct-ext ct-sess"><div class="ct-ext-q">Envoyer une séance dans l\u2019appli de ' + esc(u.n) + ' :</div>'
@@ -10427,15 +10445,20 @@
               : '<p class="ct-note" style="margin-top:6px">Génère, compose ou mets en favori une séance d\u2019abord : elle apparaîtra ici.</p>')
             + '<div class="ct-acts" style="margin-top:8px"><button type="button" data-compose>✍️ Composer une nouvelle séance</button></div></div>';
         }
+        if(!k && openSend === r.h){
+          html += '<div class="ct-ext ct-send"><p class="ct-note" style="margin:0">Lien introuvable : le prénom a sans doute été modifié depuis la création de la clé. Crée une nouvelle clé pour ' + esc(u.n) + ' avec « ＋ Nouvel athlète ».</p></div>';
+        }
         if(k && openSend === r.h){
           var msg = encodeURIComponent(waMsg(k)), ip = intlPhone(k.ph);
-          html += '<div class="ct-ext ct-send"><div class="ct-ext-q">Envoyer son lien d\u2019accès à ' + esc(k.n) + ' :</div>'
+          html += '<div class="ct-ext ct-send"><div class="ct-ext-q">Lien d\u2019accès de ' + esc(k.n) + ' :</div>'
+            + '<div class="ct-lnk"><span>' + esc(appBase() + '?acces=' + k.k) + '</span><button type="button" data-ct="link" class="send">Copier le lien</button></div>'
+            + '<div class="ct-ext-q" style="margin-top:10px">L\u2019envoyer :</div>'
             + '<div class="ct-acts">'
             + '<a href="https://wa.me/' + (ip || '') + '?text=' + msg + '" target="_blank" rel="noopener" data-ct="sent">WhatsApp</a>'
             + '<a href="sms:' + (k.ph ? esc(k.ph.replace(/\s/g, '')) : '') + '?&body=' + msg + '" data-ct="sent">SMS</a>'
             + '<a href="mailto:?subject=' + encodeURIComponent('Ton accès à l\u2019appli Ethik\u2019Coach') + '&body=' + msg + '" data-ct="sent">E-mail</a>'
             + (navigator.share ? '<button type="button" data-ct="native">Partager…</button>' : '')
-            + '<button type="button" data-ct="msg">Copier</button></div>'
+            + '<button type="button" data-ct="msg">Copier le message</button></div>'
             + '<div class="ct-ext-row"><input type="tel" class="ct-ph" placeholder="Téléphone (pour ouvrir sa conversation)" value="' + esc(k.ph || '') + '"><button type="button" data-ct="ph">OK</button></div>'
             + (ip ? '' : '<p class="ct-note" style="margin-top:6px">Sans numéro, WhatsApp te laisse choisir le contact.</p>') + '</div>';
         }
@@ -10719,6 +10742,7 @@
           return;
         }
         if(act === 'msg'){ var k = keyOf(h); if(k) copyText(waMsg(k), 'Message copié'); return; }
+        if(act === 'link'){ var kl = keyOf(h); if(kl) copyText(appBase() + '?acces=' + kl.k, 'Lien copié'); return; }
         if(act === 'del'){
           ecConfirm('Supprimer ' + (cur.n || 'cet accès') + ' ? Sa clé ne fonctionnera plus et il disparaîtra de la liste.', 'Supprimer', function(){
             lsSet(CT_KEY, localKeys().filter(function(x){ return ecHash(x.k) !== h; }));
