@@ -1502,12 +1502,8 @@
     if(!k) return null; k = String(k).trim().toLowerCase(); var h = ecHash(k);
     if(EC_REVOKED.indexOf(h) > -1) return null;
     for(var i=0;i<EC_ACCESS.length;i++){ if(EC_ACCESS[i].h === h) return EC_ACCESS[i]; }
-    var m = /^([a-z]{1,12})-(\d{6})(?:-([fmbdp]{1,4}))?-([a-z0-9]{6})$/.exec(k);
-    if(m && (m[3] ? m[3] === ecScNorm(m[3]) : true) && ecSig(m[1], m[2] + (m[3] || '')) === m[4]){
-      var e = {h:h, n:m[1].charAt(0).toUpperCase() + m[1].slice(1), label:'Clé personnelle', exp:'20' + m[2].slice(0, 2) + '-' + m[2].slice(2, 4) + '-' + m[2].slice(4, 6)};
-      if(m[3]) e.sc = m[3];
-      return e;
-    }
+    // Clé d'athlète : vérifiée par le serveur (registre privé du coach), puis gardée 7 jours pour le hors connexion
+    if(EC_ATH_RE.test(k)) return ecAthHit(k);
     return null;
   }
   // « Séance seule » : lien signé qui ouvre uniquement cette séance, sans donner accès au reste de l'appli
@@ -1538,14 +1534,43 @@
   var EC_SUB_API = 'https://ethikcoach-abonnement.ethikcoach.workers.dev';
   var EC_SUB_RE = /^ab-[a-z0-9]{16}$/, EC_SUB_PENDING = null, EC_SUB_GRACE = 7 * 86400000;
   function ecSubCache(){ try{ return JSON.parse(localStorage.getItem('ec_sub') || 'null'); }catch(e){ return null; } }
+  // Clés d'athlète : nouvelles (prénom + 8 caractères au hasard) et anciennes (prénom-date-signature)
+  var EC_ATH_RE = /^[a-z]{1,12}-(?:[a-z0-9]{8}|\d{6}-(?:[fmbdp]{1,4}-)?[a-z0-9]{6})$/;
+  function ecIsStatic(k){ var h = ecHash(String(k || '').trim().toLowerCase()); for(var i = 0; i < EC_ACCESS.length; i++) if(EC_ACCESS[i].h === h) return true; return false; }
+  function ecIsSrvKey(k){ k = String(k || '').trim().toLowerCase(); return EC_SUB_RE.test(k) || (EC_ATH_RE.test(k) && !ecIsStatic(k)); }
+  // Identifiant de cet appareil (au hasard, jamais synchronisé ni sauvegardé) : un lien sert sur 3 appareils au plus
+  function ecDevId(){
+    try{
+      var d = localStorage.getItem('ec_dev_id') || '';
+      if(!/^[a-z0-9]{12}$/.test(d)){ var a = new Uint8Array(12), c = 'abcdefghijklmnopqrstuvwxyz0123456789'; crypto.getRandomValues(a); d = ''; for(var i = 0; i < 12; i++) d += c.charAt(a[i] % 36); localStorage.setItem('ec_dev_id', d); }
+      return d;
+    }catch(e){ return ''; }
+  }
+  function ecAthCache(){ try{ return JSON.parse(localStorage.getItem('ec_acc') || 'null'); }catch(e){ return null; } }
+  function ecAthHit(k){
+    var c = ecAthCache(); if(!(k && c && c.k === k && c.ok && Date.now() - c.at < EC_SUB_GRACE)) return null;
+    var e = {h:ecHash(k), n:c.n || '', label:'Clé personnelle', exp:c.exp || ''}; if(c.sc) e.sc = c.sc; if(c.b) e.blocked = true; return e;
+  }
+  function ecAthSave(k, r){
+    try{
+      if(r && r.ok){
+        localStorage.setItem('ec_acc', JSON.stringify({k:k, ok:true, at:Date.now(), n:r.n || '', exp:r.exp || '', sc:r.sc || '', b:!!r.b}));
+        var acl = {v:1, users:{}}; acl.users[ecHash(k)] = {n:r.n || '', exp:r.exp || '', sc:r.sc || '', b:r.b ? 1 : 0}; if(r.challenge) acl.challenge = r.challenge;
+        localStorage.setItem('ec_acl', JSON.stringify(acl)); EC_ACL = acl;
+      } else if(r && r.raison !== 'appareils') localStorage.removeItem('ec_acc');
+    }catch(e){}
+  }
+  function ecAthVerify(k){
+    return fetch(EC_SUB_API + '/acces/verifier', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:k, d:ecDevId()})}).then(function(r){ return r.json(); });
+  }
   function ecSubHit(k){ var c = ecSubCache(); return (k && c && c.k === k && c.ok && Date.now() - c.at < EC_SUB_GRACE) ? {h:'sub', n:'', label:'Abonnement', sub:true, info:c} : null; }
   (function(){
     var key = null;
     try{ key = new URLSearchParams(location.search).get('acces'); }catch(e){}
     var stored = null; try{ stored = localStorage.getItem('ec_access'); }catch(e){}
     var kn = key ? String(key).trim().toLowerCase() : '', sn = stored ? String(stored).trim().toLowerCase() : '', subK = null;
-    if(EC_SUB_RE.test(kn)) subK = kn; else if(!ecFindKey(kn) && EC_SUB_RE.test(sn)) subK = sn;
-    var hit = subK ? ecSubHit(subK) : ecFindKey(key);
+    if(ecIsSrvKey(kn)) subK = kn; else if(!ecFindKey(kn) && ecIsSrvKey(sn)) subK = sn;
+    var hit = subK ? (EC_SUB_RE.test(subK) ? ecSubHit(subK) : ecFindKey(subK)) : ecFindKey(key);
     if(subK){ if(hit){ key = subK; try{ localStorage.setItem('ec_access', subK); }catch(e){} } else { key = null; EC_SUB_PENDING = subK; } }
     else if(hit){ try{ localStorage.setItem('ec_access', key.trim().toLowerCase()); }catch(e){} }
     else { hit = ecFindKey(stored); key = hit ? stored : null; }
@@ -2046,6 +2071,8 @@
   .ct-sc-c button{min-height:38px; padding:0 12px; border-radius:999px; border:1.5px solid var(--line, rgba(0,0,0,.12)); background:var(--card); color:inherit; font:inherit; font-size:0.84rem; font-weight:600; cursor:pointer;}
   .ct-sc-c button.on{background:var(--forest); border-color:var(--forest); color:#fff;}
   .ct-row em.ct-scb{font-style:normal; font-weight:600; font-size:0.72rem; padding:2px 8px; border-radius:999px; background:rgba(47,109,181,.14); color:#2F6DB5; margin-left:6px;}
+  .ct-dev{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:8px; font-size:0.84rem;}
+  .ct-dev button{flex:none;}
   .ct-lnk{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--card); border-radius:12px; padding:8px 8px 8px 12px; margin-top:6px;}
   .ct-lnk span{flex:1 1 180px; min-width:0; font-size:0.78rem; word-break:break-all; color:var(--forest); user-select:all; -webkit-user-select:all;}
   .ct-lnk button{flex:none;}
@@ -4482,7 +4509,7 @@
     </details>
     <div class="ct-card">
       <h3>Clé coach</h3>
-      <p class="ct-note" style="margin-top:0">Ta clé coach reste sur tes appareils : elle n’apparaît jamais dans les liens envoyés aux athlètes. Le code GitHub, lui, n’est enregistré que sur cet appareil et n’est jamais inclus dans les sauvegardes.</p>
+      <p class="ct-note" style="margin-top:0">Ta clé coach reste sur tes appareils : elle n’apparaît jamais dans les liens envoyés aux athlètes. La liste de tes athlètes (prénoms, dates, thèmes) et les séances que tu leur envoies sont rangées sur ton serveur privé : plus rien n’est publié sur GitHub. Chaque lien d’accès sert sur 3 appareils au plus.</p>
     </div>
     </div>
   </div>
@@ -10222,7 +10249,7 @@
     // Sauvegarde / restauration
     function backupKeys(){
       var out = {};
-      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
     $('#svExport').addEventListener('click', function(){
@@ -10243,7 +10270,7 @@
         if(!data || data.app !== 'ethikcoach' || !data.data){ showToast('Ce fichier n’est pas une sauvegarde Ethik’Coach.', false); return; }
         var n = 0; try{ n = JSON.parse(data.data.ec_history_v1 || '[]').length; }catch(e){}
         ecConfirm('Restaurer cette sauvegarde (' + n + ' séance' + (n > 1 ? 's' : '') + ' dans l’historique) ? Les données actuelles de cet appareil seront remplacées.', 'Restaurer', function(){
-          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
+          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
           location.reload();
         });
       };
@@ -10300,7 +10327,7 @@
     function setPhone(k, ph){ lsSet(CT_KEY, localKeys().map(function(x){ if(x.k === k) x.ph = ph || undefined; return x; })); }
     function usersStr(a){ var u = (a && a.users) || {}, o = {}; Object.keys(u).sort().forEach(function(k){ o[k] = u[k]; }); return JSON.stringify(o); }
     function grpStr(a){ return JSON.stringify((a && a.groups) || {}); }
-    function pending(){ var ib = JSON.stringify(lsGet('ec_coach_inbox', {}) || {}), pub = null; try{ pub = localStorage.getItem('ec_coach_inbox_pub'); }catch(e){}
+    function pending(){ var ib = JSON.stringify(lsGet('ec_coach_inbox', {}) || {}), pub = null; try{ pub = localStorage.getItem('ec_coach_inbox_srv'); }catch(e){}
       return usersStr(draft) !== usersStr(remote) || (draft && grpStr(draft) !== grpStr(remote)) || (draft && JSON.stringify(draft.challenge || null) !== JSON.stringify((remote && remote.challenge) || null)) || (remoteMissing && draft && (Object.keys(draft.users).length > 0 || ib !== '{}')) || ib !== (pub || '{}'); }
     function saveDraft(){ lsSet(CT_DRAFT, draft); }
     function localKeys(){ return lsGet(CT_KEY, []); }
@@ -10333,19 +10360,47 @@
       localKeys().forEach(function(r){ var h = ecHash(r.k); if(!draft.users[h]) draft.users[h] = {n:r.n, exp:r.exp}; });
       saveDraft();
     }
+    // Liste des accès et boîtes de réception : rangées sur le serveur d'abonnement (plus rien de public sur GitHub)
+    function srv(path, body){
+      return fetch(EC_SUB_API + path, {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({k:String(EC_KEY || '').trim().toLowerCase()}, body || {}))})
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok || !j.ok) throw (j.raison === 'cle' ? 'Le serveur ne reconnaît pas ta clé coach.' : (r.status === 404 ? 'Serveur pas encore à jour : colle le nouveau worker.js dans Cloudflare.' : 'Le serveur a répondu une erreur. Réessaie dans un instant.')); return j; }); },
+          function(){ throw 'Pas de connexion au serveur. Réessaie dans un instant.'; });
+    }
+    var DEVS = {}, DEVMAX = 3;
+    // Copie chiffrée de chaque clé (avec ta clé coach) : le bouton « Lien d'accès » marche sur tous tes appareils
+    var ekKeyP = null;
+    function ekKey(){
+      if(!ekKeyP){ var te = new TextEncoder(); ekKeyP = crypto.subtle.importKey('raw', te.encode(String(EC_KEY || '').trim().toLowerCase()), 'PBKDF2', false, ['deriveKey']).then(function(b){
+        return crypto.subtle.deriveKey({name:'PBKDF2', salt:te.encode('ethikcoach-cles|v1'), iterations:120000, hash:'SHA-256'}, b, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']); }); }
+      return ekKeyP;
+    }
+    function b64(u){ var s = ''; u = new Uint8Array(u); for(var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
+    function unb64(t){ var s = atob(t), u = new Uint8Array(s.length); for(var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+    function ekEnc(k){ var iv = crypto.getRandomValues(new Uint8Array(12)); return ekKey().then(function(c){ return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, c, new TextEncoder().encode(k)); }).then(function(ct){ return b64(iv) + '.' + b64(ct); }); }
+    function ekDec(ek){ var p = String(ek).split('.'); return ekKey().then(function(c){ return crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(p[0])}, c, unb64(p[1])); }).then(function(b){ return new TextDecoder().decode(b); }); }
+    function unlockKeys(){
+      if(!EC_LOCK_ON || !draft || !window.crypto || !crypto.subtle) return Promise.resolve();
+      var users = draft.users || {}, have = {}, jobs = [], changed = false;
+      localKeys().forEach(function(r){ have[ecHash(r.k)] = r; });
+      Object.keys(users).forEach(function(h){
+        var u = users[h]; if(u.d) return;
+        if(!have[h] && u.ek) jobs.push(ekDec(u.ek).then(function(k){ if(ecHash(k) === h){ lsSet(CT_KEY, [{n:u.n, k:k, exp:u.exp, at:u.at || Date.now()}].concat(localKeys().filter(function(x){ return x.k !== k; })).slice(0, 300)); } }).catch(function(){}));
+        else if(have[h] && !u.ek) jobs.push(ekEnc(have[h].k).then(function(ek){ if(draft.users[h]){ draft.users[h].ek = ek; changed = true; } }).catch(function(){}));
+      });
+      return Promise.all(jobs).then(function(){ if(changed){ saveDraft(); autoSave(); } });
+    }
     function refreshRemote(){
       if(!EC_LOCK_ON){ if(!remote) remote = emptyAcl(); migrate(); renderCoach(); return; }
-      fetch('acces.json?t=' + Date.now(), {cache:'no-store'}).then(function(r){
-        if(r.status === 404){ remoteMissing = true; return emptyAcl(); }
-        return r.ok ? r.json() : null;
-      }).then(function(acl){
-        if(!acl) return;
-        if(!acl.users) acl.users = {};
+      srv('/coach/acces/lire').then(function(j){
+        var acl = j.acl || emptyAcl(); if(!acl.users) acl.users = {};
+        DEVS = j.devs || {}; DEVMAX = j.max || 3;
         var hadPending = draft && remote && pending();
-        remote = acl; lsSet(CT_REMOTE, remote);
-        if(!draft || !hadPending) draft = clone(remote);
+        var keepLocal = !Object.keys(acl.users).length && draft && Object.keys(draft.users || {}).length;   // serveur encore vide : on y envoie la liste de cet appareil
+        remote = acl; remoteMissing = !Object.keys(acl.users).length; lsSet(CT_REMOTE, remote);
+        if(!keepLocal && (!draft || !hadPending)) draft = clone(remote);
         migrate(); renderCoach(); autoSave();
-      }).catch(function(){ migrate(); renderCoach(); });
+        unlockKeys().then(renderCoach);
+      }).catch(function(err){ migrate(); renderCoach(); unlockKeys().then(renderCoach); if(typeof err === 'string') renderPub(); });
     }
     function statusOf(u){
       if(u.b) return {cls:'off', txt:'Bloqué'};
@@ -10469,12 +10524,13 @@
             + '<div class="ct-acts" style="margin-top:8px"><button type="button" data-compose>✍️ Composer une nouvelle séance</button></div></div>';
         }
         if(!k && openSend === r.h){
-          html += '<div class="ct-ext ct-send"><p class="ct-note" style="margin:0">Lien introuvable : le prénom a sans doute été modifié depuis la création de la clé. Crée une nouvelle clé pour ' + esc(u.n) + ' avec « ＋ Nouvel athlète ».</p></div>';
+          html += '<div class="ct-ext ct-send"><p class="ct-note" style="margin:0">Lien pas encore disponible sur cet appareil. Ouvre une fois l\u2019Espace coach sur l\u2019appareil où tu as créé la clé : le lien sera ensuite disponible partout. Sinon, crée une nouvelle clé pour ' + esc(u.n) + '.</p></div>';
         }
         if(k && openSend === r.h){
           var msg = encodeURIComponent(waMsg(k)), ip = intlPhone(k.ph);
           html += '<div class="ct-ext ct-send"><div class="ct-ext-q">Lien d\u2019accès de ' + esc(k.n) + ' :</div>'
             + '<div class="ct-lnk"><span>' + esc(appBase() + '?acces=' + k.k) + '</span><button type="button" data-ct="link" class="send">Copier le lien</button></div>'
+            + (EC_LOCK_ON ? '<div class="ct-dev"><span>📱 Appareils utilisés : <b>' + (DEVS[r.h] || 0) + ' sur ' + DEVMAX + '</b></span>' + ((DEVS[r.h] || 0) ? '<button type="button" data-ct="devreset">Libérer les places</button>' : '') + '</div>' : '')
             + '<div class="ct-ext-q" style="margin-top:10px">L\u2019envoyer :</div>'
             + '<div class="ct-acts">'
             + '<a href="https://wa.me/' + (ip || '') + '?text=' + msg + '" target="_blank" rel="noopener" data-ct="sent">WhatsApp</a>'
@@ -10582,7 +10638,7 @@
           var s = st(a), nm = a.nom || a.email || 'Sans nom';
           return '<div class="ct-row" data-k="' + esc(a.cle) + '" data-m="' + esc(a.email) + '"><div class="ct-row-top"><div class="info"><b>' + esc(nm) + '</b><span class="st ' + s.cls + '">' + esc(s.txt) + '</span>'
             + '<span class="ab-meta">' + esc(a.email) + (a.depuis ? ' · abonné depuis le ' + fd(a.depuis) : '') + (a.filleuls ? ' · 🎁 ' + a.filleuls + ' filleul' + (a.filleuls > 1 ? 's' : '') : '') + '</span><span class="ab-key">' + esc(a.cle) + '</span></div></div>'
-            + '<div class="ct-row-acts"><button type="button" data-ab="link">Copier le lien</button>' + (a.email ? '<button type="button" data-ab="mail" class="send">📨 Renvoyer le lien par e-mail</button>' : '') + '</div></div>';
+            + '<div class="ct-row-acts"><button type="button" data-ab="link">Copier le lien</button>' + (a.email ? '<button type="button" data-ab="mail" class="send">📨 Renvoyer le lien par e-mail</button>' : '') + (a.appareils ? '<button type="button" data-ab="dev">📱 ' + a.appareils + ' appareil' + (a.appareils > 1 ? 's' : '') + ' · libérer</button>' : '') + '</div></div>';
         }).join('') : '<p class="sv-empty">' + (list.length ? 'Aucun abonné ne correspond.' : 'Aucun abonné pour l’instant.') + '</p>';
       }
       // ----- Statistiques -----
@@ -10668,6 +10724,12 @@
         var b = e.target.closest('[data-ab]'); if(!b) return;
         var row = b.closest('[data-k]'), k = row.getAttribute('data-k'), m = row.getAttribute('data-m');
         if(b.getAttribute('data-ab') === 'link'){ copyText(APP + '?acces=' + k, 'Lien copié'); return; }
+        if(b.getAttribute('data-ab') === 'dev'){
+          fetch(EC_SUB_API + '/coach/appareils/reset', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({k:String(EC_KEY || '').trim().toLowerCase(), cle:k})})
+            .then(function(r){ return r.json(); }).then(function(j){ if(!j.ok) throw 0; b.remove(); showToast('Places libérées : son lien marche à nouveau sur 3 nouveaux appareils.', false); })
+            .catch(function(){ showToast('Impossible pour le moment. Réessaie.', false); });
+          return;
+        }
         b.disabled = true;
         fetch(EC_SUB_API + '/renvoyer', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({email:m})})
           .then(function(){ showToast('Lien renvoyé à ' + m + ' (un envoi toutes les 10 min au plus)', false); })
@@ -10689,8 +10751,7 @@
       var m = $('#ctMini'); if(!m || !draft) return;
       var rows = allRows(), act = rows.filter(function(r){ return r.st.cls !== 'off'; }).length, soon = rows.filter(function(r){ return r.st.cls === 'soon'; }).length;
       var ng = Object.keys(draft.groups || {}).length, p = ($('#ctPubTxt') || {}).textContent || '';
-      var nt = lsGet(CT_NET, null), lk = !!(nt && nt.token);
-      var st = !EC_LOCK_ON ? '' : (/Enregistrement/.test(p) ? '⏳ Enregistrement…' : (lk ? (/^✓/.test(p) ? '✓ Relié · à jour' : '✓ Relié à GitHub') : '⚠ GitHub à relier'));
+      var st = !EC_LOCK_ON ? '' : (/Enregistrement/.test(p) ? '⏳ Enregistrement…' : (/^✓/.test(p) ? '✓ À jour en ligne' : '⚠ Pas encore en ligne'));
       m.innerHTML = '<span>' + act + ' athlète' + (act > 1 ? 's' : '') + ' actif' + (act > 1 ? 's' : '') + '</span>'
         + (soon ? '<span class="warn">' + soon + ' bientôt fini' + (soon > 1 ? 's' : '') + '</span>' : '')
         + '<span>' + ng + ' groupe' + (ng > 1 ? 's' : '') + '</span>' + (st ? '<span>' + st + '</span>' : '');
@@ -10698,25 +10759,20 @@
     }
     function renderPub(msg){
       setTimeout(renderMini, 0);
-      var t = $('#ctPubTxt'), b = $('#ctPubBtn'), box = $('#ctPub'), net = lsGet(CT_NET, null);
-      var linked = !!(net && net.token);
-      $('#ctNetState').textContent = linked ? '✓ fait' : '';
-      $('#ctNetOk').hidden = !linked;
-      if(renderPub.linked !== linked){ renderPub.linked = linked; $('#ctNet').open = !linked; }
+      var t = $('#ctPubTxt'), b = $('#ctPubBtn'), box = $('#ctPub');
+      var cn = $('#ctNet'); if(cn) cn.hidden = true;   // plus besoin de relier GitHub pour gérer les accès
       if(!EC_LOCK_ON){ t.textContent = 'Aperçu de travail : les changements s\u2019enregistrent en ligne depuis l\u2019appli (appli.ethikcoach.fr).'; b.hidden = true; box.className = 'ct-pub'; return; }
       if(msg){ t.textContent = msg; b.hidden = true; box.className = 'ct-pub busy'; return; }
       if(!pending()){ t.textContent = '✓ À jour en ligne'; b.hidden = true; box.className = 'ct-pub ok'; return; }
-      if(!net || !net.token){ t.textContent = 'Dernière étape, à faire une seule fois : relie l\u2019appli à GitHub pour que tes changements s\u2019appliquent chez tes athlètes.'; b.textContent = 'Relier'; }
-      else { t.textContent = 'Changements pas encore en ligne.'; b.textContent = 'Réessayer'; }
+      t.textContent = 'Changements pas encore en ligne.'; b.textContent = 'Réessayer';
       b.hidden = false; box.className = 'ct-pub todo';
     }
     var pubTimer = null, publishing = false, pubAgain = false;
     function autoSave(){
       renderPub();
-      var net = lsGet(CT_NET, null);
-      if(!EC_LOCK_ON || !net || !net.token || !pending()) return;
+      if(!EC_LOCK_ON || !pending()) return;
       clearTimeout(pubTimer);
-      pubTimer = setTimeout(function(){ if(publishing){ pubAgain = true; return; } publish(net); }, 500);
+      pubTimer = setTimeout(function(){ if(publishing){ pubAgain = true; return; } publish(); }, 500);
     }
     var ctExp = $('#ctExp');
     if(ctExp){
@@ -10729,12 +10785,16 @@
         if(!/^\d{4}-\d{2}-\d{2}$/.test(exp)){ showToast('Choisis une date de fin.', false); return; }
         var scSel = ecScNorm(Array.prototype.map.call(document.querySelectorAll('#ctScope button.on'), function(b){ return b.getAttribute('data-sc'); }).join(''));
         if(scSel.length === EC_SC_ALL.length) scSel = '';
-        var key = ecMakeKey(s, exp, scSel), h = ecHash(key);
+        // Clé au hasard (impossible à deviner) : prénom + 8 caractères. Dates et thèmes restent sur le serveur.
+        var rnd = new Uint8Array(8), al = 'abcdefghijklmnopqrstuvwxyz0123456789', key = s + '-';
+        crypto.getRandomValues(rnd); for(var ri = 0; ri < 8; ri++) key += al.charAt(rnd[ri] % 36);
+        var h = ecHash(key);
         var r = {n:name.charAt(0).toUpperCase() + name.slice(1), k:key, exp:exp, at:Date.now(), ph:($('#ctPhone').value || '').trim() || undefined};
         if(scSel) r.sc = scSel;
         var list = localKeys().filter(function(x){ return x.k !== key; }); list.unshift(r); lsSet(CT_KEY, list.slice(0, 300));
         if(!draft) migrate();
-        draft.users[h] = {n:r.n, exp:exp}; if(scSel){ draft.users[h].sc = scSel; draft.users[h].ksc = scSel; } saveDraft();
+        draft.users[h] = {n:r.n, exp:exp, at:r.at}; if(scSel) draft.users[h].sc = scSel; saveDraft();
+        if(EC_LOCK_ON && window.crypto && crypto.subtle) ekEnc(key).then(function(ek){ if(draft.users[h]){ draft.users[h].ek = ek; saveDraft(); autoSave(); } }).catch(function(){});
         var o = $('#ctOut'); o.hidden = false;
         o.innerHTML = '<div>Clé de <b>' + esc(r.n) + '</b>, ' + (ecNever(exp) ? 'sans date de fin' : 'valable jusqu’au ' + frDate(exp)) + ' :</div><div class="k">' + esc(key) + '</div><div class="u">' + esc(appBase() + '?acces=' + key) + '</div>'
           + '<div class="ct-acts"><button type="button" data-ct-k="link" data-k="' + esc(key) + '">Copier le lien</button><button type="button" data-ct-k="msg" data-k="' + esc(key) + '">Copier le message</button><a href="https://wa.me/?text=' + encodeURIComponent(waMsg(r)) + '" target="_blank" rel="noopener">WhatsApp</a></div>';
@@ -10799,6 +10859,11 @@
           return;
         }
         if(act === 'msg'){ var k = keyOf(h); if(k) copyText(waMsg(k), 'Message copié'); return; }
+        if(act === 'devreset'){
+          srv('/coach/appareils/reset', {h:h}).then(function(){ DEVS[h] = 0; renderCoach(); showToast((cur.n || 'Accès') + ' : places libérées. Son lien marche à nouveau sur ' + DEVMAX + ' nouveaux appareils.', false); })
+            .catch(function(err){ showToast(typeof err === 'string' ? err : 'Impossible pour le moment. Réessaie.', false); });
+          return;
+        }
         if(act === 'link'){ var kl = keyOf(h); if(kl) copyText(appBase() + '?acces=' + kl.k, 'Lien copié'); return; }
         if(act === 'del'){
           ecConfirm('Supprimer ' + (cur.n || 'cet accès') + ' ? Sa clé ne fonctionnera plus et il disparaîtra de la liste.', 'Supprimer', function(){
@@ -10808,9 +10873,7 @@
         }
       });
       $('#ctPubBtn').addEventListener('click', function(){
-        var net = lsGet(CT_NET, null);
-        if(!net || !net.token){ window.ecCoachOpen('set'); $('#ctNet').open = true; return; }
-        publish(net);
+        publish();
       });
       $('#ctNetSave').addEventListener('click', function(){
         var tok = $('#ctToken').value.trim(), name = ($('#ctSite').value || 'appli').trim();
@@ -10866,17 +10929,24 @@
       })
       .catch(function(err){ if(err === 'conflit' && (tries || 0) < 2) return commitFiles(net, files, (tries || 0) + 1); throw err === 'conflit' ? 'GitHub est occupé, réessaie dans un instant.' : err; });
     }
-    function publish(net){
+    function publish(){
       var out = {v:1, updated:new Date().toISOString(), users:clone(draft.users)};
       if(draft.groups && Object.keys(draft.groups).length) out.groups = clone(draft.groups);
       if(draft.challenge) out.challenge = clone(draft.challenge);
-      var files = inboxFiles(); files['acces.json'] = JSON.stringify(out, null, 1);
-      var ibNow = inboxStr();
+      var ibNow = inboxStr(), ibSrv = null; try{ ibSrv = localStorage.getItem('ec_coach_inbox_srv'); }catch(e){}
       publishing = true; renderPub('Enregistrement en ligne…');
-      commitFiles(net, files)
+      srv('/coach/acces/ecrire', {acl:out})
+      .then(function(){
+        if(ibNow === (ibSrv || '{}')) return;
+        var ib = lsGet('ec_coach_inbox', {}) || {}, old = {}, boites = {};
+        try{ old = JSON.parse(ibSrv || '{}') || {}; }catch(e){}
+        Object.keys(old).forEach(function(h){ boites[h] = []; });
+        Object.keys(ib).forEach(function(h){ boites[h] = ib[h] || []; });
+        return srv('/coach/boite/ecrire', {boites:boites});
+      })
       .then(function(){
         remote = out; remoteMissing = false; lsSet(CT_REMOTE, remote);
-        try{ localStorage.setItem('ec_coach_inbox_pub', ibNow); }catch(e){}
+        try{ localStorage.setItem('ec_coach_inbox_srv', ibNow); }catch(e){}
         draft = clone(remote); saveDraft();
         try{ localStorage.setItem('ec_acl', JSON.stringify(remote)); }catch(e){}
         publishing = false; renderCoach();
@@ -11406,11 +11476,9 @@
       lsSet('ec_coach_inbox', ib);
       who = who || 'l\u2019athlète';
       if(!EC_LOCK_ON){ showToast('Aperçu de travail : l\u2019envoi direct se fait depuis l\u2019appli en ligne.', false); return; }
-      var net = lsGet('ec_coach_gh', null);
-      if(!net || !net.token){ showToast('Relie d\u2019abord l\u2019appli à GitHub (Espace coach) : l\u2019envoi partira ensuite tout seul.', false); if(window.ecCoachOpen) window.ecCoachOpen('set'); return; }
       if(window.ecCoachSync) window.ecCoachSync();
-      showToast(many ? 'Envoyé au groupe ' + who + ' ✓ ' + n + ' personne' + (n > 1 ? 's' : '') + '. Visible à leur prochaine ouverture (d\u2019ici 1 à 2 minutes).'
-        : 'Envoyé dans l\u2019appli de ' + who + ' ✓ Visible à sa prochaine ouverture (d\u2019ici 1 à 2 minutes).', false);
+      showToast(many ? 'Envoyé au groupe ' + who + ' ✓ ' + n + ' personne' + (n > 1 ? 's' : '') + '. Visible à leur prochaine ouverture.'
+        : 'Envoyé dans l\u2019appli de ' + who + ' ✓ Visible à sa prochaine ouverture.', false);
     };
     window.ecInboxTitle = function(k){
       if(k === 'r') return 'Respiration : ' + BREATH_INTENTIONS[lastBreathSession.intention].label.toLowerCase();
@@ -11468,7 +11536,7 @@
     function onClick(e){ var b = e.target.closest('[data-ib]'); if(b) openItem(b.getAttribute('data-ib')); }
     if(typeof EC_USER !== 'undefined' && EC_USER && !EC_IS_COACH && EC_LOCK_ON){
       render();
-      fetch('boite/' + EC_USER.h + '.json?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      fetch(EC_SUB_API + '/boite/lire', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:String(EC_KEY || '').trim().toLowerCase()})}).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
         if(!d || !d.items) return;
         items = d.items; lsSet(CACHE, items); render();
       }).catch(function(){});
@@ -17072,17 +17140,7 @@
       }catch(e){}
     }
     welcome();
-    if(EC_LOCK_ON){
-      fetch('acces.json?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(acl){
-        if(!acl || !acl.users) return;
-        if(JSON.stringify(acl.users) === JSON.stringify((EC_ACL || {}).users || null)) return;
-        var k = EC_KEY, was = k ? JSON.stringify(ecFindKey(k)) : 'null';
-        try{ localStorage.setItem('ec_acl', JSON.stringify(acl)); }catch(e){}
-        EC_ACL = acl;
-        var now = k ? JSON.stringify(ecFindKey(k)) : 'null';
-        if(was !== now) location.reload();
-      }).catch(function(){});
-    }
+    // La liste des accès n'est plus publique (acces.json) : chaque athlète est vérifié par le serveur (voir plus bas)
   })();
 </script>
 <script>
@@ -17157,7 +17215,7 @@
     // Un code d'abonné tapé à la main : on le vérifie
     var btn = $('ecLockBtn'), inp = $('ecLockInput');
     function trySub(e){
-      var v = inp.value.trim().toLowerCase(); if(!EC_SUB_RE.test(v)) return;
+      var v = inp.value.trim().toLowerCase(); if(!ecIsSrvKey(v)) return;
       e.stopImmediatePropagation(); if(e.preventDefault) e.preventDefault();
       verify(v, true);
     }
@@ -17172,21 +17230,32 @@
       var sp = document.querySelector('#ecLock .ecl-spin'); if(sp) sp.remove();
     }
     function verify(k, fromCode){
+      var isSub = EC_SUB_RE.test(k), before = isSub ? '' : JSON.stringify(ecFindKey(k));
       if(fromCode) $('ecLockErr').textContent = 'Vérification…';
-      return fetch(EC_SUB_API + '/check?k=' + encodeURIComponent(k), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(r){
-        save(k, r);
+      var q = isSub ? fetch(EC_SUB_API + '/check?k=' + encodeURIComponent(k) + '&d=' + ecDevId(), {cache:'no-store'}).then(function(r){ return r.json(); }) : ecAthVerify(k);
+      return q.then(function(r){
+        if(isSub) save(k, r); else ecAthSave(k, r);
         if(r.ok){
           try{ localStorage.setItem('ec_access', k); }catch(e){}
-          if(!EC_USER || !EC_USER.sub || fromCode || EC_SUB_PENDING){ var u = new URL(location.href); u.searchParams.set('acces', k); location.replace(u.toString()); }
+          var again = isSub ? (!EC_USER || !EC_USER.sub || fromCode || EC_SUB_PENDING) : (fromCode || EC_SUB_PENDING || before !== JSON.stringify(ecFindKey(k)));
+          if(again){ var u = new URL(location.href); u.searchParams.set('acces', k); location.replace(u.toString()); }
           return;
         }
+        if(r.raison === 'appareils'){
+          if(fromCode){ $('ecLockErr').textContent = 'Ce lien est déjà utilisé sur ' + (r.max || 3) + ' appareils. Demande à Benoît de libérer une place.'; return; }
+          showLocked('Lien déjà utilisé sur ' + (r.max || 3) + ' appareils', 'Pour protéger ton accès, un même lien fonctionne sur ' + (r.max || 3) + ' appareils au plus. Écris à Benoît : il libère une place en un instant.'); return;
+        }
         try{ localStorage.removeItem('ec_access'); }catch(e){}
+        if(!isSub){
+          if(fromCode){ $('ecLockErr').textContent = 'Code non reconnu. Vérifie-le ou demande un nouveau lien à Benoît.'; return; }
+          showLocked('Accès non reconnu', 'Ce lien n’est plus valable. Demande un nouveau lien à Benoît.'); return;
+        }
         if(fromCode){ $('ecLockErr').textContent = r.raison === 'inconnu' || r.raison === 'format' ? 'Code non reconnu. Vérifie-le ou demande ton lien par e-mail.' : 'Cet abonnement n’est plus actif.'; return; }
         if(r.raison === 'cadeau-fini'){ showLocked('Ton accès cadeau est terminé', 'J’espère que ces mois de séances t’ont plu ! Pour continuer, abonne-toi : 7 jours gratuits, et tu retrouves tout ton suivi.'); return; }
         showLocked(r.raison === 'inconnu' ? 'Accès non reconnu' : 'Ton abonnement est terminé', r.raison === 'inconnu' ? 'Ce lien ne correspond à aucun abonnement. Demande ton lien par e-mail ou abonne-toi.' : 'Tu peux le reprendre quand tu veux : 1 minute, et tu retrouves toutes tes séances et ton suivi.');
       }).catch(function(){
         if(fromCode){ $('ecLockErr').textContent = 'Pas de connexion : réessaie dans un instant.'; return; }
-        if(EC_SUB_PENDING) showLocked('Connexion nécessaire', 'Connecte-toi à Internet pour vérifier ton abonnement, puis rouvre l’appli. Ensuite, elle marche aussi hors connexion.');
+        if(EC_SUB_PENDING) showLocked('Connexion nécessaire', 'Connecte-toi à Internet pour vérifier ton accès, puis rouvre l’appli. Ensuite, elle marche aussi hors connexion.');
       });
     }
     // Parrainage : lien personnel à partager
@@ -17259,6 +17328,8 @@
       }).observe(tbd, {attributes:true, attributeFilter:['class']});
     }
     // Abonné déjà vérifié : contrôle discret à chaque ouverture (sans bloquer s'il n'y a pas de réseau)
+    // Athlète : contrôle discret à chaque ouverture (prolongation, thèmes, blocage appliqués tout de suite)
+    if(EC_KEY && !EC_SUB_PENDING && !EC_SUB_RE.test(String(EC_KEY).toLowerCase()) && ecIsSrvKey(EC_KEY)) verify(String(EC_KEY).trim().toLowerCase(), false);
     if(EC_USER && EC_USER.sub){
       verify(EC_KEY, false);
       try{
@@ -17292,7 +17363,7 @@
     if(EC_USER.h === '2g7dfzw49uk') return;            // clé partagée de la page du site : pas de sauvegarde commune
     var K = String(EC_KEY).trim().toLowerCase(), API = EC_SUB_API;
     var OK = 'ec_sync_ok', AT = 'ec_sync_at', DIRTY = 'ec_sync_dirty', HIST = 'ec_history_v1';
-    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_live_dev2?|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
+    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_live_dev2?|ec_dev_id|ec_acc|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
     var LS = window.localStorage, setRaw = Storage.prototype.setItem, delRaw = Storage.prototype.removeItem;
     function g(k){ try{ return LS.getItem(k); }catch(e){ return null; } }
     function s(k, v){ try{ setRaw.call(LS, k, v); }catch(e){} }
