@@ -1456,10 +1456,11 @@
   // Pour ajouter une personne : {h:'<empreinte de sa clé>', n:'Prénom', exp:'AAAA-MM-JJ'}. On ne stocke que l'empreinte, jamais la clé.
   // exp (facultatif) = dernier jour inclus de l'accès. Sans exp, l'accès n'expire pas.
   var EC_ACCESS = [
-    {h:'2g7dfzw49uk', n:'', label:'Page Espace athlètes (ethikcoach.fr)'},
+    {h:'2g7dfzw49uk', n:'', label:'Page Espace athlètes (ethikcoach.fr)', exp:'2026-11-30'},   // clé découverte partagée : s'arrête au lancement payant
     {h:'1y5gvgy39du', n:'', label:'Coach (Benoît)'},
     {h:'1pqbtcpme2n', n:'Test', label:'Accès test', exp:'2026-12-31'}
   ];
+  var EC_SITE_H = '2g7dfzw49uk';
   var EC_ACCESS_PAGE = 'https://www.ethikcoach.fr/appli-renfo-relax.html';
   function ecHash(str){ str='ethikcoach|'+String(str).trim().toLowerCase(); var h1=0xdeadbeef, h2=0x41c6ce57;
     for(var i=0;i<str.length;i++){ var ch=str.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
@@ -2071,6 +2072,9 @@
   .ct-sc-c button{min-height:38px; padding:0 12px; border-radius:999px; border:1.5px solid var(--line, rgba(0,0,0,.12)); background:var(--card); color:inherit; font:inherit; font-size:0.84rem; font-weight:600; cursor:pointer;}
   .ct-sc-c button.on{background:var(--forest); border-color:var(--forest); color:#fff;}
   .ct-row em.ct-scb{font-style:normal; font-weight:600; font-size:0.72rem; padding:2px 8px; border-radius:999px; background:rgba(47,109,181,.14); color:#2F6DB5; margin-left:6px;}
+  .ct-keyst{margin:0 0 8px; padding:10px 12px; border-radius:12px; font-size:0.86rem; line-height:1.4; font-weight:600;}
+  .ct-keyst.ok{background:rgba(46,125,79,.12); color:#2E7D4F;} .ct-keyst.ko{background:rgba(194,99,27,.14); color:#B0561A;}
+  @media (prefers-color-scheme: dark){ .ct-keyst.ok{color:#7FD3A0;} .ct-keyst.ko{color:#F0A86A;} }
   .ct-dev{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:8px; font-size:0.84rem;}
   .ct-dev button{flex:none;}
   .ct-lnk{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--card); border-radius:12px; padding:8px 8px 8px 12px; margin-top:6px;}
@@ -4509,6 +4513,7 @@
     </details>
     <div class="ct-card">
       <h3>Clé coach</h3>
+      <p class="ct-keyst" id="ctKeyStrength" hidden></p>
       <p class="ct-note" style="margin-top:0">Ta clé coach reste sur tes appareils : elle n’apparaît jamais dans les liens envoyés aux athlètes. La liste de tes athlètes (prénoms, dates, thèmes) et les séances que tu leur envoies sont rangées sur ton serveur privé : plus rien n’est publié sur GitHub. Chaque lien d’accès sert sur 3 appareils au plus.</p>
     </div>
     </div>
@@ -10252,14 +10257,35 @@
       try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
+    // Partie coach (clés et téléphones des athlètes, clients, séances de coaching) : chiffrée avec la clé coach
+    var BK_COACH = /^(ec_coach_|ec_clients$)/, bkKeyP = null;
+    function bkKey(){
+      if(!bkKeyP){ var te = new TextEncoder(); bkKeyP = crypto.subtle.importKey('raw', te.encode(String(EC_KEY || '').trim().toLowerCase()), 'PBKDF2', false, ['deriveKey']).then(function(b){
+        return crypto.subtle.deriveKey({name:'PBKDF2', salt:te.encode('ethikcoach-sauvegarde|v1'), iterations:120000, hash:'SHA-256'}, b, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']); }); }
+      return bkKeyP;
+    }
+    function bk64(u){ var x = ''; u = new Uint8Array(u); for(var i = 0; i < u.length; i += 8192) x += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(x); }
+    function bkUn64(t){ var x = atob(t), u = new Uint8Array(x.length); for(var i = 0; i < x.length; i++) u[i] = x.charCodeAt(i); return u; }
+    if(typeof EC_IS_COACH !== 'undefined' && EC_IS_COACH && EC_LOCK_ON && window.crypto && crypto.subtle) setTimeout(function(){ bkKey().catch(function(){}); }, 4000);
+    function bkPack(){
+      var all = backupKeys(), plain = {}, coach = {}, n = 0;
+      Object.keys(all).forEach(function(k){ if(BK_COACH.test(k)){ coach[k] = all[k]; n++; } else plain[k] = all[k]; });
+      var data = {app:'ethikcoach', v:2, date:new Date().toISOString(), data:plain};
+      if(!n) return Promise.resolve(data);
+      if(!(EC_IS_COACH && EC_LOCK_ON && EC_KEY && window.crypto && crypto.subtle)) return Promise.resolve(data);   // aperçu de travail : rien de la partie coach
+      var iv = crypto.getRandomValues(new Uint8Array(12));
+      return bkKey().then(function(c){ return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, c, new TextEncoder().encode(JSON.stringify(coach))); })
+        .then(function(ct){ data.coach = {iv:bk64(iv), d:bk64(ct)}; return data; });
+    }
     $('#svExport').addEventListener('click', function(){
-      var data = {app:'ethikcoach', v:1, date:new Date().toISOString(), data:backupKeys()};
+      bkPack().then(function(data){
       var blob = new Blob([JSON.stringify(data)], {type:'application/json'});
       var a = document.createElement('a'), d = new Date();
       a.href = URL.createObjectURL(blob);
       a.download = 'ethikcoach-sauvegarde-' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + '.json';
       document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-      showToast('Sauvegarde téléchargée. Garde ce fichier précieusement.', false);
+      showToast('Sauvegarde téléchargée. Garde ce fichier précieusement.' + (data.coach ? ' La partie coach est chiffrée avec ta clé coach.' : ''), false);
+      }).catch(function(){ showToast('Sauvegarde impossible pour le moment. Réessaie.', false); });
     });
     $('#svImport').addEventListener('click', function(){ $('#svImportFile').click(); });
     $('#svImportFile').addEventListener('change', function(){
@@ -10270,8 +10296,13 @@
         if(!data || data.app !== 'ethikcoach' || !data.data){ showToast('Ce fichier n’est pas une sauvegarde Ethik’Coach.', false); return; }
         var n = 0; try{ n = JSON.parse(data.data.ec_history_v1 || '[]').length; }catch(e){}
         ecConfirm('Restaurer cette sauvegarde (' + n + ' séance' + (n > 1 ? 's' : '') + ' dans l’historique) ? Les données actuelles de cet appareil seront remplacées.', 'Restaurer', function(){
-          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
-          location.reload();
+          function put(o){ try{ Object.keys(o).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, o[k]); }); }catch(e){} }
+          put(data.data);
+          if(!data.coach){ location.reload(); return; }
+          if(!(EC_IS_COACH && EC_KEY && window.crypto && crypto.subtle)){ showToast('Suivi restauré. La partie coach est chiffrée : restaure-la depuis l’appli ouverte avec ta clé coach.', false); setTimeout(function(){ location.reload(); }, 2500); return; }
+          bkKey().then(function(c){ return crypto.subtle.decrypt({name:'AES-GCM', iv:bkUn64(data.coach.iv)}, c, bkUn64(data.coach.d)); })
+            .then(function(b){ put(JSON.parse(new TextDecoder().decode(b))); location.reload(); })
+            .catch(function(){ showToast('Partie coach non restaurée : cette sauvegarde a été faite avec une autre clé coach.', false); setTimeout(function(){ location.reload(); }, 2500); });
         });
       };
       rd.readAsText(f);
@@ -10367,6 +10398,16 @@
           function(){ throw 'Pas de connexion au serveur. Réessaie dans un instant.'; });
     }
     var DEVS = {}, DEVMAX = 3, SRV_ERR = '';
+    // Solidité de la clé coach (calculée sur l'appareil, la clé ne sort jamais) : son empreinte est dans le code public,
+    // donc une clé courte pourrait être retrouvée par essais successifs sur un ordinateur
+    (function(){
+      var el = document.getElementById('ctKeyStrength'); if(!el || !EC_IS_COACH || !EC_KEY) return;
+      var k = String(EC_KEY), cl = (/[a-z]/.test(k) ? 26 : 0) + (/[A-Z]/.test(k) ? 26 : 0) + (/[0-9]/.test(k) ? 10 : 0) + (/[^a-zA-Z0-9]/.test(k) ? 20 : 0);
+      var bits = Math.round(k.length * Math.log2(Math.max(cl, 2))), dict = /^[a-zàâçéèêëîïôûùüÿœ' -]+\d{0,4}$/i.test(k) && k.length < 20;
+      var ok = bits >= 70 && !dict;
+      el.hidden = false; el.className = 'ct-keyst ' + (ok ? 'ok' : 'ko');
+      el.textContent = ok ? '🔒 Ta clé coach est solide (' + k.length + ' caractères).' : '⚠ Ta clé coach est trop simple (' + k.length + ' caractères) : comme son empreinte est dans le code public de l’appli, un ordinateur pourrait la retrouver. À changer avant le lancement.';
+    })();
     // Copie chiffrée de chaque clé (avec ta clé coach) : le bouton « Lien d'accès » marche sur tous tes appareils
     var ekKeyP = null;
     function ekKey(){
@@ -17201,6 +17242,11 @@
     var mailBox = document.createElement('details'); mailBox.className = 'ecl-mail'; mailBox.hidden = !OPEN;
     mailBox.innerHTML = '<summary>Déjà abonné ? Recevoir mon lien par e-mail</summary><div class="ecl-row"><input id="ecMailIn" type="email" autocomplete="email" placeholder="ton e-mail"><button type="button" id="ecMailBtn">Envoyer</button></div><div class="ecl-ok" id="ecMailOk" aria-live="polite"></div>';
     var code = document.querySelector('#ecLock .ecl-code'); if(box && code) box.insertBefore(mailBox, code);
+    if(OPEN && EC_EXPIRED && EC_EXPIRED.h === EC_SITE_H){
+      $('ecLockTitle').textContent = 'L’accès découverte est terminé';
+      $('ecLockText').textContent = 'Merci d’avoir testé l’appli ! Depuis le 1er décembre, elle fonctionne en abonnement : 7 jours gratuits, sans engagement. Tu retrouves tout ton suivi.';
+      if(site) site.style.display = 'none';
+    }
     if(OPEN && !EC_EXPIRED && !EC_BLOCKED){
       $('ecLockTitle').textContent = 'Ton coach dans ta poche';
       $('ecLockText').textContent = 'Renfo sur mesure, étirements, yoga, respiration : des séances guidées à la voix, adaptées à ton niveau et à ton matériel.';
@@ -17241,6 +17287,11 @@
           try{ localStorage.setItem('ec_access', k); }catch(e){}
           var again = isSub ? (!EC_USER || !EC_USER.sub || fromCode || EC_SUB_PENDING) : (fromCode || EC_SUB_PENDING || before !== JSON.stringify(ecFindKey(k)));
           if(again){ var u = new URL(location.href); u.searchParams.set('acces', k); location.replace(u.toString()); }
+          return;
+        }
+        if(r.raison === 'bloque'){
+          if(fromCode){ $('ecLockErr').textContent = 'Trop d’essais depuis cette connexion. Réessaie dans une heure.'; return; }
+          if(EC_SUB_PENDING) showLocked('Trop d’essais', 'Trop de codes faux ont été essayés depuis cette connexion. Réessaie dans une heure, ou écris à Benoît.');
           return;
         }
         if(r.raison === 'appareils'){
