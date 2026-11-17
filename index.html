@@ -1484,22 +1484,29 @@
   var EC_REVOKED = [];   // empreintes ecHash(clé) des clés à couper avant leur date de fin
   var EC_COACH_H = '1y5gvgy39du';
   function ecSig(p, d){ return (ecHash('cle|' + p + '|' + d + '|' + EC_SIGN) + '000000').slice(0, 6); }
-  function ecMakeKey(p, iso){ var d = iso.slice(2, 4) + iso.slice(5, 7) + iso.slice(8, 10); return p + '-' + d + '-' + ecSig(p, d); }
+  // Thèmes d'une clé limitée : f renfo, m postures guidées, b respiration, d défis, p programmes (aucun = accès complet)
+  var EC_SC_ALL = 'fmbdp';
+  function ecScNorm(sc){ sc = String(sc || ''); return EC_SC_ALL.split('').filter(function(c){ return sc.indexOf(c) > -1; }).join(''); }
+  function ecMakeKey(p, iso, sc){ var d = iso.slice(2, 4) + iso.slice(5, 7) + iso.slice(8, 10); sc = ecScNorm(sc); if(sc.length === EC_SC_ALL.length) sc = ''; return sc ? p + '-' + d + '-' + sc + '-' + ecSig(p, d + sc) : p + '-' + d + '-' + ecSig(p, d); }
   // Registre publié par le coach (acces.json) : prolongations, blocages, suppressions. Dernière version gardée en mémoire.
   var EC_ACL = null; try{ EC_ACL = JSON.parse(localStorage.getItem('ec_acl') || 'null'); }catch(e){}
   function ecFindKey(k){
     var e = ecFindKeyRaw(k); if(!e || e.h === EC_COACH_H) return e;
     var a = EC_ACL && EC_ACL.users && EC_ACL.users[e.h];
-    if(a){ e = Object.assign({}, e); if(a.exp) e.exp = a.exp; if(a.n) e.n = a.n; if(a.b || a.d) e.blocked = true; }
+    if(a){ e = Object.assign({}, e); if(a.exp) e.exp = a.exp; if(a.n) e.n = a.n; if(a.b || a.d) e.blocked = true;
+      // Thèmes modifiés par le coach après la création de la clé
+      if(a.sc !== undefined){ var asc = ecScNorm(a.sc); if(asc && asc.length < EC_SC_ALL.length) e.sc = asc; else delete e.sc; } }
     return e;
   }
   function ecFindKeyRaw(k){
     if(!k) return null; k = String(k).trim().toLowerCase(); var h = ecHash(k);
     if(EC_REVOKED.indexOf(h) > -1) return null;
     for(var i=0;i<EC_ACCESS.length;i++){ if(EC_ACCESS[i].h === h) return EC_ACCESS[i]; }
-    var m = /^([a-z]{1,12})-(\d{6})-([a-z0-9]{6})$/.exec(k);
-    if(m && ecSig(m[1], m[2]) === m[3]){
-      return {h:h, n:m[1].charAt(0).toUpperCase() + m[1].slice(1), label:'Clé personnelle', exp:'20' + m[2].slice(0, 2) + '-' + m[2].slice(2, 4) + '-' + m[2].slice(4, 6)};
+    var m = /^([a-z]{1,12})-(\d{6})(?:-([fmbdp]{1,4}))?-([a-z0-9]{6})$/.exec(k);
+    if(m && (m[3] ? m[3] === ecScNorm(m[3]) : true) && ecSig(m[1], m[2] + (m[3] || '')) === m[4]){
+      var e = {h:h, n:m[1].charAt(0).toUpperCase() + m[1].slice(1), label:'Clé personnelle', exp:'20' + m[2].slice(0, 2) + '-' + m[2].slice(2, 4) + '-' + m[2].slice(4, 6)};
+      if(m[3]) e.sc = m[3];
+      return e;
     }
     return null;
   }
@@ -2032,6 +2039,13 @@
   .ct-filter .chip.active::before{display:none !important;}
   .coach-tools .ct-row{display:block; padding:12px 0;}
   .ct-row-top{display:flex; align-items:center; gap:8px;}
+  .ct-sc{display:flex; flex-direction:column; gap:6px;}
+  .ct-sc-l{font-weight:600; font-size:0.86rem;}
+  .ct-sc small{color:var(--stone); font-size:0.75rem;}
+  .ct-sc-c{display:flex; flex-wrap:wrap; gap:6px;}
+  .ct-sc-c button{min-height:38px; padding:0 12px; border-radius:999px; border:1.5px solid var(--line, rgba(0,0,0,.12)); background:var(--card); color:inherit; font:inherit; font-size:0.84rem; font-weight:600; cursor:pointer;}
+  .ct-sc-c button.on{background:var(--forest); border-color:var(--forest); color:#fff;}
+  .ct-row em.ct-scb{font-style:normal; font-weight:600; font-size:0.72rem; padding:2px 8px; border-radius:999px; background:rgba(47,109,181,.14); color:#2F6DB5; margin-left:6px;}
   .ct-lnk{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--card); border-radius:12px; padding:8px 8px 8px 12px; margin-top:6px;}
   .ct-lnk span{flex:1 1 180px; min-width:0; font-size:0.78rem; word-break:break-all; color:var(--forest); user-select:all; -webkit-user-select:all;}
   .ct-lnk button{flex:none;}
@@ -4351,6 +4365,7 @@
         <label>Prénom<input type="text" id="ctName" placeholder="ex. Marie" autocomplete="off"></label>
         <label>Accès jusqu'au<input type="date" id="ctExp"></label>
         <label class="ct-wide ct-chk"><input type="checkbox" id="ctNever"> Jamais (accès sans date de fin)</label>
+        <div class="ct-wide ct-sc"><span class="ct-sc-l">Accès à l’appli</span><div class="ct-sc-c" id="ctScope" role="group" aria-label="Thèmes inclus"><button type="button" class="on" data-sc="">Tout</button><button type="button" data-sc="f">Renfo</button><button type="button" data-sc="m">Récupération</button><button type="button" data-sc="b">Respiration</button><button type="button" data-sc="d">Défis</button><button type="button" data-sc="p">Programmes</button></div><small>Timers, Exercices et Suivi restent toujours inclus.</small></div>
         <label class="ct-wide">Téléphone (facultatif, pour l’envoi direct)<input type="tel" id="ctPhone" placeholder="06 12 34 56 78" autocomplete="off"></label>
       </div>
       <button type="button" class="ct-btn" id="ctCreate">Créer la clé</button>
@@ -10243,12 +10258,13 @@
     function iso(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
     function parseIso(s){ var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
     function appBase(){ return 'https://appli.ethikcoach.fr/'; }
+    function ecScLabel(sc){ var L = {f:'Renfo', m:'Récupération', b:'Respiration', d:'Défis', p:'Programmes'}; return String(sc || '').split('').map(function(c){ return L[c]; }).filter(Boolean).join(' + '); }
     function waMsg(r){ return 'Bonjour ' + r.n + ', voici ton accès personnel à l’appli Ethik’Coach (séances de renforcement et respiration guidées). Ouvre ce lien sur ton téléphone, puis ajoute l’appli à ton écran d’accueil :\n' + appBase() + '?acces=' + r.k + '\nTon code, si on te le demande : ' + r.k; }
     function frDate(s){ return parseIso(s).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}); }
     function today0(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
     function clone(o){ return JSON.parse(JSON.stringify(o)); }
     function emptyAcl(){ return {v:1, users:{}}; }
-    var remote = lsGet(CT_REMOTE, null), draft = lsGet(CT_DRAFT, null), remoteMissing = false, ctFilter = 'all', openEdit = null, openSend = null, openSess = null, openFb = null;
+    var remote = lsGet(CT_REMOTE, null), draft = lsGet(CT_DRAFT, null), remoteMissing = false, ctFilter = 'all', openEdit = null, openSend = null, openSess = null, openFb = null, openScope = null;
     function sessChoices(){
       var out = [];
       if(lastSession && totalExercises(lastSession) > 0) out.push({v:'last', ico:'💪', t:'Dernière séance : ' + (function(){ var d = document.createElement('div'); d.innerHTML = lastSession.title || ''; return d.textContent; })()});
@@ -10294,13 +10310,20 @@
     function recoverKey(h){
       if(KEY_MISS[h] || !draft || !draft.users || !draft.users[h]) return null;
       var u = draft.users[h], p = slug(u.n || ''); if(!p){ KEY_MISS[h] = 1; return null; }
-      function hit(d){ var k = ecMakeKey(p, d); return ecHash(k) === h ? k : null; }
-      var key = (u.exp && /^\d{4}-\d{2}-\d{2}$/.test(u.exp) ? hit(u.exp) : null) || hit(EC_NEVER), exp = key ? (hit(u.exp || '') ? u.exp : EC_NEVER) : '';
-      if(!key){
-        for(var t = new Date(2025, 0, 1), end = new Date(2034, 0, 1); t < end && !key; t.setDate(t.getDate() + 1)){ var d = iso(t); key = hit(d); if(key) exp = d; }
+      var scs = u.ksc !== undefined ? [u.ksc] : (u.sc ? [u.sc, ''] : ['']);
+      function hit(d){ for(var i = 0; i < scs.length; i++){ var k = ecMakeKey(p, d, scs[i]); if(ecHash(k) === h) return k; } return null; }
+      function scan(){
+        var k = null, ex = '';
+        if(u.exp && /^\d{4}-\d{2}-\d{2}$/.test(u.exp)){ k = hit(u.exp); if(k) ex = u.exp; }
+        if(!k){ k = hit(EC_NEVER); if(k) ex = EC_NEVER; }
+        for(var t = new Date(2025, 0, 1), end = new Date(2034, 0, 1); t < end && !k; t.setDate(t.getDate() + 1)){ var d = iso(t); k = hit(d); if(k) ex = d; }
+        return k ? {k:k, e:ex} : null;
       }
+      var found = scan();
+      if(!found && u.ksc === undefined){ scs = []; for(var c = 1; c < 31; c++){ var sc = ''; for(var j = 0; j < 5; j++) if(c & (1 << j)) sc += EC_SC_ALL.charAt(j); scs.push(sc); } found = scan(); }
+      var key = found && found.k, exp = found && found.e;
       if(!key){ KEY_MISS[h] = 1; return null; }
-      var r = {n:u.n, k:key, exp:exp, at:Date.now()};
+      var r = {n:u.n, k:key, exp:exp, at:Date.now()}, msc = /-([fmbdp]{1,4})-[a-z0-9]{6}$/.exec(key); if(msc) r.sc = msc[1];
       lsSet(CT_KEY, [r].concat(localKeys().filter(function(x){ return x.k !== key; })).slice(0, 300));
       return r;
     }
@@ -10434,8 +10457,8 @@
       $('#ctCount').textContent = rows.filter(function(r){ return r.st.cls !== 'off'; }).length + ' actif' + (rows.filter(function(r){ return r.st.cls !== 'off'; }).length > 1 ? 's' : '') + ' · ' + rows.length + ' au total';
       $('#ctList').innerHTML = list.length ? list.map(function(r){
         var k = keyOf(r.h), u = r.u;
-        var html = '<div class="ct-row" data-h="' + r.h + '"><div class="ct-row-top"><div class="info"><b>' + esc(u.n) + (r.stat && STATIC_LABEL[r.h].n ? ' <em>' + esc(r.label) + '</em>' : '') + '</b><span class="st ' + r.st.cls + '">' + esc(r.st.txt) + '</span>' + '</div></div>'
-          + '<div class="ct-row-acts"><button type="button" data-ct="sess" class="send">📲 Séance</button><button type="button" data-ct="ext">Prolonger</button><button type="button" data-ct="blk">' + (u.b ? 'Débloquer' : 'Bloquer') + '</button>'
+        var html = '<div class="ct-row" data-h="' + r.h + '"><div class="ct-row-top"><div class="info"><b>' + esc(u.n) + (r.stat && STATIC_LABEL[r.h].n ? ' <em>' + esc(r.label) + '</em>' : '') + (u.sc ? '<em class="ct-scb">' + esc(ecScLabel(u.sc)) + '</em>' : '') + '</b><span class="st ' + r.st.cls + '">' + esc(r.st.txt) + '</span>' + '</div></div>'
+          + '<div class="ct-row-acts"><button type="button" data-ct="sess" class="send">📲 Séance</button><button type="button" data-ct="ext">Prolonger</button>' + (r.stat ? '' : '<button type="button" data-ct="scope">Thèmes</button>') + '<button type="button" data-ct="blk">' + (u.b ? 'Débloquer' : 'Bloquer') + '</button>'
           + (k || !r.stat ? '<button type="button" data-ct="send" class="send">🔗 Lien d\u2019accès</button>' : '') + '<button type="button" data-ct="del" class="del">Supprimer</button></div>';
         if(openSess === r.h){
           var ch = sessChoices();
@@ -10461,6 +10484,13 @@
             + '<button type="button" data-ct="msg">Copier le message</button></div>'
             + '<div class="ct-ext-row"><input type="tel" class="ct-ph" placeholder="Téléphone (pour ouvrir sa conversation)" value="' + esc(k.ph || '') + '"><button type="button" data-ct="ph">OK</button></div>'
             + (ip ? '' : '<p class="ct-note" style="margin-top:6px">Sans numéro, WhatsApp te laisse choisir le contact.</p>') + '</div>';
+        }
+        if(openScope === r.h){
+          var csc = u.sc || '';
+          html += '<div class="ct-ext"><div class="ct-ext-q">Thèmes inclus dans l\u2019accès de ' + esc(u.n) + ' :</div>'
+            + '<div class="ct-sc-c">' + [['', 'Tout'], ['f', 'Renfo'], ['m', 'Récupération'], ['b', 'Respiration'], ['d', 'Défis'], ['p', 'Programmes']].map(function(t){ var on = t[0] ? csc.indexOf(t[0]) > -1 : !csc; return '<button type="button" data-ct="sctog" data-sc="' + t[0] + '"' + (on ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>'
+            + '<p class="ct-note" style="margin-top:6px">Timers, Exercices et Suivi restent toujours inclus. Le changement s\u2019applique à sa prochaine ouverture de l\u2019appli, sans nouveau lien.</p>'
+            + '<div class="ct-acts" style="margin-top:8px"><button type="button" data-ct="scset" class="send">Valider</button></div></div>';
         }
         if(openEdit === r.h){
           var base = u.exp && !ecNever(u.exp) && parseIso(u.exp) > today0() ? parseIso(u.exp) : today0();
@@ -10697,15 +10727,27 @@
         var nv = $('#ctNever'), name = $('#ctName').value.trim(), s = slug(name), exp = nv && nv.checked ? EC_NEVER : ctExp.value;
         if(!s){ showToast('Indique le prénom de l’athlète.', false); return; }
         if(!/^\d{4}-\d{2}-\d{2}$/.test(exp)){ showToast('Choisis une date de fin.', false); return; }
-        var key = ecMakeKey(s, exp), h = ecHash(key);
+        var scSel = ecScNorm(Array.prototype.map.call(document.querySelectorAll('#ctScope button.on'), function(b){ return b.getAttribute('data-sc'); }).join(''));
+        if(scSel.length === EC_SC_ALL.length) scSel = '';
+        var key = ecMakeKey(s, exp, scSel), h = ecHash(key);
         var r = {n:name.charAt(0).toUpperCase() + name.slice(1), k:key, exp:exp, at:Date.now(), ph:($('#ctPhone').value || '').trim() || undefined};
+        if(scSel) r.sc = scSel;
         var list = localKeys().filter(function(x){ return x.k !== key; }); list.unshift(r); lsSet(CT_KEY, list.slice(0, 300));
         if(!draft) migrate();
-        draft.users[h] = {n:r.n, exp:exp}; saveDraft();
+        draft.users[h] = {n:r.n, exp:exp}; if(scSel){ draft.users[h].sc = scSel; draft.users[h].ksc = scSel; } saveDraft();
         var o = $('#ctOut'); o.hidden = false;
         o.innerHTML = '<div>Clé de <b>' + esc(r.n) + '</b>, ' + (ecNever(exp) ? 'sans date de fin' : 'valable jusqu’au ' + frDate(exp)) + ' :</div><div class="k">' + esc(key) + '</div><div class="u">' + esc(appBase() + '?acces=' + key) + '</div>'
           + '<div class="ct-acts"><button type="button" data-ct-k="link" data-k="' + esc(key) + '">Copier le lien</button><button type="button" data-ct-k="msg" data-k="' + esc(key) + '">Copier le message</button><a href="https://wa.me/?text=' + encodeURIComponent(waMsg(r)) + '" target="_blank" rel="noopener">WhatsApp</a></div>';
-        $('#ctName').value = ''; $('#ctPhone').value = ''; if(nv){ nv.checked = false; ctExp.disabled = false; } openSend = h; renderCoach(); autoSave();
+        $('#ctName').value = ''; $('#ctPhone').value = ''; if(nv){ nv.checked = false; ctExp.disabled = false; } scReset(); openSend = h; renderCoach(); autoSave();
+      });
+      var scBox = $('#ctScope');
+      function scReset(){ if(scBox) scBox.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-sc') === ''); }); }
+      if(scBox) scBox.addEventListener('click', function(e){
+        var b = e.target.closest('button'); if(!b) return;
+        var all = scBox.querySelector('[data-sc=""]');
+        if(b === all){ scReset(); return; }
+        b.classList.toggle('on'); var any = scBox.querySelectorAll('button.on:not([data-sc=""])');
+        if(any.length === EC_SC_ALL.length || !any.length) scReset(); else all.classList.remove('on');
       });
       $('#ctOut').addEventListener('click', function(e){
         var b = e.target.closest('[data-ct-k]'); if(!b) return;
@@ -10723,7 +10765,22 @@
         var row = b.closest('[data-h]'), h = row.getAttribute('data-h'), act = b.getAttribute('data-ct');
         var st = STATIC_LABEL[h], cur = draft.users[h] || (st ? {n:st.n || st.label, exp:st.exp || ''} : {});
         function put(u){ draft.users[h] = u; saveDraft(); renderCoach(); autoSave(); }
-        if(act === 'ext'){ openEdit = openEdit === h ? null : h; openSend = null; renderCoach(); return; }
+        if(act === 'ext'){ openEdit = openEdit === h ? null : h; openSend = null; openScope = null; renderCoach(); return; }
+        if(act === 'scope'){ openScope = openScope === h ? null : h; openEdit = null; openSend = null; openSess = null; renderCoach(); return; }
+        if(act === 'sctog'){
+          var box = b.parentNode, all = box.querySelector('[data-sc=""]');
+          if(b === all){ box.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === all); }); return; }
+          b.classList.toggle('on'); var nOn = box.querySelectorAll('button.on:not([data-sc=""])').length;
+          if(!nOn || nOn === EC_SC_ALL.length) box.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === all); }); else all.classList.remove('on');
+          return;
+        }
+        if(act === 'scset'){
+          var nsc = ecScNorm(Array.prototype.map.call(row.querySelectorAll('[data-ct="sctog"].on'), function(x){ return x.getAttribute('data-sc'); }).join(''));
+          if(nsc.length === EC_SC_ALL.length) nsc = '';
+          var nu = Object.assign({}, cur); if(nu.ksc === undefined) nu.ksc = cur.sc || ''; nu.sc = nsc;
+          openScope = null; put(nu);
+          showToast((cur.n || 'Accès') + ' : ' + (nsc ? ecScLabel(nsc) : 'accès complet'), false); return;
+        }
         if(act === 'send'){ openSend = openSend === h ? null : h; openEdit = null; openSess = null; renderCoach(); return; }
         if(act === 'sess'){ openSess = openSess === h ? null : h; openEdit = null; openSend = null; openFb = null; renderCoach(); return; }
         if(act === 'sendsess'){ var cmv = (row.querySelector('.ct-cm') || {}).value || ''; openSess = null; sendSessTo(h, b.getAttribute('data-v'), cur.n, cmv.trim()); renderCoach(); return; }
@@ -24177,6 +24234,73 @@ html.cl-hide #ctMini{visibility:hidden;}
     function place(){ link(document.getElementById('mobGuideGroup')); link(document.getElementById('breathGuideGroup')); }
     place(); setTimeout(place, 1500);
     document.addEventListener('click', function(e){ if(e.target.closest('[data-w=recup], [data-w=breath]')) setTimeout(place, 80); });
+  })();
+</script>
+<script>
+  // ---------- Clé limitée à certains thèmes : les autres restent visibles avec un cadenas ----------
+  (function(){
+    var sc = (typeof EC_USER !== 'undefined' && EC_USER && EC_USER.sc) ? String(EC_USER.sc) : '';
+    window.ecScope = function(){ return sc; };
+    if(!sc || document.documentElement.classList.contains('ec-coach')) return;
+    function has(c){ return sc.indexOf(c) > -1; }
+    var NAMES = {f:'Renfo', m:'Postures guidées', b:'Respiration', d:'Défis', p:'Programmes'};
+    // Chaque entrée de l'appli et le thème qu'elle ouvre
+    var RULES = [
+      ['.want-it.w-renfo', 'f'], ['#modeSession', 'f'],
+      ['.want-it.w-prog', 'p'], ['#modeProgram', 'p'], ['.hero-progs', 'p'],
+      ['[data-rm="mob"]', 'm'], ['[data-rm="breath"]', 'b'],
+      ['.want-it.w-defi', 'd']
+    ];
+    function lockedFor(el){
+      for(var i = 0; i < RULES.length; i++){ if(el.closest(RULES[i][0]) && !has(RULES[i][1])) return RULES[i][1]; }
+      if(el.closest('.want-it.w-recup') && !has('m') && !has('b')) return 'm';
+      var g = el.closest('#generateBtn');
+      if(g){ var prog = document.getElementById('modeProgram'); var isP = prog && prog.classList.contains('active'); if(!has(isP ? 'p' : 'f')) return isP ? 'p' : 'f'; }
+      if(el.closest('#mobGenerateBtn') && !has('m')) return 'm';
+      if(el.closest('#breathGenerateBtn') && !has('b')) return 'b';
+      return '';
+    }
+    function mark(){
+      RULES.forEach(function(r){ document.querySelectorAll(r[0]).forEach(function(el){ el.classList.toggle('sc-lock', !has(r[1])); }); });
+      document.querySelectorAll('.want-it.w-recup').forEach(function(el){ el.classList.toggle('sc-lock', !has('m') && !has('b')); });
+    }
+    var st = document.createElement('style');
+    st.textContent = '.sc-lock{position:relative; opacity:.55; filter:grayscale(.6);}'
+      + '.sc-lock::after{content:"\\1F512"; position:absolute; top:6px; right:8px; font-size:14px; filter:none;}'
+      + '.sc-dlg{position:fixed; inset:0; z-index:9999; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,15,.45); padding:16px;}'
+      + '.sc-dlg > div{background:var(--card, #fff); color:inherit; border-radius:22px; padding:22px 20px 18px; max-width:420px; width:100%; box-shadow:0 18px 40px rgba(0,0,0,.25);}'
+      + '.sc-dlg h3{margin:0 0 8px; font-size:1.1rem;} .sc-dlg p{margin:0 0 14px; line-height:1.45; font-size:.93rem;}'
+      + '.sc-dlg .sc-b{display:flex; gap:8px; flex-wrap:wrap;} .sc-dlg .sc-b a, .sc-dlg .sc-b button{flex:1 1 140px; min-height:46px; border-radius:14px; border:none; font:inherit; font-weight:700; display:flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer;}'
+      + '.sc-dlg .sc-b a{background:var(--forest, #2E7D4F); color:#fff;} .sc-dlg .sc-b button{background:rgba(0,0,0,.07); color:inherit;}'
+      + '@media (min-width:700px){ .sc-dlg{align-items:center;} }';
+    document.head.appendChild(st);
+    function dlg(c){
+      var mine = sc.split('').map(function(x){ return NAMES[x]; }).join(', ');
+      var d = document.createElement('div'); d.className = 'sc-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
+      d.innerHTML = '<div><h3>' + NAMES[c] + ' : non inclus</h3><p>Ton accès comprend : <b>' + mine + '</b> (avec les Timers, les Exercices et ton Suivi). Pour profiter de toute l’appli, tu peux passer à l’abonnement complet.</p>'
+        + '<div class="sc-b"><a href="https://www.ethikcoach.fr/abonnement.html" target="_blank" rel="noopener">Voir l’abonnement</a><button type="button">Fermer</button></div></div>';
+      d.addEventListener('click', function(e){ if(e.target === d || e.target.closest('button')) d.remove(); });
+      document.body.appendChild(d); var b = d.querySelector('button'); if(b) b.focus();
+    }
+    document.addEventListener('click', function(e){
+      var c = lockedFor(e.target); if(!c) return;
+      e.preventDefault(); e.stopImmediatePropagation(); dlg(c);
+    }, true);
+    // Récupération : on ouvre directement la partie incluse
+    document.addEventListener('click', function(e){
+      if(!e.target.closest('.want-it.w-recup, [data-bn="breath"]')) return;
+      setTimeout(function(){ var q = has('b') && !has('m') ? '[data-rm="breath"]' : (has('m') && !has('b') ? '[data-rm="mob"]' : ''); var t = q && document.querySelector(q); if(t && !t.classList.contains('active')) t.click(); }, 60);
+    });
+    // Défis : toutes les ouvertures passent par ecOpenWod / la page « wod »
+    function wrap(){
+      if(!has('d')){
+        if(window.ecOpenWod && !window.ecOpenWod.__sc){ var o = window.ecOpenWod; window.ecOpenWod = function(){ dlg('d'); }; window.ecOpenWod.__sc = o; }
+        if(window.ecShowView && !window.ecShowView.__sc){ var v = window.ecShowView; window.ecShowView = function(k){ if(k === 'wod'){ dlg('d'); return; } return v.apply(this, arguments); }; window.ecShowView.__sc = v; }
+      }
+      mark();
+    }
+    wrap(); setTimeout(wrap, 800); setTimeout(wrap, 2500);
+    document.addEventListener('click', function(){ setTimeout(mark, 120); });
   })();
 </script>
 </body>
