@@ -1502,6 +1502,10 @@
   function ecFindKeyRaw(k){
     if(!k) return null; k = String(k).trim().toLowerCase(); var h = ecHash(k);
     if(EC_REVOKED.indexOf(h) > -1) return null;
+    // Nouvelle clé coach (créée depuis l'appli) : reconnue grâce à son empreinte gardée sur cet appareil ; l'ancienne ne marche plus ici
+    var ch2 = ''; try{ ch2 = localStorage.getItem('ec_coach_h') || ''; }catch(e){}
+    if(ch2 && h === ch2){ for(var j = 0; j < EC_ACCESS.length; j++){ if(EC_ACCESS[j].h === EC_COACH_H) return EC_ACCESS[j]; } }
+    if(ch2 && h === EC_COACH_H) return null;
     for(var i=0;i<EC_ACCESS.length;i++){ if(EC_ACCESS[i].h === h) return EC_ACCESS[i]; }
     // Clé d'athlète : vérifiée par le serveur (registre privé du coach), puis gardée 7 jours pour le hors connexion
     if(EC_ATH_RE.test(k)) return ecAthHit(k);
@@ -1538,7 +1542,13 @@
   // Clés d'athlète : nouvelles (prénom + 8 caractères au hasard) et anciennes (prénom-date-signature)
   var EC_ATH_RE = /^[a-z]{1,12}-(?:[a-z0-9]{8}|\d{6}-(?:[fmbdp]{1,4}-)?[a-z0-9]{6})$/;
   function ecIsStatic(k){ var h = ecHash(String(k || '').trim().toLowerCase()); for(var i = 0; i < EC_ACCESS.length; i++) if(EC_ACCESS[i].h === h) return true; return false; }
-  function ecIsSrvKey(k){ k = String(k || '').trim().toLowerCase(); return EC_SUB_RE.test(k) || (EC_ATH_RE.test(k) && !ecIsStatic(k)); }
+  // Clé coach créée depuis l'appli : « ec- » + 6 groupes de 4 caractères tirés au hasard
+  var EC_COACH_RE = /^ec(?:-[a-z0-9]{4}){6}$/;
+  function ecIsSrvKey(k){ k = String(k || '').trim().toLowerCase(); return EC_SUB_RE.test(k) || (EC_ATH_RE.test(k) && !ecIsStatic(k)) || (EC_COACH_RE.test(k) && !ecFindKeyRaw(k)); }
+  function ecCoachVerify(k){
+    return fetch(EC_SUB_API + '/coach/cle/verifier', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:k})})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._s = r.status; return j; }); });
+  }
   // Identifiant de cet appareil (au hasard, jamais synchronisé ni sauvegardé) : un lien sert sur 3 appareils au plus
   function ecDevId(){
     try{
@@ -2072,6 +2082,13 @@
   .ct-sc-c button{min-height:38px; padding:0 12px; border-radius:999px; border:1.5px solid var(--line, rgba(0,0,0,.12)); background:var(--card); color:inherit; font:inherit; font-size:0.84rem; font-weight:600; cursor:pointer;}
   .ct-sc-c button.on{background:var(--forest); border-color:var(--forest); color:#fff;}
   .ct-row em.ct-scb{font-style:normal; font-weight:600; font-size:0.72rem; padding:2px 8px; border-radius:999px; background:rgba(47,109,181,.14); color:#2F6DB5; margin-left:6px;}
+  .kc-dlg{position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(10,20,15,.55);}
+  .kc-box{width:100%; max-width:460px; max-height:90vh; overflow:auto; background:var(--card); color:inherit; border-radius:22px; padding:22px 20px; box-shadow:0 20px 50px rgba(0,0,0,.3);}
+  .kc-box h3{margin:0 0 8px; font-size:1.15rem;} .kc-box p{margin:0 0 12px; font-size:0.9rem; line-height:1.45;}
+  .kc-key{font-family:ui-monospace, Menlo, monospace; font-size:1.02rem; font-weight:700; letter-spacing:.02em; padding:14px; border-radius:14px; background:var(--chip); text-align:center; word-break:break-all; user-select:all; -webkit-user-select:all; margin-bottom:10px;}
+  .kc-acts{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;} .kc-acts .ct-btn{flex:1 1 140px;}
+  .kc-chk{display:flex; align-items:center; gap:10px; font-weight:700; font-size:0.92rem; margin:6px 0 10px;} .kc-chk input{width:22px; height:22px;}
+  .kc-note{font-size:0.82rem !important; color:var(--stone);} .kc-msg{min-height:1.2em; font-weight:700; font-size:0.88rem;}
   .ct-keyst{margin:0 0 8px; padding:10px 12px; border-radius:12px; font-size:0.86rem; line-height:1.4; font-weight:600;}
   .ct-keyst.ok{background:rgba(46,125,79,.12); color:#2E7D4F;} .ct-keyst.ko{background:rgba(194,99,27,.14); color:#B0561A;}
   @media (prefers-color-scheme: dark){ .ct-keyst.ok{color:#7FD3A0;} .ct-keyst.ko{color:#F0A86A;} }
@@ -4514,6 +4531,7 @@
     <div class="ct-card">
       <h3>Clé coach</h3>
       <p class="ct-keyst" id="ctKeyStrength" hidden></p>
+      <div id="ctKeyAct"></div>
       <p class="ct-note" style="margin-top:0">Ta clé coach reste sur tes appareils : elle n’apparaît jamais dans les liens envoyés aux athlètes. La liste de tes athlètes (prénoms, dates, thèmes) et les séances que tu leur envoies sont rangées sur ton serveur privé : plus rien n’est publié sur GitHub. Chaque lien d’accès sert sur 3 appareils au plus.</p>
     </div>
     </div>
@@ -10394,7 +10412,7 @@
     // Liste des accès et boîtes de réception : rangées sur le serveur d'abonnement (plus rien de public sur GitHub)
     function srv(path, body){
       return fetch(EC_SUB_API + path, {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({k:String(EC_KEY || '').trim().toLowerCase()}, body || {}))})
-        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok || !j.ok) throw (j.raison === 'cle' ? 'Le serveur ne reconnaît pas ta clé coach.' : (r.status === 404 ? 'Serveur pas encore à jour : colle le nouveau worker.js dans Cloudflare.' : 'Le serveur a répondu une erreur. Réessaie dans un instant.')); return j; }); },
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok || !j.ok) throw (j.raison === 'cle' ? 'Le serveur ne reconnaît pas ta clé coach (changée sur un autre appareil ?).' : (r.status === 404 ? 'Serveur pas encore à jour : colle le nouveau worker.js dans Cloudflare.' : 'Le serveur a répondu une erreur. Réessaie dans un instant.')); return j; }); },
           function(){ throw 'Pas de connexion au serveur. Réessaie dans un instant.'; });
     }
     var DEVS = {}, DEVMAX = 3, SRV_ERR = '';
@@ -10407,7 +10425,68 @@
       var ok = bits >= 70 && !dict;
       el.hidden = false; el.className = 'ct-keyst ' + (ok ? 'ok' : 'ko');
       el.textContent = ok ? '🔒 Ta clé coach est solide (' + k.length + ' caractères).' : '⚠ Ta clé coach est trop simple (' + k.length + ' caractères) : comme son empreinte est dans le code public de l’appli, un ordinateur pourrait la retrouver. À changer avant le lancement.';
+      var act = document.getElementById('ctKeyAct');
+      if(act && !ok && EC_LOCK_ON){ act.innerHTML = '<button type="button" class="ct-btn" id="ctKeyNew">Créer ma nouvelle clé coach</button>'; document.getElementById('ctKeyNew').addEventListener('click', kcOpen); }
     })();
+    // ----- Changement de clé coach : nouvelle clé tirée au hasard sur l'appareil, données re-chiffrées, ancienne clé désactivée -----
+    function kcGen(){ var a = new Uint8Array(24), c = 'abcdefghijkmnpqrstuvwxyz23456789', o = 'ec'; crypto.getRandomValues(a); for(var i = 0; i < 24; i++){ if(i % 4 === 0) o += '-'; o += c.charAt(a[i] % c.length); } return o; }
+    function kcDerive(key, salt){ var te = new TextEncoder(); return crypto.subtle.importKey('raw', te.encode(key), 'PBKDF2', false, ['deriveKey']).then(function(b){ return crypto.subtle.deriveKey({name:'PBKDF2', salt:te.encode(salt), iterations:120000, hash:'SHA-256'}, b, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']); }); }
+    function kcOpen(){
+      var K2 = kcGen();
+      var w = document.createElement('div'); w.className = 'kc-dlg'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'Nouvelle clé coach');
+      w.innerHTML = '<div class="kc-box"><h3>Ta nouvelle clé coach</h3>'
+        + '<p>Elle a été tirée au hasard sur cet appareil : personne d’autre ne la connaît, pas même Claude. <b>Enregistre-la tout de suite</b> dans un endroit sûr (Trousseau iCloud, gestionnaire de mots de passe, ou papier rangé chez toi).</p>'
+        + '<div class="kc-key">' + K2 + '</div>'
+        + '<div class="kc-acts"><button type="button" class="ct-btn ghost" data-kc="copy">Copier la clé</button></div>'
+        + '<label class="kc-chk"><input type="checkbox" id="kcOk"> Je l’ai bien enregistrée</label>'
+        + '<p class="kc-note">Ensuite : ton ancienne clé ne marchera plus. Sur ton autre appareil, l’appli te demandera la nouvelle. Tes séances de coaching, tes liens athlètes et tes réglages sont gardés.</p>'
+        + '<div class="kc-msg" id="kcMsg" aria-live="polite"></div>'
+        + '<div class="kc-acts"><button type="button" class="ct-btn" data-kc="go" disabled>Activer la nouvelle clé</button><button type="button" class="ct-btn ghost" data-kc="no">Annuler</button></div></div>';
+      document.body.appendChild(w);
+      var go = w.querySelector('[data-kc="go"]'), msg = w.querySelector('#kcMsg'), busy = false;
+      w.querySelector('#kcOk').addEventListener('change', function(){ go.disabled = !this.checked; });
+      w.addEventListener('click', function(e){
+        var b = e.target.closest('[data-kc]'); if(!b || busy) return;
+        var a = b.getAttribute('data-kc');
+        if(a === 'no'){ w.remove(); return; }
+        if(a === 'copy'){ copyText(K2, 'Clé copiée'); return; }
+        if(a === 'go'){ busy = true; go.disabled = true; kcRun(K2, function(t){ msg.textContent = t; }).catch(function(err){ busy = false; go.disabled = false; msg.textContent = '⚠ ' + (typeof err === 'string' ? err : 'Le changement n’a pas pu se faire. Rien n’a été modifié : réessaie.'); }); }
+      });
+    }
+    function kcRun(K2, say){
+      var K1 = String(EC_KEY || '').trim().toLowerCase(), cOld, cNew, eOld, eNew;
+      function api(path, body){ return fetch(EC_SUB_API + path, {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({k:K1}, body || {}))}).then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._s = r.status; if(!j.ok && r.status !== 409) throw (r.status === 404 ? 'Serveur pas encore à jour : colle le nouveau worker.js dans Cloudflare.' : 'Le serveur a refusé (' + r.status + '). Réessaie.'); return j; }); }, function(){ throw 'Pas de connexion au serveur. Réessaie.'; }); }
+      say('Préparation des clés de chiffrement…');
+      return Promise.all([kcDerive(K1, 'ethikcoach-coaching|v1'), kcDerive(K2, 'ethikcoach-coaching|v1'), kcDerive(K1, 'ethikcoach-cles|v1'), kcDerive(K2, 'ethikcoach-cles|v1')])
+      .then(function(ks){ cOld = ks[0]; cNew = ks[1]; eOld = ks[2]; eNew = ks[3];
+        say('Séances de coaching : re-chiffrement…');
+        return api('/coaching/lire', {v:0});
+      }).then(function(r){
+        if(!r.d) return;
+        return crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(r.iv)}, cOld, unb64(r.d.slice(1))).then(function(plain){
+          var iv = crypto.getRandomValues(new Uint8Array(12));
+          return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, cNew, plain).then(function(ct){ return api('/coaching/ecrire', {d:r.d.charAt(0) + b64(ct), iv:b64(iv), base:r.v}); });
+        }).then(function(w){ if(!w.ok) throw 'Une synchro des séances était en cours : réessaie dans un instant.'; });
+      }).then(function(){
+        say('Liens de tes athlètes : re-chiffrement…');
+        var users = clone((draft && draft.users) || {}), jobs = [];
+        Object.keys(users).forEach(function(h){ var u = users[h]; if(!u.ek) return; var p = String(u.ek).split('.');
+          jobs.push(crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(p[0])}, eOld, unb64(p[1])).then(function(pl){ var iv = crypto.getRandomValues(new Uint8Array(12)); return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, eNew, pl).then(function(ct){ u.ek = b64(iv) + '.' + b64(ct); }); }).catch(function(){ delete u.ek; })); });
+        return Promise.all(jobs).then(function(){
+          var out = {v:1, updated:new Date().toISOString(), users:users};
+          if(draft && draft.groups && Object.keys(draft.groups).length) out.groups = clone(draft.groups);
+          if(draft && draft.challenge) out.challenge = clone(draft.challenge);
+          return api('/coach/acces/ecrire', {acl:out}).then(function(){ draft.users = users; saveDraft(); remote = clone(draft); lsSet(CT_REMOTE, remote); });
+        });
+      }).then(function(){
+        say('Activation de la nouvelle clé…');
+        return api('/coach/cle/changer', {nh:ecHash(K2)});
+      }).then(function(){
+        try{ localStorage.setItem('ec_coach_h', ecHash(K2)); localStorage.setItem('ec_access', K2); localStorage.removeItem('ec_coach_clsync'); }catch(e){}
+        say('✓ C’est fait ! Ta nouvelle clé est active. L’appli redémarre…');
+        setTimeout(function(){ var u = new URL(location.href); u.searchParams.set('acces', K2); location.replace(u.toString()); }, 1800);
+      });
+    }
     // Copie chiffrée de chaque clé (avec ta clé coach) : le bouton « Lien d'accès » marche sur tous tes appareils
     var ekKeyP = null;
     function ekKey(){
@@ -17278,6 +17357,15 @@
       var sp = document.querySelector('#ecLock .ecl-spin'); if(sp) sp.remove();
     }
     function verify(k, fromCode){
+      if(EC_COACH_RE.test(k)){
+        if(fromCode) $('ecLockErr').textContent = 'Vérification…';
+        return ecCoachVerify(k).then(function(r){
+          if(r.ok){ try{ localStorage.setItem('ec_coach_h', ecHash(k)); localStorage.setItem('ec_access', k); }catch(e){} var u = new URL(location.href); u.searchParams.set('acces', k); location.replace(u.toString()); return; }
+          if(r.raison === 'bloque'){ $('ecLockErr').textContent = 'Trop d’essais depuis cette connexion. Réessaie dans une heure.'; if(!fromCode) showLocked('Trop d’essais', 'Réessaie dans une heure.'); return; }
+          if(fromCode){ $('ecLockErr').textContent = 'Clé coach non reconnue.'; return; }
+          showLocked('Clé non reconnue', 'Cette clé coach n’est plus valable. Saisis ta clé coach actuelle ci-dessous.'); sub.hidden = true; mailBox.hidden = true;
+        }).catch(function(){ if(fromCode) $('ecLockErr').textContent = 'Pas de connexion : réessaie dans un instant.'; else showLocked('Connexion nécessaire', 'Connecte-toi à Internet pour vérifier ta clé, puis rouvre l’appli.'); });
+      }
       var isSub = EC_SUB_RE.test(k), before = isSub ? '' : JSON.stringify(ecFindKey(k));
       if(fromCode) $('ecLockErr').textContent = 'Vérification…';
       var q = isSub ? fetch(EC_SUB_API + '/check?k=' + encodeURIComponent(k) + '&d=' + ecDevId(), {cache:'no-store'}).then(function(r){ return r.json(); }) : ecAthVerify(k);
@@ -17381,6 +17469,14 @@
       }).observe(tbd, {attributes:true, attributeFilter:['class']});
     }
     // Abonné déjà vérifié : contrôle discret à chaque ouverture (sans bloquer s'il n'y a pas de réseau)
+    // Coach : si la clé a été changée sur un autre appareil, l'ancienne est refusée par le serveur → on demande la nouvelle
+    if(EC_LOCK_ON && EC_KEY && typeof EC_IS_COACH !== 'undefined' && EC_IS_COACH){
+      ecCoachVerify(String(EC_KEY).trim().toLowerCase()).then(function(r){
+        if(r.ok || r._s !== 403) return;
+        try{ localStorage.removeItem('ec_access'); }catch(e){}
+        showLocked('Ta clé coach a changé', 'Tu as créé une nouvelle clé coach sur un autre appareil. Saisis-la ci-dessous pour continuer sur celui-ci.'); sub.hidden = true; mailBox.hidden = true;
+      }).catch(function(){});
+    }
     // Athlète : contrôle discret à chaque ouverture (prolongation, thèmes, blocage appliqués tout de suite)
     if(EC_KEY && !EC_SUB_PENDING && !EC_SUB_RE.test(String(EC_KEY).toLowerCase()) && ecIsSrvKey(EC_KEY)) verify(String(EC_KEY).trim().toLowerCase(), false);
     if(EC_USER && EC_USER.sub){
