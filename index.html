@@ -2248,7 +2248,7 @@
   .block-title .bt-dur{margin-left:auto; padding:3px 10px; border-radius:999px; background:var(--sage-light); color:var(--forest); font-size:0.74rem; font-weight:800; letter-spacing:0; text-transform:none; white-space:nowrap;}
   .sh-tags span.sh-total{background:#fff; color:#17352A; font-weight:800;}
   @media screen and (prefers-color-scheme: dark){ .block-title .bt-dur{background:#1E3528; color:#A7D8B4;} }
-  .coach-tools .ct-pub.ok{display:none;}
+  .coach-tools .ct-pub.ok{display:flex;}
   .ct-netok{font-size:0.88rem; line-height:1.45; color:var(--ink); box-shadow:var(--shadow-1), inset 0 0 0 1.5px var(--forest) !important;}
   .ct-netok[hidden]{display:none;}
   .ct-x{flex:none; width:34px; height:34px; border:none; border-radius:50%; background:var(--chip); color:var(--ink); font-size:1.3rem; line-height:1; cursor:pointer;}
@@ -10366,7 +10366,7 @@
         .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok || !j.ok) throw (j.raison === 'cle' ? 'Le serveur ne reconnaît pas ta clé coach.' : (r.status === 404 ? 'Serveur pas encore à jour : colle le nouveau worker.js dans Cloudflare.' : 'Le serveur a répondu une erreur. Réessaie dans un instant.')); return j; }); },
           function(){ throw 'Pas de connexion au serveur. Réessaie dans un instant.'; });
     }
-    var DEVS = {}, DEVMAX = 3;
+    var DEVS = {}, DEVMAX = 3, SRV_ERR = '';
     // Copie chiffrée de chaque clé (avec ta clé coach) : le bouton « Lien d'accès » marche sur tous tes appareils
     var ekKeyP = null;
     function ekKey(){
@@ -10393,14 +10393,14 @@
       if(!EC_LOCK_ON){ if(!remote) remote = emptyAcl(); migrate(); renderCoach(); return; }
       srv('/coach/acces/lire').then(function(j){
         var acl = j.acl || emptyAcl(); if(!acl.users) acl.users = {};
-        DEVS = j.devs || {}; DEVMAX = j.max || 3;
+        DEVS = j.devs || {}; DEVMAX = j.max || 3; SRV_ERR = '';
         var hadPending = draft && remote && pending();
         var keepLocal = !Object.keys(acl.users).length && draft && Object.keys(draft.users || {}).length;   // serveur encore vide : on y envoie la liste de cet appareil
         remote = acl; remoteMissing = !Object.keys(acl.users).length; lsSet(CT_REMOTE, remote);
         if(!keepLocal && (!draft || !hadPending)) draft = clone(remote);
         migrate(); renderCoach(); autoSave();
         unlockKeys().then(renderCoach);
-      }).catch(function(err){ migrate(); renderCoach(); unlockKeys().then(renderCoach); if(typeof err === 'string') renderPub(); });
+      }).catch(function(err){ SRV_ERR = typeof err === 'string' ? err : 'Serveur injoignable. Réessaie dans un instant.'; migrate(); renderCoach(); unlockKeys().then(renderCoach); renderPub(); });
     }
     function statusOf(u){
       if(u.b) return {cls:'off', txt:'Bloqué'};
@@ -10763,7 +10763,8 @@
       var cn = $('#ctNet'); if(cn) cn.hidden = true;   // plus besoin de relier GitHub pour gérer les accès
       if(!EC_LOCK_ON){ t.textContent = 'Aperçu de travail : les changements s\u2019enregistrent en ligne depuis l\u2019appli (appli.ethikcoach.fr).'; b.hidden = true; box.className = 'ct-pub'; return; }
       if(msg){ t.textContent = msg; b.hidden = true; box.className = 'ct-pub busy'; return; }
-      if(!pending()){ t.textContent = '✓ À jour en ligne'; b.hidden = true; box.className = 'ct-pub ok'; return; }
+      if(SRV_ERR){ t.textContent = '⚠ ' + SRV_ERR; b.textContent = 'Réessayer'; b.hidden = false; box.className = 'ct-pub todo'; return; }
+      if(!pending()){ t.textContent = '✓ À jour sur ton serveur'; b.hidden = true; box.className = 'ct-pub ok'; return; }
       t.textContent = 'Changements pas encore en ligne.'; b.textContent = 'Réessayer';
       b.hidden = false; box.className = 'ct-pub todo';
     }
@@ -10873,6 +10874,7 @@
         }
       });
       $('#ctPubBtn').addEventListener('click', function(){
+        if(SRV_ERR){ SRV_ERR = ''; renderPub('Connexion au serveur…'); refreshRemote(); return; }
         publish();
       });
       $('#ctNetSave').addEventListener('click', function(){
@@ -10952,7 +10954,7 @@
         publishing = false; renderCoach();
         if(pubAgain){ pubAgain = false; autoSave(); }
       })
-      .catch(function(err){ publishing = false; pubAgain = false; renderPub(); showToast(typeof err === 'string' ? err : 'Enregistrement en ligne impossible. Réessaie.', false); });
+      .catch(function(err){ publishing = false; pubAgain = false; if(typeof err === 'string' && /Serveur pas encore|clé coach/.test(err)) SRV_ERR = err; renderPub(); showToast(typeof err === 'string' ? err : 'Enregistrement en ligne impossible. Réessaie.', false); });
     }
     if(document.documentElement.classList.contains('ec-coach')) refreshRemote();
     else new MutationObserver(function(m, o){ if(document.documentElement.classList.contains('ec-coach')){ o.disconnect(); refreshRemote(); } }).observe(document.documentElement, {attributes:true, attributeFilter:['class']});
