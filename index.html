@@ -5748,6 +5748,8 @@
       return {n: fn, rounds: fr};
     }
     var baseRounds = circuitRoundsFor(level, theme);
+    // 30 min et moins : 2 tours (3 au plus sur 30 min pour les niveaux confirmés), le temps se remplit avec des exercices en plus
+    if(targetMinutes > 10 && targetMinutes <= 30) baseRounds = Math.min(baseRounds, targetMinutes <= 20 ? 2 : 3);
 
     var perStation = baseRounds * (mainAvgSec + transSec);
     var rawN = (remaining - (baseRounds - 1) * restSec + baseRounds * transSec) / perStation;
@@ -5766,9 +5768,9 @@
     // Séance courte (routine de 10 min) : on choisit la combinaison stations × tours la plus proche du temps disponible
     if(targetMinutes <= 10){
       var best = null;
-      for(var sn = 3; sn <= 6; sn++){
+      for(var sn = 3; sn <= 7; sn++){
         if(poolSize > 0 && sn > poolSize) break;
-        for(var rr = 1; rr <= 3; rr++){
+        for(var rr = 1; rr <= 2; rr++){
           var tot = rr * (sn * mainAvgSec + (sn - 1) * transSec) + (rr - 1) * restSec;
           var score = Math.abs(tot - remaining) + (tot > remaining ? 30 : 0);
           if(!best || score < best.score) best = {score:score, n:sn, rounds:rr};
@@ -7096,7 +7098,8 @@
   }
   function stemOf(ex){ return ((ex.name || '').toLowerCase().match(/[a-zà-ÿ]+/) || [''])[0].replace(/s$/, ''); }
   // Pas trop d'exercices différents : mieux vaut un circuit court répété que 15 mouvements en 2 tours
-  function circuitCap(d, th){ var c = th === 'force' ? {10:3, 20:4, 30:5, 45:6, 60:8} : {10:4, 20:5, 30:6, 45:8, 60:10}; return c[d] || (d <= 20 ? 5 : d <= 30 ? 6 : d <= 45 ? 8 : 10); }
+  // Séance courte (30 min et moins) : moins de tours, plus d'exercices différents
+  function circuitCap(d, th){ var c = th === 'force' ? {10:5, 20:6, 30:8, 45:6, 60:8} : {10:6, 20:8, 30:10, 45:8, 60:10}; return c[d] || (d <= 10 ? 6 : d <= 20 ? 8 : d <= 30 ? 10 : d <= 45 ? 8 : 10); }
   // Gabarit du circuit : l'ordre des schémas de mouvement donne un objectif clair et alterne les groupes musculaires
   function circuitTemplate(zone, th, n){
     var base;
@@ -7109,7 +7112,7 @@
     return out;
   }
   var PICK_RECENT = null;
-  function circuitMin(d, th){ var c = th === 'force' ? {10:3, 20:3, 30:4, 45:5, 60:6} : {10:3, 20:4, 30:5, 45:6, 60:7}; return c[d] || 4; }
+  function circuitMin(d, th){ var c = th === 'force' ? {10:3, 20:4, 30:5, 45:5, 60:6} : {10:4, 20:5, 30:6, 45:6, 60:7}; return c[d] || 4; }
   // Matériel choisi (kettlebell, haltères, TRX…) : ses exercices passent avant ceux au poids du corps
   // Exercices improvisés avec le mobilier (table, chaise, canapé) : inutiles quand le vrai matériel est là
   var FURN_RX = /sous une table|sur une table|sur (une )?chaise|canapé/i;
@@ -7474,7 +7477,7 @@
       var list = k < 0 ? (n0 + k >= 2 ? main0.slice(0, n0 + k) : null) : (k > 0 ? (extraNow.length >= k ? main0.concat(extraNow.slice(0, k)) : null) : main0);
       if(!list) continue;
       for(var r = S.roundsFixed ? r0 : Math.max(1, r0 - 2); r <= (S.roundsFixed ? r0 : Math.min(6, r0 + 2)); r++){
-        var sec = secsFor(r, list), score = Math.abs(sec - target) + 25 * Math.abs(r - r0) + (S.roundsFixed ? 20 : 45) * Math.abs(k) + (r === 1 && !S.roundsFixed ? 120 : 0) + (list.length < (S.roundsFixed ? 2 : 3) ? 120 : 0) + (S._minN && list.length < S._minN ? 400 : 0);
+        var sec = secsFor(r, list), score = Math.abs(sec - target) + 25 * Math.abs(r - r0) + (S.roundsFixed ? 20 : 45) * Math.abs(k) + (r === 1 && !S.roundsFixed ? 120 : 0) + (list.length < (S.roundsFixed ? 2 : 3) ? 120 : 0) + (S._minN && list.length < S._minN ? 400 : 0) + (S.durationMinutes <= 30 && !S.roundsFixed && r > r0 ? 70 * (r - r0) : 0);
         if(!best || score < best.score) best = {score:score, r:r, list:list, k:k, sec:sec};
       }
     }
