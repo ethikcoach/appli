@@ -5296,6 +5296,15 @@
   // à quatre pattes, planche, mains au sol). Écartés avec l'option « Sans passage au sol ».
   var FLOOR_IDS = ['e7','e14','r4','p3','p4','p5','p8','p9','p10','p12','p14','p15','p16','p17','p18','p24','p25','p26','p27','p28','p29','p30','p31','p32','p34','p36','p37','p38','t5','t13','t18','t21','k10','k11','h3','b8','p48','b18','p49','n3','n7','n18','n22','n29','n32','n35','n38','n42','sb1','sb2','sb3','sb6','sb10','q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12','q13','q14','q15','q16','q17','q18','q19','q20','q21','q22','q23','q25','q26','q28','q33','q34','q35','q36'];
   EX.forEach(function(ex){ ex.floor = FLOOR_IDS.indexOf(ex.id) !== -1 || !!ex.gymFloor; });
+  // Niveaux revus par le coach : exercices trop techniques, instables ou exigeants pour un débutant (ou un senior)
+  (function(){
+    var FROM_INTER = ['p51','q30','q4','q5','q1','n32','p26','p24','q34','q33','p31','q17','n35','p48','p37','cf39','g33','g34','cf19','cf21','g31','cf13','g60','cf17','t3','t7','g51','g50','sb5'];
+    var NO_SENIOR = ['p3','q22','k10','x1','cf11','t13'];
+    EX.forEach(function(ex){
+      if(FROM_INTER.indexOf(ex.id) > -1) ex.levels = ['intermediaire', 'avance'];
+      else if(NO_SENIOR.indexOf(ex.id) > -1) ex.levels = (ex.levels || []).filter(function(l){ return l !== 'senior'; });
+    });
+  })();
   function floorOk(ex, noFloor){ return !noFloor || !ex.floor; }
   // Option « Sans impact » : exercices avec sauts, rebonds, bonds ou course écartés
   var IMPACT_IDS = ['e2','e3','e9','n4','cf24','p10','p11','p33','p34','t15','g58','cf10','cf22','cf25','cf26','cf38','n31','n41','c2','c3','c4','c14','c15','c16','c17','cf23','q3','q21','q29','q30','q31','q32'];
@@ -5685,11 +5694,13 @@
     var ids = S.main.map(function(x){ return x.id; }), used = {};
     S.warm.forEach(function(x, i){
       if(!x.isWarmClone) return;
-      if(ids.indexOf(x.id) > -1 && !used[x.id]){ used[x.id] = 1; return; }
-      var cand = S.main.filter(function(m){ return !used[m.id] && m.type === 'temps'; });
+      if(ids.indexOf(x.id) > -1 && !used[x.id] && qualityOf(x) !== 'cardio' && !/dips/i.test(x.name || '') && tierOf(x) <= Math.min.apply(null, S.main.map(tierOf)) + 0.5){ used[x.id] = 1; return; }
+      var cand = S.main.filter(function(m){ return !used[m.id] && m.type === 'temps' && qualityOf(m) !== 'cardio' && !/dips/i.test(m.name || ''); });
       if(!cand.length) cand = S.main.filter(function(m){ return !used[m.id]; });
       if(!cand.length) return;
-      var m = cand[Math.floor(Math.random() * Math.min(cand.length, 3))]; used[m.id] = 1;
+      // l'activation reprend l'exercice le plus accessible du circuit
+      cand = cand.slice().sort(function(a, b){ return tierOf(a) - tierOf(b) || Math.random() - .5; });
+      var m = cand[Math.floor(Math.random() * Math.min(cand.length, 2))]; used[m.id] = 1;
       S.warm[i] = specificWarmupClone(m, S.level);
     });
   }
@@ -7075,6 +7086,7 @@
     if(th === 'stabilite' && q === 'strength' && !/gainage|planche|tenu|isom|chaise|pont/i.test(ex.name || '')) sc += 3;
     if(lv === 'avance'){ if(t <= 1) sc += 4; else if(t < 2) sc += 2; }
     else if(lv === 'intermediaire'){ if(t <= 1) sc += 2; }
+    else if(lv === 'debutant'){ if(t > 1) sc += 1; }   // à choix égal, la variante la plus accessible
     return sc;
   }
   function stemOf(ex){ return ((ex.name || '').toLowerCase().match(/[a-zà-ÿ]+/) || [''])[0].replace(/s$/, ''); }
@@ -7180,7 +7192,7 @@
         && !exBlocked(ex.id);
     });
     mainPool = mainPool.filter(function(ex){ return exScore(ex, state.level, state.theme) < 90; });
-    warmPool = warmPool.filter(function(ex){ return !(seatedEx(ex) && state.level !== 'senior' && !state.chair) && ex.pattern !== 'neck'; });
+    warmPool = warmPool.filter(function(ex){ return !((seatedEx(ex) || /assis|sur chaise/i.test(ex.name || '')) && state.level !== 'senior' && !state.chair) && ex.pattern !== 'neck'; });
     // Matériel seul trop limité (ex. uniquement un TRX ou des haltères) : on complète avec des exercices au poids du corps
     var bwAdded = false;
     if(mainPool.length < Math.max(3, Math.min(plan.main, 6)) && state.equip.indexOf('poids_du_corps') < 0 && state.equip.some(function(e){ return CARDIO_EQUIP.indexOf(e) < 0; })){
@@ -7381,7 +7393,9 @@
     var keepA = SESSION_ADJ; SESSION_ADJ = null;
     var ref = S.warm.filter(function(x){ return x.block === 'echauffement'; })[0] || {block:'echauffement', zone:S.zone === 'full' ? 'full' : S.zone, equipment:'poids_du_corps'};
     for(var i = 0; i < 9 && warmSeconds(S) < target - 10 && S.warm.length < (S.durationMinutes <= 20 ? 3 : S.durationMinutes <= 30 ? 4 : 5); i++){
-      var cands = freshFirst(replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && !(x.breath && x.breath.length) && !(seatedEx(x) && S.level !== 'senior' && !S.chair) && x.pattern !== 'neck'; }), 1);
+      var cands0 = replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && !(x.breath && x.breath.length) && !((seatedEx(x) || /assis|sur chaise/i.test(x.name || '')) && S.level !== 'senior' && !S.chair) && x.pattern !== 'neck'; });
+      var wOnly = cands0.filter(function(x){ return x.block === 'echauffement'; });
+      var cands = freshFirst(wOnly.length ? wOnly : cands0, 1);
       if(!cands.length) break;
       var pick = cands[Math.floor(Math.random() * cands.length)];
       var at = 0; while(at < S.warm.length && S.warm[at].block === 'echauffement') at++;
