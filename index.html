@@ -7044,6 +7044,96 @@
     if(e.key === 'Escape') closeExerciseModal();
   });
 
+
+  // ---------- Cohérence des séances : objectif, niveau, structure du circuit ----------
+  // Qualité dominante d'un exercice (force, gainage, équilibre, cardio-explosif, nuque)
+  var CARDIO_RX = /saut|sauté|jump|jacks|mountain|patineur|skater|navette|burpee|claqu|grenouille|mogul|bond|crabe|ours|crawl|shuttle/i;
+  function qualityOf(ex){
+    if(ex.pattern === 'neck') return 'neck';
+    if(ex.pattern === 'balance') return 'balance';
+    if(ex.pattern === 'full' || CARDIO_RX.test(ex.name || '')) return 'cardio';
+    if(ex.pattern === 'core') return 'core';
+    return 'strength';
+  }
+  // Difficulté : 1 = accessible à tous (même senior), 1.5 = débutant, 2 = intermédiaire, 3 = avancé
+  function tierOf(ex){ var L = ex.levels || []; if(L.indexOf('debutant') > -1) return L.indexOf('senior') > -1 ? 1 : 1.5; if(L.indexOf('intermediaire') > -1) return 2; return 3; }
+  function seatedEx(ex){ return /^(s|sg)\d/.test(ex.id || ''); }
+  // Qualités autorisées par objectif (au-delà : seulement si rien d'autre n'est disponible)
+  var THEME_Q = {
+    force:{strength:1, core:1},
+    endurance_force:{strength:1, core:1, cardio:1},
+    stabilite:{core:1, balance:1, strength:1},
+    equilibre:{strength:1, core:1, cardio:1, balance:1}
+  };
+  // Pénalité d'un exercice pour la séance demandée : 0 = parfait, plus c'est haut, moins il est choisi
+  function exScore(ex, lv, th){
+    var q = qualityOf(ex), t = tierOf(ex), sc = 0;
+    if(q === 'neck') return 99;
+    if(seatedEx(ex) && lv !== 'senior' && !state.chair) return 99;
+    if(!(THEME_Q[th] || THEME_Q.equilibre)[q]) sc += 6;
+    if(th === 'force' && t <= 1) sc += 2;                         // trop facile pour travailler la force
+    if(th === 'stabilite' && q === 'strength' && !/gainage|planche|tenu|isom|chaise|pont/i.test(ex.name || '')) sc += 3;
+    if(lv === 'avance'){ if(t <= 1) sc += 4; else if(t < 2) sc += 2; }
+    else if(lv === 'intermediaire'){ if(t <= 1) sc += 2; }
+    return sc;
+  }
+  function stemOf(ex){ return ((ex.name || '').toLowerCase().match(/[a-zà-ÿ]+/) || [''])[0].replace(/s$/, ''); }
+  // Pas trop d'exercices différents : mieux vaut un circuit court répété que 15 mouvements en 2 tours
+  function circuitCap(d, th){ var c = th === 'force' ? {10:3, 20:4, 30:5, 45:6, 60:8} : {10:4, 20:5, 30:6, 45:8, 60:10}; return c[d] || (d <= 20 ? 5 : d <= 30 ? 6 : d <= 45 ? 8 : 10); }
+  // Gabarit du circuit : l'ordre des schémas de mouvement donne un objectif clair et alterne les groupes musculaires
+  function circuitTemplate(zone, th, n){
+    var base;
+    if(th === 'stabilite') base = zone === 'haut' ? ['core', 'push', 'core', 'pull'] : zone === 'bas' ? ['balance', 'hinge', 'balance', 'squat'] : ['core', 'balance', 'core', 'balance', 'hinge'];
+    else if(zone === 'haut') base = ['push', 'pull', 'push', 'pull'];
+    else if(zone === 'bas') base = th === 'equilibre' ? ['squat', 'hinge', 'squat', 'hinge', 'balance'] : ['squat', 'hinge', 'squat', 'hinge'];
+    else if(zone === 'gainage') base = ['core'];
+    else base = th === 'endurance_force' ? ['squat', 'push', 'cardio', 'hinge', 'pull', 'core'] : th === 'equilibre' ? ['squat', 'push', 'hinge', 'pull', 'core', 'cardio'] : ['squat', 'push', 'hinge', 'pull', 'core'];
+    var out = []; for(var i = 0; i < n; i++) out.push(base[i % base.length]);
+    return out;
+  }
+  function pickStructured(pool, n, prefer, lv, th, zone){
+    if(!pool.length || n <= 0) return [];
+    if(zone === 'equilibre') return preferPick(pool, n, prefer, 0.7, true);
+    var cand = pool.map(function(ex){ return {ex:ex, sc:exScore(ex, lv, th) + Math.random() * 0.9 - ((prefer && prefer.indexOf(ex.id) > -1 && Math.random() < 0.7) ? 1.5 : 0)}; })
+      .filter(function(c){ return c.sc < 90; }).sort(function(a, b){ return a.sc - b.sc; });
+    var slots = circuitTemplate(zone, th, n), out = [], used = {}, stems = {}, qn = {}, lastSlot = null, curSlot = null;
+    var capQ = {cardio:th === 'endurance_force' ? Math.ceil(n / 3) : th === 'equilibre' ? 1 : 0, balance:th === 'stabilite' ? n : (th === 'equilibre' ? (lv === 'senior' ? 2 : 1) : 0)};
+    function okFor(c, slot, strict){
+      if(used[c.ex.id]) return false;
+      var q = qualityOf(c.ex), st = stemOf(c.ex), prev = out[out.length - 1];
+      if(strict){
+        if(slot === 'cardio' ? q !== 'cardio' : (c.ex.pattern !== slot || (q === 'cardio' && slot !== 'core'))) return false;
+        if(capQ[q] != null && (qn[q] || 0) >= capQ[q]) return false;
+        if((stems[st] || 0) >= 2 || (prev && stemOf(prev) === st)) return false;
+        if(prev && prev.pattern === c.ex.pattern && curSlot !== lastSlot) return false;
+      } else {
+        if(capQ[q] != null && (qn[q] || 0) >= capQ[q] && c.sc >= 6) return false;
+        if(prev && prev.pattern === c.ex.pattern && pool.length > n) return false;
+      }
+      return true;
+    }
+    slots.forEach(function(slot){
+      var c = null, i; curSlot = slot;
+      for(i = 0; i < cand.length && !c; i++) if(okFor(cand[i], slot, true) && cand[i].sc < 6) c = cand[i];
+      for(i = 0; i < cand.length && !c; i++) if(okFor(cand[i], slot, true)) c = cand[i];
+      for(i = 0; i < cand.length && !c; i++) if(okFor(cand[i], slot, false)) c = cand[i];
+      for(i = 0; i < cand.length && !c; i++) if(!used[cand[i].ex.id]) c = cand[i];
+      if(!c) return;
+      used[c.ex.id] = 1; out.push(c.ex); lastSlot = slot; var q = qualityOf(c.ex), st = stemOf(c.ex); qn[q] = (qn[q] || 0) + 1; stems[st] = (stems[st] || 0) + 1;
+    });
+    return out;
+  }
+  // L'échauffement reste nettement plus court que le corps de séance (en temps et en nombre d'exercices)
+  function trimWarm(S){
+    if(!S || !S.warm || !S.main || !S.main.length) return;
+    var maxN = Math.max(2, Math.min(S.main.length - 1, S.durationMinutes <= 20 ? 3 : S.durationMinutes <= 30 ? 4 : 5));
+    while(S.warm.length > maxN){
+      var idx = -1;
+      for(var i = S.warm.length - 1; i >= 0; i--){ if(!S.warm[i].isWarmClone && S.warm[i].type !== 'continu'){ idx = i; break; } }
+      if(idx < 0) idx = S.warm.length - 1;
+      S.warm.splice(idx, 1);
+    }
+  }
   function generateSession(opts){
     var silent = !!(opts && opts.silent === true);
     var prefer = (silent && opts.prefer) ? opts.prefer : ((!silent && state.sport && SPORT_PREFER[state.sport]) ? SPORT_PREFER[state.sport] : null);
@@ -7089,6 +7179,8 @@
         && (state.zone === 'equilibre' ? balanceEx(ex) : zoneMatch(state.zone, ex.zone))
         && !exBlocked(ex.id);
     });
+    mainPool = mainPool.filter(function(ex){ return exScore(ex, state.level, state.theme) < 90; });
+    warmPool = warmPool.filter(function(ex){ return !(seatedEx(ex) && state.level !== 'senior' && !state.chair) && ex.pattern !== 'neck'; });
     // Matériel seul trop limité (ex. uniquement un TRX ou des haltères) : on complète avec des exercices au poids du corps
     var bwAdded = false;
     if(mainPool.length < Math.max(3, Math.min(plan.main, 6)) && state.equip.indexOf('poids_du_corps') < 0 && state.equip.some(function(e){ return CARDIO_EQUIP.indexOf(e) < 0; })){
@@ -7098,6 +7190,7 @@
           && impactOk(ex, state.noImpact || state.level === 'senior') && chairOk(ex, state.chair)
           && (state.zone === 'equilibre' ? balanceEx(ex) : zoneMatch(state.zone, ex.zone)) && !exBlocked(ex.id);
       });
+      bwPool = bwPool.filter(function(ex){ return exScore(ex, state.level, state.theme) < 90; });
       if(bwPool.length){ mainPool = mainPool.concat(bwPool); bwAdded = true; }
     }
     // Séance ciblée (haut, bas, gainage…) : au plus un exercice « corps complet » quand il y a assez d'exercices de la zone
@@ -7141,7 +7234,7 @@
     }
 
     var WARMUP_CARDIO_CAP_SEC = {10:120, 20:180, 30:240};
-    var SPECIFIC_WARMUP_COUNT = {20:1, 30:1, 45:2, 60:2};
+    var SPECIFIC_WARMUP_COUNT = {20:1, 30:1, 45:1, 60:2};
 
     var transSecForLevel = TRANSITION_SECONDS[state.level];
     var restSecForLevel = REST_SECONDS_BY_THEME[state.theme][state.level];
@@ -7192,12 +7285,13 @@
 
     var mainAvgSec = avgTempsSeconds(mainPool, state.level, state.theme);
     var stationsRounds = mainPool.length > 0
-      ? computeStationsAndRounds(state.duration, state.level, state.theme, warmSec, cardioSec, coolSec, mainAvgSec, restSecForLevel, circuitRestSec(state.theme, state.level), mainPool.length, (silent && !PROG_ROUNDS) ? 0 : roundsWanted(state))
+      ? computeStationsAndRounds(state.duration, state.level, state.theme, warmSec, cardioSec, coolSec, mainAvgSec, restSecForLevel, circuitRestSec(state.theme, state.level), Math.min(mainPool.length, circuitCap(state.duration, state.theme)), (silent && !PROG_ROUNDS) ? 0 : roundsWanted(state))
       : {n:0, rounds:0};
     var rounds = stationsRounds.rounds;
     var mainCount = stationsRounds.n;
 
-    var main = preferPick(mainPool, mainCount, prefer, 0.7, true);
+    var mainPlus = pickStructured(mainPool, mainCount + 2, prefer, state.level, state.theme, state.zone);
+    var main = mainPlus.slice(0, mainCount), fitExtra = mainPlus.slice(mainCount);
     // Corps complet : au moins un exercice pour le haut et un pour le bas du corps
     if(state.zone === 'full' && main.length >= 4){
       ['bas', 'haut'].forEach(function(z){
@@ -7247,13 +7341,14 @@
     if(main.length === 0) rounds = 0;
 
     var session = {warm:warm, cardio:cardio, main:main, cool:cool, level:state.level, theme:state.theme, rounds:rounds, roundsFixed:(silent && !PROG_ROUNDS) ? 0 : roundsWanted(state), durationMinutes:state.duration, equip:state.equip.slice(), zone:state.zone, noFloor:state.noFloor, chair:state.chair, noImpact:!!state.noImpact, sport:(!silent && state.sport) || null};
+    if(fitExtra && fitExtra.length) session._fitExtra = fitExtra;
     ensureWarmup(session);
     ensureCooldown(session);
-    if(silent){ session.title = title; return session; }
+    if(silent){ trimWarm(session); session.title = title; return session; }
     if(window.ecAutoAdapt) window.ecAutoAdapt(session);
     fitSession(session);
     if(session.roundsFixed) fitFixedRounds(session);
-    syncClones(session);
+    syncClones(session); trimWarm(session);
     if(bwAdded && !msg.textContent) msg.textContent = 'Peu d’exercices avec ce seul matériel : quelques exercices au poids du corps complètent ta séance.';
     try{ var realMin = Math.round(sessionSeconds(session) / 60); if(realMin < state.duration * 0.85 && !msg.textContent) msg.textContent = 'Avec ces réglages, peu d’exercices sont disponibles : ta séance dure environ ' + realMin + ' min. Pour la durée complète, ajoute du matériel ou choisis une autre zone.'; }catch(e){}
     rememberSession(session);
@@ -7282,11 +7377,11 @@
   function warmSeconds(S){ return buildTimeline(S).reduce(function(a, st){ return a + (st.blockLabel === 'Échauffement' ? st.duration : 0); }, 0); }
   function ensureWarmup(S){
     if(!S || !S.warm || !S.durationMinutes) return;
-    var target = S.durationMinutes <= 10 ? 120 : (S.durationMinutes <= 30 ? 240 : 360);
+    var target = S.durationMinutes <= 10 ? 90 : S.durationMinutes <= 20 ? 150 : S.durationMinutes <= 30 ? 180 : S.durationMinutes <= 45 ? 270 : 330;
     var keepA = SESSION_ADJ; SESSION_ADJ = null;
     var ref = S.warm.filter(function(x){ return x.block === 'echauffement'; })[0] || {block:'echauffement', zone:S.zone === 'full' ? 'full' : S.zone, equipment:'poids_du_corps'};
-    for(var i = 0; i < 9 && warmSeconds(S) < target - 10; i++){
-      var cands = freshFirst(replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && !(x.breath && x.breath.length); }), 1);
+    for(var i = 0; i < 9 && warmSeconds(S) < target - 10 && S.warm.length < (S.durationMinutes <= 20 ? 3 : S.durationMinutes <= 30 ? 4 : 5); i++){
+      var cands = freshFirst(replacementCandidates(S, ref).filter(function(x){ return x.type === 'temps' && !(x.breath && x.breath.length) && !(seatedEx(x) && S.level !== 'senior' && !S.chair) && x.pattern !== 'neck'; }), 1);
       if(!cands.length) break;
       var pick = cands[Math.floor(Math.random() * cands.length)];
       var at = 0; while(at < S.warm.length && S.warm[at].block === 'echauffement') at++;
@@ -7320,6 +7415,9 @@
       var ex0 = main0[main0.length - 1], extra = [], tmp = {warm:S.warm, cardio:S.cardio, main:main0.slice(), cool:S.cool, equip:S.equip, zone:S.zone, level:S.level, noFloor:S.noFloor, chair:S.chair, noImpact:S.noImpact};
       for(var i = 0; i < (S.roundsFixed ? 4 : 2); i++){
         var cands = replacementCandidates(tmp, ex0).filter(function(x){ return x.type === 'temps'; });
+        cands = cands.filter(function(x){ return exScore(x, S.level, S.theme || 'equilibre') < 90; });
+        var good = cands.filter(function(x){ return exScore(x, S.level, S.theme || 'equilibre') < 2 && x.block === 'principal'; });
+        if(good.length) cands = good;
         if(!cands.length) break;
         var pick = cands[Math.floor(Math.random() * cands.length)]; extra.push(pick); tmp.main.push(pick);
       }
