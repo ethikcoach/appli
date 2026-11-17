@@ -1541,6 +1541,8 @@
   function ecSubCache(){ try{ return JSON.parse(localStorage.getItem('ec_sub') || 'null'); }catch(e){ return null; } }
   // Clés d'athlète : nouvelles (prénom + 8 caractères au hasard) et anciennes (prénom-date-signature)
   var EC_ATH_RE = /^[a-z]{1,12}-(?:[a-z0-9]{8}|\d{6}-(?:[fmbdp]{1,4}-)?[a-z0-9]{6})$/;
+  // Prénom pour saluer : le premier mot de ce que le coach a saisi (« Marie D. » → « Marie »)
+  function ecFirst(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
   function ecIsStatic(k){ var h = ecHash(String(k || '').trim().toLowerCase()); for(var i = 0; i < EC_ACCESS.length; i++) if(EC_ACCESS[i].h === h) return true; return false; }
   // Clé coach créée depuis l'appli : « ec- » + 6 groupes de 4 caractères tirés au hasard
   var EC_COACH_RE = /^ec(?:-[a-z0-9]{4}){6}$/;
@@ -10335,7 +10337,7 @@
     function parseIso(s){ var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
     function appBase(){ return 'https://appli.ethikcoach.fr/'; }
     function ecScLabel(sc){ var L = {f:'Renfo', m:'Récupération', b:'Respiration', d:'Défis', p:'Programmes'}; return String(sc || '').split('').map(function(c){ return L[c]; }).filter(Boolean).join(' + '); }
-    function waMsg(r){ return 'Bonjour ' + r.n + ', voici ton accès personnel à l’appli Ethik’Coach (séances de renforcement et respiration guidées). Ouvre ce lien sur ton téléphone, puis ajoute l’appli à ton écran d’accueil :\n' + appBase() + '?acces=' + r.k + '\nTon code, si on te le demande : ' + r.k; }
+    function waMsg(r){ return 'Bonjour ' + ecFirst(r.n) + ', voici ton accès personnel à l’appli Ethik’Coach (séances de renforcement et respiration guidées). Ouvre ce lien sur ton téléphone, puis ajoute l’appli à ton écran d’accueil :\n' + appBase() + '?acces=' + r.k + '\nTon code, si on te le demande : ' + r.k; }
     function frDate(s){ return parseIso(s).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}); }
     function today0(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
     function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -10901,7 +10903,7 @@
       $('#ctSite').value = (lsGet(CT_NET, {}) || {}).name || 'appli';
       var ctNv = $('#ctNever'); if(ctNv) ctNv.addEventListener('change', function(){ ctExp.disabled = ctNv.checked; });
       $('#ctCreate').addEventListener('click', function(){
-        var nv = $('#ctNever'), name = $('#ctName').value.trim(), s = slug(name), exp = nv && nv.checked ? EC_NEVER : ctExp.value;
+        var nv = $('#ctNever'), name = $('#ctName').value.trim(), s = slug(ecFirst(name)) || slug(name), exp = nv && nv.checked ? EC_NEVER : ctExp.value;
         if(!s){ showToast('Indique le prénom de l’athlète.', false); return; }
         if(!/^\d{4}-\d{2}-\d{2}$/.test(exp)){ showToast('Choisis une date de fin.', false); return; }
         var scSel = ecScNorm(Array.prototype.map.call(document.querySelectorAll('#ctScope button.on'), function(b){ return b.getAttribute('data-sc'); }).join(''));
@@ -17222,7 +17224,7 @@
     document.getElementById('ecLockInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') tryCode(); });
     if(EC_BLOCKED){
       document.getElementById('ecLockTitle').textContent = 'Accès suspendu';
-      document.getElementById('ecLockText').textContent = (EC_BLOCKED.n ? EC_BLOCKED.n + ', ton' : 'Ton') + ' accès à l\u2019appli a été suspendu. Contacte Benoît pour en savoir plus.';
+      document.getElementById('ecLockText').textContent = (EC_BLOCKED.n ? ecFirst(EC_BLOCKED.n) + ', ton' : 'Ton') + ' accès à l\u2019appli a été suspendu. Contacte Benoît pour en savoir plus.';
       var mb = document.getElementById('ecLockSite');
       mb.textContent = 'Contacter Benoît';
       mb.href = 'https://wa.me/33611323245?text=' + encodeURIComponent('Bonjour Benoît, mon accès à l\u2019appli Ethik\u2019Coach est suspendu' + (EC_BLOCKED.n ? ' (' + EC_BLOCKED.n + ')' : '') + '.');
@@ -17230,7 +17232,7 @@
       document.getElementById('ecLockWa').style.display = 'none';
     }
     if(EC_EXPIRED){
-      var nm = EC_EXPIRED.n ? EC_EXPIRED.n + ', ton' : 'Ton';
+      var nm = EC_EXPIRED.n ? ecFirst(EC_EXPIRED.n) + ', ton' : 'Ton';
       document.getElementById('ecLockTitle').textContent = 'Accès expiré';
       document.getElementById('ecLockText').textContent = nm + ' accès à l\u2019appli s\u2019est terminé le ' + ecExpDate(EC_EXPIRED) + '. Contacte Benoît pour le renouveler : tu garderas le même lien.';
       var main = document.getElementById('ecLockSite');
@@ -17241,7 +17243,7 @@
     }
     function welcome(){
       if(!EC_USER) return;
-      var dl = ecDaysLeft(EC_USER), msg = EC_USER.n ? 'Bonjour ' + EC_USER.n + ' !' : '';
+      var dl = ecDaysLeft(EC_USER), msg = EC_USER.n ? 'Bonjour ' + ecFirst(EC_USER.n) + ' !' : '';
       if(dl !== null && dl <= EC_REMIND_DAYS){
         msg += (msg ? ' ' : '') + (dl === 0 ? 'Ton accès se termine ce soir.' : 'Ton accès se termine dans ' + dl + ' jour' + (dl > 1 ? 's' : '') + ' (le ' + ecExpDate(EC_USER) + ').');
       } else if(dl !== null){
@@ -17251,7 +17253,7 @@
       if(dl !== null){
         var line = document.getElementById('ecAccessLine');
         if(!line){ line = document.createElement('p'); line.id = 'ecAccessLine'; line.className = 'access-line'; var v = document.getElementById('appVersion'); v.parentNode.insertBefore(line, v); }
-        line.textContent = (EC_USER.n ? EC_USER.n + ' · ' : '') + 'Accès valable jusqu\u2019au ' + ecExpDate(EC_USER) + (dl <= EC_REMIND_DAYS ? (dl === 0 ? ' (dernier jour)' : ' (encore ' + dl + ' jour' + (dl > 1 ? 's' : '') + ')') : '');
+        line.textContent = (EC_USER.n ? ecFirst(EC_USER.n) + ' · ' : '') + 'Accès valable jusqu\u2019au ' + ecExpDate(EC_USER) + (dl <= EC_REMIND_DAYS ? (dl === 0 ? ' (dernier jour)' : ' (encore ' + dl + ' jour' + (dl > 1 ? 's' : '') + ')') : '');
         line.classList.toggle('soon', dl <= EC_REMIND_DAYS);
       }
       if(!msg) return;
@@ -17719,7 +17721,7 @@
         } else h += '<small>Chargement du classement…</small>';
         h += '<button type="button" class="lnk" data-r="off">Ne plus apparaître dans le classement</button>';
       } else if(joining){
-        h += '<div class="ch-join"><input type="text" id="chRankName" maxlength="20" placeholder="Ton prénom" value="' + esc((me && me.nom) || EC_USER.n || ((document.getElementById('athleteName') || {}).value || '')) + '"><button type="button" data-r="ok">Participer</button></div>'
+        h += '<div class="ch-join"><input type="text" id="chRankName" maxlength="20" placeholder="Ton prénom" value="' + esc((me && me.nom) || ecFirst(EC_USER.n) || ((document.getElementById('athleteName') || {}).value || '')) + '"><button type="button" data-r="ok">Participer</button></div>'
           + '<small>Seuls ton prénom et ton nombre de séances du défi sont visibles par les autres participants. Tu peux te retirer quand tu veux.</small>';
       } else {
         h += '<p class="me-line" style="margin:0 0 8px">Compare-toi aux autres utilisateurs de l’appli, avec ton prénom seulement.</p><button type="button" data-r="join">Participer au classement</button>';
@@ -22081,7 +22083,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function sendSession(nom, s){
     var link = guestLink(s), ciN = s.ex.length - (s.w || 0);
-    var intro = 'Bonjour ' + nom + ',\nVoici ta séance du ' + dLong(s) + ' (' + ciN + ' exercice' + (ciN > 1 ? 's' : '') + (s.t ? ', ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '). Ouvre le lien et appuie sur « Chrono » : le chrono te guide exercice par exercice.\n' + link;
+    var intro = 'Bonjour ' + ecFirst(nom) + ',\nVoici ta séance du ' + dLong(s) + ' (' + ciN + ' exercice' + (ciN > 1 ? 's' : '') + (s.t ? ', ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '). Ouvre le lien et appuie sur « Chrono » : le chrono te guide exercice par exercice.\n' + link;
     var txt = intro + '\n\n' + sendText(nom, s).split('\n').slice(1).join('\n').replace(/\n*Bonne séance [^\n]*\n[^\n]*$/, '').replace(/^\n+/, '') + '\n\nBonne séance !', file = null, url = '', fname = 'seance-' + (nz(nom).replace(/[^a-z0-9]+/g, '-') || 'client') + '-' + (s.d || 'ethikcoach') + '.png';
     var d = sheet('<h4>' + IC('plane') + ' Envoyer la séance</h4><p>À <b>' + esc(nom) + '</b> · ' + esc(dLong(s)) + '. La personne reçoit la fiche en image et un lien : il ouvre uniquement cette séance dans l’appli (chrono, illustrations), avec une invitation à s’abonner.</p>'
       + '<div class="cl-send-pv" id="clSendPv"><span>Préparation de l’image…</span></div>'
