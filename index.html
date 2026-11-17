@@ -10201,7 +10201,7 @@
     // Sauvegarde / restauration
     function backupKeys(){
       var out = {};
-      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
     $('#svExport').addEventListener('click', function(){
@@ -10222,7 +10222,7 @@
         if(!data || data.app !== 'ethikcoach' || !data.data){ showToast('Ce fichier n’est pas une sauvegarde Ethik’Coach.', false); return; }
         var n = 0; try{ n = JSON.parse(data.data.ec_history_v1 || '[]').length; }catch(e){}
         ecConfirm('Restaurer cette sauvegarde (' + n + ' séance' + (n > 1 ? 's' : '') + ' dans l’historique) ? Les données actuelles de cet appareil seront remplacées.', 'Restaurer', function(){
-          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
+          try{ Object.keys(data.data).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, data.data[k]); }); }catch(e){}
           location.reload();
         });
       };
@@ -17207,7 +17207,7 @@
     if(EC_USER.h === '2g7dfzw49uk') return;            // clé partagée de la page du site : pas de sauvegarde commune
     var K = String(EC_KEY).trim().toLowerCase(), API = EC_SUB_API;
     var OK = 'ec_sync_ok', AT = 'ec_sync_at', DIRTY = 'ec_sync_dirty', HIST = 'ec_history_v1';
-    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
+    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_live_dev2?|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
     var LS = window.localStorage, setRaw = Storage.prototype.setItem, delRaw = Storage.prototype.removeItem;
     function g(k){ try{ return LS.getItem(k); }catch(e){ return null; } }
     function s(k, v){ try{ setRaw.call(LS, k, v); }catch(e){} }
@@ -22380,7 +22380,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // ---------- Direct : le chrono du téléphone s'affiche en grand sur l'iPad (écran Présenter) ----------
   // Réservé au coach. Chiffré avec la clé coach ; aucun prénom de client n'est envoyé.
-  var LDEV = (function(){ var d = ''; try{ d = localStorage.getItem('ec_live_dev') || ''; if(!d){ d = Math.random().toString(36).slice(2, 10); localStorage.setItem('ec_live_dev', d); } }catch(e){ d = Math.random().toString(36).slice(2, 10); } return d; })();
+  var LDEV = (function(){ var d = ''; try{ d = localStorage.getItem('ec_live_dev2') || ''; if(!d){ d = Math.random().toString(36).slice(2, 10); localStorage.setItem('ec_live_dev2', d); } }catch(e){ d = Math.random().toString(36).slice(2, 10); } return d; })();
   function liveOk(){ var h = document.documentElement.classList; return h.contains('ec-coach') && !h.contains('ec-guest') && !!(typeof EC_SUB_API !== 'undefined' && EC_SUB_API); }
   function hintOf(st){ return st.k === 'rest' ? '' : st.sec ? (st.txt || '') : st.reps ? st.reps + ' répétitions' : (st.txt || 'À ton rythme'); }
   var LV = {busy:false, pend:null};
