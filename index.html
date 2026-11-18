@@ -6579,8 +6579,13 @@
     document.getElementById('fbPainWhere').hidden = true;
     document.getElementById('fbPainWhere').value = '';
     document.getElementById('fbComment').value = '';
-    (function(){ var f = document.getElementById('fbName'); if(!f || f.value.trim()) return; var v = ''; try{ v = localStorage.getItem('ec_fb_name') || ''; }catch(e){}
-      if(!v){ try{ if(typeof EC_USER !== 'undefined' && EC_USER && EC_USER.n && !EC_IS_COACH) v = EC_USER.n; }catch(e){} } f.value = v; })();
+    // Prénom du retour : celui de l'accès personnel, sauf si la personne l'a changé elle-même avec CE lien
+    // (un prénom gardé d'un autre lien, par ex. l'ancien accès commun des testeurs, est ignoré)
+    (function(){ var f = document.getElementById('fbName'); if(!f || f.value.trim()) return; var v = '', vh = '', own = '';
+      try{ v = localStorage.getItem('ec_fb_name') || ''; vh = localStorage.getItem('ec_fb_name_h') || ''; }catch(e){}
+      try{ if(typeof EC_USER !== 'undefined' && EC_USER && EC_USER.n && !EC_IS_COACH) own = ecFirst(EC_USER.n); }catch(e){}
+      if(own && vh !== EC_USER.h) v = own;
+      f.value = v; })();
     document.getElementById('fbShare').style.display = navigator.share ? '' : 'none';
     document.getElementById('timerBackdrop').classList.add('feedback');
     document.getElementById('timerFeedback').hidden = false;
@@ -6633,7 +6638,7 @@
     refreshFeedbackLinks();
   });
   ['fbPainWhere','fbComment','fbName'].forEach(function(id){ document.getElementById(id).addEventListener('input', refreshFeedbackLinks); });
-  document.getElementById('fbName').addEventListener('change', function(){ try{ var v = this.value.trim(); if(v) localStorage.setItem('ec_fb_name', v); else localStorage.removeItem('ec_fb_name'); }catch(e){} });
+  document.getElementById('fbName').addEventListener('change', function(){ try{ var v = this.value.trim(); if(v){ localStorage.setItem('ec_fb_name', v); localStorage.setItem('ec_fb_name_h', (typeof EC_USER !== 'undefined' && EC_USER && EC_USER.h) || ''); } else { localStorage.removeItem('ec_fb_name'); localStorage.removeItem('ec_fb_name_h'); } }catch(e){} });
   document.getElementById('fbShare').addEventListener('click', function(){
     var msg = feedbackMessage();
     if(navigator.share){
@@ -17537,7 +17542,7 @@
     if(EC_USER.h === '2g7dfzw49uk') return;            // clé partagée de la page du site : pas de sauvegarde commune
     var K = String(EC_KEY).trim().toLowerCase(), API = EC_SUB_API;
     var OK = 'ec_sync_ok', AT = 'ec_sync_at', DIRTY = 'ec_sync_dirty', HIST = 'ec_history_v1';
-    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_live_dev2?|ec_dev_id|ec_acc|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
+    var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_live_dev2?|ec_dev_id|ec_acc|ec_fb_name|ec_fb_name_h|ec_defi_rank|ec_defi_push|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
     var LS = window.localStorage, setRaw = Storage.prototype.setItem, delRaw = Storage.prototype.removeItem;
     function g(k){ try{ return LS.getItem(k); }catch(e){ return null; } }
     function s(k, v){ try{ setRaw.call(LS, k, v); }catch(e){} }
@@ -17744,7 +17749,7 @@
         } else h += '<small>Chargement du classement…</small>';
         h += '<button type="button" class="lnk" data-r="off">Ne plus apparaître dans le classement</button>';
       } else if(joining){
-        h += '<div class="ch-join"><input type="text" id="chRankName" maxlength="20" placeholder="Ton prénom" value="' + esc((me && me.nom) || ecFirst(EC_USER.n) || ((document.getElementById('athleteName') || {}).value || '')) + '"><button type="button" data-r="ok">Participer</button></div>'
+        h += '<div class="ch-join"><input type="text" id="chRankName" maxlength="20" placeholder="Ton prénom" value="' + esc(ecFirst(EC_USER.n) || (me && me.nom) || ((document.getElementById('athleteName') || {}).value || '')) + '"><button type="button" data-r="ok">Participer</button></div>'
           + '<small>Seuls ton prénom et ton nombre de séances du défi sont visibles par les autres participants. Tu peux te retirer quand tu veux.</small>';
       } else {
         h += '<p class="me-line" style="margin:0 0 8px">Compare-toi aux autres utilisateurs de l’appli, avec ton prénom seulement.</p><button type="button" data-r="join">Participer au classement</button>';
