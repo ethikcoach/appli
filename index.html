@@ -1543,6 +1543,25 @@
   var EC_ATH_RE = /^[a-z]{1,12}-(?:[a-z0-9]{8}|\d{6}-(?:[fmbdp]{1,4}-)?[a-z0-9]{6})$/;
   // Prénom pour saluer : le premier mot de ce que le coach a saisi (« Marie D. » → « Marie »)
   function ecFirst(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
+  // Messages envoyés depuis l'appli : même mise en page partout, signés par Benoît quand c'est le coach qui envoie
+  var EC_SIGNATURE = 'Benoît · Ethik’Coach';
+  var EC_APP_DESC = 'renfo sur mesure, récupération (étirements, mobilité, yoga) et respiration, guidés pas à pas au chrono et à la voix';
+  function ecIsCoachMsg(){ try{ return typeof EC_IS_COACH !== 'undefined' && !!EC_IS_COACH; }catch(e){ return false; } }
+  // o = {name, intro, extra, how, link, after, outro, sign}
+  function ecMsg(o){
+    var L = [o.name ? 'Bonjour ' + ecFirst(o.name) + ' 👋' : 'Bonjour 👋', '', o.intro];
+    if(o.extra){ L.push(''); L.push(o.extra); }
+    if(o.how || o.link){ L.push(''); if(o.how) L.push('👉 ' + o.how); if(o.link) L.push(o.link); }
+    if(o.after){ L.push(''); L.push(o.after); }
+    L.push(''); L.push(o.outro || 'Bonne séance !');
+    var sg = o.sign === undefined ? ecIsCoachMsg() : o.sign;
+    L.push(sg ? EC_SIGNATURE : 'Envoyé depuis l’appli Ethik’Coach');
+    return L.join('\n');
+  }
+  function inviteText(pr){
+    return 'Salut ! J’utilise l’appli Ethik’Coach de Benoît, coach sportif diplômé d’État : ' + EC_APP_DESC + '.\n\n'
+      + '🎁 Avec mon lien, tu as 14 jours d’essai gratuit au lieu de 7 :\n' + pr.lien;
+  }
   function ecIsStatic(k){ var h = ecHash(String(k || '').trim().toLowerCase()); for(var i = 0; i < EC_ACCESS.length; i++) if(EC_ACCESS[i].h === h) return true; return false; }
   // Clé coach créée depuis l'appli : « ec- » + 6 groupes de 4 caractères tirés au hasard
   var EC_COACH_RE = /^ec(?:-[a-z0-9]{4}){6}$/;
@@ -8159,10 +8178,8 @@
     if(window.__ecShareMode === 'breath' && window.ecBreathMessage) return window.ecBreathMessage(url);
     var name = (document.getElementById('athleteName').value || '').trim();
     var mins = sessionMinutes(session);
-    return (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n')
-      + 'Voici ta séance « ' + session.title + ' » (' + mins + ' min environ). '
-      + 'Ouvre le lien et appuie sur « Démarrer la séance » : le chrono te guide exercice par exercice.\n'
-      + url;
+    return ecMsg({name:name, intro:'Voici ta séance « ' + session.title + ' » (' + mins + ' min environ).',
+      how:'Ouvre le lien et appuie sur « Démarrer la séance » : le chrono et les annonces vocales te guident exercice par exercice.', link:url});
   }
 
   function refreshShareChannels(){
@@ -8612,9 +8629,9 @@
   window.ecProgTitle = function(){ var P = currentProgram; return P ? (P.title || ('Programme ' + PROG_OBJECTIVES[P.obj].label.toLowerCase())) : 'Programme'; };
   window.ecProgMessage = function(url){
     var P = currentProgram, name = (document.getElementById('athleteName').value || '').trim() || P.athlete;
-    return (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n')
-      + 'Voici ton programme « ' + window.ecProgTitle() + ' » : ' + P.weeks + ' semaines, ' + P.spw + ' séance' + (P.spw>1?'s':'') + ' par semaine. '
-      + 'Ouvre le lien, choisis ta séance de la semaine et appuie sur « Démarrer la séance ». Coche chaque séance faite pour suivre ta progression.\n' + url;
+    return ecMsg({name:name, intro:'Voici ton programme « ' + window.ecProgTitle() + ' » : ' + P.weeks + ' semaines, ' + P.spw + ' séance' + (P.spw>1?'s':'') + ' par semaine.',
+      how:'Ouvre le lien, choisis ta séance de la semaine et appuie sur « Démarrer la séance ».', link:url,
+      after:'✅ Coche chaque séance faite pour suivre ta progression.', outro:'Bon programme !'});
   };
 
   function loadSharedProgramFromHash(){
@@ -10337,7 +10354,14 @@
     function parseIso(s){ var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
     function appBase(){ return 'https://appli.ethikcoach.fr/'; }
     function ecScLabel(sc){ var L = {f:'Renfo', m:'Récupération', b:'Respiration', d:'Défis', p:'Programmes'}; return String(sc || '').split('').map(function(c){ return L[c]; }).filter(Boolean).join(' + '); }
-    function waMsg(r){ return 'Bonjour ' + ecFirst(r.n) + ', voici ton accès personnel à l’appli Ethik’Coach (séances de renforcement et respiration guidées). Ouvre ce lien sur ton téléphone, puis ajoute l’appli à ton écran d’accueil :\n' + appBase() + '?acces=' + r.k + '\nTon code, si on te le demande : ' + r.k; }
+    function waMsg(r){
+      var u = draft && draft.users ? draft.users[ecHash(r.k)] : null, sc = u ? (u.sc || '') : (r.sc || '');
+      return ecMsg({name:r.n, sign:true,
+        intro:'Voici ton accès personnel à l’appli Ethik’Coach : ' + EC_APP_DESC + '.',
+        extra:sc ? 'Ton accès comprend : ' + ecScLabel(sc) + ', avec les timers, la bibliothèque d’exercices et ton suivi.' : '',
+        how:'Ouvre ce lien sur ton téléphone, puis ajoute l’appli à ton écran d’accueil :', link:appBase() + '?acces=' + r.k,
+        after:'🔑 Ton code, si on te le demande : ' + r.k + '\nCe lien est personnel : garde-le pour toi.', outro:'À très vite !'});
+    }
     function frDate(s){ return parseIso(s).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}); }
     function today0(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
     function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -11498,9 +11522,8 @@
     };
     window.ecBreathMessage = function(url){
       var name = (document.getElementById('athleteName').value || '').trim(), s = lastBreathSession;
-      return (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n')
-        + 'Voici ta séance de respiration « ' + BREATH_INTENTIONS[s.intention].label + ' » (' + s.minutes + ' min environ). '
-        + 'Ouvre le lien et appuie sur « Démarrer la séance » : la voix te guide du début à la fin.\n' + url;
+      return ecMsg({name:name, intro:'Voici ta séance de respiration « ' + BREATH_INTENTIONS[s.intention].label + ' » (' + s.minutes + ' min environ).',
+        how:'Installe-toi au calme, ouvre le lien et appuie sur « Démarrer la séance » : la voix te guide du début à la fin.', link:url, outro:'Belle pause respiration !'});
     };
     function openBreathShare(){
       if(!lastBreathSession) return;
@@ -11684,7 +11707,7 @@
     };
     window.ecExMessage = function(url){
       var name = (document.getElementById('athleteName').value || '').trim(), ex = exById(window.__ecShareEx) || {};
-      return (name ? 'Bonjour ' + name + ',\n' : 'Bonjour,\n') + 'Voici un exercice à travailler : « ' + ex.name + ' ». Ouvre le lien pour voir sa fiche (photo, position de départ, exécution, erreur à éviter).\n' + url;
+      return ecMsg({name:name, intro:'Voici un exercice à travailler : « ' + ex.name + ' ».', how:'Ouvre le lien pour voir sa fiche : photo, position de départ, exécution et erreur à éviter.', link:url, outro:'Bon entraînement !'});
     };
     function openExShare(id){
       window.__ecShareMode = 'ex'; window.__ecShareEx = id;
@@ -17403,7 +17426,7 @@
     }
     // Parrainage : lien personnel à partager
     function parrainer(pr){
-      var msg = 'J’utilise l’appli Ethik’Coach pour mes séances (renfo, yoga, étirements, respiration, guidés à la voix). Avec mon lien, tu as 14 jours d’essai gratuit au lieu de 7 : ' + pr.lien;
+      var msg = inviteText(pr);
       var w = document.createElement('div'); w.className = 'ec-dialog-backdrop'; w.id = 'parDialog';
       w.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Parrainer un ami">'
         + '<p class="ec-dialog-msg">🎁 Parrainer un ami</p>'
@@ -19664,7 +19687,7 @@
     if(typeof _sv === 'function') window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'today'){ tryTrial(); setTimeout(paintInvite, 0); } return r; };
 
     // ===================== 3. Invite un ami =====================
-    function inviteMsg(pr){ return 'J’utilise l’appli Ethik’Coach pour mes séances : renfo, yoga, étirements, respiration, guidés à la voix. Avec mon lien, tu as 14 jours d’essai gratuit au lieu de 7 🎁 ' + pr.lien; }
+    function inviteMsg(pr){ return inviteText(pr); }
     function invitePage(){
       var c = sub() || {}, pr = c.parrain; if(!pr || !pr.lien) return false;
       var n = Math.min(pr.filleuls || 0, pr.max || 12), mx = pr.max || 12, msg = inviteMsg(pr);
@@ -20301,7 +20324,10 @@
     var inp = document.getElementById('ctAvpLink'); if(!inp || typeof ecAvLink !== 'function') return;
     var y = new Date().getFullYear(), link = ecAvLink('edt', y);
     inp.value = link;
-    var txt = '🎄 Défi de l’Avent de l’École de Trail ! Du 1er au 24 décembre, une séance surprise de 5 à 10 minutes par jour sur l’appli Ethik’Coach (renfo, yoga, respiration, défis), guidée à la voix. Pas besoin d’abonnement : ouvre le lien puis ajoute l’appli à ton écran d’accueil 👉 ' + link;
+    var txt = '🎄 Défi de l’Avent de l’École de Trail !\n\n'
+      + 'Du 1er au 24 décembre, une séance surprise par jour sur l’appli Ethik’Coach : renfo, yoga, étirements, respiration ou défi, de 5 à 10 minutes, guidée pas à pas.\n\n'
+      + 'Pas besoin d’abonnement : ouvre le lien, puis ajoute l’appli à ton écran d’accueil.\n👉 ' + link + '\n\n'
+      + 'À vos baskets, et bonne fin d’année !\n' + EC_SIGNATURE;
     var wa = document.getElementById('ctAvpWa'); if(wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
     function toast(m){ try{ (window.showToast || showToast)(m, false); }catch(e){} }
     document.getElementById('ctAvpCopy').addEventListener('click', function(){
@@ -21972,7 +21998,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(wu.length){ L.push(''); L.push('🔸 Échauffement'); wu.forEach(function(l){ L.push('• ' + (l[0] || 'Exercice') + (l[1] ? ' — ' + showVal(l[1]) : '')); }); }
     L.push(''); L.push('🔁 Circuit');
     ci.forEach(function(l, i){ L.push((i + 1) + '. ' + (l[0] || 'Exercice') + (l[1] ? ' — ' + showVal(l[1]) : '') + (sidesOf(l) ? ' (par côté)' : '')); });
-    L.push(''); L.push('Bonne séance ' + nom + ' !'); L.push('Ethik’Coach · coaching sur mesure');
+    L.push(''); L.push('Bonne séance ' + ecFirst(nom) + ' !'); L.push(EC_SIGNATURE);
     return L.join('\n');
   }
   function loadImg(src){ return new Promise(function(res){ if(!src){ res(null); return; } var im = new Image(); var t = setTimeout(function(){ res(null); }, 4000); im.onload = function(){ clearTimeout(t); res(im); }; im.onerror = function(){ clearTimeout(t); res(null); }; im.src = src; }); }
@@ -22083,8 +22109,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function sendSession(nom, s){
     var link = guestLink(s), ciN = s.ex.length - (s.w || 0);
-    var intro = 'Bonjour ' + ecFirst(nom) + ',\nVoici ta séance du ' + dLong(s) + ' (' + ciN + ' exercice' + (ciN > 1 ? 's' : '') + (s.t ? ', ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '). Ouvre le lien et appuie sur « Chrono » : le chrono te guide exercice par exercice.\n' + link;
-    var txt = intro + '\n\n' + sendText(nom, s).split('\n').slice(1).join('\n').replace(/\n*Bonne séance [^\n]*\n[^\n]*$/, '').replace(/^\n+/, '') + '\n\nBonne séance !', file = null, url = '', fname = 'seance-' + (nz(nom).replace(/[^a-z0-9]+/g, '-') || 'client') + '-' + (s.d || 'ethikcoach') + '.png';
+    var head = {name:nom, sign:true, intro:'Voici ta séance du ' + dLong(s) + ' : ' + ciN + ' exercice' + (ciN > 1 ? 's' : '') + (s.t ? ', ' + s.t + ' tour' + (s.t > 1 ? 's' : '') : '') + '.',
+      how:'Ouvre le lien et appuie sur « Chrono » : il te guide exercice par exercice.', link:link};
+    var intro = ecMsg(head);
+    var txt = ecMsg(Object.assign({}, head, {after:sendText(nom, s).split('\n').slice(1).join('\n').replace(/\n*Bonne séance [^\n]*\n[^\n]*$/, '').replace(/^\n+/, '')})), file = null, url = '', fname = 'seance-' + (nz(nom).replace(/[^a-z0-9]+/g, '-') || 'client') + '-' + (s.d || 'ethikcoach') + '.png';
     var d = sheet('<h4>' + IC('plane') + ' Envoyer la séance</h4><p>À <b>' + esc(nom) + '</b> · ' + esc(dLong(s)) + '. La personne reçoit la fiche en image et un lien : il ouvre uniquement cette séance dans l’appli (chrono, illustrations), avec une invitation à s’abonner.</p>'
       + '<div class="cl-send-pv" id="clSendPv"><span>Préparation de l’image…</span></div>'
       + '<button type="button" class="cl-btn go" data-k="img" id="clSendImg" disabled>' + IC('plane') + 'Envoyer l’image + le lien</button>'
