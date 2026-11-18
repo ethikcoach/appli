@@ -21294,6 +21294,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cl-ss{padding:12px 14px; border-radius:18px; background:var(--card); box-shadow:var(--shadow-1); margin:0 0 10px;}
   .cl-ss-h{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
   .cl-ss-h b{font-family:'Bricolage Grotesque', sans-serif; font-size:1.02rem; text-transform:capitalize;}
+  .cl-ia{display:inline-block; flex:none; width:14px; height:14px; border-radius:50%; align-self:center; background:linear-gradient(120deg, #6D4AFF, #2FCB72); box-shadow:0 0 0 3px rgba(109,74,255,.16), 0 2px 6px rgba(99,102,241,.35);}
   .cl-tag{display:inline-block; padding:3px 9px; border-radius:999px; background:rgba(46,158,94,.14); color:var(--forest, #1F4030); font:700 .72rem/1.2 inherit;}
   .cl-meta{margin:4px 0 0; font-size:.8rem; color:var(--stone);}
   .cl-exs{display:grid; grid-template-columns:1fr; gap:2px 16px; margin:8px 0 0; padding:0; list-style:none; font-size:.88rem;}
@@ -21925,7 +21926,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function sessHtml(c, s){
     var w = s.w || 0, meta = fmtLine(s);
-    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
+    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.ia ? '<span class="cl-ia" role="img" aria-label="Créée avec l’IA" title="Créée avec l’IA"></span>' : '') + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '')
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
       + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" class="sec" data-a="dup">' + IC('copy') + '<span>Refaire</span></button><button type="button" class="sec" data-a="copy">' + IC('send') + '<span class="lg">Copier vers…</span><span class="sm">Copier</span></button><button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '<span class="sm">QR</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>';
@@ -22257,7 +22258,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     q.addEventListener('input', draw); draw();
   }
   function openEditor(c, s0, isNew, onSaved){
-    var S = {d:s0.d || '', lab:s0.lab || '', who:s0.who || '', t:s0.t || 0, r:s0.r || '', wu:[], ci:[]};
+    var S = {d:s0.d || '', lab:s0.lab || '', who:s0.who || '', t:s0.t || 0, r:s0.r || '', ia:s0.ia ? 1 : 0, wu:[], ci:[]};
     var w = s0.w || 0; (s0.ex || []).forEach(function(l, i){ var q = [l[0], l[1]]; if(l[2] === 0 || l[2] === 1) q[2] = l[2]; (i < w ? S.wu : S.ci).push(q); });
     var el = document.createElement('div'); el.className = 'cl-ov'; el.setAttribute('role', 'dialog');
     el.innerHTML = '<div class="cl-ov-top"><button type="button" class="cl-btn ghost" data-e="x">Annuler</button><b>' + (isNew ? 'Nouvelle séance' : 'Modifier') + ' · ' + esc(c.nom) + '</b><button type="button" class="cl-btn" data-e="save">Enregistrer</button></div><div class="cl-ov-body"><div id="clEdB"></div></div>'
@@ -22319,13 +22320,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function build(){
       var wu = S.wu.filter(function(l){ return String(l[0]).trim() || String(l[1]).trim(); }), ci = S.ci.filter(function(l){ return String(l[0]).trim() || String(l[1]).trim(); });
       var o = {d:S.d || '', ex:wu.concat(ci).map(function(l){ var q = [String(l[0]).trim(), String(l[1]).trim()]; if((l[2] === 0 || l[2] === 1) && (l[2] === 1) !== autoSide(q[0])) q[2] = l[2]; return q; })};
-      if(!o.d && S.lab) o.lab = S.lab; if(S.who.trim()) o.who = S.who.trim(); if(S.t) o.t = S.t; if(S.r) o.r = S.r; if(wu.length) o.w = wu.length;
+      if(!o.d && S.lab) o.lab = S.lab; if(S.who.trim()) o.who = S.who.trim(); if(S.t) o.t = S.t; if(S.r) o.r = S.r; if(wu.length) o.w = wu.length; if(S.ia) o.ia = 1;
       return o;
     }
     function commit(){
       var o = build(); if(!o.ex.length){ toast('Ajoute au moins un exercice'); return null; }
       if(isNew){ o.id = uid(); c.s.push(o); isNew = false; s0 = o; }
-      else { Object.keys(s0).forEach(function(k){ if(k !== 'id' && k !== '_k') delete s0[k]; }); Object.assign(s0, o); }
+      else { Object.keys(s0).forEach(function(k){ if(k !== 'id' && k !== '_k' && k !== 'ok') delete s0[k]; }); Object.assign(s0, o); }
       sortSess(c); save(); SUG = null; return s0;
     }
     function close(){ el.remove(); document.documentElement.style.overflow = ''; render(); }
@@ -22406,7 +22407,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         SY.post('/coaching/ia', {obj:obj, hist:hist, mots:suggestions().slice(0, 200), lib:lib}).then(function(r){
           if(!r.ok) throw r;
           dd.remove();
-          var s0 = {d:todayIso(), t:r.s.t, r:r.s.r || '', w:r.s.w || 0, ex:r.s.ex.map(function(l){ return [l[0], l[1] || '30"']; })};
+          var s0 = {d:todayIso(), t:r.s.t, r:r.s.r || '', w:r.s.w || 0, ia:1, ex:r.s.ex.map(function(l){ return [l[0], l[1] || '30"']; })};
           openEditor(c, s0, true);
           var body = document.querySelector('.cl-ov:last-of-type .cl-ov-body');
           if(body) body.insertAdjacentHTML('afterbegin', '<div class="cl-ai-note"><b>✨ Proposition de l’IA</b><span>Objectif : ' + esc(obj) + '</span>' + (r.note ? '<span>💡 ' + esc(r.note) + '</span>' : '') + '<small>Vérifie, ajuste puis Enregistrer.</small></div>');
