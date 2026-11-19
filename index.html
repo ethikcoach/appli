@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -17542,6 +17543,9 @@
     if(EC_USER.h === '2g7dfzw49uk') return;            // clé partagée de la page du site : pas de sauvegarde commune
     var K = String(EC_KEY).trim().toLowerCase(), API = EC_SUB_API;
     var OK = 'ec_sync_ok', AT = 'ec_sync_at', DIRTY = 'ec_sync_dirty', HIST = 'ec_history_v1';
+    // Remise à zéro de l'historique (ex. séances venues de l'ancien accès test commun) : date de coupure, synchronisée
+    // sur tous les appareils du même lien, pour qu'aucune ancienne séance ne revienne par la sauvegarde en ligne
+    var RST = 'ec_hist_reset_at';
     var EXCL = /^(ec_access|ec_run_v1|ec_acl|ec_sub|ec_abotest|ec_notif_dev|ec_live_dev2?|ec_dev_id|ec_acc|ec_fb_name|ec_fb_name_h|ec_defi_rank|ec_defi_push|ec_sync_.*|ec_coach_.*|ec_tts_.*|ec_vx_.*)$/;
     var LS = window.localStorage, setRaw = Storage.prototype.setItem, delRaw = Storage.prototype.removeItem;
     function g(k){ try{ return LS.getItem(k); }catch(e){ return null; } }
@@ -17590,11 +17594,21 @@
       out.sort(function(x, y){ return (x.at || 0) - (y.at || 0); });
       return JSON.stringify(out);
     }
+    function cutAt(){ return +(g(RST) || 0) || 0; }
+    function cleanHist(json, c){
+      if(!c) return json;
+      var l = []; try{ l = JSON.parse(json || '[]'); }catch(e){ return json; }
+      if(!Array.isArray(l)) return json;
+      return JSON.stringify(l.filter(function(x){ return x && (+x.at || 0) >= c; }));
+    }
     function apply(remote, localWins){
       var data = remote.data || {}, changed = false;
+      var c = Math.max(cutAt(), +(data[RST] || 0) || 0);
+      if(c && String(c) !== g(RST)){ s(RST, String(c)); changed = true; }
+      if(c){ var ch = g(HIST), cl = cleanHist(ch, c); if(ch !== null && cl !== ch){ s(HIST, cl); changed = true; } }
       Object.keys(data).forEach(function(k){
-        if(!tracked(k)) return;
-        var cur = g(k), v = k === HIST ? mergeHist(cur, data[k]) : ((localWins && cur !== null) ? cur : data[k]);
+        if(!tracked(k) || k === RST) return;
+        var cur = g(k), v = k === HIST ? cleanHist(mergeHist(cur, data[k]), c) : ((localWins && cur !== null) ? cur : data[k]);
         if(v !== cur){ s(k, v); changed = true; }
       });
       return changed;
@@ -17630,6 +17644,7 @@
     window.addEventListener('pagehide', function(){ if(timer) flush(true); });
 
     // ----- au démarrage : récupérer la sauvegarde en ligne -----
+    (function(){ var c = cutAt(), h = g(HIST); if(c && h !== null){ var cl = cleanHist(h, c); if(cl !== h){ s(HIST, cl); s(DIRTY, '1'); } } })();
     var wasDirty = g(DIRTY) === '1';
     function load(){
       if(g(OK) === '0') return Promise.resolve(null);
@@ -17678,8 +17693,44 @@
     function askWhenFree(){ var n = 0; (function wait(){ if(g(OK) !== null) return; if(busyScreen()){ if(++n < 600) setTimeout(wait, 2000); return; } setTimeout(function(){ if(!busyScreen()) ask(); else wait(); }, 1500); })(); }
     function toast(m){ var t = document.getElementById('toast'), tm = document.getElementById('toastMsg'), u = document.getElementById('toastUndo'); if(!t || !tm) return; tm.textContent = m; if(u) u.style.display = 'none'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 4000); }
 
+    // ----- Remise à zéro de l'historique -----
+    function oldCount(){ var l = []; try{ l = JSON.parse(g(HIST) || '[]'); }catch(e){} return Array.isArray(l) ? l.length : 0; }
+    function resetHist(){
+      var now = Date.now();
+      s(RST, String(now)); s(HIST, '[]'); s(DIRTY, '1');
+      try{ localStorage.removeItem('ec_hist_ask'); }catch(e){}
+      var done = function(){ location.reload(); };
+      (g(OK) === '1' ? flush() : Promise.resolve()).then(done, done);
+    }
+    function confirmReset(){
+      var n = oldCount();
+      if(!n){ toast('Ton historique est déjà vide.'); return; }
+      if(confirm('Effacer les ' + n + ' séance' + (n > 1 ? 's' : '') + ' de ton historique ? Tes réglages, favoris et séances enregistrées sont gardés. Cette action ne peut pas être annulée.')) resetHist();
+    }
+    // Proposée une seule fois aux appareils qui ont des séances d'avant les accès personnels (19 novembre 2026)
+    var SWITCH = new Date(2026, 10, 19).getTime(), ASK_END = new Date(2026, 11, 31).getTime();
+    function needAsk(){
+      if(Date.now() > ASK_END || g('ec_hist_ask') === 'non' || cutAt() >= SWITCH) return false;
+      if(typeof EC_IS_COACH !== 'undefined' && EC_IS_COACH) return false;
+      var l = []; try{ l = JSON.parse(g(HIST) || '[]'); }catch(e){}
+      return Array.isArray(l) && l.some(function(x){ return x && +x.at && +x.at < SWITCH; });
+    }
+    function askReset(){
+      if(!needAsk() || document.querySelector('.sy-wrap')) return;
+      var n = oldCount(), w = document.createElement('div'); w.className = 'sy-wrap'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'Ton historique');
+      w.innerHTML = '<div class="sy-box"><h2>🧹 Ton historique</h2>'
+        + '<p>Ton historique contient <b>' + n + ' séance' + (n > 1 ? 's' : '') + '</b>. Si tu as utilisé l’<b>ancien accès test commun</b>, il peut mélanger tes séances avec celles des autres testeurs.</p>'
+        + '<p>Tu peux repartir d’un historique vide avec ton accès personnel. Tes réglages, favoris et séances enregistrées sont gardés.</p>'
+        + '<button type="button" class="sy-go">Repartir d’un historique vide</button><button type="button" class="sy-no">Ce sont bien mes séances, garder</button></div>';
+      document.body.appendChild(w); requestAnimationFrame(function(){ w.classList.add('on'); });
+      function close(){ w.classList.remove('on'); setTimeout(function(){ w.remove(); }, 220); }
+      w.querySelector('.sy-go').addEventListener('click', function(){ close(); resetHist(); });
+      w.querySelector('.sy-no').addEventListener('click', function(){ s('ec_hist_ask', 'non'); close(); });
+    }
+    function askResetWhenFree(){ var n = 0; (function wait(){ if(!needAsk()) return; if(busyScreen() || document.querySelector('.sy-wrap')){ if(++n < 600) setTimeout(wait, 2000); return; } setTimeout(function(){ if(!busyScreen() && !document.querySelector('.sy-wrap')) askReset(); else wait(); }, 1500); })(); }
+
     // ----- Suivi › Mes données : état et interrupteur -----
-    var row = null;
+    var row = null, rstBtn = null;
     function paint(){
       var card = document.getElementById('svExport'); card = card && card.closest('.sv-card'); if(!card) return;
       if(!row){ row = document.createElement('div'); row.className = 'sy-row'; card.insertBefore(row, card.querySelector('.sv-btns'));
@@ -17692,6 +17743,7 @@
           delRaw.call(LS, AT); paint();
         });
       }
+      if(!rstBtn){ var bt = card.querySelector('.sv-btns'); if(bt){ rstBtn = document.createElement('button'); rstBtn.type = 'button'; rstBtn.className = 'sv-btn ghost'; rstBtn.id = 'svHistReset'; rstBtn.textContent = '🧹 Effacer mon historique de séances'; rstBtn.addEventListener('click', confirmReset); bt.appendChild(rstBtn); } }
       var on = g(OK) === '1', at = +(g(AT) || 0);
       row.innerHTML = on
         ? '<b>☁️ Sauvegarde automatique activée' + (at ? '<br><small style="font-weight:500">Dernière sauvegarde : ' + new Date(at).toLocaleString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) + '</small>' : '') + '</b><button type="button" class="sy-off" data-sy="off">Arrêter</button>'
@@ -17701,7 +17753,7 @@
         : 'Ton historique, tes tests, tes charges et tes favoris sont enregistrés uniquement sur cet appareil. Active la sauvegarde automatique, ou fais une sauvegarde en fichier de temps en temps.';
     }
     setTimeout(paint, 900);
-    load().then(function(r){ if(r === 'reload') return; watch(); paint(); if(g(OK) === '1'){ if(g(DIRTY) === '1' || !g(AT)) schedule(); } else if(g(OK) === null) askWhenFree(); });
+    load().then(function(r){ if(r === 'reload') return; watch(); paint(); if(g(OK) === '1'){ if(g(DIRTY) === '1' || !g(AT)) schedule(); } else if(g(OK) === null) askWhenFree(); askResetWhenFree(); });
     window.ecSyncNow = flush;
   })();
 </script>
@@ -24561,3 +24613,5 @@ html.cl-hide #ctMini{visibility:hidden;}
 </script>
 </body>
 </html>
+
+</body></html>
