@@ -24343,9 +24343,20 @@ html.cl-hide #ctMini{visibility:hidden;}
   function parseT(v){ v = String(v || '').trim().replace(/\s/g, ''); var m; if((m = /^(\d+)[:'’](\d{1,2})"?$/.exec(v))) return +m[1] * 60 + (+m[2]); if((m = /^(\d+)(?:'|’|min|mn)$/i.exec(v))) return +m[1] * 60; if((m = /^(\d+)(?:"|s)?$/i.exec(v))) return +m[1]; return null; }
   // Sons et voix
   var AC = null;
-  function audio(){ if(window.ecLoud) window.ecLoud(); try{ if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); }catch(e){} return AC; }
+  // Sur iPhone, le son doit être créé APRÈS le passage en mode « lecture » (bips en silencieux) :
+  // un son créé avant, puis basculé en cours de chrono, sautait ou se coupait.
+  var AC_T = '', loudAt = 0;
+  function sessT(){ try{ return navigator.audioSession ? navigator.audioSession.type : ''; }catch(e){ return ''; } }
+  function mkAC(){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); AC_T = sessT(); }catch(e){ AC = null; } }
+  function resume(){ try{ if(AC && AC.state !== 'running' && AC.state !== 'closed'){ var pr = AC.resume(); if(pr && pr.catch) pr.catch(function(){}); } }catch(e){} }
+  // Garde le mode « lecture » tant qu'un chrono tourne (sinon retour au mode normal au bout de 60 s, en pleine récup)
+  function keepLoud(){ var n = Date.now(); if(n - loudAt < 5000) return; loudAt = n; if(window.ecLoud) window.ecLoud(); resume(); }
+  function audio(){ if(!AC || AC.state === 'closed') mkAC(); resume(); return AC; }
   // Débloque le son de l'iPhone au moment où l'on touche l'écran (inaudible) : le bip de fin pourra sonner plus tard
-  function unlock(){ var a = null; try{ if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); a = AC; }catch(e){} if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + 0.03); }catch(e){} }
+  // loud : un chrono va démarrer → passage en mode « lecture » d'abord, et son recréé s'il datait d'avant
+  function unlock(loud){ var a = null;
+    if(loud && window.ecLoud){ window.ecLoud(); loudAt = Date.now(); if(AC && AC_T !== sessT()){ try{ AC.close(); }catch(e){} AC = null; } }
+    try{ if(!AC || AC.state === 'closed') mkAC(); resume(); a = AC; }catch(e){} if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + 0.03); }catch(e){} }
   function beep(f, d, v){ var a = audio(); if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = f || 880; o.type = 'sine'; g.gain.value = v || .18; o.connect(g); g.connect(a.destination); var t = a.currentTime; g.gain.setValueAtTime(v || .18, t); g.gain.exponentialRampToValueAtTime(.0001, t + (d || .15)); o.start(t); o.stop(t + (d || .15) + .02); }catch(e){} }
   function vib(p){ if(window.ecVib) window.ecVib(p); }
   var FRV = null;
@@ -24517,13 +24528,13 @@ html.cl-hide #ctMini{visibility:hidden;}
   }   // la préparation sert de départ : la 1re annonce part dans le toucher (exigé par l'iPhone pour la voix)
   function runInterval(c){
     var S = c.seq ? seqSteps(c) : steps(c); if(!S.length){ toast('Aucun timer à lancer'); return; }
-    unlock(); KA = true; awake(true);
+    unlock(true); KA = true; awake(true);
     var el = document.createElement('div'); el.className = 'tmr'; el.setAttribute('role', 'dialog');
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
     R = {el:el, c:c, S:S, k:0, state:'run', endAt:Date.now() + S[0].d * 1000, left:S[0].d * 1000, t0:Date.now(), lastBeep:99, sw:Date.now(), el2:0};
     draw(); announce();
     R.iv = setInterval(tick, 40);
-    el.addEventListener('click', function(e){ unlock(); var b = e.target.closest('[data-r]'); if(!b || !R) return; var a = b.getAttribute('data-r');
+    el.addEventListener('click', function(e){ unlock(true); var b = e.target.closest('[data-r]'); if(!b || !R) return; var a = b.getAttribute('data-r');
       if(a === 'x'){ close(); return; }
       if(a === 'pp'){ if(R.state === 'run'){ R.left = R.endAt - Date.now(); R.el2 = Date.now() - R.sw; R.state = 'pause'; try{ speechSynthesis.cancel(); }catch(x){} } else if(R.state === 'pause'){ R.endAt = Date.now() + R.left; R.sw = Date.now() - R.el2; R.state = 'run'; } draw(); return; }
       if(a === 'nx' || a === 'pv'){ R.pre = false; }
@@ -24552,6 +24563,7 @@ html.cl-hide #ctMini{visibility:hidden;}
   }
   function tick(){
     if(!R || R.state !== 'run') return;
+    keepLoud();
     if(cur().free){ var tf = R.el.querySelector('#tmrT'); if(tf) tf.innerHTML = fmt(Date.now() - R.sw, true); var tt = R.el.querySelector('#tmrTot'); if(tt){ var rs = 0; for(var q = R.k + 1; q < R.S.length; q++) rs += R.S[q].d; tt.textContent = 'Reste ' + fmt(rs * 1000).replace(/<\/?small>/g, '') + ' · écoulé ' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, ''); } return; }
     var left = R.endAt - Date.now(), voice = R.c.voice && window.speechSynthesis, lead = -40;
     // 3, 2, 1 : toujours des bips (la voix ne compte plus : muette en mode silencieux et elle faisait sauter l'affichage)
@@ -24672,7 +24684,7 @@ html.cl-hide #ctMini{visibility:hidden;}
   }
   function refreshTile(it){ var t = pane.querySelector('.tm-t[data-id="' + it.id + '"]'); if(!t) return; var i = M.items.indexOf(it), tmp = document.createElement('div'); tmp.innerHTML = tileHtml(it, i); t.replaceWith(tmp.firstChild); }
   pane.addEventListener('click', function(e){
-    unlock();
+    unlock(!!e.target.closest('[data-a="all"], [data-a="pp"], [data-a="lap"]'));
     var m = e.target.closest('[data-m]'); if(m){ mode = m.getAttribute('data-m'); lsSet(MODE_K, mode); render(); return; }
     var trb = e.target.closest('[data-tr]'); if(trb && SQ){ readSQ(); SQ.trans = +trb.getAttribute('data-tr'); render(); return; }
     var tmb = e.target.closest('[data-tm]'); if(tmb && SQ){ readSQ(); SQ.tc = tmb.getAttribute('data-tm') === '1'; if(!SQ.tc && !SQ.trans) SQ.trans = 30; render(); return; }
@@ -24757,7 +24769,7 @@ html.cl-hide #ctMini{visibility:hidden;}
   function loop(){ if(looping) return; looping = true; (function f(){
     var vis = !pane.hidden && mode === 'multi', run = false;
     M.items.forEach(function(it){
-      if(it.st !== 'run') return; run = true;
+      if(it.st !== 'run') return; run = true; keepLoud();
       if(it.type === 'down' && el(it) >= it.dur * 1000){ it.acc = it.dur * 1000; it.st = 'done'; saveM(); beep(880, .3); setTimeout(function(){ beep(880, .3); }, 350); setTimeout(function(){ beep(1175, .6); }, 700); vib([300, 100, 300]); toast('⏰ ' + it.n + ' : temps écoulé'); if(vis) refreshTile(it); return; }
       if(vis){ var t = pane.querySelector('[data-tt="' + it.id + '"]'); if(t) t.innerHTML = fmt(shown(it), true); var pb = it.type === 'down' && pane.querySelector('[data-pb="' + it.id + '"]'); if(pb) pb.style.width = (100 * shown(it) / (it.dur * 1000 || 1)).toFixed(2) + '%'; }
     });
