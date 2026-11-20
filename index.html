@@ -20733,6 +20733,7 @@
   .stx-dlg h4{margin:0 0 10px; font-family:'Bricolage Grotesque', sans-serif; font-size:1.05rem;}
   /* Choix du client avant le tirage (séance comptée dans Mes clients) */
   .tm-loud{display:flex; align-items:center; gap:12px; width:100%; margin:0 0 12px; padding:12px 14px; border:none; border-radius:16px; background:var(--card, #fff); box-shadow:var(--shadow-1); color:inherit; font:inherit; text-align:left; cursor:pointer;}
+  .ct-loud-box .tm-loud{margin:0 0 14px;}
   .tm-loud:disabled{opacity:.6; cursor:default;}
   .tm-loud-ic{flex:none; font-size:1.3rem;} .tm-loud-t{flex:1; min-width:0;} .tm-loud-t b{display:block; font-size:.92rem;} .tm-loud-t small{display:block; font-size:.75rem; opacity:.75; line-height:1.35; margin-top:2px;}
   .tm-loud-sw{position:relative; flex:none; width:46px; height:28px; border-radius:20px; background:rgba(127,127,127,.35); transition:background .2s;}
@@ -24368,8 +24369,8 @@ html.cl-hide #ctMini{visibility:hidden;}
     function show(v, cls){ N.className = 'tm321-n'; void N.offsetWidth; N.textContent = v; N.className = 'tm321-n pop' + (cls ? ' ' + cls : ''); }
     function finish(){ if(done) return; done = true; clearTimeout(tmo); o.classList.add('out'); setTimeout(function(){ o.remove(); }, 260); cb(); }
     function step(){
-      if(n > 0){ show(n); if(voice) say(String(n)); n--; tmo = setTimeout(step, 1000); }
-      else { show('GO !', 'go'); if(voice) say('Go'); tmo = setTimeout(finish, 650); }
+      if(n > 0){ show(n); n--; tmo = setTimeout(step, 1000); }
+      else { show('GO !', 'go'); tmo = setTimeout(finish, 650); }
     }
     o.querySelector('.tm321-skip').addEventListener('click', finish);
     step();
@@ -24552,10 +24553,10 @@ html.cl-hide #ctMini{visibility:hidden;}
   function tick(){
     if(!R || R.state !== 'run') return;
     if(cur().free){ var tf = R.el.querySelector('#tmrT'); if(tf) tf.innerHTML = fmt(Date.now() - R.sw, true); var tt = R.el.querySelector('#tmrTot'); if(tt){ var rs = 0; for(var q = R.k + 1; q < R.S.length; q++) rs += R.S[q].d; tt.textContent = 'Reste ' + fmt(rs * 1000).replace(/<\/?small>/g, '') + ' · écoulé ' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, ''); } return; }
-    var left = R.endAt - Date.now(), voice = R.c.voice && window.speechSynthesis, lead = voice ? LAT - 80 : -40;
-    // « 3, 2, 1 » entendus quand l'écran passe à 0:03, 0:02, 0:01
+    var left = R.endAt - Date.now(), voice = R.c.voice && window.speechSynthesis, lead = -40;
+    // 3, 2, 1 : toujours des bips (la voix ne compte plus : muette en mode silencieux et elle faisait sauter l'affichage)
     var s = Math.floor((left - lead) / 1000);
-    if(s <= 3 && s >= 1 && s !== R.lastBeep && cur().d >= 5){ R.lastBeep = s; if(voice) say(String(s), true); else beep(880, .12); vib(30); }
+    if(s <= 3 && s >= 1 && s !== R.lastBeep && cur().d >= 5){ R.lastBeep = s; beep(880, .12); vib(30); }
     // Annonce de la phase suivante lancée juste avant, pour l'entendre au moment du changement
     if(voice && !R.pre && left <= LAT - 60 && R.S[R.k + 1]){ R.pre = true; announce(R.k + 1); }
     if(left <= 0){ go(1); return; }
@@ -24649,18 +24650,29 @@ html.cl-hide #ctMini{visibility:hidden;}
       + (ok ? (on ? 'Activé sur cet appareil. Pendant le chrono, la musique jouée sur ce téléphone se met en pause.' : 'Désactivé : les bips suivent le bouton silencieux du téléphone.') : 'Demande iOS 17 ou plus récent sur cet appareil.')
       + '</small></span><span class="tm-loud-sw" aria-hidden="true"></span></button>';
   }
+  // Réglage rangé dans Espace coach › Réglages (juste après « Données Coaching »)
+  (function(){
+    var sp = document.querySelector('#coachTools .ct-pane[data-pane="set"]'); if(!sp || document.getElementById('ctLoudCard')) return;
+    var box = document.createElement('div'); box.id = 'ctLoudCard'; box.className = 'ct-loud-box';
+    var dc = document.getElementById('ctDataCard');
+    if(dc && dc.parentNode === sp) sp.insertBefore(box, dc.nextSibling); else sp.insertBefore(box, sp.firstChild);
+    function draw(){ box.innerHTML = loudRow(); }
+    draw();
+    box.addEventListener('click', function(e){
+      if(!e.target.closest('[data-loud]')) return; unlock();
+      var nv = !window.ecLoudOn(); window.ecLoudSet(nv); if(nv){ window.ecLoud(); beep(1046, .12); } draw();
+    });
+  })();
   // ---------- Rendu et événements ----------
   function render(){
     var sub = mode === 'multi' ? 'Plusieurs chronos nommés, lancés ensemble ou un par un.' : mode === 'int' ? 'Travail, récup, répétitions et séries, avec le nom de chaque exercice.' : 'Tes timers préparés, sur l’iPad comme sur l’iPhone.';
     pane.innerHTML = '<div class="tm-hero"><div class="tm-hero-t"><small>Espace coach · Ethik’Coach</small><h3>Timers</h3><p>' + sub + '</p></div><div class="tm-seg" role="tablist"><button type="button" data-m="multi" aria-pressed="' + (mode === 'multi') + '"><span>' + IC('watch') + '</span>Multi-chronos</button><button type="button" data-m="int" aria-pressed="' + (mode === 'int') + '"><span>' + IC('repeat') + '</span>Interval</button><button type="button" data-m="sav" aria-pressed="' + (mode === 'sav') + '"><span>' + IC('folder') + '</span>Enregistrés</button></div></div>'
-      + loudRow()
       + (mode === 'multi' ? multiHtml() : mode === 'int' ? intHtml() : savedHtml());
     if(mode === 'int'){ var sm = pane.querySelector('#tmSum'); if(sm) sm.textContent = sumTxt(); drawTl(); }
   }
   function refreshTile(it){ var t = pane.querySelector('.tm-t[data-id="' + it.id + '"]'); if(!t) return; var i = M.items.indexOf(it), tmp = document.createElement('div'); tmp.innerHTML = tileHtml(it, i); t.replaceWith(tmp.firstChild); }
   pane.addEventListener('click', function(e){
     unlock();
-    var ld = e.target.closest('[data-loud]'); if(ld){ var nv = !window.ecLoudOn(); window.ecLoudSet(nv); if(nv){ window.ecLoud(); beep(1046, .12); } render(); return; }
     var m = e.target.closest('[data-m]'); if(m){ mode = m.getAttribute('data-m'); lsSet(MODE_K, mode); render(); return; }
     var trb = e.target.closest('[data-tr]'); if(trb && SQ){ readSQ(); SQ.trans = +trb.getAttribute('data-tr'); render(); return; }
     var tmb = e.target.closest('[data-tm]'); if(tmb && SQ){ readSQ(); SQ.tc = tmb.getAttribute('data-tm') === '1'; if(!SQ.tc && !SQ.trans) SQ.trans = 30; render(); return; }
