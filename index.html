@@ -2138,6 +2138,16 @@
 .ab-stat span{display:block; font-size:0.74rem; color:var(--stone); margin-top:2px; line-height:1.25;}
 .ab-stat.main{background:var(--forest);} .ab-stat.main b, .ab-stat.main span{color:#fff;}
 .ab-err{color:#A0412A; font-size:0.84rem; margin-top:8px;}
+.ab-alert{display:flex; align-items:center; gap:12px; background:var(--chip); border-radius:14px; padding:12px 14px; margin:0 0 14px;}
+.ab-alert .ab-al-ic{flex:none; width:38px; height:38px; border-radius:12px; display:grid; place-items:center; font-size:1.15rem; background:linear-gradient(135deg, #D9F0A8, #9BD14A);}
+.ab-alert .ab-al-t{flex:1; min-width:0;}
+.ab-alert .ab-al-t b{display:block; font-size:0.92rem; color:var(--forest);}
+.ab-alert .ab-al-t small{display:block; font-size:0.75rem; color:var(--stone); line-height:1.35; margin-top:1px;}
+.ab-alert .ab-al-test{border:none; background:none; padding:4px 0 0; color:var(--forest); font:inherit; font-size:0.78rem; font-weight:600; text-decoration:underline; cursor:pointer;}
+.ab-alert .ab-al-test:disabled{opacity:.5;}
+.ab-sw{position:relative; flex:none; width:46px; height:28px; border-radius:20px; border:none; background:rgba(127,127,127,.35); cursor:pointer; transition:background .2s;}
+.ab-sw::after{content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:transform .2s;}
+.ab-sw[aria-checked="true"]{background:#3BA55C;} .ab-sw[aria-checked="true"]::after{transform:translateX(18px);} .ab-sw:disabled{opacity:.5;}
 .ab-link{border:none; background:none; padding:6px 0; color:var(--stone); font-family:inherit; font-size:0.8rem; text-decoration:underline; cursor:pointer;}
 #abSearch{margin-top:2px;}
   .ct-row-acts button{border:none; background:var(--chip); border-radius:999px; padding:7px 12px; font-size:0.78rem; font-weight:700; color:var(--forest); cursor:pointer; font-family:inherit; box-shadow:inset 0 0 0 1px var(--ring-line);}
@@ -4468,6 +4478,11 @@
       <div id="abMain" hidden>
         <p class="ct-count" id="abCount"></p>
         <div class="ab-stats" id="abStats"></div>
+        <div class="ab-alert" id="abAlert">
+          <span class="ab-al-ic" aria-hidden="true">🔔</span>
+          <span class="ab-al-t"><b>Alertes sur cet appareil</b><small id="abAlSt">Nouvel abonné, fin d’essai dans 3 jours, premier paiement.</small><button type="button" class="ab-al-test" id="abAlTest" hidden>Envoyer un essai</button></span>
+          <button type="button" class="ab-sw" role="switch" id="abAlSw" aria-checked="false" aria-label="Alertes abonnés sur cet appareil"></button>
+        </div>
         <div class="ct-form one"><label>Rechercher<input type="search" id="abSearch" placeholder="Nom, prénom, e-mail ou clé" autocomplete="off"></label></div>
         <div class="ct-filter" id="abFilter">
           <button type="button" class="chip active" data-f="all">Tous</button>
@@ -10771,7 +10786,118 @@
       function show(){
         var c = code();
         $('#abSetup').hidden = !!c; $('#abMain').hidden = !c;
+        if(c) alPaint();
       }
+      // ----- Alertes sur cet appareil (nouvel abonné, fin d'essai, premier paiement) -----
+      // L'appareil s'inscrit sur le serveur avec le code abonnés ; le serveur chiffre chaque alerte pour lui.
+      var AL = 'ec_coach_alertes', alIos = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      function alOn(){ try{ return localStorage.getItem(AL) === '1'; }catch(e){ return false; } }
+      function alSet(v){ try{ if(v) localStorage.setItem(AL, '1'); else { localStorage.removeItem(AL); localStorage.removeItem(AL + '_at'); } }catch(e){} }
+      function alStandalone(){ return navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+      function alSupport(){
+        if(alIos && !alStandalone()) return 'ios-home';
+        if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window) || !window.isSecureContext) return 'non';
+        if(Notification.permission === 'denied') return 'refus';
+        return 'ok';
+      }
+      function alActive(){ return alOn() && alSupport() === 'ok' && Notification.permission === 'granted'; }
+      function alB2u(b64){ var p = '='.repeat((4 - b64.length % 4) % 4), s = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/')), a = new Uint8Array(s.length); for(var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+      function alReady(){ return Promise.race([navigator.serviceWorker.ready, new Promise(function(_, no){ setTimeout(function(){ no(new Error('sw')); }, 8000); })]); }
+      function alPost(path, body){
+        return fetch(EC_SUB_API + path, {method:'POST', cache:'no-store', headers:{'content-type':'application/json', authorization:'Bearer ' + code()}, body:JSON.stringify(body)})
+          .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d.st = r.status; return d; }); });
+      }
+      function alSub(){
+        return alReady().then(function(reg){
+          return reg.pushManager.getSubscription().then(function(sub){
+            if(sub) return sub;
+            return fetch(EC_SUB_API + '/push/cle').then(function(r){ return r.json(); }).then(function(j){
+              if(!j || !j.cle) throw new Error('serveur');
+              return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:alB2u(j.cle)});
+            });
+          });
+        });
+      }
+      function alRegister(){
+        return alSub().then(function(sub){
+          var j = sub.toJSON(), k = j.keys || {};
+          var nom = /iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'iPad' : (/iPhone/.test(navigator.userAgent) ? 'iPhone' : 'Appareil');
+          return alPost('/coach/alertes/abonner', {endpoint:sub.endpoint, p256dh:k.p256dh, auth:k.auth, nom:nom}).then(function(r){
+            if(!r.ok) throw new Error(r.st === 401 ? 'code' : r.st === 429 ? 'bloque' : 'serveur');
+            try{ localStorage.setItem(AL + '_at', new Date().toDateString()); }catch(e){}
+            return sub;
+          });
+        });
+      }
+      function alMsg(t){ $('#abAlSt').textContent = t; }
+      function alToast(m){ try{ if(typeof showToast === 'function') showToast(m, false); else if(window.showToast) window.showToast(m, false); }catch(e){} }
+      function alPaint(){
+        var sp = alSupport(), on = alActive();
+        $('#abAlSw').setAttribute('aria-checked', on ? 'true' : 'false');
+        $('#abAlTest').hidden = !on;
+        alMsg(sp === 'ios-home' ? 'Ouvre l’appli depuis son icône sur l’écran d’accueil pour activer les alertes.'
+          : sp === 'refus' ? 'Notifications bloquées : Réglages › Notifications › Ethik’Coach, puis reviens ici.'
+          : sp === 'non' ? 'Cet appareil ne permet pas les notifications.'
+          : on ? '✓ Activées : nouvel abonné, fin d’essai dans 3 jours, premier paiement.' : 'Nouvel abonné, fin d’essai dans 3 jours, premier paiement.');
+      }
+      function alErr(e){
+        var m = e && e.message;
+        return m === 'perm' ? 'Autorisation refusée : active les notifications dans les réglages de l’appareil.'
+          : m === 'code' ? 'Code abonnés refusé : touche « Changer le code abonnés ».'
+          : m === 'bloque' ? 'Trop d’essais : réessaie dans une heure.'
+          : m === 'sw' ? 'Ouvre l’appli depuis son icône sur l’écran d’accueil, puis réessaie.'
+          : 'Pas de connexion au serveur pour l’instant. Réessaie dans un moment.';
+      }
+      $('#abAlSw').addEventListener('click', function(){
+        var sw = this;
+        if(alActive()){
+          sw.disabled = true; alMsg('…');
+          alReady().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){ if(sub) return alPost('/coach/alertes/desabonner', {endpoint:sub.endpoint}); })
+            .catch(function(){}).then(function(){ alSet(false); sw.disabled = false; alPaint(); alToast('Alertes abonnés désactivées'); });
+          return;
+        }
+        if(alSupport() !== 'ok'){ alPaint(); return; }
+        sw.disabled = true; alMsg('Activation…');
+        // L'autorisation est demandée tout de suite, dans le geste (exigé par iPhone et iPad)
+        var perm = Notification.permission === 'granted' ? Promise.resolve('granted') : new Promise(function(res){ var r = Notification.requestPermission(res); if(r && r.then) r.then(res); });
+        perm.then(function(p){ if(p !== 'granted') throw new Error('perm'); return alRegister(); })
+          .then(function(){ alSet(true); sw.disabled = false; alPaint(); alToast('🔔 Alertes abonnés activées'); })
+          .catch(function(e){ sw.disabled = false; alPaint(); alMsg(alErr(e)); });
+      });
+      $('#abAlTest').addEventListener('click', function(){
+        var b = this; b.disabled = true; alMsg('Envoi…');
+        alReady().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+          if(!sub) throw new Error('none');
+          return alPost('/coach/alertes/essai', {endpoint:sub.endpoint});
+        }).then(function(r){
+          if(r && r.raison === 'inconnu') return alRegister().then(function(){ alMsg('Appareil réinscrit : touche à nouveau « Envoyer un essai ».'); });
+          alMsg(r && r.ok ? 'Envoyée : elle arrive dans quelques secondes (verrouille l’écran pour la voir).' : 'L’essai n’est pas passé. Désactive puis réactive les alertes.');
+        }).catch(function(e){ alMsg(alErr(e)); }).then(function(){ setTimeout(function(){ b.disabled = false; }, 4000); });
+      });
+      // Une fois par jour, et quand le téléphone renouvelle son abonnement : réinscription silencieuse
+      function alRefresh(force){
+        var at = ''; try{ at = localStorage.getItem(AL + '_at') || ''; }catch(e){}
+        if(!code() || !alActive() || (!force && at === new Date().toDateString())) return;
+        alRegister().catch(function(){});
+      }
+      if('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', function(e){
+        var d = e.data || {};
+        if(d.type === 'ec-push-renew') alRefresh(true);
+        if(d.type === 'ec-coach' && window.ecCoachOpen){ window.ecCoachOpen('abo'); load(); }
+      });
+      // Ouverture depuis une alerte (appli fermée) : ?coach=abo
+      (function(){
+        var p = null; try{ p = new URLSearchParams(location.search).get('coach'); }catch(e){}
+        if(p !== 'abo') return;
+        try{ var u = new URL(location.href); u.searchParams.delete('coach'); history.replaceState(null, '', u.toString()); }catch(e){}
+        var n = 0, iv = setInterval(function(){
+          n++;
+          var locked = document.documentElement.classList.contains('ec-locked') || document.querySelector('.lock-screen:not([hidden]), #lockScreen:not([hidden])');
+          if(window.ecCoachOpen && !locked){ clearInterval(iv); window.ecCoachOpen('abo'); load(); }
+          else if(n > 60) clearInterval(iv);
+        }, 250);
+      })();
+      setTimeout(function(){ alRefresh(false); }, 5000);
       function render(){
         if(!list){ return; }
         var act = list.filter(function(a){ return a.actif; }).length, es = list.filter(function(a){ return a.statut === 'trialing'; }).length;
@@ -20134,7 +20260,10 @@
     var o = get(); o.on = false; put(o);
     if(!('serviceWorker' in navigator)) return Promise.resolve();
     return ready().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
-      if(!sub) return; post('/push/desabonner', {endpoint:sub.endpoint}).catch(function(){}); return sub.unsubscribe();
+      if(!sub) return; post('/push/desabonner', {endpoint:sub.endpoint}).catch(function(){});
+      // Les alertes abonnés du coach passent par le même abonnement : on le garde
+      try{ if(localStorage.getItem('ec_coach_alertes') === '1') return; }catch(e){}
+      return sub.unsubscribe();
     }).catch(function(){});
   }
   // Routine faite : pas de notification pour ce moment-là aujourd'hui

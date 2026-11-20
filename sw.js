@@ -94,6 +94,14 @@ var EC_NOTIF = {
 };
 self.addEventListener('push', function(e){
   var d = {}; try{ d = e.data ? e.data.json() : {}; }catch(x){}
+  // Alerte pour le coach (nouvel abonné, fin d'essai, paiement) : texte chiffré envoyé par le serveur
+  if(d.c){
+    e.waitUntil(self.registration.showNotification(String(d.t || 'Ethik’Coach'), {
+      body: String(d.b || ''), icon: 'icon-192.png', badge: 'icon-192.png', lang: 'fr',
+      tag: 'ec-coach-' + (d.id || Date.now()), data: {u: './?coach=abo', m: 'coach'}
+    }));
+    return;
+  }
   var h = new Date().getHours(), m = d.m === 'matin' || d.m === 'soir' ? d.m : (h < 14 ? 'matin' : 'soir'), n = EC_NOTIF[m];
   var body = d.b || n.b[Math.floor(Math.random() * n.b.length)];
   e.waitUntil(self.registration.showNotification(d.t || (d.essai ? '🔔 Notifications activées' : n.t), {
@@ -106,7 +114,7 @@ self.addEventListener('notificationclick', function(e){
   e.notification.close();
   var m = (e.notification.data && e.notification.data.m) || 'soir', url = new URL((e.notification.data && e.notification.data.u) || './', self.registration.scope).href;
   e.waitUntil(self.clients.matchAll({type:'window', includeUncontrolled:true}).then(function(cl){
-    for(var i = 0; i < cl.length; i++){ if(cl[i].url.indexOf(self.registration.scope) === 0 && 'focus' in cl[i]){ cl[i].postMessage({type:'ec-go', m:m}); return cl[i].focus(); } }
+    for(var i = 0; i < cl.length; i++){ if(cl[i].url.indexOf(self.registration.scope) === 0 && 'focus' in cl[i]){ cl[i].postMessage(m === 'coach' ? {type:'ec-coach', p:'abo'} : {type:'ec-go', m:m}); return cl[i].focus(); } }
     return self.clients.openWindow(url);
   }));
 });
