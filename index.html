@@ -20678,6 +20678,21 @@
   .stx-dlg > div{width:100%; max-width:520px; max-height:75vh; overflow:auto; border-radius:22px; background:var(--card, #fff); color:var(--ink, #18261E); padding:16px;}
   .stx-dlg .ss-chip{color:var(--ink, #18261E);} .stx-dlg .ss-chip[aria-pressed="true"]{color:#fff;}
   .stx-dlg h4{margin:0 0 10px; font-family:'Bricolage Grotesque', sans-serif; font-size:1.05rem;}
+  /* Choix du client avant le tirage (séance comptée dans Mes clients) */
+  .cl-tir{display:inline-flex; align-items:center; margin-left:8px; padding:3px 8px; border-radius:999px; background:rgba(46,158,94,.14); color:#1F6B43; font-size:.72rem; font-weight:700; vertical-align:middle;}
+  .ssc-wrap{position:fixed; inset:0; z-index:9000; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,14,.55); padding:12px; padding-bottom:max(12px, env(safe-area-inset-bottom));}
+  .ssc-box{width:100%; max-width:540px; max-height:82vh; display:flex; flex-direction:column; border-radius:24px; background:var(--card, #fff); color:var(--ink, #18261E); box-shadow:0 20px 50px rgba(0,0,0,.35); overflow:hidden;}
+  .ssc-hd{padding:18px 18px 10px;} .ssc-hd h4{margin:0; font:800 1.15rem/1.2 'Bricolage Grotesque', sans-serif;} .ssc-hd p{margin:4px 0 12px; font-size:.84rem; color:var(--stone, #5f6b63);}
+  .ssc-q{width:100%; box-sizing:border-box; min-height:44px; padding:10px 14px; border-radius:14px; border:1px solid rgba(127,127,127,.3); background:var(--chip, #F1F4F1); color:inherit; font:inherit; font-size:1rem;}
+  .ssc-list{flex:1; overflow:auto; padding:4px 14px 8px; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; align-content:start;}
+  .ssc-c{display:flex; align-items:center; gap:10px; min-height:52px; padding:8px 10px; border:none; border-radius:16px; background:var(--chip, #F1F4F1); color:inherit; text-align:left; cursor:pointer; font:inherit;}
+  .ssc-c em{flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-weight:800; font-size:.8rem; color:#fff; background:#2E9E5E;}
+  .ssc-c b{display:block; font-size:.92rem; line-height:1.2;} .ssc-c small{display:block; font-size:.72rem; color:var(--stone, #5f6b63);}
+  .ssc-c.new em{background:none; color:#2E9E5E; border:2px dashed #2E9E5E;}
+  .ssc-none{grid-column:1 / -1; color:var(--stone, #5f6b63); font-size:.85rem; padding:8px 4px;}
+  .ssc-ft{display:grid; gap:8px; padding:10px 14px 14px; border-top:1px solid rgba(127,127,127,.15);}
+  .ssc-skip{min-height:46px; border:none; border-radius:14px; background:none; color:var(--stone, #5f6b63); font:700 .92rem/1 inherit; cursor:pointer; text-decoration:underline;}
+  .ss-who{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; opacity:.9;}
   .stx-dlg .pk{display:flex; align-items:center; gap:10px; width:100%; padding:8px; margin-bottom:6px; border:1px solid rgba(127,127,127,.2); border-radius:12px; background:transparent; color:inherit; font:600 .86rem/1.2 inherit; text-align:left; cursor:pointer;}
   .stx-dlg .pk img, .stx-dlg .pk i{flex:none; width:48px; height:36px; border-radius:8px; object-fit:contain; background:#F1F4EF; display:grid; place-items:center; font-style:normal;}
   .stx-ib.live{font-size:.74rem; padding:0 10px;} .stx-ib.live.ok{background:rgba(127,227,161,.25);}
@@ -20900,7 +20915,7 @@
     if(c && c.parentNode.getAttribute('data-k') === 'opt'){ var ov = c.getAttribute('data-v'); S[ov] = !S[ov]; save(); c.setAttribute('aria-pressed', !!S[ov]); return; }
     if(c){ var k = c.parentNode.getAttribute('data-k'), v = c.getAttribute('data-v'); S[k] = (k === 'n' || k === 'sec') ? +v : v; save();
       c.parentNode.querySelectorAll('.ss-chip').forEach(function(b){ b.setAttribute('aria-pressed', b === c ? 'true' : 'false'); }); return; }
-    if(e.target.closest('#ssGo')) openStage();
+    if(e.target.closest('#ssGo')) pickClient(openStage);
     if(e.target.closest('#ssRemote')) openRemote();
   });
   renderPane();
@@ -20983,6 +20998,53 @@
 
   // ---------- Scène ----------
   var st = null;   // {el, tours:[[ex...]], cur, locks:{}}
+  // ---------- Séance attribuée à un client de Coaching (comptée dans Mes clients) ----------
+  var CLI = null;   // {id, nom} du client choisi pour la séance en cours
+  function ini2(n){ return String(n || '?').trim().split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+  function pickClient(go){
+    var api = window.ecClients;
+    if(!api || !api.ready()){ CLI = null; go(); return; }
+    var all = api.list(), q = '';
+    var w = document.createElement('div'); w.className = 'ssc-wrap'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'Client de la séance');
+    w.innerHTML = '<div class="ssc-box"><div class="ssc-hd"><h4>Pour quel client ?</h4><p>La séance tirée sera ajoutée à ses séances réalisées dans <b>Coaching › Mes clients</b>.</p>'
+      + '<input class="ssc-q" type="search" placeholder="Rechercher un client" autocomplete="off" aria-label="Rechercher un client"></div>'
+      + '<div class="ssc-list"></div><div class="ssc-ft"><button type="button" class="ssc-skip" data-a="none">Sans client (séance non comptée)</button></div></div>';
+    document.body.appendChild(w);
+    var list = w.querySelector('.ssc-list'), inp = w.querySelector('.ssc-q');
+    function nz2(t){ return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+    function paint(){
+      var k = nz2(q), arr = all.filter(function(c){ return k ? nz2(c.nom).indexOf(k) >= 0 : c.actif; });
+      if(!k && !arr.length) arr = all.slice(0, 12);
+      var h = arr.slice(0, 40).map(function(c){ return '<button type="button" class="ssc-c" data-id="' + esc(c.id) + '"><em>' + esc(ini2(c.nom)) + '</em><span><b>' + esc(c.nom) + '</b><small>' + esc(c.ago) + '</small></span></button>'; }).join('');
+      if(k && !arr.length) h += '<button type="button" class="ssc-c new" data-new="1"><em>+</em><span><b>' + esc(q.trim()) + '</b><small>Nouveau client</small></span></button>';
+      if(!h) h = '<p class="ssc-none">' + (all.length ? 'Pas de client récent : tape un nom pour chercher.' : 'Aucun client pour l’instant : tape un nom pour le créer.') + '</p>';
+      list.innerHTML = h;
+    }
+    function done(c){ w.remove(); CLI = c; go(); }
+    inp.addEventListener('input', function(){ q = inp.value; paint(); });
+    w.addEventListener('click', function(e){
+      if(e.target === w){ w.remove(); return; }
+      var b = e.target.closest('.ssc-c');
+      if(b && b.hasAttribute('data-new')){ var nm = q.trim(); if(!nm) return; var id = api.add(nm); return done(id ? {id:id, nom:nm} : null); }
+      if(b){ var c = all.find(function(x){ return x.id === b.getAttribute('data-id'); }); return done(c ? {id:c.id, nom:c.nom} : null); }
+      if(e.target.closest('[data-a="none"]')) done(null);
+    });
+    paint();
+  }
+  // Enregistre (ou met à jour) la séance chez le client : tous les tours tirés, avec leurs temps
+  function recordClient(fin){
+    if(!st || !st.cli || !window.ecClients) return;
+    var ex = [], nt = st.tours.length;
+    st.tours.forEach(function(T, t){
+      (T || []).forEach(function(e, i){
+        var b = S.sec > 0 ? S.sec : ((st.secs[t] && st.secs[t][i]) || 40);
+        ex.push([(nt > 1 ? 'Tour ' + (t + 1) + ' · ' : '') + e.name, b + '"' + (e.perSide ? ' × 2 côtés' : '')]);
+      });
+    });
+    if(!ex.length) return;
+    var ok = window.ecClients.upsert(st.cli.id, {id:'tir' + st.sid, d:st.day, t:1, r:'', w:0, ok:1, src:'tirage', ex:ex});
+    if(fin && ok) toast('✓ Séance comptée pour ' + st.cli.nom + ' (' + nt + ' tour' + (nt > 1 ? 's' : '') + ')');
+  }
   function openStage(){
     used = {}; AM = S.amb;
     var el = document.createElement('div'); el.className = 'stx'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Série studio');
@@ -20992,7 +21054,8 @@
       + '<div class="stx-hist" id="stxHist"></div>'
       + '<div class="stx-bar"><button type="button" class="rr" data-a="redraw">' + I('repeat') + 'Retirer</button><button type="button" class="nx" data-a="next">' + I('dice') + 'Tour suivant</button></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
-    st = {el:el, tours:[], secs:[], ambs:[], jk:[], df:[], cur:-1, locks:{}, next:S.amb, sid:Date.now().toString(36), won:{}, req:{}};
+    st = {el:el, tours:[], secs:[], ambs:[], jk:[], df:[], cur:-1, locks:{}, next:S.amb, sid:Date.now().toString(36), won:{}, req:{}, cli:CLI, day:(function(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })(new Date())};
+    CLI = null;
     setTimeout(pollPos, 1500);
     el.addEventListener('click', onStage);
     newTour();
@@ -21024,7 +21087,7 @@
     var keys = OPT.amb.map(function(o){ return o[0]; }).filter(function(k){ return k !== 'classique' && k !== AM; });
     return keys[Math.floor(Math.random() * keys.length)];
   }
-  function closeStage(){ if(!st) return; clearTimeout(pollT); clearTimeout(pushT); bigClose(); try{ if(document.fullscreenElement) document.exitFullscreen(); else if(document.webkitFullscreenElement) document.webkitExitFullscreen(); }catch(e){} st.el.remove(); st = null; document.documentElement.style.overflow = ''; }
+  function closeStage(){ if(!st) return; recordClient(true); clearTimeout(pollT); clearTimeout(pushT); bigClose(); try{ if(document.fullscreenElement) document.exitFullscreen(); else if(document.webkitFullscreenElement) document.webkitExitFullscreen(); }catch(e){} st.el.remove(); st = null; document.documentElement.style.overflow = ''; }
   function head(){
     var z = OPT.zone.find(function(o){ return o[0] === S.zone; }), q = OPT.eq.find(function(o){ return o[0] === S.eq; });
     var cs = consOn().map(function(c){ return CONS.find(function(o){ return o[0] === c; })[1]; });
@@ -21208,7 +21271,7 @@
   }
   function winClose(){ if(st){ st.winAuto = false; st.el.classList.remove('winning'); if(st.winEl){ clearTimeout(st.winT); st.winEl.remove(); st.winEl = null; } } }
   function tourWin(n, cb){
-    if(!st) return; st.won[n] = 1; winClose(); bigClose();
+    if(!st) return; st.won[n] = 1; winClose(); bigClose(); recordClient(false);
     var C = ['#F5C451', '#FF9F43', '#2FCB72', '#4DB2FF', '#FF5C8A', '#B58CFF', '#FFFFFF', '#FFD978'], cf = '';
     for(var i = 0; i < 80; i++) cf += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;background:' + C[i % C.length] + ';--dx:' + ((Math.random() - .5) * 220).toFixed(0) + 'px;--r:' + ((Math.random() - .5) * 1080).toFixed(0) + 'deg;--d:' + (2.4 + Math.random() * 2).toFixed(2) + 's;--dl:' + (Math.random() * 1.6).toFixed(2) + 's;' + (i % 3 === 0 ? 'border-radius:50%;width:11px;height:11px;' : '') + '"></i>';
     var w = document.createElement('div'); w.className = 'stx-win';
@@ -22127,7 +22190,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function sessHtml(c, s){
     var w = s.w || 0, meta = fmtLine(s);
-    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.ia ? '<span class="cl-ia" role="img" aria-label="Créée avec l’IA" title="Créée avec l’IA"></span>' : '') + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
+    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.src === 'tirage' ? '<span class="cl-tir" title="Séance du Tirage studio">🎲 Tirage studio</span>' : '') + (s.ia ? '<span class="cl-ia" role="img" aria-label="Créée avec l’IA" title="Créée avec l’IA"></span>' : '') + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '')
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
       + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" class="sec" data-a="dup">' + IC('copy') + '<span>Refaire</span></button><button type="button" class="sec" data-a="copy">' + IC('send') + '<span class="lg">Copier vers…</span><span class="sm">Copier</span></button><button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '<span class="sm">QR</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>';
@@ -22142,6 +22205,24 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     pane.innerHTML = h;
   }
 
+  // ---------- Pont pour le Tirage studio : la séance tirée est ajoutée au client choisi ----------
+  window.ecClients = {
+    ready: function(){ return READY; },
+    list: function(){
+      return D.clients.map(function(c){ return {id:c.id, nom:c.nom, ago:ago(c), actif:isActif(c), k:lastIso(c)}; })
+        .sort(function(a, b){ return a.k < b.k ? 1 : a.k > b.k ? -1 : a.nom.localeCompare(b.nom, 'fr'); });
+    },
+    add: function(nom){ nom = String(nom || '').trim(); if(!nom) return null; var ex = D.clients.find(function(o){ return nz(o.nom) === nz(nom); }); if(ex) return ex.id; var nc = {id:uid(), nom:nom, s:[]}; D.clients.push(nc); save(true); return nc.id; },
+    upsert: function(cid, o){
+      var c = clientById(cid); if(!c || !o || !o.id) return false;
+      var s = c.s.find(function(x){ return x.id === o.id; });
+      if(s){ Object.keys(s).forEach(function(k){ if(k !== 'id' && k !== 'u') delete s[k]; }); Object.keys(o).forEach(function(k){ if(k !== 'id') s[k] = JSON.parse(JSON.stringify(o[k])); }); }
+      else c.s.push(JSON.parse(JSON.stringify(o)));
+      sortSess(c); save(true);
+      if(pane && pane.offsetParent !== null) render();
+      return true;
+    }
+  };
   // Carte « Données Coaching » affichée dans Espace coach > Réglages (synchro, import, export, scan)
   window.ecCoachDataCard = function(el){
     el.innerHTML = '<h3>📲 Coaching · iPad ↔ iPhone</h3><p class="cl-sync" id="clSyncSt">' + SY.label() + '</p><p class="ct-note" style="margin-top:0">Tes séances clients se synchronisent toutes seules entre tes appareils (avec ta clé coach) dès qu’il y a du réseau. Sans réseau, tout reste enregistré et part au retour de la connexion. Dépannage : <b>QR</b> d’une séance, ou <b>Exporter</b> / <b>Importer</b> le fichier.</p>'
