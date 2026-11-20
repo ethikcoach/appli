@@ -20595,6 +20595,40 @@
   var m = 0; (function t(){ if(!place() && ++m < 60) setTimeout(t, 250); })();
 })();
 </script>
+<script>
+/* Vibration des timers et chronos de l'espace coach, même téléphone en silencieux.
+   Android : API de vibration. iPhone (iOS 18 et plus) : Safari n'a pas cette API, on déclenche le retour
+   haptique du système en basculant un interrupteur caché (même principe que les réglages d'iOS). */
+(function(){
+  var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var lab = null;
+  function el(){
+    if(lab && lab.isConnected) return lab;
+    try{
+      var inp = document.createElement('input'); inp.type = 'checkbox'; inp.setAttribute('switch', ''); inp.id = 'ecHapticSw'; inp.tabIndex = -1; inp.setAttribute('aria-hidden', 'true');
+      lab = document.createElement('label'); lab.htmlFor = 'ecHapticSw'; lab.setAttribute('aria-hidden', 'true');
+      lab.style.cssText = inp.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+      document.body.appendChild(inp); document.body.appendChild(lab);
+    }catch(e){ lab = null; }
+    return lab;
+  }
+  function tap(){ var l = el(); if(l) try{ l.click(); }catch(e){} }
+  // p : durée en ms ou motif [vibre, pause, vibre…] comme navigator.vibrate
+  window.ecVib = function(p){
+    try{ if(document.visibilityState === 'hidden') return; }catch(e){}
+    var pat = Array.isArray(p) ? p : [p || 60];
+    if(!ios && navigator.vibrate){ try{ navigator.vibrate(pat); }catch(e){} return; }
+    if(!ios) return;
+    // iPhone : une impulsion par vibration du motif, doublée ou triplée si elle est longue
+    var t = 0;
+    for(var i = 0; i < pat.length; i++){
+      var d = +pat[i] || 0;
+      if(i % 2 === 0){ var n = d >= 300 ? 3 : d >= 150 ? 2 : 1; for(var k = 0; k < n; k++){ setTimeout(tap, t); t += 90; } t += Math.max(0, d - n * 90); }
+      else t += d;
+    }
+  };
+})();
+</script>
 <!-- ===================== Design 9 : Séries studio (Espace coach) — tirage animé de 8 à 10 exercices ===================== -->
 <style>
   .ss-card{padding:16px; border-radius:20px; background:var(--card); box-shadow:var(--shadow-1); margin:0 0 12px;}
@@ -21278,7 +21312,7 @@
     w.innerHTML = '<div class="clv-party" aria-hidden="true">' + cf + '</div><div class="clv-fin"><div class="clv-cup"><span class="clv-rays"></span><span class="clv-glow"></span><i>🏆</i></div><b class="clv-bravo">Bravo !</b><span class="clv-sub">Tour ' + n + ' terminé</span>'
       + (cb ? '<span class="stx-win-nx">' + I('dice') + 'Tirage du tour ' + (n + 1) + '…</span>' : '<div class="stx-win-acts"><button type="button" class="stx-win-b" data-a="winx">' + I('list') + 'Voir la série</button><button type="button" class="stx-win-b go" data-a="next">' + I('dice') + 'Tour suivant</button></div>') + '</div>';
     st.el.appendChild(w); st.winEl = w; st.el.classList.add('winning');
-    fanfare(); setTimeout(ding, 450); try{ navigator.vibrate && navigator.vibrate([60, 40, 60]); }catch(x){}
+    fanfare(); setTimeout(ding, 450); if(window.ecVib) window.ecVib([60, 40, 60]);
   }
   // ---------- Grand chrono sur l'iPad (lancé depuis le téléphone) ----------
   var BIG = {p:null, el:null, iv:0, hide:'', last:-1};
@@ -21377,7 +21411,7 @@
       end:R.state === 'chrono' && d ? Math.round(R.endAt) : 0, sw:R.state === 'chrono' && !d ? Math.round(R.swStart) : 0, left:Math.round((d ? R.left : (R.el2 || 0)) * 10) / 10, dur:d}).catch(function(){});
   }
   function mmss(s){ s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
-  function vibrate(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+  function vibrate(p){ if(window.ecVib) window.ecVib(p); }
   function renderRemote(){
     if(!R || !R.tour) return;
     var t = R.tour, n = t.ids.length, i = R.i, stp = R.steps[R.k] || {i:i, c:0}, ns = R.steps[R.k + 1] || null;
@@ -21411,7 +21445,7 @@
     if(R.state === 'chrono' && SW){ R.el2 = (now - R.swStart) / 1000; }
     else if(R.state === 'chrono'){
       var left = (R.endAt - now) / 1000, prev = R.left; R.left = left;
-      if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0) tick(1000, .08);
+      if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0){ tick(1000, .08); if(window.ecVib) window.ecVib(30); }
       // Fin du compte à rebours : pas de chrono de récup, on passe directement au suivant (en attente du coach)
       if(left <= 0){ R.left = 0; ding(); vibrate([400, 120, 400]); var au = R.auto; R.auto = false; go(1); R.auto = au; return; }
     }
@@ -22864,7 +22898,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   var CT = null, AC = null;
   function tick(f, d){ if(reduce) return; try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
-  function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+  function vib(p){ if(window.ecVib) window.ecVib(p); }
   function mmss(x){ x = Math.max(0, Math.ceil(x)); return Math.floor(x / 60) + ':' + ('0' + x % 60).slice(-2); }
   function fmtC(x){ x = Math.max(0, x || 0); var sc = Math.floor(x + 1e-6), cs = Math.min(99, Math.floor((x - sc) * 100 + 1e-6)); return Math.floor(sc / 60) + ':' + ('0' + sc % 60).slice(-2) + '<small class="cs">,' + ('0' + cs).slice(-2) + '</small>'; }
   function openTimer(nom, s, o){
@@ -22944,7 +22978,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(CT.state === 'chrono' && free){ CT.el2 = (now - CT.sw) / 1000; }
     else if(CT.state === 'chrono'){
       var left = (CT.endAt - now) / 1000, prev = CT.left; CT.left = left;
-      if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0) tick(1000, .08);
+      if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0){ tick(1000, .08); if(window.ecVib) window.ecVib(30); }
       if(left <= 0){
         CT.left = 0; ding(); vib([400, 120, 400]);
         if(st.k === 'rest' || CT.o.auto || st.chain){ goT(1); return; }
@@ -24281,7 +24315,7 @@ html.cl-hide #ctMini{visibility:hidden;}
   var AC = null;
   function audio(){ try{ if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); }catch(e){} return AC; }
   function beep(f, d, v){ var a = audio(); if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = f || 880; o.type = 'sine'; g.gain.value = v || .18; o.connect(g); g.connect(a.destination); var t = a.currentTime; g.gain.setValueAtTime(v || .18, t); g.gain.exponentialRampToValueAtTime(.0001, t + (d || .15)); o.start(t); o.stop(t + (d || .15) + .02); }catch(e){} }
-  function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+  function vib(p){ if(window.ecVib) window.ecVib(p); }
   var FRV = null;
   function frVoice(){ if(FRV) return FRV; try{ var v = speechSynthesis.getVoices() || []; FRV = v.find(function(x){ return /^fr[-_]FR/i.test(x.lang) && /thomas|amelie|amélie|audrey|aurelie|google/i.test(x.name); }) || v.find(function(x){ return /^fr/i.test(x.lang); }) || null; }catch(e){} return FRV; }
   try{ if(window.speechSynthesis) speechSynthesis.onvoiceschanged = function(){ FRV = null; frVoice(); }; }catch(e){}
@@ -24488,7 +24522,7 @@ html.cl-hide #ctMini{visibility:hidden;}
     var left = R.endAt - Date.now(), voice = R.c.voice && window.speechSynthesis, lead = voice ? LAT - 80 : -40;
     // « 3, 2, 1 » entendus quand l'écran passe à 0:03, 0:02, 0:01
     var s = Math.floor((left - lead) / 1000);
-    if(s <= 3 && s >= 1 && s !== R.lastBeep && cur().d >= 5){ R.lastBeep = s; if(voice) say(String(s), true); else beep(880, .12); }
+    if(s <= 3 && s >= 1 && s !== R.lastBeep && cur().d >= 5){ R.lastBeep = s; if(voice) say(String(s), true); else beep(880, .12); vib(30); }
     // Annonce de la phase suivante lancée juste avant, pour l'entendre au moment du changement
     if(voice && !R.pre && left <= LAT - 60 && R.S[R.k + 1]){ R.pre = true; announce(R.k + 1); }
     if(left <= 0){ go(1); return; }
