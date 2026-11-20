@@ -21052,6 +21052,8 @@
 
   // ---------- Son (petit cliquetis de roulette) ----------
   var AC = null;
+  // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
+  function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
   function tick(f, d){ if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f || 1200; g.gain.setValueAtTime(.06, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
 
@@ -21377,7 +21379,7 @@
     else if(p.end){
       var left = (p.end - now) / 1000;
       if(left > 0){ txt = mmss(left); sub = 'C’est parti !'; frac = p.dur ? left / p.dur : 1; var sc = Math.ceil(left); if(sc !== BIG.last){ BIG.last = sc; if(sc <= 3) tick(1000, .08); } }
-      else { rec = true; txt = '+' + mmss(-left); sub = 'Récup'; frac = 0; if(BIG.last !== 0){ BIG.last = 0; ding(); } }
+      else { rec = true; txt = '+' + mmss(-left); sub = 'Récup'; frac = 0; if(BIG.last !== 0){ BIG.last = 0; } }
     }
     tEl.textContent = txt; sEl.textContent = sub; BIG.el.classList.toggle('rec', rec); BIG.el.classList.toggle('pz', p.etat === 'pause');
     if(bar) bar.style.strokeDashoffset = (339.3 * (1 - Math.max(0, Math.min(1, frac)))).toFixed(1);
@@ -21420,7 +21422,7 @@
     R.steps = []; t.ids.forEach(function(id, i){ var ex = exById(id); if(ex && ex.perSide){ R.steps.push({i:i, c:1}, {i:i, c:2}); } else R.steps.push({i:i, c:0}); });
     if(t.df && defOf(t.df)) R.steps.push({i:t.ids.length, c:0, df:t.df});
     var jm = /^(\d{1,2}):([a-z0-9]+)$/.exec(t.jk || ''); R.jk = jm && jokOf(jm[2]) ? {i:+jm[1], k:jm[2]} : null;
-    if(isNew){ R.k = 0; R.state = 'pret'; R.recup = 0; R.askN = 0; vibrate([80, 60, 80]); ding(); }
+    if(isNew){ R.k = 0; R.state = 'pret'; R.recup = 0; R.askN = 0; vibrate([80, 60, 80]); }
     else { var kk = oldStep ? R.steps.findIndex(function(x){ return x.i === oldStep.i && (x.c === oldStep.c || x.c === 0 || oldStep.c === 0); }) : 0; R.k = kk < 0 ? Math.min(R.k, R.steps.length - 1) : kk; }
     R.i = R.steps[R.k].i; if(isNew || R.state === 'pret'){ R.left = curSec(); R.el2 = 0; }
     renderRemote();
@@ -21472,7 +21474,7 @@
       var left = (R.endAt - now) / 1000, prev = R.left; R.left = left;
       if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0){ tick(1000, .08); if(window.ecVib) window.ecVib(30); }
       // Fin du compte à rebours : pas de chrono de récup, on passe directement au suivant (en attente du coach)
-      if(left <= 0){ R.left = 0; ding(); vibrate([400, 120, 400]); var au = R.auto; R.auto = false; go(1); R.auto = au; return; }
+      if(left <= 0){ R.left = 0; var au = R.auto; R.auto = false; go(1); R.auto = au; return; }
     }
     var tEl = R.el.querySelector('#stpTime'), sEl = R.el.querySelector('#stpState'), bar = R.el.querySelector('#stpBar'), pp = R.el.querySelector('#stpPP'), rec = R.el.querySelector('#stpRec');
     if(rec) rec.textContent = '+' + mmss((now - R.recup) / 1000);
@@ -21487,8 +21489,8 @@
     R.el.classList.toggle('run', R.state === 'chrono'); R.el.classList.toggle('hot', R.state === 'chrono' && R.left <= 3.2);
   }
   function start(){
-    if(!curSec()){ R.swStart = Date.now() - (R.el2 || 0) * 1000; R.state = 'chrono'; tick(1500, .1); vibrate(60); sendPos(); return; }
-    if(R.state === 'recup') R.left = curSec(); if(R.left <= 0) R.left = curSec(); R.endAt = Date.now() + R.left * 1000; R.state = 'chrono'; tick(1500, .1); vibrate(60); sendPos();
+    if(!curSec()){ R.swStart = Date.now() - (R.el2 || 0) * 1000; R.state = 'chrono'; hush(); sendPos(); return; }
+    if(R.state === 'recup') R.left = curSec(); if(R.left <= 0) R.left = curSec(); R.endAt = Date.now() + R.left * 1000; R.state = 'chrono'; hush(); sendPos();
   }
   function go(d){
     var n = R.steps.length;
@@ -22271,14 +22273,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return D.clients.map(function(c){ return {id:c.id, nom:c.nom, ago:ago(c), actif:isActif(c), k:lastIso(c)}; })
         .sort(function(a, b){ return a.k < b.k ? 1 : a.k > b.k ? -1 : a.nom.localeCompare(b.nom, 'fr'); });
     },
-    add: function(nom){ nom = String(nom || '').trim(); if(!nom) return null; var ex = D.clients.find(function(o){ return nz(o.nom) === nz(nom); }); if(ex) return ex.id; var nc = {id:uid(), nom:nom, s:[]}; D.clients.push(nc); save(true); return nc.id; },
+    add: function(nom){ nom = String(nom || '').trim(); if(!nom) return null; var ex = D.clients.find(function(o){ return nz(o.nom) === nz(nom); }); if(ex) return ex.id; var nc = {id:uid(), nom:nom, s:[]}; D.clients.push(nc); save(true); try{ render(); }catch(e){} return nc.id; },
     upsert: function(cid, o){
       var c = clientById(cid); if(!c || !o || !o.id) return false;
       var s = c.s.find(function(x){ return x.id === o.id; });
       if(s){ Object.keys(s).forEach(function(k){ if(k !== 'id' && k !== 'u') delete s[k]; }); Object.keys(o).forEach(function(k){ if(k !== 'id') s[k] = JSON.parse(JSON.stringify(o[k])); }); }
       else c.s.push(JSON.parse(JSON.stringify(o)));
       sortSess(c); save(true);
-      if(pane && pane.offsetParent !== null) render();
+      try{ render(); }catch(e){}   // la liste « Mes clients » est à jour même si elle n'est pas affichée
       return true;
     }
   };
@@ -22921,6 +22923,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return out;
   }
   var CT = null, AC = null;
+  // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
+  function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
   function tick(f, d){ if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   function vib(p){ if(window.ecVib) window.ecVib(p); }
@@ -22984,9 +22988,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function startT(){
     var st = cur(); if(!CT.t0) CT.t0 = Date.now(); try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     if(isRep(st)) return;
-    if(!st.sec){ CT.sw = Date.now() - (CT.el2 || 0) * 1000; CT.state = 'chrono'; if(st.k !== 'rest'){ tick(1500, .1); vib(60); } return; }
+    if(!st.sec){ CT.sw = Date.now() - (CT.el2 || 0) * 1000; CT.state = 'chrono'; hush(); return; }
     if(CT.state === 'over' || CT.left <= 0) CT.left = st.sec;
-    CT.endAt = Date.now() + CT.left * 1000; CT.state = 'chrono'; if(st.k !== 'rest'){ tick(1500, .1); vib(60); }
+    CT.endAt = Date.now() + CT.left * 1000; CT.state = 'chrono'; hush();
   }
   function goT(d){
     var n = CT.steps.length;
@@ -23005,7 +23009,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var left = (CT.endAt - now) / 1000, prev = CT.left; CT.left = left;
       if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0){ tick(1000, .08); if(window.ecVib) window.ecVib(30); }
       if(left <= 0){
-        CT.left = 0; ding(); vib([400, 120, 400]);
+        CT.left = 0;
         if(st.k === 'rest' || CT.o.auto || st.chain){ goT(1); return; }
         // Pas de chrono « + » entre deux comptes à rebours : on affiche directement la suite, en attente
         var au = CT.o.auto; CT.o.auto = false; goT(1); CT.o.auto = au; return;
@@ -23049,7 +23053,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'restart'){ CT.k = 0; CT.state = 'pret'; CT.left = CT.steps[0].sec || 0; CT.el2 = 0; CT.t0 = 0; CT.cnt = 0; CT.repLock = false; renderT(); liveSend(); return; }
     if(a === 'rep'){
       var sr = cur(); if(!isRep(sr) || CT.repLock || CT.state === 'fin') return;
-      CT.cnt = (CT.cnt || 0) + 1; if(!CT.t0) CT.t0 = Date.now(); tick(1300, .05); vib(25);
+      CT.cnt = (CT.cnt || 0) + 1; if(!CT.t0) CT.t0 = Date.now();
       b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
       tickT(true); liveSend();
       if(CT.cnt >= sr.reps){ CT.repLock = true; var k0 = CT.k; ding(); vib([200, 80, 200]); setTimeout(function(){ if(CT && CT.k === k0 && CT.repLock){ CT.repLock = false; goT(1); } }, 700); }
