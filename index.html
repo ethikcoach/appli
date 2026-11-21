@@ -18077,18 +18077,150 @@
       w.innerHTML = '<div class="ec-dialog compose-box" role="dialog" aria-modal="true" aria-label="Case ' + i + '">'
         + '<div class="av-big">' + IC[c[0]] + '</div><p class="ec-dialog-msg" style="text-align:center">Case ' + i + ' · ' + c[3] + '</p>'
         + '<p class="cp-note" style="text-align:center;margin-top:0"><span class="av-k">' + LB[c[0]] + ' · ' + c[2] + ' min</span><br>' + c[4] + '</p>'
-        + (ok ? '<p class="cp-note" style="text-align:center">★ Case déjà faite, bravo !</p>' : '')
+        + (ok ? '<p class="cp-note" style="text-align:center">★ Case déjà faite, bravo !</p><button type="button" class="av-cardbtn" data-card="1">🎁 Ma carte de Noël du jour ' + i + '</button>' : '')
         + '<div class="cal-acts"><button type="button" class="ct-btn" data-go="1">' + (ok ? 'Refaire la séance' : 'Ouvrir ma séance') + '</button></div>'
         + '<div class="ec-dialog-actions one"><button type="button" class="ec-dialog-cancel">Fermer</button></div></div>';
       document.body.appendChild(w);
       w.addEventListener('click', function(ev){
         if(ev.target === w || ev.target.closest('.ec-dialog-cancel')){ w.remove(); return; }
+        if(ev.target.closest('[data-card]')){ w.remove(); showCard(i, false); return; }
         if(ev.target.closest('[data-go]')){
           var o = st(); o.open = o.open || {}; if(!o.open[i] || !ok) o.open[i] = Date.now(); sv(o);
           w.remove(); launch(c); paint();
         }
       });
     });
+    // ===================== Carte du jour : une carte de Noël à partager pour chaque case réussie =====================
+    var VOEUX = ['Le compte à rebours est lancé !', 'Respire, Noël arrive.', 'Une case de plus vers Noël.', 'Prêt pour les pistes enneigées !',
+      'Le matin, la magie commence.', 'Saint-Nicolas est passé par là !', 'Bien au chaud, sous le plaid.', 'Droit comme un sapin.',
+      'Un souffle de neige fraîche.', 'Tout en douceur.', 'Les lutins s’entraînent aussi !', 'Une nuit étoilée t’attend.',
+      'À fond, comme un renne !', 'Déjà la moitié du chemin !', 'Une pause entre deux courses.', 'Équilibre et lumière.',
+      'Tenir debout sur la glace.', 'Souple comme une guirlande.', 'Une pyramide de cadeaux !', 'Les fêtes approchent.',
+      'Le jour le plus court, l’énergie la plus forte.', 'Zen avant les fêtes.', 'Dernier effort avant le réveillon !', 'Joyeux Noël !'];
+    function rnd(seed){ var s = seed * 9301 + 49297; return function(){ s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+    function rr(x, a, b, w, h, r){ x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+    function wrapT(x, t, w){ var ws = String(t).split(' '), L = [], l = ''; ws.forEach(function(m){ var tt = l ? l + ' ' + m : m; if(x.measureText(tt).width > w && l){ L.push(l); l = m; } else l = tt; }); if(l) L.push(l); return L; }
+    function flake(x, cx, cy, r, a){ x.save(); x.translate(cx, cy); x.strokeStyle = 'rgba(255,255,255,' + a + ')'; x.lineWidth = Math.max(2, r / 7); x.lineCap = 'round';
+      for(var k = 0; k < 6; k++){ x.rotate(Math.PI / 3); x.beginPath(); x.moveTo(0, 0); x.lineTo(0, -r); x.moveTo(0, -r * .55); x.lineTo(-r * .25, -r * .78); x.moveTo(0, -r * .55); x.lineTo(r * .25, -r * .78); x.stroke(); }
+      x.restore(); }
+    function tree(x, cx, base, h, col, star){
+      var w = h * .62; x.fillStyle = col;
+      for(var k = 0; k < 3; k++){ var tw = w * (1 - k * .24), ty = base - k * h * .27; x.beginPath(); x.moveTo(cx - tw / 2, ty); x.lineTo(cx + tw / 2, ty); x.lineTo(cx, ty - h * .46); x.closePath(); x.fill(); }
+      x.fillRect(cx - h * .05, base, h * .1, h * .08);
+      var bc = ['#E2463F', '#FFD86B', '#6FB6FF', '#FF8AD8'], bR = rnd(Math.round(cx));
+      for(var k2 = 0; k2 < 3; k2++){ var yy = base - k2 * h * .27 - h * .04, hw = w * (1 - k2 * .24) / 2 * .7; for(var m = 0; m < 3; m++){ var xx = cx - hw + m * hw, ci = Math.floor(bR() * 4);
+        x.save(); x.shadowColor = bc[ci]; x.shadowBlur = 16; x.fillStyle = bc[ci]; x.beginPath(); x.arc(xx, yy - bR() * h * .06, Math.max(5, h * .028), 0, 7); x.fill(); x.restore(); } }
+      if(star){ x.save(); x.translate(cx, base - h * .27 * 2 - h * .46); x.fillStyle = '#FFD86B'; x.shadowColor = 'rgba(255,216,107,.9)'; x.shadowBlur = 30; x.beginPath();
+        for(var s = 0; s < 10; s++){ var rad = s % 2 ? h * .045 : h * .1, an = -Math.PI / 2 + s * Math.PI / 5; x.lineTo(Math.cos(an) * rad, Math.sin(an) * rad); } x.closePath(); x.fill(); x.restore(); }
+    }
+    function drawCard(i){
+      var c = CASES[i - 1], W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var x = cv.getContext('2d'), F = '"Bricolage Grotesque", "Inter", sans-serif', FI = '"Inter", -apple-system, sans-serif', EM = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif', R = rnd(i * 7 + 3);
+      // Nuit d'hiver
+      var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#071428'); g.addColorStop(.45, '#0E2A3F'); g.addColorStop(1, '#0F3B2A'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      var rg = x.createRadialGradient(W * .85, 260, 20, W * .85, 260, 760); rg.addColorStop(0, 'rgba(214,58,58,.45)'); rg.addColorStop(1, 'rgba(214,58,58,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);
+      var rg2 = x.createRadialGradient(W * .1, 1100, 20, W * .1, 1100, 700); rg2.addColorStop(0, 'rgba(242,196,107,.18)'); rg2.addColorStop(1, 'rgba(242,196,107,0)'); x.fillStyle = rg2; x.fillRect(0, 0, W, H);
+      // Étoiles et neige
+      for(var s = 0; s < 90; s++){ x.fillStyle = 'rgba(255,255,255,' + (.25 + R() * .6).toFixed(2) + ')'; x.beginPath(); x.arc(R() * W, R() * H * .8, 1.5 + R() * 4.5, 0, 7); x.fill(); }
+      for(var f = 0; f < 14; f++){ var fx = f % 2 ? 20 + R() * 120 : W - 140 + R() * 120; flake(x, fx, 260 + R() * 1100, 14 + R() * 24, (.25 + R() * .35).toFixed(2)); }
+      // Guirlande lumineuse
+      var cols = ['#FF4D4D', '#FFD86B', '#4CD18A', '#6FB6FF', '#FF8AD8'];
+      x.strokeStyle = 'rgba(20,40,30,.9)'; x.lineWidth = 5; x.beginPath(); x.moveTo(-20, 60); x.quadraticCurveTo(W / 2, 230, W + 20, 60); x.stroke();
+      for(var b = 0; b < 13; b++){ var t = (b + .5) / 13, bx = (1 - t) * (1 - t) * -20 + 2 * (1 - t) * t * (W / 2) + t * t * (W + 20), by = (1 - t) * (1 - t) * 60 + 2 * (1 - t) * t * 230 + t * t * 60;
+        x.save(); x.shadowColor = cols[b % 5]; x.shadowBlur = 34; x.fillStyle = cols[b % 5]; x.beginPath(); x.ellipse(bx, by + 26, 15, 22, 0, 0, 7); x.fill(); x.restore();
+        x.fillStyle = '#2B3A33'; x.fillRect(bx - 8, by + 2, 16, 10); }
+      // En-tête
+      x.textAlign = 'center'; x.fillStyle = '#F2C46B'; x.font = '800 36px ' + FI; x.save(); if('letterSpacing' in x) x.letterSpacing = '8px'; x.fillText('CALENDRIER DE L’AVENT', W / 2, 340); x.restore();
+      var gt = x.createLinearGradient(0, 380, 0, 600); gt.addColorStop(0, '#FFFFFF'); gt.addColorStop(1, '#FFE3A3');
+      x.fillStyle = gt; x.font = '800 230px ' + F; x.save(); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 30; x.fillText('Jour ' + i, W / 2, 580); x.restore();
+      // Ruban « réussi »
+      x.save(); x.translate(W / 2, 650); rr(x, -230, -40, 460, 80, 40); var gr = x.createLinearGradient(-230, 0, 230, 0); gr.addColorStop(0, '#B8232C'); gr.addColorStop(1, '#E2463F'); x.fillStyle = gr; x.fill();
+      x.fillStyle = '#fff'; x.font = '800 42px ' + F; x.fillText('★  Case réussie  ★', 0, 15); x.restore();
+      // Étiquette cadeau : ce qui était au programme
+      var px = 90, py = 740, pw = W - 180, ph = 520;
+      x.save(); x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 50; x.shadowOffsetY = 20; rr(x, px, py, pw, ph, 46); x.fillStyle = '#FBF3E2'; x.fill(); x.restore();
+      x.save(); rr(x, px, py, pw, ph, 46); x.clip();
+      x.fillStyle = '#C8323A'; x.fillRect(px + pw - 150, py, 54, ph); x.fillStyle = 'rgba(255,255,255,.25)'; x.fillRect(px + pw - 136, py, 8, ph);
+      x.restore();
+      // nœud
+      x.save(); x.translate(px + pw - 123, py + 10); x.fillStyle = '#E2463F';
+      x.beginPath(); x.ellipse(-46, -6, 52, 30, -.5, 0, 7); x.fill(); x.beginPath(); x.ellipse(46, -6, 52, 30, .5, 0, 7); x.fill();
+      x.fillStyle = '#9E1F27'; x.beginPath(); x.arc(0, 0, 22, 0, 7); x.fill(); x.restore();
+      x.textAlign = 'left'; var tx = px + 60, tw = pw - 250;
+      x.font = '96px ' + EM; x.fillText(IC[c[0]], tx - 4, py + 140);
+      var chip = LB[c[0]] + ' · ' + c[2] + ' min'; x.font = '700 34px ' + FI; var cw2 = x.measureText(chip).width + 48;
+      rr(x, tx + 130, py + 72, cw2, 62, 31); x.fillStyle = '#1F4030'; x.fill(); x.fillStyle = '#F4E3B5'; x.fillText(chip, tx + 154, py + 114);
+      x.fillStyle = '#1F4030'; var fs = 78; x.font = '800 ' + fs + 'px ' + F; var tl = wrapT(x, c[3], tw);
+      while(tl.length > 2 && fs > 52){ fs -= 6; x.font = '800 ' + fs + 'px ' + F; tl = wrapT(x, c[3], tw); }
+      var ty = py + 250; tl.slice(0, 2).forEach(function(l, k){ x.fillText(l, tx, ty + k * (fs + 6)); }); ty += (Math.min(2, tl.length) - 1) * (fs + 6);
+      x.fillStyle = 'rgba(31,64,48,.85)'; x.font = '500 38px ' + FI; var dl = wrapT(x, c[4], tw).slice(0, 3); var dy = Math.min(ty + 80, py + ph - 50 - (dl.length - 1) * 48);
+      dl.forEach(function(l, k){ x.fillText(l, tx, dy + k * 48); });
+      // Progression : les 24 cases
+      var o = st(), gy = 1440, cs = 100, gg = 14, gx0 = (W - (cs * 6 + gg * 5)) / 2; x.textAlign = 'center';
+      for(var q = 1; q <= 24; q++){ var gx = gx0 + ((q - 1) % 6) * (cs + gg), gy2 = gy + Math.floor((q - 1) / 6) * (cs * .62 + gg), h2 = cs * .62, isOk = q === i || (o.done && o.done[q]);
+        rr(x, gx, gy2, cs, h2, 18);
+        if(q === i){ x.save(); x.shadowColor = 'rgba(255,216,107,.9)'; x.shadowBlur = 26; x.fillStyle = '#D63A3A'; x.fill(); x.restore(); x.strokeStyle = '#FFD86B'; x.lineWidth = 5; x.stroke(); }
+        else { x.fillStyle = isOk ? '#F4E3B5' : 'rgba(255,255,255,.12)'; x.fill(); }
+        x.fillStyle = q === i ? '#fff' : isOk ? '#1F4030' : 'rgba(255,255,255,.6)'; x.font = '800 30px ' + F; x.fillText(isOk && q !== i ? '★' : String(q), gx + cs / 2, gy2 + h2 / 2 + 11); }
+      // Collines enneigées et sapins
+      var by2 = 1760;
+      tree(x, 105, by2 + 10, 250, '#14492F', false); tree(x, 985, by2 - 10, 300, '#14492F', true); tree(x, 1060, by2 + 30, 170, '#185A3A', false);
+      x.fillStyle = '#EAF3F7'; x.beginPath(); x.moveTo(0, by2 + 40); x.quadraticCurveTo(300, by2 - 30, 560, by2 + 30); x.quadraticCurveTo(820, by2 + 80, W, by2 + 10); x.lineTo(W, H); x.lineTo(0, H); x.closePath(); x.fill();
+      x.fillStyle = '#FFFFFF'; x.beginPath(); x.moveTo(0, by2 + 110); x.quadraticCurveTo(400, by2 + 50, W, by2 + 120); x.lineTo(W, H); x.lineTo(0, H); x.closePath(); x.fill();
+      // Vœu du jour + compte à rebours
+      var left = 25 - i;
+      x.fillStyle = '#FFFFFF'; x.font = '800 50px ' + F; x.fillText(VOEUX[i - 1], W / 2, 1340);
+      x.fillStyle = 'rgba(255,255,255,.8)'; x.font = '600 32px ' + FI; x.fillText(left > 1 ? 'Plus que ' + left + ' jours avant Noël 🎅' : left === 1 ? 'Noël, c’est demain ! 🎅' : 'Calendrier terminé 🎁', W / 2, 1394);
+      // Signature
+      x.fillStyle = '#1F4030'; x.font = '800 44px ' + F; x.fillText('ETHIK’COACH', W / 2, 1852); x.fillStyle = '#4A6B5A'; x.font = '600 28px ' + FI; x.fillText('Ma séance du jour sur l’appli · ethikcoach.fr', W / 2, 1894);
+      return cv;
+    }
+    function cardLink(){ var link = 'https://www.ethikcoach.fr/appli-renfo-relax.html'; try{ var sub = JSON.parse(localStorage.getItem('ec_sub') || 'null'); if(sub && sub.parrain && sub.parrain.lien) link = sub.parrain.lien; }catch(e){} return link; }
+    function cardText(i){ var c = CASES[i - 1]; return '🎄 Jour ' + i + ' du calendrier de l’Avent : « ' + c[3] + ' » ✓ (' + LB[c[0]].toLowerCase() + ', ' + c[2] + ' min) avec l’appli Ethik’Coach ' + cardLink(); }
+    var cBusy = false;
+    function showCard(i, fete){
+      if(cBusy) return; cBusy = true; setTimeout(function(){ cBusy = false; }, 4000);
+      var fr = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load("800 84px 'Bricolage Grotesque'"), document.fonts.load("600 42px 'Inter'"), document.fonts.load("800 42px 'Inter'")]).catch(function(){}) : Promise.resolve();
+      fr.then(function(){ var cv = drawCard(i); cv.toBlob(function(blob){
+        cBusy = false; if(!blob) return;
+        var url = URL.createObjectURL(blob), file = null; try{ file = new File([blob], 'avent-jour-' + i + '.png', {type:'image/png'}); }catch(e){}
+        var canFile = !!(file && navigator.canShare && navigator.canShare({files:[file]}));
+        document.querySelectorAll('.sh-wrap').forEach(function(z){ z.remove(); });
+        var w = document.createElement('div'); w.className = 'ec-dialog-backdrop sh-wrap av-cw';
+        w.innerHTML = '<div class="ec-dialog sh-box" role="dialog" aria-modal="true" aria-label="Ma carte du jour ' + i + '">'
+          + '<button type="button" class="sh-x" aria-label="Fermer">&times;</button>'
+          + (fete ? '<p class="av-cw-t">🎄 Case ' + i + ' réussie, bravo !</p>' : '')
+          + '<img class="sh-img" alt="Carte de Noël du jour ' + i + '" src="' + url + '">'
+          + '<div class="sh-acts">' + (canFile || navigator.share ? '<button type="button" class="sh-go">Partager ma carte</button>' : '')
+          + '<a class="sh-dl" href="' + url + '" download="avent-jour-' + i + '.png">Enregistrer l’image</a></div>'
+          + '<p class="sh-tip">Parfaite pour une story Instagram, Facebook ou un statut WhatsApp.</p></div>';
+        document.body.appendChild(w);
+        function close(){ w.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000); }
+        w.addEventListener('click', function(e){ if(e.target === w || e.target.closest('.sh-x')) close(); });
+        var go = w.querySelector('.sh-go');
+        if(go) go.addEventListener('click', function(){ navigator.share(canFile ? {files:[file], text:cardText(i)} : {title:'Calendrier de l’Avent Ethik’Coach', text:cardText(i)}).then(close).catch(function(){}); });
+        if(fete){ try{ if(window.ecConfetti) window.ecConfetti(); }catch(e){} }
+      }, 'image/png'); });
+    }
+    window.ecAventCard = showCard; window.ecAventCardCanvas = drawCard;
+    var css2 = document.createElement('style');
+    css2.textContent = '.av-cw .av-cw-t{margin:4px 30px 0; font:800 1.15rem/1.25 "Bricolage Grotesque",sans-serif;} .av-cw .sh-img{margin-top:14px;}'
+      + '.av-cardbtn{display:block; width:100%; margin:0 0 10px; padding:12px 14px; border:none; border-radius:14px; font:700 0.95rem "Inter",sans-serif; color:#fff; background:linear-gradient(135deg,#B8232C,#E2463F); cursor:pointer;}';
+    document.head.appendChild(css2);
+    // Case réussie aujourd'hui : la carte s'affiche une fois, dès qu'on n'est plus en pleine séance
+    function busyNow(){ var t = document.getElementById('timerBackdrop'); return (t && t.classList.contains('open')) || !!document.querySelector('.sh-wrap, .av-dlg'); }
+    function checkNew(){
+      if(!TODAY || TODAY > 24 || document.hidden) return;
+      var o = st(); if(!(o.open && o.open[TODAY])) return;
+      if(o.card && o.card[TODAY]) return;
+      if(!done(TODAY)) return;
+      if(busyNow()){ setTimeout(checkNew, 2500); return; }
+      o = st(); o.card = o.card || {}; o.card[TODAY] = Date.now(); sv(o);
+      try{ paint(); }catch(e){}
+      setTimeout(function(){ showCard(TODAY, true); }, 900);
+    }
+    setInterval(checkNew, 4000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(checkNew, 600); });
     var tries = 0; (function wait(){ if(!place() && ++tries < 40){ setTimeout(wait, 250); return; } paint(); })();
     var _sv = window.ecShowView;
     if(typeof _sv === 'function') window.ecShowView = function(k){ var r = _sv.apply(this, arguments); if(k === 'today') setTimeout(paint, 50); return r; };
