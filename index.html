@@ -20835,6 +20835,10 @@
   var KEY = 'ec_coach_series';
   function I(n){ return window.ecIC ? window.ecIC(n) : ''; }
   function fmtC(x){ x = Math.max(0, x || 0); var sc = Math.floor(x + 1e-6), cs = Math.min(99, Math.floor((x - sc) * 100 + 1e-6)); return Math.floor(sc / 60) + ':' + ('0' + sc % 60).slice(-2) + '<small class="cs">,' + ('0' + cs).slice(-2) + '</small>'; }
+  // Compte à rebours avec centièmes, calé sur les bips : la seconde affichée change pile au bip
+  // (0:03,99 → 0:03,00 pendant la dernière « 3 »), et la phase se termine pile quand on passe sous 0:01,00.
+  // dur : avant le départ, on affiche la durée ronde (0:40,00)
+  function fmtD(x, dur){ x = x || 0; if(dur > 0 && x >= dur) return fmtC(dur); return fmtC(x > 0 ? x + 0.99 : 0); }
   function ppSet(pp, k){ if(!pp || pp._k === k) return; pp._k = k; pp.innerHTML = k === 'pause' ? I('pause') + 'Pause' : k === 'relance' ? I('reset') + 'Relancer' : I('play') + 'Démarrer'; }
   var S = {eq:'pdc', zone:'full', sec:40, n:8, amb:'classique', cons:[], joker:true, defi:true};
   try{ Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); }catch(e){}
@@ -21057,6 +21061,8 @@
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
   function tick(f, d){ if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f || 1200; g.gain.setValueAtTime(.06, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
+  // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
+  function zero(){ tick(1000, .12); setTimeout(function(){ tick(1000, .12); }, 190); }
 
   // ---------- Scène ----------
   var st = null;   // {el, tours:[[ex...]], cur, locks:{}}
@@ -21475,7 +21481,7 @@
       var left = (R.endAt - now) / 1000, prev = R.left; R.left = left;
       if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0){ tick(1000, .08); if(window.ecVib) window.ecVib(30); }
       // Fin du compte à rebours : pas de chrono de récup, on passe directement au suivant (en attente du coach)
-      if(left <= 0){ R.left = 0; var au = R.auto; R.auto = false; go(1); R.auto = au; return; }
+      if(left <= 0){ R.left = 0; if(R.k + 1 < R.steps.length){ zero(); if(window.ecVib) window.ecVib([60, 80, 60]); } var au = R.auto; R.auto = false; go(1); R.auto = au; return; }
     }
     var tEl = R.el.querySelector('#stpTime'), sEl = R.el.querySelector('#stpState'), bar = R.el.querySelector('#stpBar'), pp = R.el.querySelector('#stpPP'), rec = R.el.querySelector('#stpRec');
     if(rec) rec.textContent = '+' + mmss((now - R.recup) / 1000);
@@ -21483,7 +21489,7 @@
     var tot = curSec() || 1;
     if(SW){ tEl.innerHTML = fmtC(R.el2 || 0); sEl.textContent = R.state === 'chrono' ? 'Chrono libre : à fond !' : (R.state === 'pause' ? 'En pause' : 'Chrono libre : touche pour démarrer'); R.el.classList.remove('rec'); if(bar) bar.style.strokeDashoffset = '0'; ppSet(pp, R.state === 'chrono' ? 'pause' : 'play'); R.el.classList.toggle('run', R.state === 'chrono'); R.el.classList.remove('hot'); return; }
     if(R.state === 'recup'){ tEl.textContent = '+' + mmss((now - R.recup) / 1000); sEl.textContent = 'Récup'; R.el.classList.add('rec'); }
-    else { tEl.innerHTML = fmtC(R.left); sEl.textContent = R.state === 'chrono' ? 'C’est parti !' : (R.state === 'pause' ? 'En pause' : 'Touche pour démarrer'); R.el.classList.remove('rec'); }
+    else { tEl.innerHTML = fmtD(R.left, curSec()); sEl.textContent = R.state === 'chrono' ? 'C’est parti !' : (R.state === 'pause' ? 'En pause' : 'Touche pour démarrer'); R.el.classList.remove('rec'); }
     var frac = R.state === 'recup' ? 0 : Math.max(0, Math.min(1, R.left / tot));
     if(bar) bar.style.strokeDashoffset = (339.3 * (1 - frac)).toFixed(1);
     ppSet(pp, R.state === 'chrono' ? 'pause' : (R.state === 'recup' ? 'relance' : 'play'));
@@ -22928,9 +22934,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
   function tick(f, d){ if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
+  // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
+  function zero(){ tick(1000, .12); setTimeout(function(){ tick(1000, .12); }, 190); }
   function vib(p){ if(window.ecVib) window.ecVib(p); }
   function mmss(x){ x = Math.max(0, Math.ceil(x)); return Math.floor(x / 60) + ':' + ('0' + x % 60).slice(-2); }
   function fmtC(x){ x = Math.max(0, x || 0); var sc = Math.floor(x + 1e-6), cs = Math.min(99, Math.floor((x - sc) * 100 + 1e-6)); return Math.floor(sc / 60) + ':' + ('0' + sc % 60).slice(-2) + '<small class="cs">,' + ('0' + cs).slice(-2) + '</small>'; }
+  // Compte à rebours avec centièmes, calé sur les bips : la seconde affichée change pile au bip
+  // (0:03,99 → 0:03,00 pendant la dernière « 3 »), et la phase se termine pile quand on passe sous 0:01,00.
+  // dur : avant le départ, on affiche la durée ronde (0:40,00)
+  function fmtD(x, dur){ x = x || 0; if(dur > 0 && x >= dur) return fmtC(dur); return fmtC(x > 0 ? x + 0.99 : 0); }
   function openTimer(nom, s, o){
     var steps = buildSteps(s, o);
     if(!steps.length){ toast('Séance vide'); return; }
@@ -22947,7 +22959,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     // Centièmes : l'affichage du temps suit chaque image de l'écran
     (function cltRaf(){ if(!CT || CT.el !== el) return; var st = cur(), t = el.querySelector('#cltTime');
       if(CT.state === 'chrono' && st.sec && CT.endAt <= Date.now()){ tickT(); requestAnimationFrame(cltRaf); return; }
-      if(t && CT.state === 'chrono') t.innerHTML = st.sec ? fmtC((CT.endAt - Date.now()) / 1000) : fmtC((Date.now() - CT.sw) / 1000);
+      if(t && CT.state === 'chrono') t.innerHTML = st.sec ? fmtD((CT.endAt - Date.now()) / 1000, st.sec) : fmtC((Date.now() - CT.sw) / 1000);
       else if(t && CT.state === 'over') t.innerHTML = '+' + fmtC((Date.now() - CT.overAt) / 1000);
       requestAnimationFrame(cltRaf); })();
     renderT();
@@ -23010,7 +23022,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var left = (CT.endAt - now) / 1000, prev = CT.left; CT.left = left;
       if(Math.ceil(left) !== Math.ceil(prev) && Math.ceil(left) <= 3 && Math.ceil(left) > 0){ tick(1000, .08); if(window.ecVib) window.ecVib(30); }
       if(left <= 0){
-        CT.left = 0;
+        CT.left = 0; if(CT.k + 1 < CT.steps.length){ zero(); if(window.ecVib) window.ecVib([60, 80, 60]); }
         if(st.k === 'rest' || CT.o.auto || st.chain){ goT(1); return; }
         // Pas de chrono « + » entre deux comptes à rebours : on affiche directement la suite, en attente
         var au = CT.o.auto; CT.o.auto = false; goT(1); CT.o.auto = au; return;
@@ -23037,7 +23049,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return;
     }
     if(CT.state === 'over'){ tEl.innerHTML = '+' + fmtC((now - CT.overAt) / 1000); sEl.textContent = 'Terminé ✓ · récup'; }
-    else { tEl.innerHTML = fmtC(CT.left); sEl.textContent = CT.state === 'chrono' ? (st.wup ? 'Échauffement' : st.sw ? 'Change de côté' : st.k === 'rest' ? 'Récup' : (st.side ? st.side + ' · go !' : 'C’est parti !')) : CT.state === 'pause' ? 'En pause' : 'Touche pour démarrer'; }
+    else { tEl.innerHTML = fmtD(CT.left, st.sec); sEl.textContent = CT.state === 'chrono' ? (st.wup ? 'Échauffement' : st.sw ? 'Change de côté' : st.k === 'rest' ? 'Récup' : (st.side ? st.side + ' · go !' : 'C’est parti !')) : CT.state === 'pause' ? 'En pause' : 'Touche pour démarrer'; }
     var frac = CT.state === 'over' ? 0 : Math.max(0, Math.min(1, CT.left / (st.sec || 1)));
     if(bar) bar.style.strokeDashoffset = (339.3 * (1 - frac)).toFixed(1);
     setH(pp, CT.state === 'chrono' ? IC('pause') + 'Pause' : CT.state === 'over' ? IC('reset') + 'Relancer' : IC('play') + 'Démarrer');
@@ -23181,7 +23193,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       W.el.classList.toggle('rec', c.k === 'rest' && !c.wup); W.el.classList.toggle('wupm', !!c.wup);
       if(c.reps){ var vv = W.el.querySelector('#clvVal'); if(vv) vv.textContent = (c.cnt || 0) + ' / ' + c.reps + ' rép.'; }
       if(!t) return;
-      if(timed){ var left = Math.max(0, run ? p.left - dt : p.left); t.innerHTML = fmtC(left); if(bar) bar.style.strokeDashoffset = (339.3 * (1 - Math.max(0, Math.min(1, left / p.dur)))).toFixed(1); W.el.classList.toggle('hot', run && c.k !== 'rest' && left <= 3.2); }
+      if(timed){ var left = Math.max(0, run ? p.left - dt : p.left); t.innerHTML = fmtD(left, p.dur); if(bar) bar.style.strokeDashoffset = (339.3 * (1 - Math.max(0, Math.min(1, left / p.dur)))).toFixed(1); W.el.classList.toggle('hot', run && c.k !== 'rest' && left <= 3.2); }
       else { t.innerHTML = fmtC(run ? p.el + dt : p.el); if(bar) bar.style.strokeDashoffset = '0'; W.el.classList.remove('hot'); }
       sEl.textContent = run ? (c.wup ? 'Échauffement' : c.sw ? 'Change de côté' : c.k === 'rest' ? 'Récup' : (c.side ? c.side + ' · go !' : 'C’est parti !')) : p.st === 'pause' ? 'En pause' : 'Prêt';
     }
@@ -24549,6 +24561,8 @@ html.cl-hide #ctMini{visibility:hidden;}
     function close(){ clearInterval(R.iv); keepOff(); el.remove(); R = null; keepSync(); try{ speechSynthesis.cancel(); }catch(e){} if(!document.querySelector('.tmr, .cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
   }
   function cur(){ return R.S[R.k]; }
+  // Compte à rebours avec centièmes, calé sur les bips 3-2-1 et sur 0:00,00 à la fin
+  function fmtCd(ms){ if(ms >= cur().d * 1000) return fmt(cur().d * 1000, true); return fmt(ms > 0 ? ms + 990 : 0, true); }
   function announce(k){
     if(k == null) k = R.k; var st = R.S[k]; if(!TM_VOICE || !R.c.voice || !st) return;
     var nx = R.S[k + 1], nxt = nx && nx.k === 'work' ? ', ensuite : ' + nx.lab : '';
@@ -24572,12 +24586,12 @@ html.cl-hide #ctMini{visibility:hidden;}
     if(cur().free){ var tf = R.el.querySelector('#tmrT'); if(tf) tf.innerHTML = fmt(Date.now() - R.sw, true); var tt = R.el.querySelector('#tmrTot'); if(tt){ var rs = 0; for(var q = R.k + 1; q < R.S.length; q++) rs += R.S[q].d; tt.textContent = 'Reste ' + fmt(rs * 1000).replace(/<\/?small>/g, '') + ' · écoulé ' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, ''); } return; }
     var left = R.endAt - Date.now(), voice = TM_VOICE && R.c.voice && window.speechSynthesis, lead = -40;
     // 3, 2, 1 : toujours des bips (la voix ne compte plus : muette en mode silencieux et elle faisait sauter l'affichage)
-    var s = Math.floor((left - lead) / 1000);
+    var s = Math.ceil((left - 40) / 1000);   // bip « 3 » quand l'écran passe à 0:03 (40 ms d'avance pour le son)
     if(s <= 3 && s >= 1 && s !== R.lastBeep && cur().d >= 4){ R.lastBeep = s; beep(880, .12); vib(30); }
     // Annonce de la phase suivante lancée juste avant, pour l'entendre au moment du changement
     if(voice && !R.pre && left <= LAT - 60 && R.S[R.k + 1]){ R.pre = true; announce(R.k + 1); }
-    if(left <= 0){ go(1); return; }
-    var t = R.el.querySelector('#tmrT'); if(t) t.innerHTML = fmt(left, true); var off2 = (339.3 * (1 - Math.max(0, Math.min(1, left / (cur().d * 1000))))).toFixed(2), bb = R.el.querySelector('#tmrB'), gg = R.el.querySelector('#tmrG'); if(bb) bb.style.strokeDashoffset = off2; if(gg) gg.style.strokeDashoffset = off2;
+    if(left <= 0){ var nx0 = R.S[R.k + 1], nR0 = nx0 && (nx0.R || Math.max(1, R.c.reps | 0)); if(nx0 && !(nx0.k === 'work' && nx0.r && nR0 > 1 && nx0.r === nR0)){ beep(1046, .12, .22); setTimeout(function(){ beep(1046, .12, .22); }, 190); vib([60, 80, 60]); } go(1); return; }
+    var t = R.el.querySelector('#tmrT'); if(t) t.innerHTML = fmtCd(left); var off2 = (339.3 * (1 - Math.max(0, Math.min(1, left / (cur().d * 1000))))).toFixed(2), bb = R.el.querySelector('#tmrB'), gg = R.el.querySelector('#tmrG'); if(bb) bb.style.strokeDashoffset = off2; if(gg) gg.style.strokeDashoffset = off2;
     R.el.classList.toggle('hot', left <= 3200 && cur().k === 'work');
     var tot = R.el.querySelector('#tmrTot'); if(tot){ var rest = left / 1000; for(var j = R.k + 1; j < R.S.length; j++) rest += R.S[j].d; tot.textContent = 'Reste ' + fmt(rest * 1000).replace(/<\/?small>/g, '') + ' · écoulé ' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, ''); }
   }
@@ -24593,7 +24607,7 @@ html.cl-hide #ctMini{visibility:hidden;}
       + (fin
         ? '<div class="tmr-mid"><div style="font-size:4rem">🏆</div><div class="tmr-nm">Terminé, bravo !</div><div class="tmr-cnt">' + (R.c.seq ? '<span>' + (st.bn || 1) + ' timers enchaînés</span><span>' + R.S.filter(function(x){ return x.k === 'work'; }).length + ' répétitions</span>' : '<span>' + sets + ' série' + (sets > 1 ? 's' : '') + '</span><span>' + reps * sets + ' répétitions</span>') + '<span>' + fmt(Date.now() - R.t0).replace(/<\/?small>/g, '') + '</span></div></div><div class="tmr-ctl" style="grid-template-columns:1fr 1fr"><button type="button" data-r="again">' + IC('reset') + 'Recommencer</button><button type="button" class="pp" data-r="x">Terminer</button></div>'
         : '<div class="tmr-mid">' + (st.bn > 1 ? '<div class="tmr-blk">🔗 Timer ' + (st.bi + 1) + '/' + st.bn + ' · ' + esc(st.k === 'trans' ? st.nb : st.blk) + '</div>' : '') + '<div class="tmr-ph">' + (fr ? '⏱ Transition libre' : PH[st.k]) + (R.state === 'pause' ? ' · en pause' : '') + '</div><div class="tmr-nm">' + esc(st.k === 'work' ? st.lab : st.k === 'prep' ? 'Prépare-toi' : st.k === 'trans' ? 'Ensuite : ' + st.nb : (nxt && nxt.k === 'work' ? 'Ensuite : ' + nxt.lab : 'Souffle')) + '</div>'
-          + '<div class="tmr-ring" data-r="pp" role="button" aria-label="' + (R.state === 'pause' ? 'Reprendre' : 'Pause') + '"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tk"/><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="gl" id="tmrG" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, fr ? 1 : (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/><circle cx="60" cy="60" r="54" class="br" id="tmrB" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, fr ? 1 : (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/></svg><div class="tmr-big" id="tmrT">' + fmt(fr ? (R.state === 'pause' ? R.el2 : Date.now() - R.sw) : (R.state === 'pause' ? R.left : R.endAt - Date.now()), true) + '</div><small class="tmr-tap">' + (R.state === 'pause' ? IC('play') + 'Touche pour reprendre' : IC('pause') + 'Touche pour pause') + '</small></div>'
+          + '<div class="tmr-ring" data-r="pp" role="button" aria-label="' + (R.state === 'pause' ? 'Reprendre' : 'Pause') + '"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="tk"/><circle cx="60" cy="60" r="54" class="tr"/><circle cx="60" cy="60" r="54" class="gl" id="tmrG" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, fr ? 1 : (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/><circle cx="60" cy="60" r="54" class="br" id="tmrB" style="stroke-dashoffset:' + (339.3 * (1 - Math.max(0, Math.min(1, fr ? 1 : (R.state === 'pause' ? R.left : R.endAt - Date.now()) / (st.d * 1000))))).toFixed(1) + '"/></svg><div class="tmr-big" id="tmrT">' + (fr ? fmt(R.state === 'pause' ? R.el2 : Date.now() - R.sw, true) : fmtCd(R.state === 'pause' ? R.left : R.endAt - Date.now())) + '</div><small class="tmr-tap">' + (R.state === 'pause' ? IC('play') + 'Touche pour reprendre' : IC('pause') + 'Touche pour pause') + '</small></div>'
           + '<div class="tmr-cnt">' + (fr ? '<span>Chrono · touche Continuer quand tu es prêt</span>' : '') + (st.s ? '<span>Série ' + st.s + '/' + sets + '</span>' : '') + (st.r ? '<span>Rép ' + st.r + '/' + reps + '</span>' : '') + '</div></div>'
           + (st.k === 'trans' ? upNext(st) : nxt ? '<div class="tmr-nx"><span><small>Ensuite</small><b>' + esc(nxt.k === 'work' ? nxt.lab : nxt.k === 'trans' ? 'Transition · ' + nxt.nb : PH[nxt.k]) + '</b></span><em>' + (nxt.free ? 'libre' : fmtS(nxt.d)) + '</em></div>' : '')
           + '<div class="tmr-ctl"><button type="button" data-r="pv" aria-label="Précédent">' + IC('prev') + '</button>' + (fr ? '<button type="button" class="pp go" data-r="nx">' + IC('play') + 'Continuer</button>' : '<button type="button" class="pp" data-r="pp">' + (R.state === 'pause' ? IC('play') + 'Reprendre' : IC('pause') + 'Pause') + '</button>') + '<button type="button" data-r="nx" aria-label="Suivant">' + IC('next') + '</button></div><div class="tmr-tot" id="tmrTot"></div>');
