@@ -11838,6 +11838,8 @@
     function onClick(e){ var b = e.target.closest('[data-ib]'); if(b) openItem(b.getAttribute('data-ib')); }
     if(typeof EC_USER !== 'undefined' && EC_USER && !EC_IS_COACH && EC_LOCK_ON){
       render();
+      // Abonnés : pas de boîte de coach sur le serveur (la demander comptait comme un code faux)
+      if(EC_SUB_RE.test(String(EC_KEY || '').trim().toLowerCase())) return;
       fetch(EC_SUB_API + '/boite/lire', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:String(EC_KEY || '').trim().toLowerCase()})}).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
         if(!d || !d.items) return;
         items = d.items; lsSet(CACHE, items); render();
@@ -17550,7 +17552,13 @@
       if(fromCode) $('ecLockErr').textContent = 'Vérification…';
       var q = isSub ? fetch(EC_SUB_API + '/check?k=' + encodeURIComponent(k) + '&d=' + ecDevId(), {cache:'no-store'}).then(function(r){ return r.json(); }) : ecAthVerify(k);
       return q.then(function(r){
-        if(isSub) save(k, r); else ecAthSave(k, r);
+        // « Trop d'essais » (pause d'une heure sur la connexion) n'est pas un refus : on garde l'accès déjà vérifié
+        if(r && r.raison === 'bloque' && !fromCode){
+          var c0 = isSub ? ecSubCache() : null;
+          if(!EC_SUB_PENDING) return;
+          if(isSub && c0 && c0.k === k && c0.ok && c0.fin && new Date(c0.fin).getTime() > Date.now() - 86400000){ var u0 = new URL(location.href); u0.searchParams.set('acces', k); try{ localStorage.setItem('ec_sub', JSON.stringify(Object.assign({}, c0, {ok:true, at:Date.now() - EC_SUB_GRACE + 3600000}))); localStorage.setItem('ec_access', k); }catch(e){} location.replace(u0.toString()); return; }
+        }
+        if(!(r && r.raison === 'bloque')){ if(isSub) save(k, r); else ecAthSave(k, r); }
         if(r.ok){
           try{ localStorage.setItem('ec_access', k); }catch(e){}
           var again = isSub ? (!EC_USER || !EC_USER.sub || fromCode || EC_SUB_PENDING) : (fromCode || EC_SUB_PENDING || before !== JSON.stringify(ecFindKey(k)));
@@ -22099,6 +22107,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       });
     }
     function run(){
+      // Synchro des séances de coaching : réservée au coach (chez un abonné, chaque essai était refusé par le serveur
+      // et compté comme un code faux : au bout de 10 min d'appli ouverte, la connexion était bloquée 1 h)
+      if(typeof EC_IS_COACH === 'undefined' || !EC_IS_COACH) return Promise.resolve();
       if(!READY || !API || !K() || !window.crypto || !crypto.subtle) return Promise.resolve();
       if(!navigator.onLine){ set('off'); return Promise.resolve(); }
       if(busy && Date.now() - busyAt < 40000){ again = true; return Promise.resolve(); }
