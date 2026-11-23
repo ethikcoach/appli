@@ -20783,6 +20783,9 @@
   // Bips 3-2-1-0 programmés à l'avance sur l'horloge du son (précision à la milliseconde, quelle que soit la charge du téléphone)
   // S : état du chrono ; key : change à chaque phase / reprise ; left : secondes restantes ; sec : durée ; last : pas de double bip à 0
   // play(kind, délai en s) : programme le son et renvoie les nœuds (pour pouvoir les annuler en cas de pause ou de passage)
+  // Le haut-parleur de l'iPhone/iPad sort le son avec un léger retard : les bips partent 150 ms avant le changement de chiffre
+  // pour être entendus pile au passage à 0:03,00 · 0:02,00 · 0:01,00 · 0:00,00.
+  window.ecBipLead = function(){ return 150; };
   window.ecCdPlan = function(S, key, left, sec, last, play){
     if(!S || document.hidden) return;
     // Nouvelle phase : on repart de zéro SANS couper les bips déjà partis (le double bip 0 tombe pile au changement de phase)
@@ -20792,7 +20795,7 @@
       if(S._cd[t]) return;
       if(t > 0 && !(sec > t)) return;
       if(t === 0 && last) return;
-      var dly = left - t; if(dly > 0.6 || dly < -0.08) return;
+      var dly = left - t - window.ecBipLead() / 1000; if(dly > 0.6 || dly < -0.08) return;
       S._cd[t] = play(t ? 'b' : 'z', Math.max(0, dly)) || [];
     });
   };
