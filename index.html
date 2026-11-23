@@ -20768,17 +20768,25 @@
   window.ecLoudSet = function(v){ try{ localStorage.setItem(LK, v ? '1' : '0'); }catch(e){} if(!v){ try{ navigator.audioSession && (navigator.audioSession.type = 'ambient'); }catch(e){} } };
   window.ecLoud = function(){
     try{
-      if(!navigator.audioSession || !window.ecLoudOn()) return;
+      if(!navigator.audioSession || !window.ecLoudOn() || document.hidden) return;
       if(navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback';
       clearTimeout(loudT); loudT = setTimeout(function(){ try{ navigator.audioSession.type = 'ambient'; }catch(e){} }, 60000);
     }catch(e){}
   };
+  // Appli quittée (écran d'accueil, autre appli, téléphone verrouillé) : plus aucun bip, retour au son normal.
+  // Sinon le mode « lecture » gardait l'appli active en arrière-plan et les chronos continuaient de sonner.
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden) return;
+    clearTimeout(loudT); try{ navigator.audioSession && (navigator.audioSession.type = 'ambient'); }catch(e){}
+    try{ window.dispatchEvent(new Event('ec-sound-off')); }catch(e){}
+  });
   // Bips 3-2-1-0 programmés à l'avance sur l'horloge du son (précision à la milliseconde, quelle que soit la charge du téléphone)
   // S : état du chrono ; key : change à chaque phase / reprise ; left : secondes restantes ; sec : durée ; last : pas de double bip à 0
   // play(kind, délai en s) : programme le son et renvoie les nœuds (pour pouvoir les annuler en cas de pause ou de passage)
   window.ecCdPlan = function(S, key, left, sec, last, play){
-    if(!S) return;
-    if(S._cdKey !== key){ window.ecCdStop(S); S._cdKey = key; }
+    if(!S || document.hidden) return;
+    // Nouvelle phase : on repart de zéro SANS couper les bips déjà partis (le double bip 0 tombe pile au changement de phase)
+    if(S._cdKey !== key){ S._cd = {}; S._cdKey = key; }
     S._cd = S._cd || {};
     [3, 2, 1, 0].forEach(function(t){
       if(S._cd[t]) return;
@@ -21220,17 +21228,13 @@
   var AC = null;
   // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
-  function tick(f, d){ if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f || 1200; g.gain.setValueAtTime(.06, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
+  window.addEventListener('ec-sound-off', function(){ if(R) window.ecCdStop(R); });
+  function tick(f, d){ if(document.hidden) return; if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f || 1200; g.gain.setValueAtTime(.06, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
   function zero(){ tick(1000, .12); setTimeout(function(){ tick(1000, .12); }, 190); }
-  // Son programmé à l'avance (bips 3-2-1 et double bip 0)
-  function cdPlay(kind, dly){ try{ if(window.ecLoud) window.ecLoud(); AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); }catch(e){ return []; }
-    var t0 = AC.currentTime + Math.max(0, dly - window.ecCdLat(AC)), out = [];
-    function one(f, d, at){ try{ var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.0001, AC.currentTime); g.gain.setValueAtTime(.06, at); g.gain.exponentialRampToValueAtTime(.0001, at + d); o.connect(g); g.connect(AC.destination); o.start(at); o.stop(at + d + .02); out.push(o); }catch(e){} }
-    if(kind === 'b') one(1000, .08, t0); else { one(1000, .12, t0); one(1000, .12, t0 + .19); }
-    if(window.ecVib) out.push(setTimeout(function(){ window.ecVib(kind === 'b' ? 30 : [60, 80, 60]); }, dly * 1000));
-    return out; }
+  // Bips 3-2-1 et double bip 0 : déclenchés à l'instant exact (minuteur réglé à la milliseconde), avec le même son qu'avant
+  function cdPlay(kind, dly){ return [setTimeout(function(){ if(kind === 'b'){ tick(1000, .08); if(window.ecVib) window.ecVib(30); } else { zero(); if(window.ecVib) window.ecVib([60, 80, 60]); } }, Math.max(0, dly * 1000 - 15))]; }
 
 
   // ---------- Scène ----------
@@ -21572,7 +21576,7 @@
     R.auto = false; try{ R.auto = localStorage.getItem('ec_coach_stauto2') === '1'; }catch(e){}
     el.addEventListener('click', onRemote);
     try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
-    R.iv = setInterval(tickRemote, 50);
+    R.iv = setInterval(tickRemote, 100);
     (function rRaf(){ if(!R || R.el !== el) return; tickRemote(); requestAnimationFrame(rRaf); })();   // centièmes fluides
     pollRemote();
   }
@@ -23105,17 +23109,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   var CT = null, AC = null;
   // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
-  function tick(f, d){ if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
+  window.addEventListener('ec-sound-off', function(){ if(CT) window.ecCdStop(CT); });
+  function tick(f, d){ if(document.hidden) return; if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
   function zero(){ tick(1000, .12); setTimeout(function(){ tick(1000, .12); }, 190); }
-  // Son programmé à l'avance (bips 3-2-1 et double bip 0)
-  function cdPlay(kind, dly){ try{ if(window.ecLoud) window.ecLoud(); AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); }catch(e){ return []; }
-    var t0 = AC.currentTime + Math.max(0, dly - window.ecCdLat(AC)), out = [];
-    function one(f, d, at){ try{ var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.0001, AC.currentTime); g.gain.setValueAtTime(.06, at); g.gain.exponentialRampToValueAtTime(.0001, at + d); o.connect(g); g.connect(AC.destination); o.start(at); o.stop(at + d + .02); out.push(o); }catch(e){} }
-    if(kind === 'b') one(1000, .08, t0); else { one(1000, .12, t0); one(1000, .12, t0 + .19); }
-    if(window.ecVib) out.push(setTimeout(function(){ window.ecVib(kind === 'b' ? 30 : [60, 80, 60]); }, dly * 1000));
-    return out; }
+  // Bips 3-2-1 et double bip 0 : déclenchés à l'instant exact (minuteur réglé à la milliseconde), avec le même son qu'avant
+  function cdPlay(kind, dly){ return [setTimeout(function(){ if(kind === 'b'){ tick(1000, .08); if(window.ecVib) window.ecVib(30); } else { zero(); if(window.ecVib) window.ecVib([60, 80, 60]); } }, Math.max(0, dly * 1000 - 15))]; }
 
   function vib(p){ if(window.ecVib) window.ecVib(p); }
   function mmss(x){ x = Math.max(0, Math.ceil(x)); return Math.floor(x / 60) + ':' + ('0' + x % 60).slice(-2); }
@@ -23136,7 +23136,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     CT.left = steps[0].sec || 0;
     el.addEventListener('click', onTimer);
-    CT.iv = setInterval(tickT, 50); CT.sid = Date.now().toString(36); CT.hb = setInterval(function(){ liveSend(); }, 20000);
+    CT.iv = setInterval(tickT, 100); CT.sid = Date.now().toString(36); CT.hb = setInterval(function(){ liveSend(); }, 20000);
     // Centièmes : l'affichage du temps suit chaque image de l'écran
     (function cltRaf(){ if(!CT || CT.el !== el) return; var st = cur(), t = el.querySelector('#cltTime');
       if(CT.state === 'chrono' && st.sec && CT.endAt <= Date.now()){ tickT(); requestAnimationFrame(cltRaf); return; }
@@ -24548,20 +24548,17 @@ html.cl-hide #ctMini{visibility:hidden;}
   function audio(){ if(!AC || AC.state === 'closed') mkAC(); resume(); return AC; }
   // Son gardé ouvert pendant tout le chrono (signal inaudible) : l'iPad/iPhone ne le met plus en veille pendant les récups
   var KEEPO = null, KEEPA = null;
-  function keepOn(){ var a = audio(); if(!a) return; if(KEEPO && KEEPA === a) return; keepOff(); try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = 30; g.gain.value = 0.00012; o.connect(g); g.connect(a.destination); o.start(); KEEPO = o; KEEPA = a; }catch(e){ KEEPO = null; } }
+  function keepOn(){ if(document.hidden) return; var a = audio(); if(!a) return; if(KEEPO && KEEPA === a) return; keepOff(); try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = 30; g.gain.value = 0.00012; o.connect(g); g.connect(a.destination); o.start(); KEEPO = o; KEEPA = a; }catch(e){ KEEPO = null; } }
   function keepOff(){ if(KEEPO){ try{ KEEPO.stop(); }catch(e){} } KEEPO = null; KEEPA = null; }
+  window.addEventListener('ec-sound-off', function(){ keepOff(); if(R) window.ecCdStop(R); try{ if(AC && AC.state === 'running') AC.suspend(); }catch(e){} });
   // Débloque le son de l'iPhone au moment où l'on touche l'écran (inaudible) : le bip de fin pourra sonner plus tard
   // loud : un chrono va démarrer → passage en mode « lecture » d'abord, et son recréé s'il datait d'avant
   function unlock(loud){ var a = null;
     if(loud && window.ecLoud){ window.ecLoud(); loudAt = Date.now(); if(AC && AC_T !== sessT()){ keepOff(); try{ AC.close(); }catch(e){} AC = null; } }
     try{ if(!AC || AC.state === 'closed') mkAC(); resume(); a = AC; }catch(e){} if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + 0.03); }catch(e){} }
-  // Son programmé à l'avance (bips 3-2-1 et double bip 0)
-  function cdPlay(kind, dly){ var a = audio(); if(!a) return []; var t0 = a.currentTime + Math.max(0, dly - window.ecCdLat(a)), out = [];
-    function one(f, d, v, at){ try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = f; o.type = 'sine'; g.gain.setValueAtTime(.0001, a.currentTime); g.gain.setValueAtTime(v, at); g.gain.exponentialRampToValueAtTime(.0001, at + d); o.connect(g); g.connect(a.destination); o.start(at); o.stop(at + d + .02); out.push(o); }catch(e){} }
-    if(kind === 'b') one(880, .12, .18, t0); else { one(1046, .12, .22, t0); one(1046, .12, .22, t0 + .19); }
-    out.push(setTimeout(function(){ vib(kind === 'b' ? 30 : [60, 80, 60]); }, dly * 1000));
-    return out; }
-  function beep(f, d, v){ var a = audio(); if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = f || 880; o.type = 'sine'; g.gain.value = v || .18; o.connect(g); g.connect(a.destination); var t = a.currentTime; g.gain.setValueAtTime(v || .18, t); g.gain.exponentialRampToValueAtTime(.0001, t + (d || .15)); o.start(t); o.stop(t + (d || .15) + .02); }catch(e){} }
+  // Bips 3-2-1 et double bip 0 : déclenchés à l'instant exact (minuteur réglé à la milliseconde), avec le même son qu'avant
+  function cdPlay(kind, dly){ return [setTimeout(function(){ if(kind === 'b'){ beep(880, .12); vib(30); } else { beep(1046, .12, .22); setTimeout(function(){ beep(1046, .12, .22); }, 190); vib([60, 80, 60]); } }, Math.max(0, dly * 1000 - 15))]; }
+  function beep(f, d, v){ if(document.hidden) return; var a = audio(); if(!a) return; try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = f || 880; o.type = 'sine'; g.gain.value = v || .18; o.connect(g); g.connect(a.destination); var t = a.currentTime; g.gain.setValueAtTime(v || .18, t); g.gain.exponentialRampToValueAtTime(.0001, t + (d || .15)); o.start(t); o.stop(t + (d || .15) + .02); }catch(e){} }
   function vib(p){ if(window.ecVib) window.ecVib(p); }
   var FRV = null;
   function frVoice(){ if(FRV) return FRV; try{ var v = speechSynthesis.getVoices() || []; FRV = v.find(function(x){ return /^fr[-_]FR/i.test(x.lang) && /thomas|amelie|amélie|audrey|aurelie|google/i.test(x.name); }) || v.find(function(x){ return /^fr/i.test(x.lang); }) || null; }catch(e){} return FRV; }
