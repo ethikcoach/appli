@@ -20786,6 +20786,17 @@
   // Le haut-parleur de l'iPhone/iPad sort le son avec un léger retard : les bips partent 150 ms avant le changement de chiffre
   // pour être entendus pile au passage à 0:03,00 · 0:02,00 · 0:01,00 · 0:00,00.
   window.ecBipLead = function(){ return 150; };
+  // Son gardé éveillé pendant tout le chrono (signal inaudible) + mode « lecture » maintenu.
+  // Sans ça, l'iPhone/iPad met le haut-parleur en veille entre deux bips : le 1er bip (« 3 ») était avalé, on n'entendait qu'à partir de « 2 ».
+  window.ecAlive = function(ac, S){
+    if(!ac || document.hidden) return; var n = Date.now();
+    if(S){ if(n - (S._ka || 0) < 2500) return; S._ka = n; }
+    if(window.ecLoud) window.ecLoud();
+    try{ if(ac.state === 'suspended' || ac.state === 'interrupted'){ var pr = ac.resume(); if(pr && pr.catch) pr.catch(function(){}); } }catch(e){}
+    if(ac.__ka) return;
+    try{ var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 30; g.gain.value = 0.00012; o.connect(g); g.connect(ac.destination); o.start(); ac.__ka = o; }catch(e){}
+  };
+  window.ecAliveOff = function(ac){ if(ac && ac.__ka){ try{ ac.__ka.stop(); }catch(e){} ac.__ka = null; } };
   window.ecCdPlan = function(S, key, left, sec, last, play){
     if(!S || document.hidden) return;
     // Nouvelle phase : on repart de zéro SANS couper les bips déjà partis (le double bip 0 tombe pile au changement de phase)
@@ -21231,7 +21242,7 @@
   var AC = null;
   // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
-  window.addEventListener('ec-sound-off', function(){ if(R) window.ecCdStop(R); });
+  window.addEventListener('ec-sound-off', function(){ if(R) window.ecCdStop(R); window.ecAliveOff(AC); });
   function tick(f, d){ if(document.hidden) return; if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f || 1200; g.gain.setValueAtTime(.06, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
@@ -21583,7 +21594,7 @@
     (function rRaf(){ if(!R || R.el !== el) return; tickRemote(); requestAnimationFrame(rRaf); })();   // centièmes fluides
     pollRemote();
   }
-  function closeRemote(){ if(!R) return; clearInterval(R.iv); window.ecCdStop(R); clearTimeout(R.pt); try{ window.ecKeepAwake && window.ecKeepAwake(false); }catch(e){} R.el.remove(); R = null; document.documentElement.style.overflow = ''; }
+  function closeRemote(){ if(!R) return; clearInterval(R.iv); window.ecCdStop(R); window.ecAliveOff(AC); clearTimeout(R.pt); try{ window.ecKeepAwake && window.ecKeepAwake(false); }catch(e){} R.el.remove(); R = null; document.documentElement.style.overflow = ''; }
   function pollRemote(){
     if(!R) return;
     post('/studio/lire', {}).then(function(r){
@@ -21652,6 +21663,7 @@
     if(!R || !R.tour) return;
     var now = Date.now();
     if(R.state !== 'chrono' && R._cdKey) window.ecCdStop(R);
+    if(AC) window.ecAlive(AC, R);
     var SW = !curSec() && R.state !== 'fin';
     if(R.state === 'chrono' && SW){ R.el2 = (now - R.swStart) / 1000; }
     else if(R.state === 'chrono'){
@@ -23112,7 +23124,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   var CT = null, AC = null;
   // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
-  window.addEventListener('ec-sound-off', function(){ if(CT) window.ecCdStop(CT); });
+  window.addEventListener('ec-sound-off', function(){ if(CT) window.ecCdStop(CT); window.ecAliveOff(AC); });
   function tick(f, d){ if(document.hidden) return; if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
@@ -23153,7 +23165,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Téléphone tourné : le chrono reste à la verticale (contre-rotation de l'écran)
   function cltOri(){ var a = screen.orientation && typeof screen.orientation.angle === 'number' ? screen.orientation.angle : (typeof window.orientation === 'number' ? window.orientation : 0); if(a === 270) a = -90; document.documentElement.classList.toggle('clt-ror', a === -90); }
   window.addEventListener('orientationchange', function(){ setTimeout(cltOri, 50); }); window.addEventListener('resize', cltOri); cltOri();
-  function closeTimer(){ if(!CT) return; liveSend(true); clearInterval(CT.iv); window.ecCdStop(CT); clearInterval(CT.hb); try{ window.ecKeepAwake && window.ecKeepAwake(false); }catch(e){} CT.el.remove(); CT = null; if(!document.querySelector('.cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
+  function closeTimer(){ if(!CT) return; liveSend(true); clearInterval(CT.iv); window.ecCdStop(CT); window.ecAliveOff(AC); clearInterval(CT.hb); try{ window.ecKeepAwake && window.ecKeepAwake(false); }catch(e){} CT.el.remove(); CT = null; if(!document.querySelector('.cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
   function cur(){ return CT.steps[CT.k]; }
   function nextEx(from){ for(var j = from; j < CT.steps.length; j++){ if(CT.steps[j].k === 'ex') return CT.steps[j]; } return null; }
   function renderT(){
@@ -23202,6 +23214,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!CT || CT.state === 'fin'){ if(CT && CT._cdKey) window.ecCdStop(CT); return; }
     var now = Date.now(), st = cur(), free = !st.sec;
     if(CT.state !== 'chrono' && CT._cdKey) window.ecCdStop(CT);
+    if(AC) window.ecAlive(AC, CT);
     if(CT.state === 'chrono' && free){ CT.el2 = (now - CT.sw) / 1000; }
     else if(CT.state === 'chrono'){
       var left = (CT.endAt - now) / 1000, prev = CT.left; CT.left = left;
