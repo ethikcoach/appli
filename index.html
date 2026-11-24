@@ -3329,7 +3329,7 @@
   .tq-ico svg{width:20px; height:20px;}
   html.ec-p2 #todayView .tq b{font-size:1.25rem; margin-top:10px;}
   html.ec-p2 #todayView .tq span:not(.tq-ico){font-size:0.84rem; color:var(--stone);}
-  .tq-renfo .tq-ico{background:#2E7D4F;} .tq-recup .tq-ico{background:#1E7A78;} .tq-breath .tq-ico{background:#2F6DB5;} .tq-defi .tq-ico{background:#C2661B;}
+  .tq-renfo .tq-ico{background:#2E7D4F;} .tq-recup .tq-ico{background:#1E7A78;} .tq-breath .tq-ico{background:#2F6DB5;} .tq-defi .tq-ico{background:#C2661B;} .tq-progs .tq-ico{background:#5B4BA6;}
   html.ec-p2 #todayView .tq::after{content:''; position:absolute; right:-26px; bottom:-26px; width:84px; height:84px; border-radius:50%; opacity:0.1;}
   .tq-renfo::after{background:#2E7D4F;} .tq-recup::after{background:#1E7A78;} .tq-breath::after{background:#2F6DB5;} .tq-defi::after{background:#C2661B;}
   html.ec-p2 #todayView .tq-renfo b{color:#2E7D4F;} html.ec-p2 #todayView .tq-recup b{color:#1E7A78;} html.ec-p2 #todayView .tq-breath b{color:#2F6DB5;} html.ec-p2 #todayView .tq-defi b{color:#C2661B;}
@@ -13767,7 +13767,9 @@
         var v = document.getElementById('renfoView');
         if(v && (v.classList.contains('quick') || v.classList.contains('collapsed'))){ var e = v.querySelector('.ps-edit'); if(e) e.click(); }
         try{ setMode('program'); }catch(e){}
-        setTimeout(function(){ var it = sec.querySelector('[data-start="' + id + '"]') || sec; it.scrollIntoView({behavior:'smooth', block:'center'}); it.classList.add('ci-pulse'); setTimeout(function(){ it.classList.remove('ci-pulse'); }, 2600); }, 200);
+        // Une séance affichée dans « Créer » masque les réglages : on la ferme et on passe sur « Un programme »
+        if(!sec.offsetParent){ var rx = document.querySelector('#results .res-x'); if(rx) rx.click(); var wp = document.querySelector('#renfoView [data-w="prog"]'); if(wp) wp.click(); try{ setMode('program'); }catch(e){} }
+        setTimeout(function(){ if(!id){ sec.scrollIntoView({behavior:'smooth', block:'start'}); return; } var it = sec.querySelector('[data-start="' + id + '"]') || sec; it.scrollIntoView({behavior:'smooth', block:'center'}); it.classList.add('ci-pulse'); setTimeout(function(){ it.classList.remove('ci-pulse'); }, 2600); }, 200);
       }, 60);
     }
     function newBubble(){
@@ -13786,6 +13788,7 @@
       });
     }
     window.ecProgNewTip = newBubble;
+    window.ecOpenCatalog = function(){ openCat(null); };
     setTimeout(newBubble, 1500);
     var _svN = window.ecShowView; if(_svN) window.ecShowView = function(k){ var r = _svN.apply(this, arguments); if(k === 'today') setTimeout(newBubble, 300); return r; };
     var cssN = document.createElement('style');
@@ -15808,6 +15811,7 @@
       +   '<button type="button" data-q="r10" class="tq tq-renfo"><b>10 min</b><span>Renfo</span></button>'
       +   '<button type="button" data-q="s15" class="tq tq-recup"><b>15 min</b><span>Étirements</span></button>'
       +   '<button type="button" data-q="br5" class="tq tq-breath"><b>5 min</b><span>Respiration</span></button>'
+      +   '<button type="button" data-q="progs" class="tq tq-progs"><b>4 à 10 sem.</b><span>Programme</span></button>'
       +   '<button type="button" data-q="defi" class="tq tq-defi"><b>Défi</b><span>Chrono</span></button>'
       + '</div></section>'
       + '<section class="td-create"><button type="button" data-q="create">' + svg(I.plus, 20) + '<span><b>Créer une autre séance</b><small>Renfo, Récup, Défis ou Programme</small></span><span class="td-chev" aria-hidden="true">›</span></button></section>';
@@ -15853,6 +15857,7 @@
       if(q === 'prog'){ if(window.ecOpenProgNext) window.ecOpenProgNext(); return; }
       if(q === 'create'){ window.ecShowView('renfo'); window.scrollTo(0, 0); return; }
       if(q === 'defi'){ if(window.ecOpenWod) window.ecOpenWod({type:'defi'}); return; }
+      if(q === 'progs'){ if(window.ecOpenCatalog) window.ecOpenCatalog(); return; }
       if(q === 's15'){ window.ecShowView('breath'); if(window.ecMobSet) window.ecMobSet({g:'recup', d:15, z:'full'}); if(window.ecMobGenerate) window.ecMobGenerate(); return; }
       if(q === 'r10'){ adhoc({dur:10}); return; }
       if(q === 'br5'){ if(window.ecBreath) window.ecBreath(5); return; }
@@ -16198,7 +16203,7 @@
         stat.innerHTML = svg(IC.flame, 16) + (n ? n + (n > 1 ? ' séances' : ' séance') + ' cette semaine' : 'Ta semaine commence ici');
       }
       // Tuiles « Envie d'autre chose ? » avec icône
-      var TQ = {r10:IC.renfo, s15:IC.recup, br5:IC.breath, defi:IC.chrono};
+      var TQ = {r10:IC.renfo, s15:IC.recup, br5:IC.breath, defi:IC.chrono, progs:IC.prog};
       tv.querySelectorAll('.td-more .tq').forEach(function(b){ var i = TQ[b.getAttribute('data-q')]; if(i && !b.querySelector('.tq-ico')) b.insertAdjacentHTML('afterbegin', '<span class="tq-ico">' + svg(i, 20) + '</span>'); });
       // « Crée ta propre séance » : 4 raccourcis directs
       var cr = tv.querySelector('.td-create');
@@ -16668,7 +16673,7 @@
         + '<div class="cv-days">' + L.map(function(l, i){ return '<span class="' + (i === todayIdx ? 'now' : '') + '">' + l + '</span>'; }).join('') + '</div>';
     }
     // Carrousel : une photo par carte
-    var PH = {r10:'p10', s15:'m1', br5:'r1', defi:'p11', eq20:'p44'};
+    var PH = {r10:'p10', s15:'m1', br5:'r1', defi:'p11', eq20:'p44', progs:'p21'};
     function photos(){
       var ok = false;
       tv.querySelectorAll('.td-more .tq').forEach(function(b){
