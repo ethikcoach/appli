@@ -8351,6 +8351,15 @@
                 zones:{1:['full'], 2:['full','full'], 3:['bas','haut','full'], 4:['bas','haut','full','gainage']}},
     yoga_doux: {label:'Yoga doux', desc:'Séances de yoga guidées', hidden:true, themes:['equilibre'], zones:{1:['full'],2:['full','full'],3:['full','full','full'],4:['full','full','full','full']}},
     mobilite: {label:'Mobilité', desc:'Routines de mobilité guidées', hidden:true, themes:['equilibre'], zones:{1:['full'],2:['full','full'],3:['full','full','full'],4:['full','full','full','full']}},
+    bureau: {label:'Télétravail et bureau', desc:'Dos, nuque, épaules et hanches : compenser les heures assis', themes:['stabilite','equilibre','stabilite'],
+                prefer:['v1','v2','e15','b2','b3','b14','b1','n26','t19','t9','t26','t27','q23','p5','p14','p15','p4','p8','q25','b8','b10','b11','t11','sb4','sb10','n36','n34','s6','p1','p6','t1','p16','p39','p20','r6','m21','m30','m44','m53','m54','m51','m55','s22','s23','m49','m50','m58','e14','e13'],
+                zones:{1:['full'], 2:['haut','gainage'], 3:['haut','gainage','bas'], 4:['haut','gainage','bas','full']}},
+    rando: {label:'Renfo randonnée et marche nordique', desc:'Jambes qui tiennent les dénivelés, genoux protégés en descente, bras et dos pour les bâtons', themes:['endurance_force','stabilite','endurance_force','stabilite'],
+                prefer:['p20','p21','p2','n23','n39','p19','p50','k2','p6','b6','p8','p37','b9','k3','t13','p43','p47','p39','p44','t32','b7','b15','p16','t1','t23','b1','n26','t9','t28','p7','b16','h4','t7','p4','p9','p14','b10','k7','n21','r6','m9','m48'],
+                zones:{1:['bas'], 2:['bas','haut'], 3:['bas','gainage','haut'], 4:['bas','haut','gainage','bas']}},
+    ski: {label:'Prépa ski', desc:'Cuisses endurantes, genoux stables, gainage et réactivité', themes:['endurance_force','force','stabilite','endurance_force'],
+                prefer:['p6','p1','k2','p23','p22','p33','q30','q31','n41','p11','t32','b13','b7','b15','p47','p43','p39','t14','p51','b9','p8','p37','t21','p49','b18','q6','p9','b11','b10','p24','t10','p12','p46','n31','p35','t45','q29','p2','p21','t2'],
+                zones:{1:['bas'], 2:['bas','gainage'], 3:['bas','gainage','full'], 4:['bas','gainage','bas','full']}},
     autonomie: {label:'Autonomie et prévention des chutes', desc:'Équilibre, jambes, confiance : idéal en senior', themes:['stabilite','equilibre'],
                 zones:{1:['bas'], 2:['bas','full'], 3:['bas','full','bas'], 4:['bas','full','bas','full']}}
   };
@@ -13063,7 +13072,7 @@
       ['Démarrer', 'Comment faire une séance CrossFit ou HYROX ?', 'Dans <b>Renfo</b>, touche <b>⚡ CrossFit / HYROX</b> en haut. <b>HYROX</b> : les stations de la course dans l’ordre (SkiErg, traîneau, burpees, rameur, farmer carry, fentes sandbag, wall balls), avec en option <b>🏃 la course à pied</b> avant chaque station (250 m, 500 m ou 1 km) et une <b>simulation complète</b>. <b>CrossFit</b> : un WOD en <b>AMRAP</b>, <b>EMOM</b>, <b>Tabata</b> ou <b>EMOM + AMRAP</b>. L’appli utilise ton matériel (mode 🏋️ Salle conseillé) et remplace ce qui manque par un exercice équivalent. Comme toute séance, tu peux l’<b>enregistrer en favori</b> ou l’<b>envoyer</b> : la personne reçoit exactement le même WOD.'],
       ['Démarrer', 'Comment lancer ma première séance ?', 'Dans <b>Renfo</b> (ou <b>Récup</b>), règle tes choix puis touche <b>Générer ma séance</b>. Vérifie la séance proposée, puis touche <b>Démarrer la séance ▶</b> : le chrono s’ouvre et te guide jusqu’au bout.'],
       ['Démarrer', 'C’est quoi les « Programmes tout prêts » ?', 'Dans <b>Renfo</b>, touche <b>📅 Programmes</b> en haut (ou l’onglet <b>Un programme</b>) : des programmes de plusieurs semaines (prépa trail, ultra-trail, 5/10 km, semi et marathon, HYROX, CrossFit, raid multisports, VTT, vélo, yoga doux, mobilité, dos solide, remise en forme, équilibre senior, gainage express…). Touche <b>Commencer</b> : toutes les séances sont prêtes, avec une progression semaine après semaine. Coche chaque séance quand elle est faite.'],
-      ['Démarrer', 'Comment caler un programme sur ma course ?', 'Pour les programmes sportifs (trail, ultra-trail, 5/10 km, semi et marathon, raid multisports, vélo, VTT, kayak), l’appli te demande la date de ta course. Le programme s’étale jusqu’au jour J : la charge monte jusqu’à un pic, puis 2 semaines d’affûtage allègent les séances pour que tu arrives frais. La semaine de course, une seule séance courte, au plus tard 3 à 4 jours avant.'],
+      ['Démarrer', 'Comment caler un programme sur une date ?', 'Quand tu lances un programme tout prêt, l’appli te propose une date : ta course pour les programmes sportifs, ton départ pour la rando ou le ski, ou une date visée pour les autres (vacances, événement, reprise). Le programme s’étale jusqu’à ce jour-là : la charge monte jusqu’à un pic, puis 2 semaines plus légères (l’affûtage) pour que tu arrives frais. La dernière semaine, une seule séance courte, au plus tard 3 à 4 jours avant. Sans date, le programme garde sa durée habituelle.'],
       ['Démarrer', 'Je m’entraîne en salle de sport : comment utiliser les machines ?', 'Dans <b>Renfo › Matériel</b>, passe sur <b>🏋️ Salle</b> et coche ce qu’il y a dans ta salle : machines guidées (presse, leg curl, tirage…), poulies, barre et banc, Smith machine, swiss ball, box… Les séances et les programmes utilisent alors ces machines. L’option « Privilégier les machines et les charges » garde le poids du corps surtout pour le gainage. Pour le CrossFit et l’HYROX, coche aussi la partie « CrossFit / HYROX » (SkiErg, air bike, traîneau, sandbag, anneaux, corde, GHD). De retour chez toi, repasse sur <b>🏠 Maison</b> : tu retrouves ton matériel habituel.'],
       ['Démarrer', 'Quel niveau choisir ?', '<b>Débutant</b> si tu reprends ou si tu ne fais pas de renfo régulièrement. <b>Intermédiaire</b> si tu en fais déjà 1 à 2 fois par semaine. <b>Avancé</b> si tu es à l’aise avec les mouvements et les charges. <b>Senior · adapté APA</b> propose des exercices à faible impact, avec appuis possibles. En cas de doute, commence plus bas : tu pourras monter ensuite.'],
       ['Démarrer', 'Je ne peux pas aller au sol, ou je préfère rester assis.', 'Dans <b>Renfo</b>, utilise <b>Contrainte</b> : « Sans passage au sol » ou « Séance sur chaise ». Dans <b>Récup</b>, coche seulement <b>Debout</b> et/ou <b>Sur chaise</b> dans Position.'],
@@ -13632,11 +13641,14 @@
       {id:'semi8', sport:true, ico:'🏅', t:'Semi-marathon / Marathon', obj:'route_long', w:8, s:2, d:30, pitch:'Des jambes qui tiennent la distance et un tronc stable jusqu’au bout, pour limiter les blessures.'},
       {id:'ultra10', sport:true, ico:'🏔️', t:'Ultra-trail', obj:'ultra', w:10, s:2, d:45, pitch:'Des quadriceps qui encaissent les longues descentes, des chevilles solides et un tronc qui tient des heures.'},
       {id:'raid6', sport:true, ico:'🧭', t:'Raid multisports', obj:'raid', w:6, s:2, d:30, pitch:'Course, VTT, canoë : jambes, tirages, épaules et gainage pour enchaîner les disciplines.'},
+      {id:'rando6', from:'2027-03-01', sport:true, ico:'🥾', t:'Randonnée et marche nordique', obj:'rando', w:6, s:2, d:30, ev:{q:'🥾 Une grande rando ou un trek en vue ?', how:'Indique la date du départ : le programme se cale dessus, avec une progression, puis 2 semaines plus légères pour partir frais.', lab:'Date du départ', nm:'Nom de la rando', ph:'ex. Tour du Mont-Blanc', ok:'Caler sur ma rando'}, pitch:'Des jambes qui tiennent les dénivelés, des genoux protégés en descente, des bras et un dos solides pour pousser sur les bâtons.'},
+      {id:'ski6', from:'2027-01-05', sport:true, ico:'⛷️', t:'Prépa ski', obj:'ski', w:6, s:3, d:30, ev:{q:'⛷️ Tu pars au ski ?', how:'Indique la date du départ : le programme se cale dessus, avec une progression, puis 2 semaines plus légères pour arriver en forme le premier jour.', lab:'Date du départ', nm:'Station', ph:'ex. Les Arcs', ok:'Caler sur mon séjour'}, pitch:'Des cuisses qui tiennent toute la journée, des genoux stables, un gainage solide et de la réactivité pour enchaîner les virages.'},
       {id:'hyrox8', sport:true, ico:'🏟️', t:'HYROX', obj:'hyrox', w:8, s:3, d:45, pitch:'Les stations HYROX (traîneau, wall ball, fentes sandbag, farmer carry, burpees…) et l’endurance de force pour enchaîner. Idéal en mode Salle.'},
       {id:'crossfit6', ico:'🔥', t:'CrossFit', obj:'crossfit', w:6, s:3, d:45, pitch:'Haltérophilie (épaulé, thruster, squat avant), gymnastique (anneaux, toes to bar) et conditionnement sur rameur, SkiErg, air bike. Idéal en mode Salle.'},
       {id:'yoga4', mob:true, ico:'🧘', t:'Yoga doux', obj:'yoga_doux', g:'yoga', w:4, s:3, d:20, l:'debutant', zones:['full','dos','bas'], pitch:'Trois séances par semaine, au rythme du souffle : souplesse, équilibre et calme. Accessible à tous.'},
       {id:'mobi4', mob:true, ico:'🤸', t:'Mobilité au quotidien', obj:'mobilite', g:'mobi', w:4, s:4, d:15, zones:['full','bas','dos','haut'], pitch:'15 minutes, 4 fois par semaine : hanches, dos et épaules plus libres, idéal en complément du sport.'},
       {id:'dos4', ico:'🧍', t:'Dos solide', obj:'posture', w:4, s:3, d:20, pitch:'Gainage et posture pour soulager et protéger le dos au quotidien.'},
+      {id:'bureau4', from:'2027-01-05', ico:'💻', t:'Télétravail et bureau', obj:'bureau', w:4, s:3, d:20, lvl:'debutant', pitch:'20 minutes, 3 fois par semaine : dos, nuque et épaules libérés, hanches qui respirent, pour compenser les heures assis.'},
       {id:'forme8', ico:'🌱', t:'Remise en forme', obj:'reprise', w:8, s:3, d:30, lvl:'debutant', pitch:'Reprendre en douceur et durablement, tout le corps, avec une progression semaine après semaine.'},
       {id:'senior8', ico:'🧓', t:'Équilibre et prévention des chutes', obj:'autonomie', w:8, s:2, d:30, lvl:'senior', noFloor:true, pitch:'Jambes, équilibre et confiance, sans passage au sol. Idéal en senior et en APA.'},
       {id:'gainage4', ico:'🔥', t:'Gainage express', obj:'posture', w:4, s:4, d:10, pitch:'10 minutes, 4 fois par semaine : un tronc solide sans y passer des heures.'},
@@ -13646,10 +13658,18 @@
       {id:'kayak6', sport:true, ico:'🛶', t:'Canoë-kayak slalom', obj:'kayak', w:6, s:2, d:30, pitch:'Tirages explosifs, rotation du tronc, épaules solides et gainage.'},
       {id:'endu6', ico:'⏱️', t:'Endurance musculaire', obj:'endurance', w:6, s:3, d:30, pitch:'Tenir l’effort plus longtemps, avec des récupérations courtes.'}
     ];
+    // Programmes programmés : visibles à partir de leur date (from), le coach les voit avant pour tester
+    var NOWD = (function(){ var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })();
+    var IS_CO = typeof EC_IS_COACH !== 'undefined' && EC_IS_COACH;
+    function isOut(c){ return !c.from || NOWD >= c.from; }
+    function isNew(c){ return c.from && isOut(c) && (Date.now() - new Date(c.from + 'T00:00:00').getTime()) < 21 * 86400000; }
+    function frDay(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? (+m[3]) + ' ' + ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'][+m[2] - 1] : v; }
+    var CAT_ALL = CAT; CAT = CAT.filter(function(c){ return isOut(c) || IS_CO; });
+    window.ecProgCat = CAT_ALL;
     var sec = document.createElement('section'); sec.className = 'cat-sec'; sec.id = 'progCatalog';
     sec.innerHTML = '<div class="cat-head"><h3>Programmes tout prêts</h3><span>Touche un programme pour le lancer. <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="course" style="display:inline-block;vertical-align:-2px"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></svg> = il se cale sur la date de ta course.</span></div><div class="cat-list">'
       + CAT.map(function(c){
-        return '<button type="button" class="cat-item" data-start="' + c.id + '"><span class="ci-ico" aria-hidden="true">' + c.ico + '</span><span class="ci-txt"><b>' + escapeHtml(c.t) + '</b>'
+        return '<button type="button" class="cat-item' + (isNew(c) ? ' ci-new' : '') + (!isOut(c) ? ' ci-soon' : '') + '" data-start="' + c.id + '"><span class="ci-ico" aria-hidden="true">' + c.ico + '</span><span class="ci-txt"><b>' + escapeHtml(c.t) + (isNew(c) ? ' <em class="ci-badge">Nouveau</em>' : '') + (!isOut(c) ? ' <em class="ci-badge soon">Visible le ' + frDay(c.from) + '</em>' : '') + '</b>'
           + '<span class="ci-meta">' + c.w + ' sem. · ' + c.s + '×/sem · ' + c.d + ' min' + (c.lvl === 'senior' ? ' · Senior' : (c.lvl === 'debutant' ? ' · Débutant' : '')) + (c.sport ? ' · <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="course" style="display:inline-block;vertical-align:-2px"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></svg>' : '') + '</span>'
           + '<span class="ci-pitch">' + escapeHtml(c.pitch) + '</span></span><span class="ci-chev" aria-hidden="true">›</span></button>';
       }).join('') + '</div><div class="cat-or"><span>ou compose ton programme sur mesure</span></div>';
@@ -13696,12 +13716,15 @@
     function askRace(c){
       var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop'; wrap.id = 'raceDialog';
       var min = new Date(); min.setDate(min.getDate() + 10);
-      wrap.innerHTML = '<div class="ec-dialog race-box" role="dialog" aria-modal="true"><p class="ec-dialog-msg">🏁 Tu as une course en vue ?</p>'
-        + '<p class="race-how">Indique sa date : le programme se cale dessus, avec une progression, un pic de forme, puis 2 semaines d’affûtage pour arriver frais le jour J.</p>'
-        + '<label class="race-l">Date de la course<input type="date" class="ec-dialog-input" id="raceDate" min="' + ymd(min) + '"></label>'
-        + '<label class="race-l">Nom de la course <small>(facultatif)</small><input type="text" class="ec-dialog-input" id="raceName" maxlength="40" placeholder="ex. Trail des Falaises"></label>'
+      // Textes du dialogue : une course par défaut, un séjour au ski ou une rando selon le programme (c.ev)
+      var ev = Object.assign(c.sport ? {q:'🏁 Tu as une course en vue ?', how:'Indique sa date : le programme se cale dessus, avec une progression, un pic de forme, puis 2 semaines d’affûtage pour arriver frais le jour J.', lab:'Date de la course', nm:'Nom de la course', ph:'ex. Trail des Falaises', ok:'Calibrer sur ma course'}
+        : {q:'📅 Tu as une date en tête ?', how:'Des vacances, un événement, une reprise… Indique la date : le programme se cale dessus, avec une progression, puis des semaines plus légères pour être au top ce jour-là.', lab:'Date visée', nm:'Ton objectif', ph:'ex. Vacances d’été', ok:'Caler sur cette date'}, c.ev || {});
+      wrap.innerHTML = '<div class="ec-dialog race-box" role="dialog" aria-modal="true"><p class="ec-dialog-msg">' + escapeHtml(ev.q) + '</p>'
+        + '<p class="race-how">' + escapeHtml(ev.how) + '</p>'
+        + '<label class="race-l">' + escapeHtml(ev.lab) + '<input type="date" class="ec-dialog-input" id="raceDate" min="' + ymd(min) + '"></label>'
+        + '<label class="race-l">' + escapeHtml(ev.nm) + ' <small>(facultatif)</small><input type="text" class="ec-dialog-input" id="raceName" maxlength="40" placeholder="' + escapeHtml(ev.ph) + '"></label>'
         + '<p class="race-info" id="raceInfo"></p>'
-        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-r="nodate">Sans date (' + c.w + ' sem.)</button><button type="button" class="ec-dialog-ok" data-r="ok">Calibrer sur ma course</button></div>'
+        + '<div class="ec-dialog-actions"><button type="button" class="ec-dialog-cancel" data-r="nodate">Sans date (' + c.w + ' sem.)</button><button type="button" class="ec-dialog-ok" data-r="ok">' + escapeHtml(ev.ok) + '</button></div>'
         + '<button type="button" class="tf-cancel" data-r="close">Annuler</button></div>';
       document.body.appendChild(wrap);
       var di = wrap.querySelector('#raceDate'), info = wrap.querySelector('#raceInfo');
@@ -13727,12 +13750,51 @@
     sec.addEventListener('click', function(e){
       var b = e.target.closest('[data-start]'); if(!b) return;
       var c = CAT.filter(function(x){ return x.id === b.getAttribute('data-start'); })[0]; if(!c) return;
-      var go = function(){ if(c.sport) askRace(c); else start(c); };
+      var go = function(){ if(c.mob) start(c); else askRace(c); };
       if(currentProgram){
         var name = currentProgram.title || 'ton programme en cours';
         ecConfirm('Remplacer « ' + name + ' » par « ' + c.t + ' » ? Tu peux enregistrer ton programme actuel avant, avec ☆ Enregistrer.', 'Continuer', go, false, 'Annuler');
       } else go();
     });
+    // ---------- Bulle « Nouveau programme » sur la page Aujourd'hui (une fois, pendant 3 semaines après sa sortie) ----------
+    function seenNew(id){ try{ return !!JSON.parse(localStorage.getItem('ec_prog_new_seen') || '{}')[id]; }catch(e){ return false; } }
+    function markNew(id){ try{ var o = JSON.parse(localStorage.getItem('ec_prog_new_seen') || '{}'); o[id] = Date.now(); localStorage.setItem('ec_prog_new_seen', JSON.stringify(o)); }catch(e){} }
+    function openCat(id){
+      if(window.ecShowView) window.ecShowView('renfo');
+      setTimeout(function(){
+        var v = document.getElementById('renfoView');
+        if(v && (v.classList.contains('quick') || v.classList.contains('collapsed'))){ var e = v.querySelector('.ps-edit'); if(e) e.click(); }
+        try{ setMode('program'); }catch(e){}
+        setTimeout(function(){ var it = sec.querySelector('[data-start="' + id + '"]') || sec; it.scrollIntoView({behavior:'smooth', block:'center'}); it.classList.add('ci-pulse'); setTimeout(function(){ it.classList.remove('ci-pulse'); }, 2600); }, 200);
+      }, 60);
+    }
+    function newBubble(){
+      if(document.getElementById('progNewTip')) return;
+      var tv = document.getElementById('todayView'); if(!tv || (typeof EC_GUEST !== 'undefined' && EC_GUEST)) return;
+      var c = CAT_ALL.filter(function(x){ return isNew(x) && !seenNew(x.id); })[0]; if(!c) return;
+      var d = document.createElement('div'); d.id = 'progNewTip'; d.className = 'pn-tip'; d.setAttribute('role', 'status');
+      d.innerHTML = '<button type="button" class="pn-x" aria-label="Fermer">&times;</button><span class="pn-ico" aria-hidden="true">' + c.ico + '</span>'
+        + '<div class="pn-t"><small>🆕 Nouveau programme</small><b>' + escapeHtml(c.t) + '</b><span>' + escapeHtml(c.pitch) + '</span>'
+        + '<button type="button" class="pn-go">Découvrir le programme</button></div>';
+      var top = tv.querySelector('.td-top'); if(top && top.parentNode) top.parentNode.insertBefore(d, top.nextSibling); else tv.insertBefore(d, tv.firstChild);
+      d.addEventListener('click', function(e){
+        if(e.target.closest('.pn-x')){ markNew(c.id); d.remove(); return; }
+        if(e.target.closest('.pn-go')){ markNew(c.id); d.remove(); openCat(c.id); }
+      });
+    }
+    window.ecProgNewTip = newBubble;
+    setTimeout(newBubble, 1500);
+    var _svN = window.ecShowView; if(_svN) window.ecShowView = function(k){ var r = _svN.apply(this, arguments); if(k === 'today') setTimeout(newBubble, 300); return r; };
+    var cssN = document.createElement('style');
+    cssN.textContent = '.ci-badge{display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; font:700 0.7rem/1.3 "Inter",sans-serif; font-style:normal; vertical-align:2px; background:#2E9E5E; color:#fff;} .ci-badge.soon{background:#8A8F98;}'
+      + '.cat-item.ci-soon{opacity:.7;} .cat-item.ci-pulse{animation:ciPulse 1.2s ease 2;} @keyframes ciPulse{0%,100%{box-shadow:0 0 0 0 rgba(46,158,94,0);} 50%{box-shadow:0 0 0 6px rgba(46,158,94,.35);}}'
+      + '.pn-tip{position:relative; display:flex; gap:12px; align-items:flex-start; margin:12px 0; padding:14px 40px 14px 14px; border-radius:20px; background:linear-gradient(135deg, rgba(46,158,94,.14), rgba(242,196,107,.16)); border:1.5px solid rgba(46,158,94,.45); animation:pnIn .35s ease;}'
+      + '.pn-tip:before{content:""; position:absolute; top:-8px; left:28px; width:14px; height:14px; transform:rotate(45deg); background:inherit; border-left:1.5px solid rgba(46,158,94,.45); border-top:1.5px solid rgba(46,158,94,.45);}'
+      + '.pn-ico{font-size:2rem; line-height:1;} .pn-t small{display:block; font:700 0.75rem "Inter",sans-serif; color:#2E9E5E; letter-spacing:.02em;} .pn-t b{display:block; margin:2px 0 4px; font:800 1.1rem/1.2 "Bricolage Grotesque",sans-serif;}'
+      + '.pn-t span{display:block; font-size:0.88rem; line-height:1.4; opacity:.85;} .pn-go{margin-top:10px; padding:9px 14px; border:none; border-radius:12px; background:#2E9E5E; color:#fff; font:700 0.9rem "Inter",sans-serif; cursor:pointer;}'
+      + '.pn-x{position:absolute; top:8px; right:8px; width:30px; height:30px; border:none; background:transparent; color:inherit; font-size:1.4rem; line-height:1; cursor:pointer; opacity:.6;} @keyframes pnIn{from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:none;}}'
+      + '@media (prefers-reduced-motion: reduce){.pn-tip, .cat-item.ci-pulse{animation:none;}}';
+    document.head.appendChild(cssN);
   })();
   // ---------- Programme calé sur une date de course : pic de forme puis affûtage ----------
   (function(){
@@ -13799,8 +13861,10 @@
         var sm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(P.race.start || ''), start = sm ? new Date(+sm[1], +sm[2] - 1, +sm[3]) : new Date(rd.getTime() - (n * 7 - 1) * DAYMS);
         var peak = n >= 3 ? n - 2 : 1;
         var b = document.createElement('div'); b.className = 'race-banner';
-        b.innerHTML = '<div class="rb-top"><span class="rb-flag" aria-hidden="true">🏁</span><div><b>' + escapeHtml(P.race.name || 'Ta course') + '</b><span>' + escapeHtml(fmt(rd, {weekday:'long', day:'numeric', month:'long'})) + '</span></div><div class="rb-j">' + (j > 0 ? 'J-' + j : (j === 0 ? 'Jour J !' : 'Terminé')) + '</div></div>'
-          + '<p>Programme calé sur ta course : la charge monte jusqu’à la semaine ' + peak + ', puis ' + (n >= 3 ? '2 semaines d’affûtage' : 'une semaine légère') + ' pour arriver en pleine forme.' + (start > today ? ' Il démarre le ' + escapeHtml(fmt(start, {weekday:'long', day:'numeric', month:'long'})) + ' : d’ici là, fais des séances libres.' : '') + '</p>';
+        var ceK = (window.ecProgCat || []).filter(function(x){ return x.id === P.cat; })[0];
+        var evK = P.cat === 'ski6' ? {f:'⛷️', n:'Ton séjour au ski', w:'ton séjour', d:'Départ au ski'} : P.cat === 'rando6' ? {f:'🥾', n:'Ta rando', w:'ta rando', d:'Départ en rando'} : (ceK && !ceK.sport) ? {f:'📅', n:'Ton objectif', w:'ta date', d:'Objectif'} : {f:'🏁', n:'Ta course', w:'ta course', d:'Course'};
+        b.innerHTML = '<div class="rb-top"><span class="rb-flag" aria-hidden="true">' + evK.f + '</span><div><b>' + escapeHtml(P.race.name || evK.n) + '</b><span>' + escapeHtml(fmt(rd, {weekday:'long', day:'numeric', month:'long'})) + '</span></div><div class="rb-j">' + (j > 0 ? 'J-' + j : (j === 0 ? 'Jour J !' : 'Terminé')) + '</div></div>'
+          + '<p>Programme calé sur ' + evK.w + ' : la charge monte jusqu’à la semaine ' + peak + ', puis ' + (n >= 3 ? (evK.f === '🏁' ? '2 semaines d’affûtage' : '2 semaines plus légères') : 'une semaine légère') + ' pour arriver en pleine forme.' + (start > today ? ' Il démarre le ' + escapeHtml(fmt(start, {weekday:'long', day:'numeric', month:'long'})) + ' : d’ici là, fais des séances libres.' : '') + '</p>';
         var head = res.querySelector('.session-head');
         res.insertBefore(b, head ? head.nextSibling : res.firstChild);
         var weeks = res.querySelectorAll('.prog-week');
@@ -13813,7 +13877,7 @@
             sec.querySelectorAll('.prog-card').forEach(function(card, i){
               if(i > 0){ card.classList.add('optional'); var tp = card.querySelector('.prog-card-top'); if(tp && !card.querySelector('.opt-tag')){ var o = document.createElement('span'); o.className = 'opt-tag'; o.textContent = 'Facultative : repos conseillé'; tp.appendChild(o); } }
             });
-            var hd = sec.querySelector('.prog-week-head'); if(hd && !sec.querySelector('.race-day')){ var rdv = document.createElement('div'); rdv.className = 'race-day'; rdv.textContent = '🏁 ' + (P.race.name || 'Course') + ' le ' + fmt(rd, {weekday:'long', day:'numeric', month:'long'}) + '. Fais la séance A au plus tard 3 à 4 jours avant.'; hd.parentNode.insertBefore(rdv, hd.nextSibling); }
+            var hd = sec.querySelector('.prog-week-head'); if(hd && !sec.querySelector('.race-day')){ var rdv = document.createElement('div'); rdv.className = 'race-day'; var ceD = (window.ecProgCat || []).filter(function(x){ return x.id === P.cat; })[0]; var evD = P.cat === 'ski6' ? ['⛷️', 'Départ au ski'] : P.cat === 'rando6' ? ['🥾', 'Départ en rando'] : (ceD && !ceD.sport) ? ['📅', 'Objectif'] : ['🏁', 'Course']; rdv.textContent = evD[0] + ' ' + (P.race.name || evD[1]) + ' le ' + fmt(rd, {weekday:'long', day:'numeric', month:'long'}) + '. Fais la séance A au plus tard 3 à 4 jours avant.'; hd.parentNode.insertBefore(rdv, hd.nextSibling); }
           }
         });
         var cur = res.querySelector('.pw-now'); if(cur && arguments[0] === false) setTimeout(function(){ cur.scrollIntoView({behavior:'smooth', block:'center'}); }, 400);
@@ -13871,13 +13935,15 @@
     function openEdit(focusDate){
       var P = currentProgram; if(!editable(P)) return;
       var hasRace = !!(P.race && P.race.date);
+      var ceE = (window.ecProgCat || []).filter(function(x){ return x.id === P.cat; })[0];
+      var peL = ceE && ceE.ev ? [ceE.ev.lab, ceE.ev.nm] : (ceE && !ceE.sport) ? ['Date visée', 'Ton objectif'] : ['Date de la course', 'Nom de la course'];
       var o = {weeks:P.weeks, spw:P.spw, duration:P.duration};
       var wrap = document.createElement('div'); wrap.className = 'ec-dialog-backdrop'; wrap.id = 'progEditDialog';
       var min = new Date(); min.setDate(min.getDate() + 10);
       var weeksVals = [4, 6, 8, 10, 12]; if(weeksVals.indexOf(P.weeks) < 0 && !hasRace) weeksVals.push(P.weeks), weeksVals.sort(function(a, b){ return a - b; });
       wrap.innerHTML = '<div class="ec-dialog pe-box" role="dialog" aria-modal="true"><p class="ec-dialog-msg">⚙️ Modifier le programme</p>'
-        + (hasRace ? '<label class="race-l">Date de la course<input type="date" class="ec-dialog-input" id="peDate" min="' + ymd(min) + '" value="' + P.race.date + '"></label>'
-                     + '<label class="race-l">Nom de la course <small>(facultatif)</small><input type="text" class="ec-dialog-input" id="peName" maxlength="40" value="' + escapeHtml(P.race.name || '') + '"></label>'
+        + (hasRace ? '<label class="race-l">' + peL[0] + '<input type="date" class="ec-dialog-input" id="peDate" min="' + ymd(min) + '" value="' + P.race.date + '"></label>'
+                     + '<label class="race-l">' + peL[1] + ' <small>(facultatif)</small><input type="text" class="ec-dialog-input" id="peName" maxlength="40" value="' + escapeHtml(P.race.name || '') + '"></label>'
                    : '<div class="pe-l">Durée du programme</div>' + seg('weeks', weeksVals, P.weeks, function(v){ return v + ' sem.'; }))
         + '<div class="pe-l">Séances par semaine</div>' + seg('spw', [1, 2, 3, 4], P.spw)
         + '<div class="pe-l">Durée de chaque séance</div>' + seg('duration', P.mob ? [10, 15, 20, 30] : [10, 20, 30, 45, 60], P.duration, function(v){ return v + ' min'; })
