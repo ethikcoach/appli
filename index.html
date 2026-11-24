@@ -21989,8 +21989,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function setH(el, h){ if(el && el._h !== h){ el._h = h; el.innerHTML = h; } }
   function idb(){ return new Promise(function(res, rej){ try{ var r = indexedDB.open('ec_clients', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); }; r.onsuccess = function(){ res(r.result); }; r.onerror = function(){ rej(r.error); }; }catch(e){ rej(e); } }); }
   function load(){
-    return idb().then(function(db){ return new Promise(function(res){ try{ var q = db.transaction('kv').objectStore('kv').get('data'); q.onsuccess = function(){ res(q.result || null); }; q.onerror = function(){ res(null); }; }catch(e){ res(null); } }); })
-      .catch(function(){ try{ return JSON.parse(localStorage.getItem(LSK) || 'null'); }catch(e){ return null; } })
+    function once(){ return idb().then(function(db){ return new Promise(function(res){ try{ var q = db.transaction('kv').objectStore('kv').get('data'); q.onsuccess = function(){ res(q.result || null); }; q.onerror = function(){ res(null); }; }catch(e){ res(null); } }); }).catch(function(){ return null; }); }
+    function lsCopy(){ try{ return JSON.parse(localStorage.getItem(LSK) || 'null'); }catch(e){ return null; } }
+    // iPadOS perd parfois la connexion au stockage à la reprise de l'appli : on réessaie avant de conclure qu'il n'y a rien
+    return once().then(function(x){ if(x && x.clients && x.clients.length) return x; return new Promise(function(r){ setTimeout(r, 500); }).then(once).then(function(y){ return (y && y.clients && y.clients.length) ? y : (x || y || lsCopy()); }); })
       .then(function(x){ if(x && x.clients){ D = x; } D.map = D.map || {}; D.mapU = D.mapU || {}; D.dead = D.dead || {}; D.timers = D.timers || []; uniq(); snap(); READY = true; try{ window.dispatchEvent(new Event('ec-timers-ready')); }catch(e){} });
   }
   function persist(){ idb().then(function(db){ var tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(D, 'data'); }).catch(function(){ try{ localStorage.setItem(LSK, JSON.stringify(D)); }catch(e){ toast('⚠️ Stockage plein : exporte tes clients'); } }); }
@@ -22141,10 +22143,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         throw r;
       });
     }
+    // Copie complète demandée à la 1re synchro de chaque ouverture, et dès que cet appareil n'a aucun client :
+    // sinon, si l'iPad avait perdu sa copie locale (stockage vidé par iPadOS), le serveur répondait « déjà à jour » et la liste restait vide
+    var fullDone = false;
     function pull(tries){
-      return post('/coaching/lire', {v:st.v}).then(function(r){
+      var emptyHere = !D.clients.length && !(D.timers || []).length;
+      return post('/coaching/lire', {v:(!fullDone || emptyHere) ? 0 : st.v}).then(function(r){
         if(!r.ok){ if(r.raison === 'cle') denied = true; throw r; }
-        denied = false;
+        denied = false; if(!r.vide) fullDone = true;
         if(r.vide || r.same){ if(r.vide && !D.clients.length && !(D.timers || []).length && !Object.keys(D.dead).length){ st.v = 0; st.at = Date.now(); keep(); return; } if(st.dirty || r.vide) return push(r.v || 0, tries); st.at = Date.now(); keep(); return; }
         return dec(r.d, r.iv).then(function(R){
           var m = merge(R); if(uniq()) m.mine = true; snap(); persist();
