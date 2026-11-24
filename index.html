@@ -13649,7 +13649,7 @@
       {id:'mobi4', mob:true, ico:'🤸', t:'Mobilité au quotidien', obj:'mobilite', g:'mobi', w:4, s:4, d:15, zones:['full','bas','dos','haut'], pitch:'15 minutes, 4 fois par semaine : hanches, dos et épaules plus libres, idéal en complément du sport.'},
       {id:'dos4', ico:'🧍', t:'Dos solide', obj:'posture', w:4, s:3, d:20, pitch:'Gainage et posture pour soulager et protéger le dos au quotidien.'},
       {id:'bureau4', from:'2027-01-05', ico:'💻', t:'Télétravail et bureau', obj:'bureau', w:4, s:3, d:20, lvl:'debutant', pitch:'20 minutes, 3 fois par semaine : dos, nuque et épaules libérés, hanches qui respirent, pour compenser les heures assis.'},
-      {id:'forme8', ico:'🌱', t:'Remise en forme', obj:'reprise', w:8, s:3, d:30, lvl:'debutant', pitch:'Reprendre en douceur et durablement, tout le corps, avec une progression semaine après semaine.'},
+      {id:'forme8', spot:'2027-01-03', spotTxt:'Nouvelle année, nouvelle forme : 8 semaines pour reprendre en douceur et durablement, avec une progression semaine après semaine.', ico:'🌱', t:'Remise en forme', obj:'reprise', w:8, s:3, d:30, lvl:'debutant', pitch:'Reprendre en douceur et durablement, tout le corps, avec une progression semaine après semaine.'},
       {id:'senior8', ico:'🧓', t:'Équilibre et prévention des chutes', obj:'autonomie', w:8, s:2, d:30, lvl:'senior', noFloor:true, pitch:'Jambes, équilibre et confiance, sans passage au sol. Idéal en senior et en APA.'},
       {id:'gainage4', ico:'🔥', t:'Gainage express', obj:'posture', w:4, s:4, d:10, pitch:'10 minutes, 4 fois par semaine : un tronc solide sans y passer des heures.'},
       {id:'force4', ico:'💪', t:'Force', obj:'force', w:4, s:3, d:30, pitch:'Efforts courts et intenses, récupérations longues, pour gagner en puissance.'},
@@ -13663,13 +13663,15 @@
     var IS_CO = typeof EC_IS_COACH !== 'undefined' && EC_IS_COACH;
     function isOut(c){ return !c.from || NOWD >= c.from; }
     function isNew(c){ return c.from && isOut(c) && (Date.now() - new Date(c.from + 'T00:00:00').getTime()) < 21 * 86400000; }
+    // Mise en avant d'un programme existant à une date (spot) : bulle « À la une » + étiquette pendant 3 semaines
+    function isSpot(c){ return !!c.spot && NOWD >= c.spot && (Date.now() - new Date(c.spot + 'T00:00:00').getTime()) < 21 * 86400000; }
     function frDay(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? (+m[3]) + ' ' + ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'][+m[2] - 1] : v; }
     var CAT_ALL = CAT; CAT = CAT.filter(function(c){ return isOut(c) || IS_CO; });
     window.ecProgCat = CAT_ALL;
     var sec = document.createElement('section'); sec.className = 'cat-sec'; sec.id = 'progCatalog';
     sec.innerHTML = '<div class="cat-head"><h3>Programmes tout prêts</h3><span>Touche un programme pour le lancer. <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="course" style="display:inline-block;vertical-align:-2px"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></svg> = il se cale sur la date de ta course.</span></div><div class="cat-list">'
       + CAT.map(function(c){
-        return '<button type="button" class="cat-item' + (isNew(c) ? ' ci-new' : '') + (!isOut(c) ? ' ci-soon' : '') + '" data-start="' + c.id + '"><span class="ci-ico" aria-hidden="true">' + c.ico + '</span><span class="ci-txt"><b>' + escapeHtml(c.t) + (isNew(c) ? ' <em class="ci-badge">Nouveau</em>' : '') + (!isOut(c) ? ' <em class="ci-badge soon">Visible le ' + frDay(c.from) + '</em>' : '') + '</b>'
+        return '<button type="button" class="cat-item' + (isNew(c) || isSpot(c) ? ' ci-new' : '') + (!isOut(c) ? ' ci-soon' : '') + '" data-start="' + c.id + '"><span class="ci-ico" aria-hidden="true">' + c.ico + '</span><span class="ci-txt"><b>' + escapeHtml(c.t) + (isNew(c) ? ' <em class="ci-badge">Nouveau</em>' : (isSpot(c) ? ' <em class="ci-badge spot">À la une</em>' : '')) + (!isOut(c) ? ' <em class="ci-badge soon">Visible le ' + frDay(c.from) + '</em>' : '') + '</b>'
           + '<span class="ci-meta">' + c.w + ' sem. · ' + c.s + '×/sem · ' + c.d + ' min' + (c.lvl === 'senior' ? ' · Senior' : (c.lvl === 'debutant' ? ' · Débutant' : '')) + (c.sport ? ' · <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="course" style="display:inline-block;vertical-align:-2px"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></svg>' : '') + '</span>'
           + '<span class="ci-pitch">' + escapeHtml(c.pitch) + '</span></span><span class="ci-chev" aria-hidden="true">›</span></button>';
       }).join('') + '</div><div class="cat-or"><span>ou compose ton programme sur mesure</span></div>';
@@ -13771,22 +13773,23 @@
     function newBubble(){
       if(document.getElementById('progNewTip')) return;
       var tv = document.getElementById('todayView'); if(!tv || (typeof EC_GUEST !== 'undefined' && EC_GUEST)) return;
-      var c = CAT_ALL.filter(function(x){ return isNew(x) && !seenNew(x.id); })[0]; if(!c) return;
+      var c = CAT_ALL.filter(function(x){ return isNew(x) && !seenNew(x.id); })[0] || CAT_ALL.filter(function(x){ return isSpot(x) && !seenNew(x.id + '@' + x.spot); })[0]; if(!c) return;
+      var spot = !isNew(c), sk = spot ? c.id + '@' + c.spot : c.id;
       var d = document.createElement('div'); d.id = 'progNewTip'; d.className = 'pn-tip'; d.setAttribute('role', 'status');
       d.innerHTML = '<button type="button" class="pn-x" aria-label="Fermer">&times;</button><span class="pn-ico" aria-hidden="true">' + c.ico + '</span>'
-        + '<div class="pn-t"><small>🆕 Nouveau programme</small><b>' + escapeHtml(c.t) + '</b><span>' + escapeHtml(c.pitch) + '</span>'
+        + '<div class="pn-t"><small>' + (spot ? '⭐ Programme à la une' : '🆕 Nouveau programme') + '</small><b>' + escapeHtml(c.t) + '</b><span>' + escapeHtml(spot && c.spotTxt ? c.spotTxt : c.pitch) + '</span>'
         + '<button type="button" class="pn-go">Découvrir le programme</button></div>';
       var top = tv.querySelector('.td-top'); if(top && top.parentNode) top.parentNode.insertBefore(d, top.nextSibling); else tv.insertBefore(d, tv.firstChild);
       d.addEventListener('click', function(e){
-        if(e.target.closest('.pn-x')){ markNew(c.id); d.remove(); return; }
-        if(e.target.closest('.pn-go')){ markNew(c.id); d.remove(); openCat(c.id); }
+        if(e.target.closest('.pn-x')){ markNew(sk); d.remove(); return; }
+        if(e.target.closest('.pn-go')){ markNew(sk); d.remove(); openCat(c.id); }
       });
     }
     window.ecProgNewTip = newBubble;
     setTimeout(newBubble, 1500);
     var _svN = window.ecShowView; if(_svN) window.ecShowView = function(k){ var r = _svN.apply(this, arguments); if(k === 'today') setTimeout(newBubble, 300); return r; };
     var cssN = document.createElement('style');
-    cssN.textContent = '.ci-badge{display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; font:700 0.7rem/1.3 "Inter",sans-serif; font-style:normal; vertical-align:2px; background:#2E9E5E; color:#fff;} .ci-badge.soon{background:#8A8F98;}'
+    cssN.textContent = '.ci-badge{display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; font:700 0.7rem/1.3 "Inter",sans-serif; font-style:normal; vertical-align:2px; background:#2E9E5E; color:#fff;} .ci-badge.soon{background:#8A8F98;} .ci-badge.spot{background:#D9A23A;}'
       + '.cat-item.ci-soon{opacity:.7;} .cat-item.ci-pulse{animation:ciPulse 1.2s ease 2;} @keyframes ciPulse{0%,100%{box-shadow:0 0 0 0 rgba(46,158,94,0);} 50%{box-shadow:0 0 0 6px rgba(46,158,94,.35);}}'
       + '.pn-tip{position:relative; display:flex; gap:12px; align-items:flex-start; margin:12px 0; padding:14px 40px 14px 14px; border-radius:20px; background:linear-gradient(135deg, rgba(46,158,94,.14), rgba(242,196,107,.16)); border:1.5px solid rgba(46,158,94,.45); animation:pnIn .35s ease;}'
       + '.pn-tip:before{content:""; position:absolute; top:-8px; left:28px; width:14px; height:14px; transform:rotate(45deg); background:inherit; border-left:1.5px solid rgba(46,158,94,.45); border-top:1.5px solid rgba(46,158,94,.45);}'
