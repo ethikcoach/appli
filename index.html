@@ -1482,10 +1482,12 @@
   function ecExpDate(entry){ var p = entry.exp.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}); }
   var EC_EXPIRED = null, EC_BLOCKED = null, EC_KEY = null;
   // Clés personnelles créées depuis l'Espace coach : prenom-AAMMJJ-signature (valables jusqu'à la date indiquée)
-  var EC_SIGN = 'nTE0g1CcWW4_7-IRLl959Uv0';
+  // Ancienne signature : sert seulement à retrouver les anciennes clés d'athlètes (vérifiées par le serveur de toute façon).
+  // Les liens « séance seule » et le pass Avent sont signés avec une clé que seul le serveur et l'appareil du coach connaissent.
+  var EC_SIGN_OLD = 'nTE0g1CcWW4_7-IRLl959Uv0';
   var EC_REVOKED = [];   // empreintes ecHash(clé) des clés à couper avant leur date de fin
   var EC_COACH_H = '1y5gvgy39du';
-  function ecSig(p, d){ return (ecHash('cle|' + p + '|' + d + '|' + EC_SIGN) + '000000').slice(0, 6); }
+  function ecSig(p, d){ return (ecHash('cle|' + p + '|' + d + '|' + EC_SIGN_OLD) + '000000').slice(0, 6); }
   // Thèmes d'une clé limitée : f renfo, m postures guidées, b respiration, d défis, p programmes (aucun = accès complet)
   var EC_SC_ALL = 'fmbdp';
   function ecScNorm(sc){ sc = String(sc || ''); return EC_SC_ALL.split('').filter(function(c){ return sc.indexOf(c) > -1; }).join(''); }
@@ -1513,18 +1515,28 @@
     return null;
   }
   // « Séance seule » : lien signé qui ouvre uniquement cette séance, sans donner accès au reste de l'appli
-  function ecGuestSig(p){ return (ecHash('seance|' + p + '|' + EC_SIGN) + '00000000').slice(0, 8); }
-  var EC_GUEST = (function(){ var m = /^#[sprec]=([A-Za-z0-9_-]+)&g=([a-z0-9]{8})$/.exec(location.hash || ''); return !!(m && ecGuestSig(m[1]) === m[2]); })();
+  // Clé de signature des liens : gardée uniquement sur l'appareil du coach (ec_coach_lien, jamais synchronisée ni sauvegardée)
+  function ecLienKey(){ try{ return localStorage.getItem('ec_coach_lien') || ''; }catch(e){ return ''; } }
+  function ecGuestSig(p){ var k = ecLienKey(); return k ? (ecHash('seance|' + p + '|' + k) + '0000000000').slice(0, 10) : ''; }
+  function ecGuestTail(p){ var g = ecGuestSig(p); return g ? '&g=' + g : ''; }
+  // Liens déjà vérifiés par le serveur sur ce téléphone (pour les rouvrir hors connexion)
+  function ecLienOk(id){ try{ return !!(JSON.parse(localStorage.getItem('ec_lien_ok') || '{}')[ecHash(id)]); }catch(e){ return false; } }
+  function ecLienSave(id){ try{ var o = JSON.parse(localStorage.getItem('ec_lien_ok') || '{}'); o[ecHash(id)] = Date.now(); var ks = Object.keys(o); if(ks.length > 40) delete o[ks[0]]; localStorage.setItem('ec_lien_ok', JSON.stringify(o)); }catch(e){} }
+  var EC_LIEN_PENDING = null;   // lien reçu, pas encore vérifié par le serveur sur ce téléphone
+  var EC_GUEST = (function(){ var m = /^#[sprec]=([A-Za-z0-9_-]+)&g=([a-z0-9]{10})$/.exec(location.hash || ''); if(!m) return false;
+    if(ecLienOk('s|' + m[1] + '|' + m[2])) return true; EC_LIEN_PENDING = {t:'s', p:m[1], s:m[2]}; return false; })();
   // « Calendrier de l'Avent seul » : lien signé par groupe (ex. École de Trail), valable jusqu'au 31 décembre de l'année du lien.
   // Donne accès uniquement au calendrier et aux séances de ses cases, sans abonnement. Gardé sur le téléphone pour l'icône d'accueil.
   var EC_AVP_GROUPES = {edt:'l’École de Trail Pont-Audemer'};
-  function ecAvSig(g, y){ return (ecHash('avent|' + g + '|' + y + '|' + EC_SIGN) + '00000000').slice(0, 8); }
-  function ecAvLink(g, y){ y = y || new Date().getFullYear(); return 'https://appli.ethikcoach.fr/#avent=' + g + '-' + y + '&g=' + ecAvSig(g, y); }
+  function ecAvSig(g, y){ var k = ecLienKey(); return k ? (ecHash('avent|' + g + '|' + y + '|' + k) + '0000000000').slice(0, 10) : ''; }
+  function ecAvLink(g, y){ y = y || new Date().getFullYear(); var s = ecAvSig(g, y); return s ? 'https://appli.ethikcoach.fr/#avent=' + g + '-' + y + '&g=' + s : ''; }
   var EC_AVPASS = (function(){
-    var p = null, m = /^#avent=([a-z0-9]{2,16})-(\d{4})&g=([a-z0-9]{8})$/.exec(location.hash || '');
+    var p = null, m = /^#avent=([a-z0-9]{2,16})-(\d{4})&g=([a-z0-9]{10})$/.exec(location.hash || '');
     if(m) p = {g:m[1], y:+m[2], s:m[3]};
     else { try{ p = JSON.parse(localStorage.getItem('ec_avpass') || 'null'); }catch(e){} }
-    if(!p || ecAvSig(p.g, p.y) !== p.s) return null;
+    if(!p || !/^[a-z0-9]{10}$/.test(String(p.s || ''))) return null;
+    // Pass vérifié par le serveur une fois sur ce téléphone ; sinon, vérification au démarrage
+    if(!ecLienOk('a|' + p.g + '|' + p.y + '|' + p.s)){ if(m && !EC_LIEN_PENDING) EC_LIEN_PENDING = {t:'a', g:p.g, y:p.y, s:p.s}; return null; }
     if(Date.now() >= new Date(p.y + 1, 0, 1).getTime()) { try{ localStorage.removeItem('ec_avpass'); }catch(e){} return null; }
     try{ localStorage.setItem('ec_avpass', JSON.stringify(p)); }catch(e){}
     if(m) try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
@@ -1624,6 +1636,8 @@
       document.documentElement.classList.add('ec-locked', 'ec-subcheck');
     } else if(EC_LOCK_ON && EC_GUEST){
       document.documentElement.classList.add('ec-guest');
+    } else if(EC_LOCK_ON && EC_LIEN_PENDING){
+      document.documentElement.classList.add('ec-locked', 'ec-subcheck');
     } else if(EC_LOCK_ON && EC_AVPASS){
       document.documentElement.classList.add('ec-avpass');
     } else if(EC_LOCK_ON){
@@ -1633,6 +1647,13 @@
   })();
   var EC_IS_COACH = !EC_LOCK_ON || !!(EC_USER && EC_USER.h === EC_COACH_H);
   if(EC_IS_COACH) document.documentElement.classList.add('ec-coach');
+  // Coach : la clé qui signe les liens « séance seule » et le pass Avent vient du serveur (jamais dans le code publié)
+  if(EC_IS_COACH && EC_KEY && window.fetch) setTimeout(function(){
+    fetch(EC_SUB_API + '/coach/cle/lien', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:EC_KEY})})
+      .then(function(r){ return r.json(); })
+      .then(function(r){ if(r && r.ok && r.s && r.s !== ecLienKey()){ try{ localStorage.setItem('ec_coach_lien', r.s); }catch(e){} try{ window.dispatchEvent(new Event('ec-lien-key')); }catch(e){} } })
+      .catch(function(){});
+  }, 800);
 </script>
 <style>
   html.ec-locked body > *:not(#ecLock){display:none !important;}
@@ -8213,7 +8234,7 @@
     // Coach : accès personnel de l'athlète choisi glissé dans le lien (ouverture directe, sans code)
     if(window.__ecShareKey && window.__ecShareKey !== '__guest' && !/^[hg]:/.test(window.__ecShareKey) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', window.__ecShareKey); base = u.toString(); }catch(e){} }
     var p = encodeSession(session);
-    return base + '#s=' + p + (window.__ecShareKey === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
+    return base + '#s=' + p + (window.__ecShareKey === '__guest' && EC_IS_COACH ? ecGuestTail(p) : '');
   }
 
   function shareMessageFor(session, url){
@@ -8677,7 +8698,7 @@
     if(EC_IS_COACH) pl.by = 'Benoît';
     var cmv = ((document.getElementById('shareCoachMsg') || {}).value || '').trim(); if(cmv) pl.cm = cmv;
     var p = b64urlEncode(JSON.stringify(pl));
-    return base + '#p=' + p + (k === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
+    return base + '#p=' + p + (k === '__guest' && EC_IS_COACH ? ecGuestTail(p) : '');
   };
   window.ecProgTitle = function(){ var P = currentProgram; return P ? (P.title || ('Programme ' + PROG_OBJECTIVES[P.obj].label.toLowerCase())) : 'Programme'; };
   window.ecProgMessage = function(url){
@@ -10344,7 +10365,7 @@
     // Sauvegarde / restauration
     function backupKeys(){
       var out = {};
-      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k !== 'ec_coach_lien' && k !== 'ec_lien_ok' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') out[k] = localStorage.getItem(k); } }catch(e){}
       return out;
     }
     // Partie coach (clés et téléphones des athlètes, clients, séances de coaching) : chiffrée avec la clé coach
@@ -11682,7 +11703,7 @@
       var base = SHARE_BASE_URL || ecCleanBase();
       if(window.__ecShareKey && window.__ecShareKey !== '__guest' && !/^[hg]:/.test(window.__ecShareKey) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', window.__ecShareKey); base = u.toString(); }catch(e){} }
       var p = breathPayload();
-      return base + '#r=' + p + (window.__ecShareKey === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
+      return base + '#r=' + p + (window.__ecShareKey === '__guest' && EC_IS_COACH ? ecGuestTail(p) : '');
     };
     window.ecBreathMessage = function(url){
       var name = (document.getElementById('athleteName').value || '').trim(), s = lastBreathSession;
@@ -11869,7 +11890,7 @@
       var base = SHARE_BASE_URL || ecCleanBase(), k = window.__ecShareKey;
       if(k && k !== '__guest' && !/^[hg]:/.test(k) && EC_IS_COACH){ try{ var u = new URL(base); u.searchParams.set('acces', k); base = u.toString(); }catch(e){} }
       var p = exPayload();
-      return base + '#e=' + p + (k === '__guest' && EC_IS_COACH ? '&g=' + ecGuestSig(p) : '');
+      return base + '#e=' + p + (k === '__guest' && EC_IS_COACH ? ecGuestTail(p) : '');
     };
     window.ecExMessage = function(url){
       var name = (document.getElementById('athleteName').value || '').trim(), ex = exById(window.__ecShareEx) || {};
@@ -17699,6 +17720,19 @@
       requestAnimationFrame(function(){ w.classList.add('on'); });
       w.querySelector('.ech-go').addEventListener('click', function(){ w.classList.remove('on'); setTimeout(function(){ w.remove(); }, 250); });
     }
+    // Lien « séance seule » ou pass Avent reçu : vérifié une fois par le serveur, puis gardé sur ce téléphone
+    if(EC_LIEN_PENDING && EC_LOCK_ON && !EC_SUB_PENDING && !EC_USER){
+      var LP = EC_LIEN_PENDING, lid = LP.t === 's' ? 's|' + LP.p + '|' + LP.s : 'a|' + LP.g + '|' + LP.y + '|' + LP.s;
+      $('ecLockTitle').textContent = LP.t === 's' ? 'Ouverture de ta séance…' : 'Ouverture du calendrier…'; $('ecLockText').textContent = 'Un instant.';
+      var spL = document.createElement('div'); spL.className = 'ecl-spin'; $('ecLockText').after(spL);
+      fetch(EC_SUB_API + '/lien/verifier', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify(LP.t === 's' ? {t:'s', p:LP.p, s:LP.s} : {t:'a', g:LP.g, y:LP.y, s:LP.s})})
+        .then(function(r){ return r.json(); })
+        .then(function(r){
+          if(r && r.ok){ ecLienSave(lid); location.reload(); return; }
+          showLocked('Lien non valide', r && r.raison === 'bloque' ? 'Trop d’essais depuis cette connexion. Réessaie dans une heure.' : (LP.t === 's' ? 'Ce lien de séance n’est pas valide. Demande un nouveau lien à Benoît, ou essaie l’appli complète.' : 'Ce lien du calendrier de l’Avent n’est pas valide. Demande le bon lien à Benoît.'));
+        })
+        .catch(function(){ showLocked('Connexion nécessaire', 'Connecte-toi à Internet pour ouvrir ce lien la première fois. Ensuite, il marche aussi hors connexion.'); });
+    }
     // Lien d'abonné pas encore vérifié sur ce téléphone (ou hors connexion depuis plus de 7 jours)
     if(EC_SUB_PENDING && EC_LOCK_ON){
       $('ecLockTitle').textContent = 'Vérification de ton accès…'; $('ecLockText').textContent = 'Un instant.';
@@ -20748,15 +20782,21 @@
   // ---------- Espace coach : lien à partager ----------
   (function(){
     var inp = document.getElementById('ctAvpLink'); if(!inp || typeof ecAvLink !== 'function') return;
-    var y = new Date().getFullYear(), link = ecAvLink('edt', y);
+    var y = new Date().getFullYear(), link = '', txt = '';
+    function fill(){
+    link = ecAvLink('edt', y);
+    if(!link){ inp.value = 'Connecte-toi à Internet : le lien se prépare avec ton serveur'; txt = ''; return; }
     inp.value = link;
-    var txt = '🎄 Défi de l’Avent de l’École de Trail !\n\n'
+    txt = '🎄 Défi de l’Avent de l’École de Trail !\n\n'
       + 'Du 1er au 24 décembre, une séance surprise par jour sur l’appli Ethik’Coach : renfo, yoga, étirements, respiration ou défi, de 5 à 10 minutes, guidée pas à pas.\n\n'
       + 'Pas besoin d’abonnement : ouvre le lien, puis ajoute l’appli à ton écran d’accueil.\n👉 ' + link + '\n\n'
       + 'À vos baskets, et bonne fin d’année !\n' + EC_SIGNATURE;
     var wa = document.getElementById('ctAvpWa'); if(wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+    }
+    fill(); window.addEventListener('ec-lien-key', fill);
     function toast(m){ try{ (window.showToast || showToast)(m, false); }catch(e){} }
     document.getElementById('ctAvpCopy').addEventListener('click', function(){
+      if(!txt){ toast('Lien pas encore prêt : connecte-toi à Internet'); return; }
       var done = function(){ toast('Lien copié ✓'); };
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ inp.select(); document.execCommand('copy'); done(); });
       else { inp.select(); document.execCommand('copy'); done(); }
@@ -22715,7 +22755,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var s2 = {d:s.d, lab:s.lab, t:s.t, r:s.r, w:s.w, ex:s.ex.map(function(l){ var a = [l[0], l[1]]; if(l[2] === 0 || l[2] === 1) a.push(l[2]); return a; })};
     var p = b64e(codeOf('Ta séance', s2)), base = 'https://appli.ethikcoach.fr/';
     try{ if(/(^|\.)ethikcoach\.fr$/i.test(location.hostname)) base = location.origin + '/'; }catch(e){}
-    return base + '#c=' + p + (typeof ecGuestSig === 'function' ? '&g=' + ecGuestSig(p) : '');
+    return base + '#c=' + p + (typeof ecGuestTail === 'function' ? ecGuestTail(p) : '');
   }
   function guestCta(){ return '<div class="clp-gwrap"><span class="guest-note">Cette séance t’est offerte par Benoît, coach Ethik’Coach. Envie d’un programme fait pour toi ? Écris-lui, il te répond vite.</span><div class="clp-gbtns"><a class="cl-btn ghost" href="https://wa.me/33611323245?text=' + encodeURIComponent('Bonjour Benoît, j’ai fait la séance que tu m’as envoyée et je voudrais en savoir plus sur l’appli Ethik’Coach.') + '" target="_blank" rel="noopener">Écrire à Benoît sur WhatsApp</a></div></div>'; }
   window.ecCoachingOpen = function(code, note, guest){ var r = parseCC(code); if(!r){ toast('Séance illisible'); return; } present(r.nom || 'Ta séance', r.s, {athlete:true, note:note || '', guest:!!guest}); };
