@@ -10407,7 +10407,7 @@
         if(!data || data.app !== 'ethikcoach' || !data.data){ showToast('Ce fichier n’est pas une sauvegarde Ethik’Coach.', false); return; }
         var n = 0; try{ n = JSON.parse(data.data.ec_history_v1 || '[]').length; }catch(e){}
         ecConfirm('Restaurer cette sauvegarde (' + n + ' séance' + (n > 1 ? 's' : '') + ' dans l’historique) ? Les données actuelles de cet appareil seront remplacées.', 'Restaurer', function(){
-          function put(o){ try{ Object.keys(o).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_acl') localStorage.setItem(k, o[k]); }); }catch(e){} }
+          function put(o){ try{ Object.keys(o).forEach(function(k){ if(/^(ec_|ethikcoach)/.test(k) && k !== 'ec_access' && k !== 'ec_run_v1' && k !== 'ec_notif_dev' && k !== 'ec_live_dev2' && k !== 'ec_dev_id' && k !== 'ec_acc' && k !== 'ec_coach_gh' && k !== 'ec_coach_abo' && k !== 'ec_coach_lien' && k !== 'ec_lien_ok' && k.indexOf('ec_sync_') !== 0 && k !== 'ec_acl' && k !== 'ec_coach_min') localStorage.setItem(k, o[k]); }); }catch(e){} }
           put(data.data);
           if(!data.coach){ location.reload(); return; }
           if(!(EC_IS_COACH && EC_KEY && window.crypto && crypto.subtle)){ showToast('Suivi restauré. La partie coach est chiffrée : restaure-la depuis l’appli ouverte avec ta clé coach.', false); setTimeout(function(){ location.reload(); }, 2500); return; }
@@ -17605,7 +17605,7 @@
     }
     if(OPEN && !EC_EXPIRED && !EC_BLOCKED){
       $('ecLockTitle').textContent = 'Ton coach dans ta poche';
-      $('ecLockText').textContent = 'Renfo sur mesure, étirements, yoga, respiration, et plus de 20 programmes de 4 à 10 semaines (trail, course, vélo, dos, seniors…) : des séances guidées à la voix, adaptées à ton niveau et à ton matériel.';
+      $('ecLockText').textContent = 'Renfo sur mesure, étirements, yoga, respiration, et près de 20 programmes de 4 à 10 semaines (trail, course, vélo, dos, seniors…) : des séances guidées à la voix, adaptées à ton niveau et à ton matériel.';
       if(site) site.style.display = 'none';
       var wa = $('ecLockWa'); if(wa) wa.textContent = 'Une question ? Écris à Benoît';
     }
