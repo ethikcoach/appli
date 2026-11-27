@@ -23481,7 +23481,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         var age = Math.max(0, ((r.now || 0) - (r.x.at || 0)) / 1000);
         return SY.dec(r.x.d, r.x.iv).then(function(p){
           if(!W.on) return;
-          if(!p || p.dev === LDEV || p.st === 'close' || age > 60){ chip.classList.remove('ok'); show(null); return; }
+          if(!p || p.dev === LDEV || p.st === 'close'){ chip.classList.remove('ok'); show(null); return; }
+          // Le serveur peut renvoyer un moment une copie plus ancienne (stockage pas encore à jour partout) :
+          // on garde l'étape la plus récente déjà affichée au lieu de revenir en arrière ou de tout effacer (scintillement)
+          if(W.p && p.sid === W.p.sid && (p.at || 0) < (W.p.at || 0)){ return; }
+          if(age > 60){ if(W.p && Date.now() - (W.seen || 0) < 90000) return; chip.classList.remove('ok'); show(null); return; }
+          W.seen = Date.now();
           chip.classList.add('ok');
           p.lt = Date.now() - age * 1000;   // heure du serveur : pas de décalage entre les horloges des deux appareils
           show(p);
