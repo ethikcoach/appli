@@ -22966,7 +22966,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         + '<div class="cl-grid2"><button type="button" class="cl-btn go" data-a="import">' + IC('import') + 'Importer</button><button type="button" class="cl-btn ghost" data-a="newc">' + IC('userplus') + 'Nouveau client</button></div>';
     } else {
       h += '<div class="cl-bar"><input class="cl-in" id="clQ" type="search" placeholder="Rechercher un client" value="' + esc(V.q) + '" autocomplete="off"><button type="button" class="cl-btn ghost cl-eye" data-a="' + (SHOW ? 'hide' : 'reveal') + '" aria-label="' + (SHOW ? 'Masquer mes clients' : 'Afficher mes clients') + '">' + IC(SHOW ? 'eyeoff' : 'eye') + '</button><button type="button" class="cl-btn" data-a="newc" aria-label="Nouveau client">' + IC('plus') + '</button></div>';
-      if(!SHOW){ h += '<button type="button" class="cl-reveal" data-a="reveal">' + IC('eye') + '<span><b>Afficher mes clients</b><small>Mode discret : liste et chiffres masqués devant tes clients. Ils se recachent tout seuls.</small></span></button><div class="cl-list" id="clList"></div>'; }
+      if(!SHOW){ h += '<div class="cl-list" id="clList"></div>'; }   // mode discret : l'œil de la barre suffit pour afficher
       h += todayHtml();
       if(SHOW) h += '<div class="cl-list" id="clList"></div>';   // le bilan des séances est dans le Planning (vues Mois et Année)
     }
