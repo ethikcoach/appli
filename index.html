@@ -20905,8 +20905,17 @@
   };
   // Appli quittée (écran d'accueil, autre appli, téléphone verrouillé) : plus aucun bip, retour au son normal.
   // Sinon le mode « lecture » gardait l'appli active en arrière-plan et les chronos continuaient de sonner.
+  // Retour dans l'appli : iOS a coupé le son pendant l'absence. On le relance tout de suite (ec-sound-back), puis on le
+  // recrée proprement au premier toucher (ec-sound-touch), seul moment où iOS autorise à rallumer le son à coup sûr.
+  var backOnce = null;
   document.addEventListener('visibilitychange', function(){
-    if(!document.hidden) return;
+    if(!document.hidden){
+      try{ window.dispatchEvent(new Event('ec-sound-back')); }catch(e){}
+      if(backOnce) return;
+      backOnce = function(){ document.removeEventListener('touchend', backOnce, true); document.removeEventListener('pointerdown', backOnce, true); document.removeEventListener('keydown', backOnce, true); backOnce = null; try{ window.dispatchEvent(new Event('ec-sound-touch')); }catch(e){} };
+      document.addEventListener('touchend', backOnce, true); document.addEventListener('pointerdown', backOnce, true); document.addEventListener('keydown', backOnce, true);
+      return;
+    }
     clearTimeout(loudT); try{ navigator.audioSession && (navigator.audioSession.type = 'ambient'); }catch(e){}
     try{ window.dispatchEvent(new Event('ec-sound-off')); }catch(e){}
   });
@@ -21373,6 +21382,18 @@
   // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
   window.addEventListener('ec-sound-off', function(){ if(R) window.ecCdStop(R); window.ecAliveOff(AC); });
+  // Retour dans l'appli pendant le chrono : le son est relancé, puis recréé au premier toucher (sinon plus de 3-2-1)
+  window.addEventListener('ec-sound-back', function(){
+    if(!R) return;
+    try{ if(AC && AC.state !== 'closed' && AC.state !== 'running'){ var pr = AC.resume(); if(pr && pr.catch) pr.catch(function(){}); } }catch(e){}
+    R._ka = 0; window.ecAlive(AC, R);
+    toast('Touche l’écran pour réactiver les bips');
+  });
+  window.addEventListener('ec-sound-touch', function(){
+    if(!R) return;
+    try{ window.ecAliveOff(AC); if(AC && AC.close) AC.close(); }catch(e){} AC = null;
+    if(window.ecLoud) window.ecLoud(); hush(); R._ka = 0; window.ecAlive(AC, R);
+  });
   function tick(f, d){ if(document.hidden) return; if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = f || 1200; g.gain.setValueAtTime(.06, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
@@ -23263,6 +23284,19 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Réveil inaudible du son (iPhone) au toucher, sans bip : les 3-2-1 et le bip final sonneront ensuite
   function hush(){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === 'suspended') AC.resume(); var o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .03); }catch(e){} }
   window.addEventListener('ec-sound-off', function(){ if(CT) window.ecCdStop(CT); window.ecAliveOff(AC); });
+  // Retour dans l'appli pendant le chrono : le son est relancé, puis recréé au premier toucher (sinon plus de 3-2-1)
+  window.addEventListener('ec-sound-back', function(){
+    if(!CT) return;
+    liveSend();   // l'iPad reçoit tout de suite l'étape en cours
+    try{ if(AC && AC.state !== 'closed' && AC.state !== 'running'){ var pr = AC.resume(); if(pr && pr.catch) pr.catch(function(){}); } }catch(e){}
+    CT._ka = 0; window.ecAlive(AC, CT);
+    toast('Touche l’écran pour réactiver les bips');
+  });
+  window.addEventListener('ec-sound-touch', function(){
+    if(!CT) return;
+    try{ window.ecAliveOff(AC); if(AC && AC.close) AC.close(); }catch(e){} AC = null;
+    if(window.ecLoud) window.ecLoud(); hush(); CT._ka = 0; window.ecAlive(AC, CT);
+  });
   function tick(f, d){ if(document.hidden) return; if(window.ecLoud) window.ecLoud(); try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); var os = AC.createOscillator(), g = AC.createGain(); os.type = 'triangle'; os.frequency.value = f || 1200; g.gain.setValueAtTime(.07, AC.currentTime); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + (d || .05)); os.connect(g); g.connect(AC.destination); os.start(); os.stop(AC.currentTime + (d || .05) + .02); }catch(e){} }
   function ding(){ tick(880, .25); setTimeout(function(){ tick(1320, .35); }, 120); }
   // « 0 » : double bip à la fin de chaque compte à rebours (sauf le dernier, qui a sa mélodie)
@@ -23498,7 +23532,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           var best = null;
           Object.keys(W.devs).forEach(function(d){
             var x = W.devs[d], ag = x.age + (now - x.seen) / 1000;
-            if(x.p.st === 'close' || ag > 60 || now - x.seen > 45000){ if(now - x.seen > 90000 || x.p.st === 'close') delete W.devs[d]; return; }
+            if(x.p.st === 'close' || ag > 900 || now - x.seen > 45000){ if(now - x.seen > 90000 || x.p.st === 'close') delete W.devs[d]; return; }
             if(!best || x.ch > best.ch) best = x;
           });
           if(!best){ chip.classList.remove('ok'); show(null); return; }
@@ -24739,6 +24773,9 @@ html.cl-hide #ctMini{visibility:hidden;}
   function keepOn(){ if(document.hidden) return; var a = audio(); if(!a) return; if(KEEPO && KEEPA === a) return; keepOff(); try{ var o = a.createOscillator(), g = a.createGain(); o.frequency.value = 30; g.gain.value = 0.00012; o.connect(g); g.connect(a.destination); o.start(); KEEPO = o; KEEPA = a; }catch(e){ KEEPO = null; } }
   function keepOff(){ if(KEEPO){ try{ KEEPO.stop(); }catch(e){} } KEEPO = null; KEEPA = null; }
   window.addEventListener('ec-sound-off', function(){ keepOff(); if(R) window.ecCdStop(R); try{ if(AC && AC.state === 'running') AC.suspend(); }catch(e){} });
+  // Retour dans l'appli pendant un timer : son relancé, puis recréé au premier toucher (sinon plus de 3-2-1)
+  window.addEventListener('ec-sound-back', function(){ if(!R) return; loudAt = 0; resume(); keepLoud(); toast('Touche l’écran pour réactiver les bips'); });
+  window.addEventListener('ec-sound-touch', function(){ if(!R) return; keepOff(); try{ if(AC) AC.close(); }catch(e){} AC = null; if(window.ecLoud) window.ecLoud(); loudAt = 0; keepLoud(); });
   // Débloque le son de l'iPhone au moment où l'on touche l'écran (inaudible) : le bip de fin pourra sonner plus tard
   // loud : un chrono va démarrer → passage en mode « lecture » d'abord, et son recréé s'il datait d'avant
   function unlock(loud){ var a = null;
