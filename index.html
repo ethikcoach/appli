@@ -23280,6 +23280,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function openTimer(nom, s, o){
     var steps = buildSteps(s, o);
     if(!steps.length){ toast('Séance vide'); return; }
+    // Double appui sur « Lancer » : on range l'ancien chrono au lieu d'en laisser deux tourner (deux envois en direct)
+    if(CT){ try{ clearInterval(CT.iv); clearInterval(CT.hb); window.ecCdStop(CT); CT.el.remove(); }catch(e){} CT = null; }
     var el = document.createElement('div'); el.className = 'stx stp clt'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Chrono de ' + nom);
     el.innerHTML = '<div class="stx-top"><div class="stx-tour" id="cltT">' + esc(nom) + '<small></small></div><span class="stx-sp"></span><button type="button" class="stx-ib" data-r="show" aria-label="Voir la séance">' + IC('list') + '</button><button type="button" class="stx-ib" data-r="close" aria-label="Fermer">' + IC('x') + '</button></div><div class="clt-pg" id="cltPg" aria-hidden="true"></div><div class="stp-body" id="cltB"></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
@@ -23289,7 +23291,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     try{ window.ecKeepAwake && window.ecKeepAwake(true); }catch(e){}
     CT.left = steps[0].sec || 0;
     el.addEventListener('click', onTimer);
-    CT.iv = setInterval(tickT, 100); CT.sid = Date.now().toString(36); CT.hb = setInterval(function(){ liveSend(); }, 20000);
+    CT.iv = setInterval(tickT, 100); CT.sid = Date.now().toString(36); CT.hb = setInterval(function(){ if(CT && CT.el && document.body.contains(CT.el)) liveSend(); }, 20000);
     // Centièmes : l'affichage du temps suit chaque image de l'écran
     (function cltRaf(){ if(!CT || CT.el !== el) return; var st = cur(), t = el.querySelector('#cltTime');
       if(CT.state === 'chrono' && st.sec && CT.endAt <= Date.now()){ tickT(); requestAnimationFrame(cltRaf); return; }
@@ -23481,14 +23483,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         var age = Math.max(0, ((r.now || 0) - (r.x.at || 0)) / 1000);
         return SY.dec(r.x.d, r.x.iv).then(function(p){
           if(!W.on) return;
-          if(!p || p.dev === LDEV || p.st === 'close'){ chip.classList.remove('ok'); show(null); return; }
-          // Le serveur peut renvoyer un moment une copie plus ancienne (stockage pas encore à jour partout) :
-          // on garde l'étape la plus récente déjà affichée au lieu de revenir en arrière ou de tout effacer (scintillement)
-          if(W.p && p.sid === W.p.sid && (p.at || 0) < (W.p.at || 0)){ return; }
-          if(age > 60){ if(W.p && Date.now() - (W.seen || 0) < 90000) return; chip.classList.remove('ok'); show(null); return; }
-          W.seen = Date.now();
+          // Plusieurs appareils peuvent avoir un chrono ouvert (téléphone + un chrono oublié ailleurs) : le serveur garde
+          // le dernier envoi, donc l'iPad recevrait tour à tour l'un puis l'autre (scintillement, écran qui s'efface).
+          // On suit l'appareil dont la séance AVANCE le plus récemment ; un chrono immobile ne prend plus la main.
+          var now = Date.now(); W.devs = W.devs || {};
+          if(p && p.dev && p.dev !== LDEV){
+            var sig = p.sid + ':' + p.k + ':' + p.st + ':' + ((p.cur && p.cur.cnt) || 0), e = W.devs[p.dev];
+            if(!(e && p.sid === e.p.sid && (p.at || 0) < (e.p.at || 0))){            // jamais revenir à une copie plus ancienne
+              if(!e || e.sig !== sig) e = W.devs[p.dev] = {sig:sig, ch:now};
+              p.lt = now - age * 1000;   // heure du serveur : pas de décalage entre les horloges des deux appareils
+              e.p = p; e.seen = now; e.age = age;
+            }
+          }
+          var best = null;
+          Object.keys(W.devs).forEach(function(d){
+            var x = W.devs[d], ag = x.age + (now - x.seen) / 1000;
+            if(x.p.st === 'close' || ag > 60 || now - x.seen > 45000){ if(now - x.seen > 90000 || x.p.st === 'close') delete W.devs[d]; return; }
+            if(!best || x.ch > best.ch) best = x;
+          });
+          if(!best){ chip.classList.remove('ok'); show(null); return; }
           chip.classList.add('ok');
-          p.lt = Date.now() - age * 1000;   // heure du serveur : pas de décalage entre les horloges des deux appareils
+          p = best.p;
           show(p);
         });
       }).catch(function(){ chip.classList.remove('ok'); net(false); }).then(function(){ if(W.on) W.pt = setTimeout(poll, 1500); });
