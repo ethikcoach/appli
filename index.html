@@ -23474,7 +23474,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function liveGo(p){
     LV.busy = true;
     var d = (Date.now() - p.at) / 1000; if(d > 0 && p.st === 'chrono'){ if(p.dur) p.left = Math.max(0, p.left - d); else p.el += d; } p.at = Date.now();
-    SY.enc(p).then(function(b){ return SY.post('/coaching/direct', b); }).catch(function(){}).then(function(){ LV.busy = false; if(LV.pend){ var q = LV.pend; LV.pend = null; liveGo(q); } });
+    var fail = false;
+    SY.enc(p).then(function(b){ return SY.post('/coaching/direct', b); }).then(function(r){ if(!r || !r.ok) fail = true; }, function(){ fail = true; })
+      .then(function(){
+        LV.busy = false;
+        if(LV.pend){ var q = LV.pend; LV.pend = null; liveGo(q); return; }
+        // Envoi raté (réseau ou serveur un instant indisponible) : on réessaie l'étape en cours 2 s plus tard
+        if(fail && CT && (LV.retry || 0) < 3){ LV.retry = (LV.retry || 0) + 1; setTimeout(function(){ if(CT && !LV.busy) liveSend(); }, 2000); }
+        else if(!fail) LV.retry = 0;
+      });
   }
   function liveWatch(host){
     if(!liveOk()) return null;
@@ -23513,7 +23521,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       SY.post('/coaching/direct/lire', {}).then(function(r){
         if(!W.on) return;
         net(!!(r && r._s));
-        if(!r || !r.ok || !r.x){ chip.classList.remove('ok'); show(null); return; }
+        // Réponse ratée (serveur un instant indisponible) : on garde l'affichage au lieu de l'effacer (scintillement) ;
+        // on n'efface que si ça dure plus de 20 s, ou si le serveur dit clairement qu'il n'y a plus de séance en direct.
+        if(!r || !r.ok){ W.bad = W.bad || Date.now(); if(W.p && Date.now() - W.bad < 20000) return; chip.classList.remove('ok'); show(null); return; }
+        W.bad = 0;
+        if(!r.x){ chip.classList.remove('ok'); show(null); return; }
         var age = Math.max(0, ((r.now || 0) - (r.x.at || 0)) / 1000);
         return SY.dec(r.x.d, r.x.iv).then(function(p){
           if(!W.on) return;
@@ -23521,6 +23533,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           // le dernier envoi, donc l'iPad recevrait tour à tour l'un puis l'autre (scintillement, écran qui s'efface).
           // On suit l'appareil dont la séance AVANCE le plus récemment ; un chrono immobile ne prend plus la main.
           var now = Date.now(); W.devs = W.devs || {};
+          if(!p && W.p) return;   // lecture illisible un instant : on garde l'étape affichée
           if(p && p.dev && p.dev !== LDEV){
             var sig = p.sid + ':' + p.k + ':' + p.st + ':' + ((p.cur && p.cur.cnt) || 0), e = W.devs[p.dev];
             if(!(e && p.sid === e.p.sid && (p.at || 0) < (e.p.at || 0))){            // jamais revenir à une copie plus ancienne
