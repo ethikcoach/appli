@@ -10860,7 +10860,7 @@
       if(p === 'abo' || p === 'grp'){ ctPf = p; p = 'ath'; }
       if(p === 'studio'){ ctCo = 'tirage'; p = 'clients'; }
       if(['ath', 'send', 'clients', 'timers', 'set'].indexOf(p) < 0) p = 'ath';
-      ctPane = p;
+      ctPane = p; var ctEl = document.getElementById('coachTools'); if(ctEl) ctEl.setAttribute('data-pane', p);
       document.querySelectorAll('#ctTabs [data-pane]').forEach(function(b){ var on = b.getAttribute('data-pane') === p; b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
       document.querySelectorAll('#coachTools .ct-pane').forEach(function(x){
         var d = x.getAttribute('data-pane'), on;
@@ -25031,9 +25031,9 @@ html:root .clp .clp-c em .tmi{color:#5A3A04;} html:root .clp .clp-c em small{col
 /* Boutons d'une séance : rangée principale + rangée d'outils (téléphone) */
 .cl-acts .sm{display:none;}
 @media (max-width:600px){
-  .cl-acts{display:grid !important; grid-template-columns:repeat(15, minmax(0, 1fr)); gap:8px;}
-  .cl-acts > button{grid-column:span 5; min-width:0; padding:0 6px; justify-content:center; white-space:nowrap; min-height:46px; font-size:.86rem;}
-  .cl-acts > button.sec{grid-column:span 3; flex-direction:column; gap:3px; min-height:56px; padding:6px 2px; font-size:.68rem; font-weight:700; line-height:1;}
+  .cl-acts{display:grid !important; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:6px;}
+  .cl-acts > button{grid-column:span 2; min-width:0; padding:0 6px; justify-content:center; white-space:nowrap; min-height:46px; font-size:.86rem;}
+  .cl-acts > button.sec{grid-column:span 1; flex-direction:column; gap:3px; min-height:54px; padding:6px 1px; font-size:.64rem; font-weight:700; line-height:1;}
   .cl-acts > button.sec .tmi{width:19px; height:19px;}
   .cl-acts > button.sec .lg{display:none;} .cl-acts > button.sec .sm{display:inline;}
 }
@@ -25582,7 +25582,27 @@ html.cl-hide #ctMini{visibility:hidden;}
 @media (max-width:600px){ #coachTools .ct-hero{padding:16px;} #coachTools .ct-hero-stats{width:100%;} #coachTools .ct-hero-stats .ct-k{flex:1 1 0; min-width:0;} .ct-k small{white-space:normal;} #coachTools .ct-hero-stats .ct-sync{flex-basis:100%; justify-content:center;} }
 /* Le statut « à jour » est dans le bandeau : la barre ne s'affiche que s'il y a quelque chose à faire */
 #coachTools .ct-pub.ok{display:none !important;}
-html.cl-hide #coachTools .ct-hero-stats{display:none;}
+html.cl-hide #ctMini{visibility:visible;} html.cl-hide #coachTools[data-pane="clients"] .ct-hero-stats{display:none;}
+/* ===== Espace coach : même mise en page sur tous les onglets (téléphone en priorité) ===== */
+#coachTools .ct-card, #coachTools .cl-card{border-radius:20px; padding:16px; margin:0 0 12px; box-shadow:0 1px 2px rgba(16,32,48,.05), 0 6px 18px rgba(16,32,48,.06); border:1px solid rgba(38,63,88,.07);}
+#coachTools .ct-card > h3, #coachTools .cl-card > h3, #coachTools .ct-h3row > h3, #coachTools .ct-card h3:first-child{display:flex; align-items:center; gap:8px; margin:0 0 6px; font:800 1.12rem/1.2 'Bricolage Grotesque', Inter, sans-serif; letter-spacing:-.01em; color:var(--ink);}
+#coachTools .ct-card > h3 .tmi, #coachTools .cl-card > h3 .tmi, #coachTools .ct-card > h3 svg, #coachTools .cl-card > h3 svg{width:20px; height:20px; flex:none; color:#34536F;}
+#coachTools .ct-card > p:not([class]), #coachTools .cl-card > p:not([class]), #coachTools .ct-note{font-size:.84rem; line-height:1.45; color:var(--stone);}
+/* Rangées de filtres : à la ligne plutôt que coupées au bord de l'écran */
+#coachTools .chip-group, #coachTools .ct-filter, #coachTools .ab-filter{flex-wrap:wrap !important; overflow:visible !important; -webkit-mask-image:none !important; mask-image:none !important;}
+#coachTools .chip{flex:none;}
+/* Bandeaux des sous-pages (Timers, Tirage studio) : compacts, le titre « Espace coach » est déjà en haut */
+#coachTools .tm-hero{border-radius:20px; padding:14px 14px 12px;}
+#coachTools .tm-hero-t small{display:none;}
+#coachTools .tm-hero-t h3{margin:0 0 4px; font-size:1.35rem;}
+#coachTools .tm-hero-t p{font-size:.82rem; margin:0 0 4px;}
+@media (max-width:600px){
+  #coachTools .ct-card, #coachTools .cl-card{padding:14px;}
+  #coachTools .tm-hero-t p{display:none;}
+  #coachTools .ss-hero .ss-hero-acts{margin-top:8px;}
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #coachTools .ct-card, :root:not([data-theme="light"]) #coachTools .cl-card{border-color:rgba(255,255,255,.06); box-shadow:0 8px 22px rgba(0,0,0,.28);} :root:not([data-theme="light"]) #coachTools .ct-card > h3 .tmi, :root:not([data-theme="light"]) #coachTools .cl-card > h3 .tmi, :root:not([data-theme="light"]) #coachTools .ct-card > h3 svg, :root:not([data-theme="light"]) #coachTools .cl-card > h3 svg{color:#9CC0E0;} }
+:root[data-theme="dark"] #coachTools .ct-card, :root[data-theme="dark"] #coachTools .cl-card{border-color:rgba(255,255,255,.06); box-shadow:0 8px 22px rgba(0,0,0,.28);} :root[data-theme="dark"] #coachTools .ct-card > h3 .tmi, :root[data-theme="dark"] #coachTools .cl-card > h3 .tmi, :root[data-theme="dark"] #coachTools .ct-card > h3 svg, :root[data-theme="dark"] #coachTools .cl-card > h3 svg{color:#9CC0E0;}
 #coachTools .ct-pub.todo{border-radius:14px; box-shadow:inset 0 0 0 1.5px #E8C77A, 0 4px 14px rgba(232,180,74,.18);}
 /* Onglets */
 #coachTools .ct-tabs{padding:5px; gap:4px; border-radius:18px; box-shadow:0 4px 16px rgba(16,32,48,.08); border:1px solid rgba(38,63,88,.08);}
