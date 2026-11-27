@@ -23498,6 +23498,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         W.el.addEventListener('click', function(ev){ if(ev.target.closest('[data-lv="hide"]') && W.p){ W.hide = key(W.p); W.el.remove(); W.el = null; backShow(W.p); } });
         same = false; requestAnimationFrame(loop);
       }
+      // Auto-réparation : si l'écran du direct est resté vide (Safari/iPad qui n'a pas redessiné), on le redessine
+      if(same){ var bd = W.el.querySelector('.clv-body, .clv-fin'); if(!bd || bd.getBoundingClientRect().height < 40 || !bd.textContent.trim()) same = false; }
       if(!same) draw(p);
       tickV();
     }
@@ -23521,7 +23523,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         h += '<div class="stp-body clv-body"><div class="clv-l">' + left + '</div><div class="clv-r">' + right + '</div></div>';
       }
       W.el.innerHTML = h;
+      W.el.scrollTop = 0;
     }
+    // Fenêtre redimensionnée (iPad en fenêtre, rotation, clavier) : on redessine à la bonne taille
+    var rsT = 0;
+    function onResize(){ clearTimeout(rsT); rsT = setTimeout(function(){ if(W.on && W.el && W.p){ draw(W.p); tickV(); } }, 150); }
+    window.addEventListener('resize', onResize);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden && W.on && W.el && W.p){ draw(W.p); tickV(); } });
     function tickV(){
       var p = W.p; if(!p || !W.el) return;
       var t = W.el.querySelector('#clvTime'), sEl = W.el.querySelector('#clvState'), bar = W.el.querySelector('#clvBar'), run = p.st === 'chrono', timed = p.dur > 0, dt = (Date.now() - p.lt) / 1000, c = p.cur;
@@ -23541,7 +23549,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return W;
   }
   window.ecTimerStore = {ready:function(){ return READY; }, list:function(){ return D.timers || []; }, set:function(a){ D.timers = a; save(); }};
-  window.ecClientsTest = {sync:SY, open:function(n, x, o){ openTimer(n, x, o); }, stamp:stamp, fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
+  window.ecClientsTest = {sync:SY, open:function(n, x, o){ openTimer(n, x, o); }, present:function(n, x, o){ return present(n, x, o || {}); }, stamp:stamp, fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
   load().then(function(){ render(); SY.run(); });
   render();
 })();
