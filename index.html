@@ -22881,7 +22881,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       h += '<div class="cl-bar"><input class="cl-in" id="clQ" type="search" placeholder="Rechercher un client" value="' + esc(V.q) + '" autocomplete="off"><button type="button" class="cl-btn ghost cl-eye" data-a="' + (SHOW ? 'hide' : 'reveal') + '" aria-label="' + (SHOW ? 'Masquer mes clients' : 'Afficher mes clients') + '">' + IC(SHOW ? 'eyeoff' : 'eye') + '</button><button type="button" class="cl-btn" data-a="newc" aria-label="Nouveau client">' + IC('plus') + '</button></div>';
       if(!SHOW){ h += '<button type="button" class="cl-reveal" data-a="reveal">' + IC('eye') + '<span><b>Afficher mes clients</b><small>Mode discret : liste et chiffres masqués devant tes clients. Ils se recachent tout seuls.</small></span></button><div class="cl-list" id="clList"></div>'; }
       h += todayHtml();
-      if(SHOW) h += '<button type="button" class="cl-bil-all" data-a="bilall">' + IC('calendar') + '<span><b>Bilan des séances</b><small>' + (function(){ var ym = todayIso().slice(0, 7), n = 0, cs = 0; D.clients.forEach(function(c){ var k = c.s.filter(function(x){ var d = isoD(x); return d && d.slice(0, 7) === ym && isDone(x); }).length; n += k; if(k) cs++; }); return n + ' séance' + (n > 1 ? 's' : '') + ' réalisée' + (n > 1 ? 's' : '') + ' en ' + mLab(ym) + (cs ? ' · ' + cs + ' client' + (cs > 1 ? 's' : '') : ''); })() + '</small></span><i>' + IC('next') + '</i></button><div class="cl-list" id="clList"></div>';
+      if(SHOW) h += '<div class="cl-list" id="clList"></div>';   // le bilan des séances est dans le Planning (vues Mois et Année)
     }
     h += '</div>';
     pane.innerHTML = h;
