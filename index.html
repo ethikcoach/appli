@@ -13151,7 +13151,7 @@
       mode = m; try{ localStorage.setItem('ec_recup_mode', m); }catch(e){}
       sw.querySelectorAll('[data-rm]').forEach(function(b){ var on = b.getAttribute('data-rm') === m; b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
       panel.hidden = slot.hidden = m !== 'mob'; bPanel.hidden = bRes.hidden = m === 'mob';
-      intro.querySelector('h1').textContent = m === 'mob' ? 'Récup & étirements' : 'Respiration & détente';
+      intro.querySelector('h1').textContent = m === 'mob' ? 'Récupération' : 'Respiration & détente';
       intro.querySelector('p').textContent = m === 'mob' ? 'Des routines guidées pour récupérer, gagner en amplitude ou te détendre, au chrono comme pour le renfo.' : 'Une respiration guidée pour récupérer, avant ou après l’effort, ou à tout moment.';
       place();
     }
@@ -15865,7 +15865,7 @@
     var want = document.createElement('section'); want.className = 'want'; want.setAttribute('aria-labelledby', 'wantTitle');
     want.innerHTML = '<h2 id="wantTitle">Je veux…</h2><div class="want-grid">'
       + '<button type="button" class="want-it w-renfo" data-w="renfo"><span class="w-ico">' + ico(IC.renfo) + '</span><b>Me renforcer</b><small>Séance sur mesure</small></button>'
-      + '<button type="button" class="want-it w-recup" data-w="recup"><span class="w-ico">' + ico(IC.recup) + '</span><b>Récupérer &amp; m’étirer</b><small>Étirements, yoga, massage</small></button>'
+      + '<button type="button" class="want-it w-recup" data-w="recup"><span class="w-ico">' + ico(IC.recup) + '</span><b>Récupération</b><small>Étirements, yoga, auto-massage</small></button>'
       + '<button type="button" class="want-it w-defi" data-w="defi"><span class="w-ico">' + ico(IC.defi) + '</span><b>Un défi</b><small>Chrono, CrossFit, HYROX</small></button>'
       + '<button type="button" class="want-it w-prog" data-w="prog"><span class="w-ico">' + ico(IC.prog) + '</span><b>Un programme</b><small>Plusieurs semaines</small></button>'
       + '</div>';
@@ -16088,7 +16088,7 @@
       var ih = rv.querySelector(':scope > .intro h1'); if(ih) ih.textContent = 'Créer une séance';
       var hh = rv.querySelector(':scope > .intro .hero-hello'); if(hh) hh.textContent = 'Choisis un type de séance, règle-la, c’est prêt';
       var wt = document.getElementById('wantTitle'); if(wt) wt.textContent = 'Que veux-tu faire ?';
-      var W = {renfo:['Renfo', 'Séance sur mesure'], recup:['Récup & étirements', 'Étirements, yoga, massage'], defi:['Défis & WOD', 'Chrono, CrossFit, HYROX'], prog:['Programme', 'Plusieurs semaines']};
+      var W = {renfo:['Renfo', 'Séance sur mesure'], recup:['Récupération', 'Étirements, yoga, auto-massage'], defi:['Défis & WOD', 'Chrono, CrossFit, HYROX'], prog:['Programme', 'Plusieurs semaines']};
       Object.keys(W).forEach(function(k){ var b = rv.querySelector('[data-w="' + k + '"]'); if(b){ b.querySelector('b').textContent = W[k][0]; b.querySelector('small').textContent = W[k][1]; } });
     }
 
@@ -16174,7 +16174,7 @@
     var ms = document.querySelector('#renfoView .mode-switch'); if(ms) ms.classList.add('sw-big');
     var rs = document.querySelector('#breathView .recup-switch');
     if(rs){ rs.classList.add('sw-big');
-      card(rs.querySelector('[data-rm="mob"]'), IC.mob, 'Postures guidées', 'Étirements, mobilité, yoga, massage', 'sw-mob');
+      card(rs.querySelector('[data-rm="mob"]'), IC.mob, 'Postures guidées', 'Étirements, mobilité, yoga, auto-massage', 'sw-mob');
       card(rs.querySelector('[data-rm="breath"]'), IC.breath, 'Respiration', 'Cohérence, détente, sommeil', 'sw-breath'); }
 
     // Créer : d'abord le choix (4 tuiles), puis le formulaire correspondant
@@ -16331,7 +16331,7 @@
       var k = key();
       if(H.getAttribute('data-pg') !== k) H.setAttribute('data-pg', k);
       if(rv){ var sub = k === 'renfo' || k === 'prog' || (k === 'wod' && window.__ecView === 'renfo'); rv.classList.toggle('cr-sub', sub); if(rH1 && window.__ecView === 'renfo'){ var t = TITLES[k] || TITLES.hub; if(rH1.textContent !== t) rH1.textContent = t; } }
-      if(bH1 && window.__ecView === 'breath'){ var bt = k === 'breath' ? 'Respiration' : 'Récup & étirements'; if(bH1.textContent !== bt) bH1.textContent = bt; }
+      if(bH1 && window.__ecView === 'breath'){ var bt = k === 'breath' ? 'Respiration' : 'Récupération'; if(bH1.textContent !== bt) bH1.textContent = bt; }
       wodBack();
     }
     window.ecPageUpdate = update;
@@ -16845,7 +16845,7 @@
   (function(){
     var hd = document.querySelector('body > header.site'); if(!hd) return;
     var t = document.createElement('div'); t.className = 'hd-title'; t.setAttribute('aria-hidden', 'true'); t.innerHTML = '<i></i><span></span>'; hd.appendChild(t);
-    var N = {today:'Aujourd’hui', hub:'Créer', renfo:'Renfo sur mesure', prog:'Mon programme', mob:'Récup & étirements', breath:'Respiration', wod:'Défis & WOD', lib:'Exercices', suivi:'Mon suivi', tests:'Tests de forme', espace:'Espace coach', moncoach:'Mon coach'};
+    var N = {today:'Aujourd’hui', hub:'Créer', renfo:'Renfo sur mesure', prog:'Mon programme', mob:'Récupération', breath:'Respiration', wod:'Défis & WOD', lib:'Exercices', suivi:'Mon suivi', tests:'Tests de forme', espace:'Espace coach', moncoach:'Mon coach'};
     function name(){ var k = document.documentElement.getAttribute('data-pg') || window.__ecView || 'today'; t.querySelector('span').textContent = N[k] || ''; }
     var on = false;
     function upd(){ var o = (window.scrollY || document.documentElement.scrollTop || 0) > 28; if(o !== on){ on = o; hd.classList.toggle('hd-on', o); } }
@@ -16912,7 +16912,7 @@
     var head = document.createElement('div'); head.className = 'cr-head';
     intro.appendChild(head);
     var CARDS = {renfo:{ph:'p2', c:'renfo', k:'Renfo', t:'Me renforcer', s:'Poids du corps, haltères, kettlebell, salle', d:'10 à 60 min'},
-      recup:{ph:'m5', c:'recup', k:'Récup', t:'Récupérer & m’étirer', s:'Étirements, yoga, massage, respiration', d:'5 à 45 min'},
+      recup:{ph:'m5', c:'recup', k:'Récup', t:'Récupération', s:'Étirements, yoga, auto-massage, respiration', d:'5 à 45 min'},
       defi:{ph:'cf5', c:'defi', k:'Défis', t:'Relever un défi', s:'Chrono, CrossFit, HYROX', d:'Au chrono'},
       prog:{ph:'k13', c:'prog', k:'Programme', t:'Suivre un programme', s:'Plusieurs semaines, pas à pas', d:'2 à 12 sem.'}};
     var ARROW = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>';
