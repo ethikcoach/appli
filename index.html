@@ -24039,7 +24039,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         LV.busy = false;
         if(LV.pend){ var q = LV.pend; LV.pend = null; liveGo(q); return; }
         // Envoi raté (réseau ou serveur un instant indisponible) : on réessaie l'étape en cours 2 s plus tard
-        if(fail && CT && (LV.retry || 0) < 3){ LV.retry = (LV.retry || 0) + 1; setTimeout(function(){ if(CT && !LV.busy) liveSend(); }, 2000); }
+        if(fail && CT && (LV.retry || 0) < 6){ LV.retry = (LV.retry || 0) + 1; setTimeout(function(){ if(CT && !LV.busy) liveSend(); }, 2000); }
         else if(!fail) LV.retry = 0;
       });
   }
@@ -24054,8 +24054,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var top = host.querySelector('.clp-top'); if(top && top.parentNode) top.parentNode.insertBefore(off, top.nextSibling);
     var fails = 0;
     function net(ok){
+      // « Connexion perdue » seulement si l'iPad n'a vraiment plus de réseau : hors ligne, ou 4 requêtes sans réponse de suite (≈ 6 s)
       fails = ok ? 0 : fails + 1;
-      var down = navigator.onLine === false || fails >= 2;
+      var down = navigator.onLine === false || fails >= 4;
       off.hidden = !down; chip.classList.toggle('off', down);
       var sp = chip.querySelector('span'); if(sp) sp.textContent = down ? 'Hors ligne' : 'Direct';
       if(W.el){ var on = W.el.querySelector('.clv-on'); if(on){ on.classList.toggle('off', down); on.lastChild.textContent = down ? 'Connexion perdue' : 'En direct'; } }
@@ -24077,9 +24078,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if(!W.on) return;
       if(document.hidden){ W.pt = setTimeout(poll, 3000); return; }
       if(navigator.onLine === false){ net(false); W.pt = setTimeout(poll, 3000); return; }
+      var netOk = false;
       SY.post('/coaching/direct/lire', {}).then(function(r){
         if(!W.on) return;
-        net(!!(r && r._s));
+        netOk = true; net(!!(r && r._s));
         // Réponse ratée (serveur un instant indisponible) : on garde l'affichage au lieu de l'effacer (scintillement) ;
         // on n'efface que si ça dure plus de 20 s, ou si le serveur dit clairement qu'il n'y a plus de séance en direct.
         if(!r || !r.ok){ W.bad = W.bad || Date.now(); if(W.p && Date.now() - W.bad < 20000) return; chip.classList.remove('ok'); show(null); return; }
@@ -24112,7 +24114,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           p = best.p;
           show(p);
         });
-      }).catch(function(){ chip.classList.remove('ok'); net(false); }).then(function(){ if(W.on) W.pt = setTimeout(poll, 1500); });
+      }).catch(function(){ if(!netOk){ net(false); if(fails >= 4) chip.classList.remove('ok'); } }).then(function(){ if(W.on) W.pt = setTimeout(poll, fails ? 1000 : 1500); });
     }
     function show(p){
       if(!p){ W.p = null; backShow(null); if(W.el){ W.el.remove(); W.el = null; } return; }
