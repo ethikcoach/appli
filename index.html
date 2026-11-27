@@ -23643,15 +23643,24 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       for(var k = 0; k <= N; k++){ var t = Math.PI + 2 * Math.PI * k / N; pts.push([cx + a * Math.cos(t), cy + b * Math.sin(t)]); if(k) L.push(L[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1])); }
       tot = L[N]; pos = []; for(var i0 = 0; i0 < n; i0++) pos.push(at(off + i0 / n));
       var hit = false;
-      for(var x1 = 0; x1 < n && !hit; x1++) for(var x2 = x1 + 1; x2 < n; x2++){ if(Math.abs(pos[x1][0] - pos[x2][0]) < cw + 12 && Math.abs(pos[x1][1] - pos[x2][1]) < ch + 12){ hit = true; break; } }
+      for(var x1 = 0; x1 < n && !hit; x1++) for(var x2 = x1 + 1; x2 < n; x2++){ if(Math.abs(pos[x1][0] - pos[x2][0]) < cw + 40 && Math.abs(pos[x1][1] - pos[x2][1]) < ch + 34){ hit = true; break; } }
       if(!hit || cw < 130) break; cw *= 0.97;
     }
     cs.forEach(function(c, i){ var q = pos[i]; c.style.width = Math.round(cw) + 'px'; c.style.height = Math.round(ch) + 'px'; c.style.left = Math.round(q[0] - cw / 2) + 'px'; c.style.top = Math.round(q[1] - ch / 2) + 'px'; });
     // piste + flèches de sens entre deux exercices
     var ar = '';
+    // Flèches posées exactement sur la piste (ligne pointillée), au milieu de la portion de piste visible entre deux cartes,
+    // orientées dans le sens de la piste
+    function kOf(f){ var d = ((f % 1) + 1) % 1 * tot, k = 1; while(k < N && L[k] < d) k++; return k; }
+    function inCard(pt, q){ return Math.abs(pt[0] - q[0]) < cw / 2 + 3 && Math.abs(pt[1] - q[1]) < ch / 2 + 3; }
+    function P(k){ return pts[((k % N) + N) % N]; }
     for(var i = 0; i < n; i++){
-      var f = off + (i + 0.5) / n, p1 = at(f - 0.004), p2 = at(f + 0.004), m = at(f), ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * 180 / Math.PI, back = i === n - 1;
-      ar += '<g transform="translate(' + m[0].toFixed(1) + ' ' + m[1].toFixed(1) + ') rotate(' + ang.toFixed(1) + ')" class="clp-ova' + (back ? ' back' : '') + '" style="--d:' + i + '"><circle r="' + (back ? 19 : 15) + '"/><path d="M-5 -6 L3 0 L-5 6" /></g>';
+      var k1 = kOf(off + i / n), k2 = kOf(off + (i + 1) / n); if(k2 <= k1) k2 += N;
+      var A = pos[i], B = pos[(i + 1) % n], s1 = k1, s2 = k2;
+      while(s1 < k2 && inCard(P(s1), A)) s1++;
+      while(s2 > s1 && inCard(P(s2), B)) s2--;
+      var km = Math.round((s1 + s2) / 2), m = P(km), pa = P(km - 2), pb = P(km + 2), ang = Math.atan2(pb[1] - pa[1], pb[0] - pa[0]) * 180 / Math.PI, back = i === n - 1;
+      ar += '<g transform="translate(' + m[0].toFixed(1) + ' ' + m[1].toFixed(1) + ') rotate(' + ang.toFixed(1) + ')" class="clp-ova' + (back ? ' back' : '') + '"><circle r="' + (back ? 18 : 15) + '"/><path d="M-4 -6.5 L4 0 L-4 6.5" /></g>';
     }
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('width', W); svg.setAttribute('height', H);
     svg.innerHTML = '<ellipse class="clp-ovl o" cx="' + cx + '" cy="' + cy + '" rx="' + (a + 22) + '" ry="' + (b + 22) + '"/><ellipse class="clp-ovl" cx="' + cx + '" cy="' + cy + '" rx="' + a + '" ry="' + b + '"/><ellipse class="clp-ovl d" cx="' + cx + '" cy="' + cy + '" rx="' + a + '" ry="' + b + '"/><ellipse class="clp-ovl o" cx="' + cx + '" cy="' + cy + '" rx="' + Math.max(0, a - 22) + '" ry="' + Math.max(0, b - 22) + '"/>';
