@@ -21293,15 +21293,19 @@
     CONS.forEach(function(o){ h += '<button type="button" class="ss-chip" data-v="' + o[0] + '" aria-pressed="' + ((S.cons || []).indexOf(o[0]) > -1) + '">' + esc(o[1]) + '</button>'; });
     h += '</div><span class="ss-lab">Bonus</span><div class="ss-chips" data-k="opt"><button type="button" class="ss-chip" data-v="joker" aria-pressed="' + !!S.joker + '">🃏 Carte Joker<small>un bonus caché par tour</small></button><button type="button" class="ss-chip" data-v="defi" aria-pressed="' + !!S.defi + '">🏁 Défi final<small>à la fin de chaque tour</small></button></div>';
     h += '<details class="ss-how"><summary>' + I('spark') + 'Comment ça marche ?</summary><p>L’ambiance choisit aussi une partie des exercices (animaux pour la Jungle, sauts pour les JO, tirages pour les Pirates…). Une nouvelle série à chaque tour : effet surprise garanti. Tu gères le chrono et les récupérations ; tu peux verrouiller ou remplacer un exercice avant de lancer.</p><p><b>Chrono sur ce téléphone</b> : chaque série tirée sur l’iPad y arrive toute seule, avec le chrono et la touche Suivant. Sans réseau : bouton QR sur l’iPad, puis appareil photo sur le téléphone pour le scanner.</p></details></div>';
-    pane.innerHTML = h;
+    pane.innerHTML = (PRE && PRE.cli ? '<div class="ss-pre">' + I('users') + '<span><b>Séance de ' + esc(PRE.cli.nom) + '</b><small>Règle le tirage puis touche « Lancer » : la séance sera enregistrée chez ' + esc(PRE.cli.nom.split(' ')[0]) + '.</small></span><button type="button" class="ss-pre-x" data-a="prex" aria-label="Annuler">×</button></div>' : '') + h;
   }
+  // Séance « Tirage studio » créée depuis la fiche d'un client : client déjà choisi, séance prévue remplacée par le tirage
+  var PRE = null;   // {cli:{id, nom}, sid, h, lieu}
+  window.ecStudioFor = function(cli, sid, s0){ PRE = cli ? {cli:cli, sid:sid || '', h:(s0 && s0.h) || '', lieu:(s0 && s0.lieu) || ''} : null; if(window.ecCoachOpen) window.ecCoachOpen('studio'); renderPane(); };
   pane.addEventListener('click', function(e){
+    if(e.target.closest('[data-a="prex"]')){ PRE = null; renderPane(); return; }
     var c = e.target.closest('.ss-chip');
     if(c && c.parentNode.getAttribute('data-k') === 'cons'){ var cv = c.getAttribute('data-v'), ix = S.cons.indexOf(cv); if(ix > -1) S.cons.splice(ix, 1); else S.cons.push(cv); S.consDay = new Date().toDateString(); save(); c.setAttribute('aria-pressed', ix < 0); return; }
     if(c && c.parentNode.getAttribute('data-k') === 'opt'){ var ov = c.getAttribute('data-v'); S[ov] = !S[ov]; save(); c.setAttribute('aria-pressed', !!S[ov]); return; }
     if(c){ var k = c.parentNode.getAttribute('data-k'), v = c.getAttribute('data-v'); S[k] = (k === 'n' || k === 'sec') ? +v : v; save();
       c.parentNode.querySelectorAll('.ss-chip').forEach(function(b){ b.setAttribute('aria-pressed', b === c ? 'true' : 'false'); }); return; }
-    if(e.target.closest('#ssGo')) pickClient(openStage);
+    if(e.target.closest('#ssGo')){ if(PRE && PRE.cli){ CLI = PRE.cli; openStage(); } else pickClient(openStage); }
     if(e.target.closest('#ssRemote')) openRemote();
   });
   renderPane();
@@ -21448,7 +21452,9 @@
       });
     });
     if(!ex.length) return;
-    var ok = window.ecClients.upsert(st.cli.id, {id:'tir' + st.sid, d:st.day, t:1, r:'', w:0, ok:1, src:'tirage', ex:ex});
+    var o = {id:(st.pre && st.pre.sid) || ('tir' + st.sid), d:st.day, t:1, r:'', w:0, ok:1, src:'tirage', ex:ex};
+    if(st.pre && st.pre.h) o.h = st.pre.h; if(st.pre && st.pre.lieu) o.lieu = st.pre.lieu;
+    var ok = window.ecClients.upsert(st.cli.id, o);
     if(fin && ok) toast('✓ Séance comptée pour ' + st.cli.nom + ' (' + nt + ' tour' + (nt > 1 ? 's' : '') + ')');
   }
   function openStage(){
@@ -21460,7 +21466,7 @@
       + '<div class="stx-hist" id="stxHist"></div>'
       + '<div class="stx-bar"><button type="button" class="rr" data-a="redraw">' + I('repeat') + 'Retirer</button><button type="button" class="nx" data-a="next">' + I('dice') + 'Tour suivant</button></div>';
     document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
-    st = {el:el, tours:[], secs:[], ambs:[], jk:[], df:[], cur:-1, locks:{}, next:S.amb, sid:Date.now().toString(36), won:{}, req:{}, cli:CLI, day:(function(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })(new Date())};
+    st = {el:el, tours:[], secs:[], ambs:[], jk:[], df:[], cur:-1, locks:{}, next:S.amb, sid:Date.now().toString(36), won:{}, req:{}, cli:CLI, pre:(function(){ var pr = PRE && PRE.cli && CLI && PRE.cli.id === CLI.id ? PRE : (CLI && window.ecClients && window.ecClients.tirToday ? window.ecClients.tirToday(CLI.id) : null); PRE = null; return pr; })(), day:(function(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })(new Date())};
     CLI = null;
     setTimeout(pollPos, 1500);
     el.addEventListener('click', onStage);
@@ -22099,6 +22105,43 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cl-ai-ch{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 6px;}
   .cl-ai-ch button{padding:7px 11px; border-radius:999px; border:1px solid rgba(109,74,255,.3); background:rgba(109,74,255,.08); color:inherit; font:700 .78rem/1 Inter, sans-serif; cursor:pointer;}
   /* ===== Aujourd'hui, ressenti, plan, devoir maison ===== */
+.cl-tir-b{background:linear-gradient(135deg, #2E9E5E, #1F6B43) !important; color:#fff !important;}
+.cl-tir-plan{margin:12px 0 6px; padding:10px 12px; border-radius:14px; border:1px dashed rgba(127,127,127,.35);} .cl-tir-plan > b{display:block; margin-bottom:6px; font:800 .86rem/1.2 Inter, sans-serif;} .cl-tir-plan .cl-btn{width:100%; margin-top:8px;}
+.cl-tir .tmi{width:14px; height:14px; margin-right:4px;}
+.ss-pre{display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:12px 14px; border-radius:16px; background:rgba(46,158,94,.12); border:1px solid rgba(46,158,94,.35);} .ss-pre .tmi{width:22px; height:22px; flex:none;}
+.ss-pre span{flex:1; display:flex; flex-direction:column; gap:2px;} .ss-pre b{font:800 .95rem/1.2 Inter, sans-serif;} .ss-pre small{font:600 .78rem/1.3 Inter, sans-serif; opacity:.75;}
+.ss-pre-x{width:34px; height:34px; border-radius:50%; border:0; background:rgba(127,127,127,.15); color:inherit; font:700 1.1rem/1 Inter, sans-serif; cursor:pointer;}
+.cl-today-now{background:linear-gradient(135deg, rgba(232,180,74,.18), rgba(31,64,48,.08)); border-color:rgba(232,180,74,.45);}
+.cl-td.now{background:rgba(232,180,74,.14); border-radius:12px; padding:8px; margin:2px -8px;} .cl-now-b{margin-left:6px; padding:2px 7px; border-radius:999px; background:#E8B44A; color:#1A1205; font:800 .66rem/1.3 Inter, sans-serif; font-style:normal; text-transform:uppercase; letter-spacing:.04em; vertical-align:2px;}
+.cl-today-more{display:flex; align-items:center; gap:6px; margin-top:6px; padding:6px 0 0; border:0; background:none; color:inherit; font:600 .78rem/1.2 Inter, sans-serif; opacity:.7; cursor:pointer;} .cl-today-more .tmi{width:16px; height:16px;}
+.cl-now-bn{display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:10px 12px; border-radius:18px; background:linear-gradient(135deg, rgba(232,180,74,.2), rgba(31,64,48,.1)); border:1px solid rgba(232,180,74,.45);}
+.cl-now-i .tmi{width:24px; height:24px;} .cl-now-t{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;} .cl-now-t small{font:700 .74rem/1.2 Inter, sans-serif; opacity:.75;} .cl-now-t b{font:800 1.05rem/1.15 'Bricolage Grotesque', Inter, sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cl-pl-bil{margin-top:16px; padding-top:12px; border-top:1px solid rgba(127,127,127,.2);} .cl-pl-bil h5{display:flex; align-items:center; gap:6px; margin:0 0 8px; font:800 .9rem/1.2 Inter, sans-serif;} .cl-pl-bil h5 .tmi{width:18px; height:18px;}
+.cl-plan .cl-ball-nav{display:none;}
+.cl-plan-go{margin-left:8px; padding:6px 10px; border-radius:999px; border:1px solid rgba(31,64,48,.25); background:rgba(255,255,255,.5); color:inherit; font:700 .74rem/1 Inter, sans-serif; cursor:pointer;}
+.cl-pl-tabs{display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; padding:4px; border-radius:14px; background:rgba(127,127,127,.1); margin:0 0 10px;}
+.cl-pl-tabs button{min-height:40px; border:0; border-radius:11px; background:none; color:inherit; font:700 .86rem/1 Inter, sans-serif; cursor:pointer;} .cl-pl-tabs button[aria-pressed="true"]{background:#1F4030; color:#fff;}
+.cl-pl-nav{display:flex; align-items:center; gap:8px; margin:0 0 10px;} .cl-pl-nav b{flex:1; text-align:center; font:800 1rem/1.25 'Bricolage Grotesque', Inter, sans-serif;}
+.cl-pl-nav button{width:42px; height:42px; display:grid; place-items:center; border-radius:12px; border:1px solid rgba(127,127,127,.3); background:rgba(127,127,127,.08); color:inherit; cursor:pointer;} .cl-pl-nav .tmi{width:18px; height:18px;}
+.cl-pl-none{margin:6px 0; font:600 .84rem/1.3 Inter, sans-serif; opacity:.55;}
+.cl-pi{display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid rgba(127,127,127,.18);} .cl-pi.done{opacity:.6;}
+.cl-pi-h{min-width:48px; font:800 .9rem/1 Inter, sans-serif; font-variant-numeric:tabular-nums;}
+.cl-pi-m{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; padding:0; border:0; background:none; color:inherit; text-align:left; cursor:pointer;} .cl-pi-m b{font:700 .92rem/1.2 Inter, sans-serif;} .cl-pi-m small{font:600 .74rem/1.25 Inter, sans-serif; opacity:.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cl-pi.fut .cl-pi-h{color:#2A86D6;} .cl-pi-fb{font-style:italic;}
+.cl-pw{margin:0 0 6px; padding:6px 10px; border-radius:14px; background:rgba(127,127,127,.06);} .cl-pw.today{background:rgba(31,64,48,.1); box-shadow:inset 0 0 0 1.5px rgba(31,64,48,.35);}
+.cl-pw-d{display:flex; align-items:baseline; gap:8px; width:100%; padding:4px 0; border:0; background:none; color:inherit; cursor:pointer; text-align:left;} .cl-pw-d b{font:800 .86rem/1 Inter, sans-serif; text-transform:capitalize;} .cl-pw-d span{font:600 .78rem/1 Inter, sans-serif; opacity:.6;}
+.cl-pw-d em{margin-left:auto; min-width:22px; padding:3px 7px; border-radius:999px; background:#1F4030; color:#fff; font:800 .72rem/1 Inter, sans-serif; font-style:normal; text-align:center;}
+.cl-pw .cl-pi{padding:6px 0;} .cl-pw .cl-pi-h{min-width:44px; font-size:.82rem;}
+.cl-pm-h, .cl-pm-g{display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;} .cl-pm-h span{text-align:center; font:800 .72rem/1 Inter, sans-serif; opacity:.55; padding:4px 0;}
+.cl-pm-c{aspect-ratio:1; min-height:44px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:3px; padding:6px 2px; border-radius:12px; border:1px solid rgba(127,127,127,.18); background:rgba(127,127,127,.05); color:inherit; cursor:pointer;}
+.cl-pm-c b{font:700 .86rem/1 Inter, sans-serif;} .cl-pm-c.out{opacity:.3;} .cl-pm-c.has{background:rgba(31,64,48,.08); border-color:rgba(31,64,48,.25);} .cl-pm-c.today{box-shadow:inset 0 0 0 2px #1F4030;}
+.cl-pm-c span{display:flex; flex-wrap:wrap; justify-content:center; gap:3px; align-items:center;} .cl-pm-c small{font:700 .62rem/1 Inter, sans-serif; opacity:.7;}
+.cl-pm-c i, .cl-pl-leg i{display:inline-block; width:8px; height:8px; border-radius:50%;} i.d{background:#2E9E5E;} i.a{background:#E8B44A;} i.p{background:#2A86D6;}
+.cl-pl-sum{margin:12px 0 4px; font:600 .86rem/1.3 Inter, sans-serif;} .cl-pl-leg{display:flex; align-items:center; gap:6px; margin:4px 0; font:600 .76rem/1 Inter, sans-serif; opacity:.75;} .cl-pl-leg i{margin-left:6px;}
+.cl-py{display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;} @media (min-width:700px){ .cl-py{grid-template-columns:repeat(3, 1fr);} .cl-pm-c{min-height:64px;} }
+.cl-py-m{position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:10px 12px 14px; border-radius:14px; border:1px solid rgba(127,127,127,.2); background:rgba(127,127,127,.05); color:inherit; text-align:left; cursor:pointer;}
+.cl-py-m.today{box-shadow:inset 0 0 0 2px #1F4030;} .cl-py-m b{font:800 .86rem/1 Inter, sans-serif;} .cl-py-n{font:800 1.5rem/1 'Bricolage Grotesque', Inter, sans-serif;} .cl-py-m small{font:600 .7rem/1.3 Inter, sans-serif; opacity:.65;}
+.cl-py-m i{position:absolute; left:0; bottom:0; height:4px; background:#1F4030; border-radius:0 3px 3px 0;}
 .cl-today{display:block; width:100%; box-sizing:border-box; margin:0 0 12px; padding:12px 14px; border-radius:18px; background:linear-gradient(135deg, rgba(31,64,48,.08), rgba(110,143,116,.12)); border:1px solid rgba(31,64,48,.16); text-align:left; color:inherit; font:inherit;}
 .cl-today-m{display:flex; align-items:center; gap:10px; cursor:pointer;} .cl-today-m span{display:flex; flex-direction:column; gap:2px;} .cl-today-m small{opacity:.7; font-size:.78rem;}
 .cl-today-t{display:flex; align-items:center; gap:8px; margin-bottom:6px;} .cl-today-t b{font:800 1rem/1.2 'Bricolage Grotesque', Inter, sans-serif;} .cl-today-t small{margin-left:auto; opacity:.65; font:600 .78rem/1 Inter, sans-serif;}
@@ -22184,12 +22227,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function lsCopy(){ try{ return JSON.parse(localStorage.getItem(LSK) || 'null'); }catch(e){ return null; } }
     // iPadOS perd parfois la connexion au stockage à la reprise de l'appli : on réessaie avant de conclure qu'il n'y a rien
     return once().then(function(x){ if(x && x.clients && x.clients.length) return x; return new Promise(function(r){ setTimeout(r, 500); }).then(once).then(function(y){ return (y && y.clients && y.clients.length) ? y : (x || y || lsCopy()); }); })
-      .then(function(x){ if(x && x.clients){ D = x; } D.map = D.map || {}; D.mapU = D.mapU || {}; D.dead = D.dead || {}; D.timers = D.timers || []; uniq(); snap(); READY = true; try{ window.dispatchEvent(new Event('ec-timers-ready')); }catch(e){} });
+      .then(function(x){ if(x && x.clients){ D = x; } D.map = D.map || {}; D.mapU = D.mapU || {}; D.dead = D.dead || {}; D.timers = D.timers || []; uniq(); snap(); READY = true; setTimeout(function(){ try{ nowBanner(); }catch(e){} }, 300); try{ window.dispatchEvent(new Event('ec-timers-ready')); }catch(e){} });
   }
   function persist(){ idb().then(function(db){ var tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(D, 'data'); }).catch(function(){ try{ localStorage.setItem(LSK, JSON.stringify(D)); }catch(e){ toast('⚠️ Stockage plein : exporte tes clients'); } }); }
   function save(now){
     clearTimeout(saveT);
-    var run = function(){ saveT = 0; if(stamp()) SY.changed(); persist(); };
+    var run = function(){ saveT = 0; if(stamp()) SY.changed(); persist(); try{ nowBanner(); }catch(e){} };
     if(now) run(); else saveT = setTimeout(run, 250);
   }
 
@@ -22549,9 +22592,18 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     box.addEventListener('input', function(e){ if(!e.target.classList.contains('cl-fbn')) return; var s0 = getS(); if(!s0) return; s0.fb = s0.fb || {}; s0.fb.n = e.target.value.slice(0, 500); s0.fb.at = Date.now(); onChange(); });
   }
   // Devoir maison : mini-séance sans matériel tirée de la séance, envoyée par un lien « séance seule »
-  var HW_DEF = [['Squat', '30"'], ['Gainage planche', '30"'], ['Pont fessier', '30"'], ['Fentes avant alternées', '30"'], ['Pompes inclinées', '30"'], ['Gainage latéral 1 bras', '20"']];
+  var HW_DEF = [['Squat', '30"'], ['Gainage planche', '30"'], ['Pont fessier', '30"'], ['Fentes avant alternées', '30"'], ['Pompes', '30"'], ['Chaise contre un mur', '30"'], ['Mountain climbers', '30"']];
+  // Exercice qui demande du matériel : mot-clé dans le nom, ou fiche de la bibliothèque qui n'est pas « poids du corps »
+  var GEAR_RX = /traction|dips|suspen|sangle|poulie|machine|rameur|velo|elliptique|tapis de course|corde|lest|gilet|bouteille|sac de sable|landmine|anneau/;
+  function needsGear(name){
+    var k = nz(name); if(!k) return true;
+    if(GEAR_RX.test(k) || MAT_KW.some(function(m){ return m[1].test(k); })) return true;
+    var e = exList().filter(function(x){ return nz(x.name) === k; })[0];
+    if(!e){ var ws = k.split(' '); e = exList().filter(function(x){ var n2 = nz(x.name); return n2.indexOf(ws[0]) === 0 && ws.every(function(w){ return n2.indexOf(w) >= 0; }); })[0]; }
+    return !!(e && e.equipment && e.equipment !== 'poids_du_corps');
+  }
   function homework(nom, s){
-    var free = (s.ex || []).slice(s.w || 0).filter(function(l){ return l[0] && !MAT_KW.some(function(k){ return k[1].test(nz(l[0])); }); }).map(function(l){ return [l[0], /^\d+$/.test(String(l[1]).trim()) ? l[1] : '30"']; });
+    var free = (s.ex || []).slice(s.w || 0).filter(function(l){ return l[0] && !needsGear(l[0]); }).map(function(l){ return [l[0], /^\d+$/.test(String(l[1]).trim()) ? l[1] : '30"']; });
     var seen = {}, ex = [];
     free.concat(HW_DEF).forEach(function(l){ var k = nz(l[0]); if(ex.length < 5 && !seen[k]){ seen[k] = 1; ex.push(l); } });
     sendSession(nom, {lab:'Devoir maison', hw:1, t:2, r:'', w:0, ex:ex});
@@ -22563,21 +22615,179 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     var msg = 'Bonjour ' + first + ' ! Petit rappel : séance demain' + (jour ? ' (' + jour + ')' : '') + (s.h ? ' à ' + hTxt(s.h) : '') + (s.lieu ? ', ' + (s.lieu === 'Domicile' ? 'chez toi' : s.lieu === 'Studio' ? 'au studio' : s.lieu.toLowerCase()) : '') + '. À demain ! Benoît';
     try{ window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank'); }catch(e){}
   }
+  // ---------- Séance « Tirage studio » : lancée tout de suite ou planifiée (le tirage se fait le jour J) ----------
+  function tirSheet(c){
+    var T = {d:todayIso(), h:'', lieu:'Studio'};
+    var d = sheet('<h4>' + IC('dice') + ' Tirage studio · ' + esc(c.nom) + '</h4><p>Les exercices sont tirés au sort sur l’iPad du studio, avec tes réglages du tirage. La séance est ensuite enregistrée chez ' + esc(c.nom) + '.</p>'
+      + '<button type="button" class="cl-btn go" data-k="now">' + IC('play') + 'Faire le tirage maintenant</button>'
+      + '<div class="cl-tir-plan"><b>Ou la planifier</b><div class="cl-row2"><label>Date<input type="date" id="clTirD" value="' + T.d + '"></label><label>Heure<input type="time" id="clTirH"></label></div>'
+      + '<span class="cl-chips cl-lieux">' + LIEUX.map(function(x){ return '<button type="button" class="cl-chip" data-tl="' + x + '" aria-pressed="' + (T.lieu === x) + '">' + x + '</button>'; }).join('') + '</span>'
+      + '<button type="button" class="cl-btn" data-k="plan">' + IC('calendar') + 'Planifier la séance</button></div>'
+      + '<button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k, dd){
+        if(k === 'now'){ if(window.ecStudioFor) window.ecStudioFor({id:c.id, nom:c.nom}, '', null); else toast('Tirage indisponible ici'); return; }
+        if(k === 'plan'){
+          T.d = dd.querySelector('#clTirD').value || todayIso(); T.h = dd.querySelector('#clTirH').value;
+          var o = {id:uid(), d:T.d, tir:1, t:1, r:'', w:0, ex:[['Tirage studio', 'au sort']]}; if(T.h) o.h = T.h; if(T.lieu) o.lieu = T.lieu;
+          c.s.push(o); sortSess(c); save(); render(); toast('🎲 Tirage studio prévu le ' + dShort(o) + (o.h ? ' à ' + hTxt(o.h) : '')); return;
+        }
+      });
+    d.addEventListener('click', function(e){ var b = e.target.closest('[data-tl]'); if(!b) return; var v = b.getAttribute('data-tl'); T.lieu = T.lieu === v ? '' : v; d.querySelectorAll('[data-tl]').forEach(function(x){ x.setAttribute('aria-pressed', String(x.getAttribute('data-tl') === T.lieu)); }); });
+  }
+  // Une séance « Tirage studio » prévue se lance par le tirage (chrono, présenter, aujourd'hui, planning, bandeau)
+  function tirGo(nom, s, c){
+    if(!s || !s.tir || s.ok === 1 || !window.ecStudioFor) return false;
+    var cc = c || D.clients.find(function(x){ return x.s.indexOf(s) >= 0; });
+    document.querySelectorAll('.cl-ov.cl-plan').forEach(function(x){ x.remove(); });
+    window.ecStudioFor(cc ? {id:cc.id, nom:cc.nom} : null, s.id, s); return true;
+  }
+  function exLab(s){ if(s.tir && s.ok !== 1) return 'Tirage studio'; var n = s.ex.length - (s.w || 0); return n + ' exercice' + (n > 1 ? 's' : ''); }
+  // ---------- Planning : vue jour, semaine, mois, année (toutes les séances datées, faites et prévues) ----------
+  var PV = {v:'jour', d:''};
+  var MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  function monOf(iso){ var x = new Date(iso + 'T12:00:00'); return addDays(iso, -((x.getDay() + 6) % 7)); }
+  function sessOn(){ var m = {}; D.clients.forEach(function(c){ c.s.forEach(function(s){ var d = isoD(s); if(d) (m[d] = m[d] || []).push({c:c, s:s}); }); }); Object.keys(m).forEach(function(k){ m[k].sort(function(a, b){ return (a.s.h || '99') < (b.s.h || '99') ? -1 : (a.s.h || '99') > (b.s.h || '99') ? 1 : a.c.nom.localeCompare(b.c.nom); }); }); return m; }
+  function planning(view, day){
+    PV.v = view || PV.v || 'jour'; PV.d = day || PV.d || todayIso();
+    var el = document.createElement('div'); el.className = 'cl-ov cl-plan'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Planning');
+    document.body.appendChild(el); document.documentElement.style.overflow = 'hidden';
+    function close(){ el.remove(); if(!document.querySelector('.cl-ov, .clp, .stx')) document.documentElement.style.overflow = ''; }
+    function label(){
+      var x = new Date(PV.d + 'T12:00:00');
+      if(PV.v === 'jour') return dLong({d:PV.d});
+      if(PV.v === 'semaine'){ var m = monOf(PV.d), e = addDays(m, 6), a = new Date(m + 'T12:00:00'), b = new Date(e + 'T12:00:00'); return 'Semaine du ' + a.getDate() + (a.getMonth() !== b.getMonth() ? ' ' + MOIS[a.getMonth()] : '') + ' au ' + b.getDate() + ' ' + MOIS[b.getMonth()] + ' ' + b.getFullYear(); }
+      if(PV.v === 'mois') return MOIS[x.getMonth()].replace(/^./, function(c){ return c.toUpperCase(); }) + ' ' + x.getFullYear();
+      return String(x.getFullYear());
+    }
+    function step(n){
+      if(PV.v === 'jour') PV.d = addDays(PV.d, n);
+      else if(PV.v === 'semaine') PV.d = addDays(PV.d, 7 * n);
+      else if(PV.v === 'mois'){ var x = new Date(PV.d + 'T12:00:00'); x.setDate(1); x.setMonth(x.getMonth() + n); PV.d = x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-01'; }
+      else { var y = new Date(PV.d + 'T12:00:00').getFullYear() + n; PV.d = y + '-01-01'; }
+    }
+    function item(x, full){
+      var s = x.s, c = x.c, done = isDone(s), fut = isoD(s) > todayIso(), n = s.ex.length - (s.w || 0), tom = s.d === addDays(todayIso(), 1);
+      return '<div class="cl-pi' + (done ? ' done' : fut ? ' fut' : '') + '" data-pc="' + esc(c.id) + '" data-ps="' + esc(s.id) + '"><span class="cl-pi-h">' + esc(hTxt(s.h) || '—') + '</span><button type="button" class="cl-pi-m" data-pa="open"><b>' + esc(c.nom) + '</b><small>' + esc([s.lieu, s.ti, s.tir && !done ? 'Tirage studio' : n + ' ex.', done ? 'faite' : fut ? 'prévue' : 'à faire'].filter(Boolean).join(' · ')) + '</small>' + (full && s.fb && s.fb.r ? '<small class="cl-pi-fb">Ressenti ' + s.fb.r + '/10' + (s.fb.n ? ' · ' + esc(s.fb.n) : '') + '</small>' : '') + '</button>'
+        + (full ? (done ? '<span class="cl-td-ok">' + IC('check') + '</span>' : (tom ? '<button type="button" class="cl-td-b" data-pa="wa">' + IC('send') + 'Rappel</button>' : '') + '<button type="button" class="cl-td-b pri" data-pa="go" aria-label="Chrono">' + IC('play') + '</button><button type="button" class="cl-td-b" data-pa="show" aria-label="Présenter">' + IC('screen') + '</button>') : '') + '</div>';
+    }
+    function body(){
+      var M = sessOn(), t = todayIso(), h = '';
+      if(PV.v === 'jour'){
+        var L = M[PV.d] || [];
+        h = L.length ? L.map(function(x){ return item(x, true); }).join('') : '<p class="cl-pl-none">Aucune séance ce jour-là.</p>';
+        var mat = matOf(L.filter(function(x){ return x.s.lieu === 'Domicile' && !isDone(x.s); }).map(function(x){ return x.s; }));
+        if(mat.length) h += '<p class="cl-td-mat">' + IC('folder') + '<span><b>À emporter à domicile</b> ' + esc(mat.join(', ')) + '</span></p>';
+      } else if(PV.v === 'semaine'){
+        var m = monOf(PV.d);
+        for(var i = 0; i < 7; i++){
+          var d = addDays(m, i), L2 = M[d] || [], x = new Date(d + 'T12:00:00');
+          h += '<div class="cl-pw' + (d === t ? ' today' : '') + '"><button type="button" class="cl-pw-d" data-pday="' + d + '"><b>' + x.toLocaleDateString('fr-FR', {weekday:'long'}) + '</b><span>' + x.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>' + (L2.length ? '<em>' + L2.length + '</em>' : '') + '</button>'
+            + (L2.length ? L2.map(function(y){ return item(y, false); }).join('') : '<p class="cl-pl-none">—</p>') + '</div>';
+        }
+      } else if(PV.v === 'mois'){
+        var x0 = new Date(PV.d + 'T12:00:00'), y = x0.getFullYear(), mo = x0.getMonth(), first = y + '-' + ('0' + (mo + 1)).slice(-2) + '-01', start = monOf(first), nb = new Date(y, mo + 1, 0).getDate(), tot = 0, dn = 0;
+        h = '<div class="cl-pm"><div class="cl-pm-h">' + ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(function(j){ return '<span>' + j + '</span>'; }).join('') + '</div><div class="cl-pm-g">';
+        for(var k = 0; k < 42; k++){
+          var dd = addDays(start, k), inM = dd.slice(0, 7) === first.slice(0, 7);
+          if(k >= 35 && !inM) break;
+          var L3 = M[dd] || [], nd = L3.filter(function(z){ return isDone(z.s); }).length;
+          if(inM){ tot += L3.length; dn += nd; }
+          h += '<button type="button" class="cl-pm-c' + (inM ? '' : ' out') + (dd === t ? ' today' : '') + (L3.length ? ' has' : '') + '" data-pday="' + dd + '"><b>' + (+dd.slice(8)) + '</b>' + (L3.length ? '<span>' + L3.slice(0, 3).map(function(z){ return '<i class="' + (isDone(z.s) ? 'd' : isoD(z.s) > t ? 'p' : 'a') + '"></i>'; }).join('') + (L3.length > 3 ? '<small>+' + (L3.length - 3) + '</small>' : '') + '</span>' : '') + '</button>';
+        }
+        h += '</div></div><p class="cl-pl-sum"><b>' + tot + ' séance' + (tot > 1 ? 's' : '') + '</b> · ' + dn + ' faite' + (dn > 1 ? 's' : '') + ' · ' + (tot - dn) + ' à venir ou à faire</p><p class="cl-pl-leg"><i class="d"></i>faite <i class="a"></i>à faire <i class="p"></i>prévue</p>'
+          + '<div class="cl-pl-bil"><h5>' + IC('calendar') + 'Bilan du mois · séances réalisées</h5>' + bilanAll({ym:first.slice(0, 7)}) + '</div>';
+      } else {
+        var yy = new Date(PV.d + 'T12:00:00').getFullYear(), cnt = [], mx = 1;
+        for(var q = 0; q < 12; q++){ var key = yy + '-' + ('0' + (q + 1)).slice(-2), a1 = 0, d1 = 0, cl = {}; Object.keys(M).forEach(function(dk){ if(dk.slice(0, 7) === key) M[dk].forEach(function(z){ a1++; if(isDone(z.s)) d1++; cl[z.c.id] = 1; }); }); cnt.push({a:a1, d:d1, c:Object.keys(cl).length}); if(a1 > mx) mx = a1; }
+        var ya = cnt.reduce(function(s1, z){ return s1 + z.a; }, 0);
+        h = '<div class="cl-py">' + cnt.map(function(z, q){ return '<button type="button" class="cl-py-m' + (yy + '-' + ('0' + (q + 1)).slice(-2) === t.slice(0, 7) ? ' today' : '') + '" data-pmonth="' + yy + '-' + ('0' + (q + 1)).slice(-2) + '-01"><b>' + MOIS[q].replace(/^./, function(c){ return c.toUpperCase(); }) + '</b><span class="cl-py-n">' + z.a + '</span><small>' + (z.a ? z.d + ' faite' + (z.d > 1 ? 's' : '') + (z.a - z.d ? ' · ' + (z.a - z.d) + ' à venir' : '') + ' · ' + z.c + ' client' + (z.c > 1 ? 's' : '') : 'aucune') + '</small><i style="width:' + Math.round(100 * z.a / mx) + '%"></i></button>'; }).join('') + '</div><p class="cl-pl-sum"><b>' + ya + ' séance' + (ya > 1 ? 's' : '') + ' en ' + yy + '</b> (faites et prévues)</p>'
+          + '<div class="cl-pl-bil"><h5>' + IC('calendar') + 'Bilan de l’année · séances réalisées</h5>' + bilanAll({y:yy}) + '</div>';
+      }
+      return h;
+    }
+    function draw(){
+      el.innerHTML = '<div class="cl-ov-top"><button type="button" class="cl-btn ghost" data-pa="x">Fermer</button><b>Planning</b><button type="button" class="cl-btn ghost" data-pa="today">Aujourd’hui</button></div>'
+        + '<div class="cl-ov-body"><div class="cl-pl-tabs">' + [['jour', 'Jour'], ['semaine', 'Semaine'], ['mois', 'Mois'], ['annee', 'Année']].map(function(o){ return '<button type="button" data-pv="' + o[0] + '" aria-pressed="' + (PV.v === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div>'
+        + '<div class="cl-pl-nav"><button type="button" data-pa="prev" aria-label="Précédent">' + IC('prev') + '</button><b>' + esc(label()) + '</b><button type="button" data-pa="next" aria-label="Suivant">' + IC('next') + '</button></div>'
+        + '<div class="cl-pl-b">' + body() + '</div></div>';
+    }
+    draw();
+    el.addEventListener('click', function(e){
+      var tv = e.target.closest('[data-pv]'); if(tv){ PV.v = tv.getAttribute('data-pv'); draw(); return; }
+      // Liens du bilan intégré : un mois du graphique → vue mois ; un client → sa fiche
+      var bk = e.target.closest('.cl-pl-bil [data-k]');
+      if(bk){ var kk = bk.getAttribute('data-k');
+        if(kk.indexOf('m:') === 0){ PV.d = kk.slice(2) + '-01'; PV.v = 'mois'; draw(); el.querySelector('.cl-ov-body').scrollTop = 0; }
+        else if(kk.indexOf('c:') === 0){ close(); V.c = kk.slice(2); V.bil = V.c; V.more = 15; render(); window.scrollTo(0, 0); }
+        return; }
+      var pd = e.target.closest('[data-pday]'); if(pd){ PV.d = pd.getAttribute('data-pday'); PV.v = 'jour'; draw(); return; }
+      var pm = e.target.closest('[data-pmonth]'); if(pm){ PV.d = pm.getAttribute('data-pmonth'); PV.v = 'mois'; draw(); return; }
+      var b = e.target.closest('[data-pa]'); if(!b) return; var a = b.getAttribute('data-pa');
+      if(a === 'x'){ close(); return; }
+      if(a === 'today'){ PV.d = todayIso(); draw(); return; }
+      if(a === 'prev' || a === 'next'){ step(a === 'next' ? 1 : -1); draw(); return; }
+      var it = b.closest('[data-pc]'), c = it && clientById(it.getAttribute('data-pc')), s = c && c.s.find(function(x){ return x.id === it.getAttribute('data-ps'); });
+      if(!s) return;
+      if(a === 'go') return launchSheet(c.nom, s, c);
+      if(a === 'show') return present(c.nom, s, null);
+      if(a === 'wa') return remind(c, s);
+      if(a === 'open'){
+        close(); V.c = c.id; var pos = c.s.slice().reverse().findIndex(function(x){ return x.id === s.id; }); V.more = Math.max(15, pos + 5); render();
+        setTimeout(function(){ var ce = pane.querySelector('.cl-ss[data-s="' + s.id + '"]'); if(ce){ ce.scrollIntoView({behavior:'smooth', block:'center'}); ce.classList.remove('flash'); void ce.offsetWidth; ce.classList.add('flash'); } }, 80);
+      }
+    });
+    return el;
+  }
+  // ---------- À l'ouverture de l'appli : bandeau du client du moment sur l'accueil (coach seulement) ----------
+  function nowBanner(){
+    try{
+      var host = document.getElementById('todayView'), old = document.getElementById('clNowBn');
+      var ok = READY && document.documentElement.classList.contains('ec-coach') && !document.documentElement.classList.contains('ec-guest');
+      var cur = ok ? nowSess() : null;
+      if(!cur || !host){ if(old) old.remove(); return; }
+      var cs = cur.s, key = cur.c.id + ':' + cs.id + ':' + (cur.gap < 0 ? 'b' : 'm');
+      if(old && old.getAttribute('data-k') === key) return;
+      var bn = old || document.createElement('div'); bn.id = 'clNowBn'; bn.className = 'cl-now-bn'; bn.setAttribute('data-k', key);
+      bn.innerHTML = '<span class="cl-now-i">' + IC('watch') + '</span><span class="cl-now-t"><small>' + (cur.gap < 0 ? 'Bientôt' : 'Maintenant') + ' · ' + esc(hTxt(cs.h)) + (cs.lieu ? ' · ' + esc(cs.lieu) : '') + '</small><b>' + esc(cur.c.nom) + '</b></span><button type="button" class="cl-td-b pri" data-nb="go">' + IC('play') + 'Chrono</button><button type="button" class="cl-td-b" data-nb="show" aria-label="Présenter">' + IC('screen') + '</button>';
+      if(!old){
+        bn.addEventListener('click', function(e){ var b = e.target.closest('[data-nb]'); if(!b) return; var x = nowSess(); if(!x) return; if(b.getAttribute('data-nb') === 'go') launchSheet(x.c.nom, x.s, x.c); else present(x.c.nom, x.s, null); });
+        host.insertBefore(bn, host.firstChild);
+      }
+    }catch(e){}
+  }
+  setInterval(nowBanner, 60000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) nowBanner(); });
   // ---------- Aujourd'hui / demain : séances planifiées de tous les clients ----------
+  // Séance « du moment » : aujourd'hui, de 1 h avant à 1 h 30 après l'heure prévue (la plus proche)
+  function nowSess(){
+    var t = todayIso(), d0 = new Date(), mn = d0.getHours() * 60 + d0.getMinutes(), best = null;
+    D.clients.forEach(function(c){ c.s.forEach(function(s){
+      if(s.d !== t || s.ok === 1) return; var m = /^(\d{1,2}):(\d{2})/.exec(s.h || ''); if(!m) return;
+      var st = +m[1] * 60 + +m[2], gap = mn - st; if(gap < -60 || gap > 90) return;
+      if(!best || Math.abs(gap) < Math.abs(best.gap)) best = {c:c, s:s, gap:gap};
+    }); });
+    return best;
+  }
   function todayHtml(){
-    var t = todayIso(), dm = addDays(t, 1), tod = [], tom = [];
+    var t = todayIso(), dm = addDays(t, 1), tod = [], tom = [], cur = nowSess();
     D.clients.forEach(function(c){ c.s.forEach(function(s){ if(s.d === t) tod.push({c:c, s:s}); else if(s.d === dm) tom.push({c:c, s:s}); }); });
-    if(!tod.length && !tom.length) return '';
+    if(!tod.length && !tom.length) return SHOW && D.clients.some(function(c){ return c.s.some(function(x){ return isoD(x); }); }) ? '<button type="button" class="cl-today cl-today-m" data-a="plan">' + IC('calendar') + '<span><b>Planning</b><small>Rien aujourd’hui ni demain · vue jour, semaine, mois, année</small></span></button>' : '';
     function by(a, b){ return (a.s.h || '99') < (b.s.h || '99') ? -1 : (a.s.h || '99') > (b.s.h || '99') ? 1 : a.c.nom.localeCompare(b.c.nom); }
     tod.sort(by); tom.sort(by);
+    if(!SHOW && cur){
+      var cs = cur.s, cn = cs.ex.length - (cs.w || 0);
+      return '<div class="cl-today cl-today-now"><div class="cl-today-t">' + IC('watch') + '<b>' + (cur.gap < 0 ? 'Bientôt' : 'Maintenant') + '</b><small>' + esc(hTxt(cs.h)) + '</small></div>'
+        + '<div class="cl-td now" data-tc="' + esc(cur.c.id) + '" data-ts="' + esc(cs.id) + '"><span class="cl-td-m"><b>' + esc(cur.c.nom) + '</b><small>' + esc([cs.lieu, cs.ti, exLab(cs)].filter(Boolean).join(' · ')) + '</small></span><button type="button" class="cl-td-b pri" data-a="tdgo">' + IC('play') + 'Chrono</button><button type="button" class="cl-td-b" data-a="tdshow" aria-label="Présenter">' + IC('screen') + '</button></div>'
+        + (tod.length + tom.length > 1 ? '<button type="button" class="cl-today-more" data-a="reveal">' + IC('eye') + 'Les autres clients restent masqués · afficher</button>' : '') + '</div>';
+    }
     if(!SHOW) return '<button type="button" class="cl-today cl-today-m" data-a="reveal">' + IC('calendar') + '<span><b>Aujourd’hui : ' + tod.length + ' séance' + (tod.length > 1 ? 's' : '') + (tom.length ? ' · demain : ' + tom.length : '') + '</b><small>Affiche tes clients pour voir le détail</small></span></button>';
     function row(x, demain){
       var s = x.s, c = x.c, done = s.ok === 1, n = s.ex.length - (s.w || 0);
-      return '<div class="cl-td' + (done ? ' done' : '') + '" data-tc="' + esc(c.id) + '" data-ts="' + esc(s.id) + '"><span class="cl-td-h">' + esc(hTxt(s.h) || '—') + '</span><span class="cl-td-m"><b>' + esc(c.nom) + '</b><small>' + esc([s.lieu, s.ti, n + ' exercice' + (n > 1 ? 's' : '')].filter(Boolean).join(' · ')) + '</small></span>'
+      var isNow = cur && cur.s === s;
+      return '<div class="cl-td' + (done ? ' done' : '') + (isNow ? ' now' : '') + '" data-tc="' + esc(c.id) + '" data-ts="' + esc(s.id) + '"><span class="cl-td-h">' + esc(hTxt(s.h) || '—') + '</span><span class="cl-td-m"><b>' + esc(c.nom) + (isNow ? ' <em class="cl-now-b">' + (cur.gap < 0 ? 'bientôt' : 'maintenant') + '</em>' : '') + '</b><small>' + esc([s.lieu, s.ti, exLab(s)].filter(Boolean).join(' · ')) + '</small></span>'
         + (demain ? '<button type="button" class="cl-td-b" data-a="tdwa">' + IC('send') + 'Rappel</button>' : done ? '<span class="cl-td-ok">' + IC('check') + '</span>' : '<button type="button" class="cl-td-b pri" data-a="tdgo" aria-label="Chrono">' + IC('play') + '</button><button type="button" class="cl-td-b" data-a="tdshow" aria-label="Présenter">' + IC('screen') + '</button>') + '</div>';
     }
     var dom = tod.filter(function(x){ return x.s.lieu === 'Domicile' && x.s.ok !== 1; }), mat = matOf(dom.map(function(x){ return x.s; }));
-    return '<div class="cl-today"><div class="cl-today-t">' + IC('calendar') + '<b>Aujourd’hui</b><small>' + esc(dLong({d:t})) + '</small></div>'
+    return '<div class="cl-today"><div class="cl-today-t">' + IC('calendar') + '<b>Aujourd’hui</b><small>' + esc(dLong({d:t})) + '</small><button type="button" class="cl-plan-go" data-a="plan">Planning ›</button></div>'
       + (tod.length ? tod.map(function(x){ return row(x, false); }).join('') : '<p class="cl-td-none">Aucune séance prévue aujourd’hui.</p>')
       + (mat.length ? '<p class="cl-td-mat">' + IC('folder') + '<span><b>À emporter à domicile</b> ' + esc(mat.join(', ')) + '</span></p>' : '')
       + (tom.length ? '<div class="cl-today-t2">Demain</div>' + tom.map(function(x){ return row(x, true); }).join('') : '')
@@ -22603,7 +22813,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return h + '</div>';
   }
   // Bilan de tous les clients, mois par mois
-  function bilanAll(){
+  function bilanAll(embed){
     var ym = todayIso().slice(0, 7), mode = 'm', yr = +todayIso().slice(0, 4);
     function tabs(){ return '<div class="cl-ball-tabs" role="tablist"><button type="button" data-k="mode:m" aria-pressed="' + (mode === 'm') + '">Mois</button><button type="button" data-k="mode:y" aria-pressed="' + (mode === 'y') + '">Année</button></div>'; }
     function yearBody(){
@@ -22640,6 +22850,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         + (rows.length ? '<div class="cl-ball-l">' + rows.map(function(r){ return '<div class="cl-ball-r"><button type="button" class="cl-ball-c" data-k="c:' + esc(r.c.id) + '"><em class="cl-av2" style="background:' + avCol(r.c.nom) + '">' + esc(ini(r.c.nom)) + '</em><b>' + esc(r.c.nom) + '</b><span>' + r.L.length + '</span></button><p>' + r.L.map(function(x){ return '<span>' + esc(dayLab(x.d)) + '</span>'; }).join('') + '</p></div>'; }).join('') + '</div>'
           : '<div class="cl-empty">Aucune séance réalisée en ' + esc(mLab(ym)) + '.</div>');
     }
+    if(embed){ if(embed.y){ yr = embed.y; return yearBody(); } ym = embed.ym || ym; return body(); }
     function paint(dd){ dd.querySelector('#clBall').innerHTML = tabs() + (mode === 'y' ? yearBody() : body()); }
     var d = sheet('<div class="cl-ball"><h4>' + IC('calendar') + 'Bilan des séances</h4><div id="clBall">' + tabs() + body() + '</div><button type="button" class="cl-btn ghost" data-k="x">Fermer</button></div>', function(k, dd){
       if(k === 'mode:m' || k === 'mode:y'){ mode = k.slice(5); if(mode === 'y') yr = +ym.slice(0, 4); paint(dd); return false; }
@@ -22710,10 +22921,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function sessHtml(c, s){
     var w = s.w || 0, meta = fmtLine(s);
-    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.h ? '<span class="cl-tag">' + esc(hTxt(s.h)) + '</span>' : '') + (s.lieu ? '<span class="cl-tag">' + esc(s.lieu) + '</span>' : '') + (isoD(s) > todayIso() ? '<span class="cl-tag cl-tag-pv">Prévue</span>' : '') + (s.ti ? '<span class="cl-tag cl-tag-pl">' + esc(s.ti) + '</span>' : '') + (s.src === 'tirage' ? '<span class="cl-tir" title="Séance du Tirage studio">🎲 Tirage studio</span>' : '') + (s.ia ? '<span class="cl-ia" role="img" aria-label="Créée avec l’IA" title="Créée avec l’IA"></span>' : '') + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
+    return '<div class="cl-ss' + (isDone(s) ? ' done' : '') + '" data-s="' + esc(s.id) + '"><div class="cl-ss-h"><b>' + esc(dLong(s)) + '</b>' + (s.h ? '<span class="cl-tag">' + esc(hTxt(s.h)) + '</span>' : '') + (s.lieu ? '<span class="cl-tag">' + esc(s.lieu) + '</span>' : '') + (isoD(s) > todayIso() ? '<span class="cl-tag cl-tag-pv">Prévue</span>' : '') + (s.ti ? '<span class="cl-tag cl-tag-pl">' + esc(s.ti) + '</span>' : '') + (s.src === 'tirage' || s.tir ? '<span class="cl-tir" title="Séance du Tirage studio">' + IC('dice') + 'Tirage studio</span>' : '') + (s.ia ? '<span class="cl-ia" role="img" aria-label="Créée avec l’IA" title="Créée avec l’IA"></span>' : '') + (s.who ? '<span class="cl-tag">' + esc(s.who) + '</span>' : '') + doneBtn(s) + '</div>'
       + (meta ? '<p class="cl-meta">' + esc(meta) + '</p>' : '') + fbLine(s)
       + '<ul class="cl-exs">' + s.ex.map(function(l, i){ return '<li' + (i < w ? ' class="wu"' : '') + '><span>' + (i < w ? '🔸 ' : '') + esc(l[0]) + '</span><em>' + esc(showVal(l[1])) + '</em></li>'; }).join('') + '</ul>'
-      + '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" class="sec" data-a="dup">' + IC('copy') + '<span>Refaire</span></button><button type="button" class="sec" data-a="copy">' + IC('send') + '<span class="lg">Copier vers…</span><span class="sm">Copier</span></button><button type="button" class="sec" data-a="hw" aria-label="Devoir maison">' + IC('file') + '<span class="lg">Devoir maison</span><span class="sm">Devoir</span></button>' + (s.d === addDays(todayIso(), 1) ? '<button type="button" class="sec" data-a="wa" aria-label="Rappel WhatsApp">' + IC('send') + '<span class="lg">Rappel</span><span class="sm">Rappel</span></button>' : '') + '<button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '<span class="sm">QR</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>';
+      + (s.tir && s.ok !== 1 ? '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('dice') + 'Lancer le tirage</button><button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>' : '<div class="cl-acts"><button type="button" class="pri" data-a="go">' + IC('play') + 'Chrono</button><button type="button" data-a="show">' + IC('screen') + 'Présenter</button><button type="button" data-a="send">' + IC('plane') + 'Envoyer</button><button type="button" class="sec" data-a="dup">' + IC('copy') + '<span>Refaire</span></button><button type="button" class="sec" data-a="copy">' + IC('send') + '<span class="lg">Copier vers…</span><span class="sm">Copier</span></button><button type="button" class="sec" data-a="hw" aria-label="Devoir maison">' + IC('file') + '<span class="lg">Devoir maison</span><span class="sm">Devoir</span></button>' + (s.d === addDays(todayIso(), 1) ? '<button type="button" class="sec" data-a="wa" aria-label="Rappel WhatsApp">' + IC('send') + '<span class="lg">Rappel</span><span class="sm">Rappel</span></button>' : '') + '<button type="button" class="sec" data-a="edit" aria-label="Modifier">' + IC('edit') + '<span class="sm">Modifier</span></button><button type="button" class="sec" data-a="qr" aria-label="QR pour l’iPad">' + IC('camera') + '<span class="sm">QR</span></button><button type="button" class="sec" data-a="del" aria-label="Supprimer">' + IC('trash') + '<span class="sm">Suppr.</span></button></div></div>');
   }
   function renderClient(c){
     var l = lastSess(c), list = c.s.slice().reverse(), shown = list.slice(0, V.more);
@@ -22733,6 +22944,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         .sort(function(a, b){ return a.k < b.k ? 1 : a.k > b.k ? -1 : a.nom.localeCompare(b.nom, 'fr'); });
     },
     add: function(nom){ nom = String(nom || '').trim(); if(!nom) return null; var ex = D.clients.find(function(o){ return nz(o.nom) === nz(nom); }); if(ex) return ex.id; var nc = {id:uid(), nom:nom, s:[]}; D.clients.push(nc); save(true); try{ render(); }catch(e){} return nc.id; },
+    // Séance « Tirage studio » prévue aujourd'hui pour ce client (le tirage la remplace au lieu d'en créer une autre)
+    tirToday: function(cid){ var c = clientById(cid), t = todayIso(), x = c && c.s.find(function(y){ return y.tir && y.d === t && y.ok !== 1; }); return x ? {sid:x.id, h:x.h || '', lieu:x.lieu || ''} : null; },
     upsert: function(cid, o){
       var c = clientById(cid); if(!c || !o || !o.id) return false;
       var s = c.s.find(function(x){ return x.id === o.id; });
@@ -22764,7 +22977,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(a === 'newc') return askName('Nouveau client', '', function(n){ var nc = {id:uid(), nom:n, s:[]}; D.clients.push(nc); save(); V.c = nc.id; render(); });
     if(a === 'back'){ V.c = null; render(); return; }
     if(a === 'more'){ V.more += 30; render(); return; }
-    if(a === 'bilall') return bilanAll();
+    if(a === 'bilall') return planning('mois', todayIso());
+    if(a === 'plan') return planning('jour', todayIso());
     if(a === 'tdgo' || a === 'tdshow' || a === 'tdwa'){
       var tr = b.closest('[data-tc]'), tc = tr && clientById(tr.getAttribute('data-tc')), ts = tc && tc.s.find(function(x){ return x.id === tr.getAttribute('data-ts'); });
       if(!ts) return;
@@ -22784,7 +22998,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       sheet('<h4>＋ Nouvelle séance · ' + esc(c.nom) + '</h4><p>Comment veux-tu partir ?</p>'
         + '<button type="button" class="cl-btn cl-ai-b" data-k="ia">' + IC('spark') + 'Créer avec l’IA <small style="font-weight:600;opacity:.85">· à partir d’un objectif</small></button>'
         + (l0 ? '<button type="button" class="cl-btn go" data-k="last">' + IC('copy') + 'Dernière séance <small style="font-weight:600;opacity:.85">· ' + esc(dShort(l0)) + ' · ' + l0.ex.length + ' exercice' + (l0.ex.length > 1 ? 's' : '') + '</small></button>' : '')
+        + '<button type="button" class="cl-btn cl-tir-b" data-k="tir">' + IC('dice') + 'Tirage studio <small style="font-weight:600;opacity:.85">· exercices tirés au sort sur l’iPad</small></button>'
         + '<button type="button" class="cl-btn" data-k="blank">' + IC('file') + 'Séance vierge</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k){
+          if(k === 'tir') setTimeout(function(){ tirSheet(c); }, 0);
           if(k === 'ia') setTimeout(function(){ aiSheet(c); }, 0);
           if(k === 'last') setTimeout(function(){ openEditor(c, {d:todayIso(), t:l0.t, r:l0.r, w:l0.w, who:l0.who, ex:l0.ex.map(function(x){ return x.slice(); })}, true); }, 0);
           if(k === 'blank') setTimeout(function(){ openEditor(c, {d:todayIso(), ex:[['', '30"'], ['', '30"'], ['', '30"']]}, true); }, 0);
@@ -23169,6 +23385,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // ---------- Présentation grand écran (iPad ou téléphone) ----------
   function present(nom, s, opts){
+    if(!(opts && (opts.guest || opts.athlete || opts.saveTo)) && tirGo(nom, s, null)) return document.createElement('div');
     opts = opts || {};
     var el = document.createElement('div'); el.className = 'clp'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Séance de ' + nom);
     function cards(){
@@ -23489,6 +23706,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   try{ Object.assign(CO, JSON.parse(localStorage.getItem(CK) || '{}')); }catch(e){}
   function saveCO(){ try{ localStorage.setItem(CK, JSON.stringify(CO)); }catch(e){} }
   function launchSheet(nom, s, c){
+    if(tirGo(nom, s, c)) return;
     var T = s.t || (c && c.lt) || 3, Rr = s.r ? clean(s.r) : CO.rec, Au = !!CO.auto, Wu = CO.wu === 0 ? 0 : -1;
     var opt = function(id, arr, cur){ return '<div class="cl-chips" id="' + id + '">' + arr.map(function(o){ return '<button type="button" class="cl-chip" data-v="' + esc(o[0]) + '" aria-pressed="' + (String(o[0]) === String(cur)) + '">' + o[1] + '</button>'; }).join('') + '</div>'; };
     var hasCi = s.ex.length > (s.w || 0);
