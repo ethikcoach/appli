@@ -3,6 +3,28 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<script>
+// Lien court « appli.ethikcoach.fr/?l=xxxxxxxxxx » : on récupère le vrai lien (séance seule, programme, Avent…) puis on l'ouvre
+(function(){
+  var m = /[?&]l=([a-z0-9]{10})(?:&|$)/.exec(location.search || ''); if(!m) return;
+  var html = document.documentElement; html.className += ' ec-court';
+  var st = document.createElement('style');
+  st.textContent = 'html.ec-court body>*{display:none!important}html.ec-court body{background:#F3F1EA!important}html.ec-court body::before{content:attr(data-msg);position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font:700 17px/1.45 -apple-system,BlinkMacSystemFont,sans-serif;color:#1F4030;white-space:pre-line}';
+  document.head.appendChild(st);
+  function msg(t){ var b = document.body; if(b) b.setAttribute('data-msg', t); else document.addEventListener('DOMContentLoaded', function(){ document.body.setAttribute('data-msg', t); }); }
+  msg('Ouverture de ta séance…');
+  var n = 0;
+  (function go(){
+    fetch('https://ethikcoach-abonnement.ethikcoach.workers.dev/court/lire?id=' + m[1], {cache:'no-store'})
+      .then(function(r){ return r.json().catch(function(){ return {}; }); })
+      .then(function(j){
+        if(j && j.ok && /^#[a-z]+=/.test(j.h || '')){ location.replace(location.origin + '/' + j.h); return; }
+        if(++n < 3){ setTimeout(go, 2500); return; }
+        msg('Ce lien n’est pas (encore) disponible.\nRéessaie dans un instant, ou demande à Benoît de te le renvoyer.');
+      }, function(){ if(++n < 4){ setTimeout(go, 2000); return; } msg('Pas de connexion internet.\nConnecte-toi puis rouvre le lien.'); });
+  })();
+})();
+</script>
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F4030">
@@ -1561,8 +1583,39 @@
   var EC_SIGNATURE = 'Benoît · Ethik’Coach';
   var EC_APP_DESC = 'renfo sur mesure, récupération (étirements, mobilité, yoga) et respiration, guidés pas à pas au chrono et à la voix';
   function ecIsCoachMsg(){ try{ return typeof EC_IS_COACH !== 'undefined' && !!EC_IS_COACH; }catch(e){ return false; } }
+  // Liens courts (coach) : « https://appli.ethikcoach.fr/?l=k3x9ab2q1z » au lieu d'un lien de plusieurs lignes.
+  // Le vrai lien (séance seule, programme, Avent… jamais de clé d'accès ni de prénom) est rangé sur le serveur ;
+  // l'identifiant est tiré du lien lui-même, donc le même lien donne toujours le même lien court.
+  var EC_COURT_K = 'ec_coach_court';
+  function ecShortKey(){ try{ return String((typeof EC_KEY !== 'undefined' && EC_KEY) || localStorage.getItem('ec_access') || '').trim().toLowerCase(); }catch(e){ return ''; } }
+  function ecShort(u){
+    try{
+      var m = /^https:\/\/appli\.ethikcoach\.fr\/(#[a-z]+=[A-Za-z0-9_-]+(?:&g=[a-z0-9]{8,10})?)$/.exec(String(u || ''));
+      if(!m || !ecIsCoachMsg() || !ecShortKey()) return u;
+      var h = m[1], id = (ecHash('court|' + h.replace(/[A-Z]/g, function(c){ return '^' + c.toLowerCase(); })) + '0000000000').slice(0, 10).replace(/[^a-z0-9]/g, '0');
+      var q = {}; try{ q = JSON.parse(localStorage.getItem(EC_COURT_K) || '{}') || {}; }catch(e){}
+      if(q[id] !== 1){ q[id] = h; try{ localStorage.setItem(EC_COURT_K, JSON.stringify(q)); }catch(e){} ecShortFlush(); }
+      return 'https://appli.ethikcoach.fr/?l=' + id;
+    }catch(e){ return u; }
+  }
+  var EC_COURT_BUSY = false;
+  function ecShortFlush(){
+    if(EC_COURT_BUSY) return; var q = {}; try{ q = JSON.parse(localStorage.getItem(EC_COURT_K) || '{}') || {}; }catch(e){}
+    var l = Object.keys(q).filter(function(id){ return typeof q[id] === 'string'; }).slice(0, 20).map(function(id){ return {id:id, h:q[id]}; });
+    var k = ecShortKey(); if(!l.length || !k) return;
+    EC_COURT_BUSY = true;
+    fetch(EC_SUB_API + '/court/creer', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:k, l:l})})
+      .then(function(r){ return r.json(); }).then(function(j){
+        if(j && j.ok && j.ids){ var q2 = {}; try{ q2 = JSON.parse(localStorage.getItem(EC_COURT_K) || '{}') || {}; }catch(e){}
+          j.ids.forEach(function(id){ q2[id] = 1; }); var ks = Object.keys(q2); if(ks.length > 300) ks.slice(0, ks.length - 300).forEach(function(id){ if(q2[id] === 1) delete q2[id]; });
+          try{ localStorage.setItem(EC_COURT_K, JSON.stringify(q2)); }catch(e){} }
+      }).catch(function(){}).then(function(){ EC_COURT_BUSY = false; });
+  }
+  window.ecShort = ecShort;
+  window.addEventListener('online', ecShortFlush); setTimeout(ecShortFlush, 6000);
   // o = {name, intro, extra, how, link, after, outro, sign}
   function ecMsg(o){
+    if(o.link) o = Object.assign({}, o, {link:ecShort(o.link)});
     var L = [o.name ? 'Bonjour ' + ecFirst(o.name) + ' 👋' : 'Bonjour 👋', '', o.intro];
     if(o.extra){ L.push(''); L.push(o.extra); }
     if(o.how || o.link){ L.push(''); if(o.how) L.push('👉 ' + o.how); if(o.link) L.push(o.link); }
@@ -20806,7 +20859,7 @@
     var inp = document.getElementById('ctAvpLink'); if(!inp || typeof ecAvLink !== 'function') return;
     var y = new Date().getFullYear(), link = '', txt = '';
     function fill(){
-    link = ecAvLink('edt', y);
+    link = ecAvLink('edt', y); if(link && window.ecShort) link = window.ecShort(link);
     if(!link){ inp.value = 'Connecte-toi à Internet : le lien se prépare avec ton serveur'; txt = ''; return; }
     inp.value = link;
     txt = '🎄 Défi de l’Avent de l’École de Trail !\n\n'
