@@ -22098,7 +22098,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   .cl-ai-t{width:100%; box-sizing:border-box; min-height:96px; padding:12px; border-radius:14px; font:600 .95rem/1.4 Inter, sans-serif; resize:vertical;}
   .cl-ai-ch{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 6px;}
   .cl-ai-ch button{padding:7px 11px; border-radius:999px; border:1px solid rgba(109,74,255,.3); background:rgba(109,74,255,.08); color:inherit; font:700 .78rem/1 Inter, sans-serif; cursor:pointer;}
-  .cl-ai-o{display:flex; align-items:center; gap:8px; margin:8px 0 4px; font:600 .84rem/1.3 Inter, sans-serif;}
+  .cl-dlg .cl-ai-t, .cl-dlg .cl-ai-in{background:rgba(127,127,127,.08); border:1px solid rgba(127,127,127,.3); color:inherit;}
+.cl-ai-pf{margin:4px 0 10px; padding:10px 12px; border-radius:14px; background:rgba(109,74,255,.06); border:1px solid rgba(109,74,255,.18);}
+.cl-ai-pf summary{cursor:pointer; list-style:none; display:flex; flex-direction:column; gap:3px;} .cl-ai-pf summary::-webkit-details-marker{display:none;}
+.cl-ai-pf summary b{font:800 .9rem/1.2 Inter, sans-serif;} .cl-ai-pf summary b::after{content:' ▾'; opacity:.5;} .cl-ai-pf[open] summary b::after{content:' ▴';}
+.cl-ai-pf summary span{font:600 .8rem/1.35 Inter, sans-serif; opacity:.75;}
+.cl-ai-l{display:block; margin:12px 0 2px; font:800 .72rem/1.2 Inter, sans-serif; letter-spacing:.06em; text-transform:uppercase; opacity:.7;}
+.cl-ai-in{width:100%; box-sizing:border-box; margin-top:6px; padding:10px 12px; border-radius:12px; font:600 .9rem/1.3 Inter, sans-serif;}
+.cl-ai-tg button.on{background:#6D4AFF; border-color:#6D4AFF; color:#fff;}
+.cl-ai-id button{background:rgba(31,64,48,.07); border-color:rgba(31,64,48,.22); text-align:left; line-height:1.25 !important;}
+.cl-ai-last{display:block; width:100%; margin:6px 0 0; padding:8px 10px; border-radius:10px; border:1px dashed rgba(109,74,255,.35); background:none; color:inherit; font:600 .78rem/1.3 Inter, sans-serif; text-align:left; cursor:pointer; opacity:.85;}
+.cl-ai-o{display:flex; align-items:center; gap:8px; margin:8px 0 4px; font:600 .84rem/1.3 Inter, sans-serif;}
   .cl-ai-s{margin:6px 0 0 !important; font-size:.8rem !important;}
   .cl-ai-spin{display:inline-block; width:14px; height:14px; margin-right:6px; vertical-align:-2px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:clAiSp .8s linear infinite;}
   @keyframes clAiSp{to{transform:rotate(360deg);}}
@@ -22165,7 +22175,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     D.clients.forEach(function(c){ c.s.forEach(function(x){ if(n[x.id] > 1){ x.id = x.id + '~' + c.id; ch = true; } }); });
     return ch;
   }
-  function cSig(c){ return JSON.stringify([c.nom, c.lt || 0]); }
+  function cSig(c){ return JSON.stringify([c.nom, c.lt || 0, c.pf || null, c.ia || '']); }
   function sSig(x){ var o = {}; Object.keys(x).forEach(function(k){ if(k !== 'u') o[k] = x[k]; }); return JSON.stringify(o); }
   function snap(){ SNAP = {}; D.clients.forEach(function(c){ SNAP['c:' + c.id] = cSig(c); c.s.forEach(function(x){ SNAP['s:' + x.id] = sSig(x); }); }); Object.keys(D.map).forEach(function(k){ SNAP['m:' + k] = String(D.map[k]); }); (D.timers || []).forEach(function(t){ SNAP['x:' + t.id] = sSig(t); }); }
   function stamp(){
@@ -22249,7 +22259,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         if(lc && !byId[rc.id]) delete byNm[nz(rc.nom)];
         if(!lc){ if(dead[rc.id] >= (rc.u || 0)) return; lc = copy(rc); lc.s = []; D.clients.push(lc); byId[lc.id] = lc; got = true; }
         else {
-          if((rc.u || 0) > (lc.u || 0)){ lc.nom = rc.nom; if(rc.lt) lc.lt = rc.lt; lc.u = rc.u; got = true; }
+          if((rc.u || 0) > (lc.u || 0)){ lc.nom = rc.nom; if(rc.lt) lc.lt = rc.lt; if(rc.pf) lc.pf = rc.pf; if(rc.ia) lc.ia = rc.ia; lc.u = rc.u; got = true; }
           else if((lc.u || 0) > (rc.u || 0)) mine = true;
           if(lc.id !== rc.id){ if(rc.id < lc.id){ if(V.c === lc.id) V.c = rc.id; lc.id = rc.id; got = true; } else mine = true; }   // même client créé des deux côtés : un seul identifiant
         }
@@ -23086,41 +23096,116 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return el;
   }
   // ---------- Création de séance avec l'IA (via le serveur, clé coach ; le prénom du client n'est jamais envoyé) ----------
-  var AI_CH = ['Haut du corps', 'Bas du corps', 'Gainage', 'Cardio', 'Mobilité', 'Senior / doux', 'Prépa trail', 'TRX', 'Kettlebell', 'Élastique', 'Poids du corps', 'À domicile', '45 min', 'Débutant', 'Confirmé'];
-  var AI_LAST = 'ec_coach_iaobj';
+  var AI_CH = ['Haut du corps', 'Bas du corps', 'Gainage', 'Cardio', 'Mobilité', 'TRX', 'Kettlebell', 'Élastique', 'Poids du corps', 'À domicile', '30 min', '45 min', '1 h'];
+  // Profil du client (gardé avec ses séances, synchronisé iPad ↔ iPhone) : l'IA part de SON objectif, plus de la dernière demande faite pour un autre
+  var AI_SP = ['Trail', 'Course sur route', 'Marche / rando', 'Vélo route', 'VTT', 'Canoë-kayak', 'Natation', 'Ski', 'Tennis / padel', 'Football', 'Rugby', 'Basket / hand', 'Golf', 'Escalade', 'Équitation', 'Danse', 'Musculation / fitness'];
+  var AI_GL = ['Remise en forme', 'Perte de poids', 'Tonification', 'Préparer une course', 'Performance', 'Prévention des blessures', 'Retour de blessure', 'Dos / posture', 'Équilibre / autonomie', 'Mobilité / souplesse'];
+  var AI_LV = ['Débutant', 'Intermédiaire', 'Confirmé', 'Senior'];
+  var AI_IDEAS = {
+    'Trail':['Renfo excentrique des quadriceps pour les descentes', 'Gainage et proprioception des chevilles', 'Fessiers et ischios pour les montées', 'Pliométrie douce : sauts bas, montées de genoux', 'Prévention du genou : quadriceps, fessier moyen, TFL'],
+    'Course sur route':['Mollets et pieds : prévention des tendons', 'Gainage anti-rotation et posture de course', 'Fessier moyen et stabilité du bassin', 'Pliométrie basse pour l’économie de course'],
+    'Marche / rando':['Endurance des jambes et du dos (port du sac)', 'Équilibre et chevilles pour terrain irrégulier', 'Quadriceps pour les descentes'],
+    'Vélo route':['Gainage et bas du dos pour la position sur le vélo', 'Fessiers et quadriceps en unilatéral', 'Mobilité des hanches et du dos', 'Haut du corps postural : épaules, nuque'],
+    'VTT':['Gainage et haut du corps pour le pilotage', 'Explosivité des jambes pour les relances', 'Avant-bras et grip', 'Mobilité des hanches'],
+    'Canoë-kayak':['Tirage et dos : rowing, TRX', 'Rotation du tronc et gainage anti-rotation', 'Épaules : coiffe des rotateurs', 'Grip et avant-bras'],
+    'Natation':['Épaules (coiffe) et dos', 'Gainage pour l’alignement', 'Mobilité des épaules et du thoracique'],
+    'Ski':['Cuisses en excentrique et isométrique (chaise, squats)', 'Proprioception genoux et chevilles', 'Explosivité latérale', 'Gainage anti-rotation'],
+    'Tennis / padel':['Appuis latéraux et changements de direction', 'Rotation du tronc avec élastique', 'Épaule et coiffe des rotateurs', 'Gainage dynamique'],
+    'Football':['Pliométrie et appuis', 'Prévention des ischios et des adducteurs', 'Explosivité et vitesse'], 'Rugby':['Force du haut du corps et gainage', 'Explosivité des jambes', 'Prévention épaules et nuque'], 'Basket / hand':['Pliométrie et réception des sauts', 'Appuis et changements de direction', 'Prévention chevilles et genoux'],
+    'Golf':['Rotation et mobilité thoracique', 'Gainage anti-rotation', 'Hanches et fessiers'], 'Escalade':['Tirage et gainage', 'Muscles antagonistes : pompes, épaules', 'Grip et avant-bras'], 'Équitation':['Gainage et posture', 'Adducteurs et fessiers', 'Équilibre'], 'Danse':['Gainage et équilibre', 'Force des pieds et chevilles', 'Mobilité active'], 'Musculation / fitness':['Circuit full body', 'Haut du corps : poussée et tirage', 'Bas du corps : force']
+  };
+  var AI_GIDEAS = {'Remise en forme':'Circuit full body 45 min, cardio léger', 'Perte de poids':'Circuit cardio-renfo en intervalles 30"-15"', 'Tonification':'Renfo global, abdos et fessiers', 'Préparer une course':'Renfo spécifique à la course préparée', 'Performance':'Force et explosivité', 'Prévention des blessures':'Prévention : chevilles, genoux, gainage', 'Retour de blessure':'Reprise douce : renfo progressif, amplitude contrôlée', 'Dos / posture':'Dos et posture : gainage, fessiers, mobilité', 'Équilibre / autonomie':'Équilibre et force des jambes (relevés de chaise)', 'Mobilité / souplesse':'Mobilité et souplesse active'};
+  function aiZone(sess){
+    var z = {bas:0, haut:0, gain:0}; if(!sess) return '';
+    sess.ex.slice(sess.w || 0).forEach(function(l){ var n = nz(l[0]);
+      if(/squat|fente|pont|chaise|mollet|jambe|step|soulev|deadlift|hip|fessier|saut/.test(n)) z.bas++;
+      if(/pompe|rowing|tirage|traction|dips|developpe|curl|biceps|triceps|epaule|press|bras/.test(n)) z.haut++;
+      if(/gainage|planche|crunch|abdo|dead bug|bird|hollow|mountain|russian/.test(n)) z.gain++; });
+    var m = Math.max(z.bas, z.haut, z.gain); if(!m) return ''; return z.bas === m ? 'bas' : z.haut === m ? 'haut' : 'gain';
+  }
+  function aiIdeas(c){
+    var pf = c.pf || {}, out = [], seen = {};
+    function add(x){ if(x && !seen[x]){ seen[x] = 1; out.push(x); } }
+    (pf.gl || []).forEach(function(g){ add(AI_GIDEAS[g]); });
+    (pf.sp || []).forEach(function(sp){ (AI_IDEAS[sp] || []).forEach(add); });
+    var last = c.s.length ? c.s[c.s.length - 1] : null, z = aiZone(last);
+    if(z === 'bas') add('Varier : haut du corps et gainage (dernière séance : bas du corps)');
+    if(z === 'haut') add('Varier : bas du corps et gainage (dernière séance : haut du corps)');
+    if(z === 'gain') add('Varier : circuit full body (dernière séance : gainage)');
+    if(c.s.length >= 3) add('Même trame que la dernière séance, en progression');
+    if(out.length < 4){ ['Circuit full body 45 min', 'Bas du corps et gainage', 'Haut du corps et cardio', 'Mobilité et prévention'].forEach(add); }
+    return out.slice(0, 9);
+  }
+  function aiPfTxt(pf){ pf = pf || {}; return [(pf.gl || []).join(', '), pf.obj, (pf.sp || []).length ? 'sports : ' + pf.sp.join(', ') : '', pf.lv ? 'niveau ' + pf.lv.toLowerCase() : '', pf.ctr ? 'à surveiller : ' + pf.ctr : ''].filter(Boolean).join(' · '); }
   function aiSheet(c){
-    var last = ''; try{ last = localStorage.getItem(AI_LAST) || ''; }catch(e){}
-    var d = sheet('<h4>✨ Séance avec l’IA · ' + esc(c.nom) + '</h4><p>Décris l’objectif : zone travaillée, niveau, matériel, durée, contraintes. L’IA propose la séance, tu l’ajustes avant d’enregistrer.</p>'
-      + '<textarea class="cl-in cl-ai-t" id="clIaT" rows="4" placeholder="Ex. : renfo bas du corps et gainage, genou fragile, 45 min, TRX et kettlebell, niveau intermédiaire">' + esc(last) + '</textarea>'
+    var pf = c.pf = c.pf || {}; pf.sp = pf.sp || []; pf.gl = pf.gl || [];
+    var empty = !pf.obj && !pf.sp.length && !pf.gl.length && !pf.lv && !pf.ctr;
+    function chips(list, sel, attr){ return list.map(function(x){ return '<button type="button" data-' + attr + '="' + esc(x) + '"' + (sel.indexOf(x) >= 0 ? ' class="on"' : '') + '>' + esc(x) + '</button>'; }).join(''); }
+    function ideasHtml(){ return aiIdeas(c).map(function(x){ return '<button type="button" data-id="' + esc(x) + '">' + esc(x) + '</button>'; }).join(''); }
+    var d = sheet('<h4>✨ Séance avec l’IA · ' + esc(c.nom) + '</h4>'
+      + '<details class="cl-ai-pf"' + (empty ? ' open' : '') + '><summary><b>Profil de ' + esc(c.nom) + '</b><span id="clPfSum">' + (empty ? 'À remplir une fois : l’IA s’en servira à chaque séance' : esc(aiPfTxt(pf))) + '</span></summary>'
+      + '<label class="cl-ai-l">Objectif principal</label><div class="cl-ai-ch cl-ai-tg">' + chips(AI_GL, pf.gl, 'gl') + '</div>'
+      + '<input class="cl-in cl-ai-in" id="clPfObj" placeholder="En détail (ex. trail de 45 km le 20 mars, perdre 5 kg…)" value="' + esc(pf.obj || '') + '">'
+      + '<label class="cl-ai-l">Sports pratiqués</label><div class="cl-ai-ch cl-ai-tg">' + chips(AI_SP, pf.sp, 'sp') + '</div>'
+      + '<label class="cl-ai-l">Niveau</label><div class="cl-ai-ch cl-ai-tg">' + chips(AI_LV, pf.lv ? [pf.lv] : [], 'lv') + '</div>'
+      + '<label class="cl-ai-l">À surveiller</label><input class="cl-in cl-ai-in" id="clPfCtr" placeholder="Ex. genou fragile, éviter les sauts, dos sensible" value="' + esc(pf.ctr || '') + '">'
+      + '</details>'
+      + '<label class="cl-ai-l">Idées de séance pour ' + esc(c.nom) + '</label><div class="cl-ai-ch cl-ai-id" id="clIaId">' + ideasHtml() + '</div>'
+      + '<label class="cl-ai-l">Objectif de cette séance</label>'
+      + '<textarea class="cl-in cl-ai-t" id="clIaT" rows="3" placeholder="Touche une idée ci-dessus ou décris : zone, matériel, durée, contraintes du jour"></textarea>'
+      + (c.ia ? '<button type="button" class="cl-ai-last" data-last="1">↺ Dernière demande pour ' + esc(c.nom) + ' : ' + esc(c.ia.length > 70 ? c.ia.slice(0, 70) + '…' : c.ia) + '</button>' : '')
       + '<div class="cl-ai-ch">' + AI_CH.map(function(x){ return '<button type="button" data-ch="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>'
       + '<label class="cl-ai-o"><input type="checkbox" id="clIaH" checked> S’appuyer sur ses dernières séances (progression, variété)</label>'
       + '<p class="cl-ai-s" id="clIaS">Le prénom du client n’est pas envoyé. Il faut du réseau.</p>'
       + '<button type="button" class="cl-btn cl-ai-b" data-k="go" id="clIaGo">' + IC('spark') + 'Créer la séance</button><button type="button" class="cl-btn ghost" data-k="x">Annuler</button>', function(k, dd){
-        if(k !== 'go') return;
+        if(k !== 'go'){ savePf(); return; }
+        savePf();
         var obj = dd.querySelector('#clIaT').value.trim(), st2 = dd.querySelector('#clIaS'), go = dd.querySelector('#clIaGo');
-        if(obj.length < 3){ st2.textContent = '✍️ Écris d’abord l’objectif de la séance.'; return false; }
+        if(obj.length < 3){ st2.textContent = '✍️ Touche une idée ou écris l’objectif de la séance.'; return false; }
         if(!navigator.onLine){ st2.textContent = '📴 Pas de réseau : l’IA a besoin d’internet.'; return false; }
         if(go.disabled) return false;
-        try{ localStorage.setItem(AI_LAST, obj); }catch(e){}
+        c.ia = obj; save();
         go.disabled = true; go.innerHTML = '<span class="cl-ai-spin"></span> L’IA prépare la séance…'; st2.textContent = 'Quelques secondes…';
         var hist = dd.querySelector('#clIaH').checked ? c.s.slice(-4).reverse().map(function(x){ return {d:x.d || '', t:x.t || 0, ex:x.ex.slice(x.w || 0).map(function(l){ return [l[0], l[1]]; })}; }) : [];
         var lib = exList().filter(function(e){ var ph = ''; try{ ph = window.ecExPhoto ? window.ecExPhoto(e) : ''; }catch(x){} return ph && ph.indexOf('data:image/svg') !== 0; }).map(function(e){ return e.name; });
-        SY.post('/coaching/ia', {obj:obj, hist:hist, mots:suggestions().slice(0, 200), lib:lib}).then(function(r){
+        var pfs = {gl:pf.gl, obj:pf.obj || '', sp:pf.sp, lv:pf.lv || '', ctr:pf.ctr || ''};
+        SY.post('/coaching/ia', {obj:obj, pf:pfs, hist:hist, mots:suggestions().slice(0, 200), lib:lib}).then(function(r){
           if(!r.ok) throw r;
           dd.remove();
           var s0 = {d:todayIso(), t:r.s.t, r:r.s.r || '', w:r.s.w || 0, ia:1, ex:r.s.ex.map(function(l){ return [l[0], l[1] || '30"']; })};
           openEditor(c, s0, true);
           var body = document.querySelector('.cl-ov:last-of-type .cl-ov-body');
-          if(body) body.insertAdjacentHTML('afterbegin', '<div class="cl-ai-note"><b>✨ Proposition de l’IA</b><span>Objectif : ' + esc(obj) + '</span>' + (r.note ? '<span>💡 ' + esc(r.note) + '</span>' : '') + '<small>Vérifie, ajuste puis Enregistrer.</small></div>');
+          var pt = aiPfTxt(pf);
+          if(body) body.insertAdjacentHTML('afterbegin', '<div class="cl-ai-note"><b>✨ Proposition de l’IA</b><span>Séance : ' + esc(obj) + '</span>' + (pt ? '<span>Profil : ' + esc(pt) + '</span>' : '') + (r.note ? '<span>💡 ' + esc(r.note) + '</span>' : '') + '<small>Vérifie, ajuste puis Enregistrer.</small></div>');
         }).catch(function(e){
           go.disabled = false; go.innerHTML = '✨ Réessayer';
           var why = e && e.raison;
-          st2.textContent = why === 'ia-off' ? '🛠 L’IA n’est pas encore branchée : ajoute la clé ANTHROPIC_API_KEY dans Cloudflare.' : why === 'cle' ? '⚪ Réservé à la clé coach.' : why === 'quota' ? '⏳ Limite du jour atteinte, réessaie demain.' : (e && e._s === 404) ? '🛠 Serveur pas encore mis à jour : dépose le nouveau worker.js sur Cloudflare.' : '⚠️ L’IA n’a pas répondu correctement. Réessaie.';
+          st2.textContent = why === 'ia-off' ? '🛠 L’IA n’est pas encore branchée : ajoute la clé ANTHROPIC_API_KEY dans Cloudflare.' : why === 'cle' ? '⚪ Réservé à la clé coach.' : why === 'quota' ? '⏳ Limite du jour atteinte, réessaie demain.' : (e && e._s === 404) ? '🛠 Serveur pas encore mis à jour : déploie le dernier worker.js.' : '😕 L’IA n’a pas répondu. Réessaie dans un instant.';
         });
         return false;
       });
-    d.addEventListener('click', function(ev){ var ch = ev.target.closest('[data-ch]'); if(!ch) return; var t = d.querySelector('#clIaT'), v = ch.getAttribute('data-ch'); t.value = (t.value.trim() ? t.value.trim().replace(/[,.]?$/, ', ') : '') + v; t.focus(); });
-    setTimeout(function(){ var t = d.querySelector('#clIaT'); if(t && !t.value) t.focus(); }, 80);
+    function savePf(){
+      var o = d.querySelector('#clPfObj'), t = d.querySelector('#clPfCtr'); if(!o) return;
+      var before = JSON.stringify(c.pf || {});
+      pf.obj = o.value.trim().slice(0, 300); pf.ctr = t.value.trim().slice(0, 300);
+      if(JSON.stringify(pf) !== before){ c.pf = pf; save(); }
+      var sm = d.querySelector('#clPfSum'); if(sm){ var tx = aiPfTxt(pf); sm.textContent = tx || 'À remplir une fois : l’IA s’en servira à chaque séance'; }
+      var idb = d.querySelector('#clIaId'); if(idb) idb.innerHTML = ideasHtml();
+    }
+    d.addEventListener('change', function(ev){ if(ev.target.id === 'clPfObj' || ev.target.id === 'clPfCtr') savePf(); });
+    d.addEventListener('click', function(ev){
+      var t = d.querySelector('#clIaT');
+      var g = ev.target.closest('[data-gl],[data-sp],[data-lv]');
+      if(g){
+        var key = g.hasAttribute('data-gl') ? 'gl' : g.hasAttribute('data-sp') ? 'sp' : 'lv', v = g.getAttribute('data-' + key);
+        if(key === 'lv'){ pf.lv = pf.lv === v ? '' : v; g.parentNode.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-lv') === pf.lv); }); }
+        else { var arr = pf[key], i = arr.indexOf(v); if(i >= 0) arr.splice(i, 1); else arr.push(v); g.classList.toggle('on', i < 0); }
+        savePf(); return;
+      }
+      var id = ev.target.closest('[data-id]'); if(id){ t.value = id.getAttribute('data-id'); t.focus(); return; }
+      if(ev.target.closest('[data-last]')){ t.value = c.ia || ''; t.focus(); return; }
+      var ch = ev.target.closest('[data-ch]'); if(!ch) return; var v2 = ch.getAttribute('data-ch'); t.value = (t.value.trim() ? t.value.trim().replace(/[,.]?$/, ', ') : '') + v2; t.focus();
+    });
   }
 
   // ---------- Banque d'exercices : recherche (mots dans n'importe quel ordre, accents ignorés) ----------
@@ -23616,7 +23701,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return W;
   }
   window.ecTimerStore = {ready:function(){ return READY; }, list:function(){ return D.timers || []; }, set:function(a){ D.timers = a; save(); }};
-  window.ecClientsTest = {sync:SY, open:function(n, x, o){ openTimer(n, x, o); }, present:function(n, x, o){ return present(n, x, o || {}); }, stamp:stamp, fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
+  window.ecClientsTest = {sync:SY, open:function(n, x, o){ openTimer(n, x, o); }, ai:function(id){ aiSheet(clientById(id)); }, present:function(n, x, o){ return present(n, x, o || {}); }, stamp:stamp, fuzzy:function(n){ var e = exFuzzy(n); return e ? e.name : ''; }, autoSide:autoSide, parseVal:parseVal, expandLine:expandLine, buildSteps:buildSteps, exFor:function(n){ var e = exFor(n); return e ? e.name : ''; }, data:function(){ return D; }};
   load().then(function(){ render(); SY.run(); });
   render();
 })();
