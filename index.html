@@ -1614,6 +1614,8 @@
   window.ecShort = ecShort;
   window.addEventListener('online', ecShortFlush); setTimeout(ecShortFlush, 6000);
   // o = {name, intro, extra, how, link, after, outro, sign}
+  function ecAbos(){ try{ var c = JSON.parse(localStorage.getItem('ec_coach_abos') || 'null'); return (c && c.l) || []; }catch(e){ return []; } }
+  window.ecAbos = ecAbos;
   function ecMsg(o){
     if(o.link) o = Object.assign({}, o, {link:ecShort(o.link)});
     var L = [o.name ? 'Bonjour ' + ecFirst(o.name) + ' 👋' : 'Bonjour 👋', '', o.intro];
@@ -10893,6 +10895,23 @@
     (function(){
       var CK = 'ec_coach_abo', APP = 'https://appli.ethikcoach.fr/', list = null, abF = 'all', loading = false;
       function code(){ try{ return localStorage.getItem(CK) || ''; }catch(e){ return ''; } }
+      // Abonnés actifs gardés sur l'appareil du coach pour « Envoyer dans son appli » : empreinte de la clé + nom (pas la clé, pas l'e-mail)
+      function aboCache(l){
+        try{
+          var out = (l || []).filter(function(a){ return a.actif && a.cle && a.statut !== 'cadeau-attente'; }).map(function(a){
+            var n = String(a.nom || '').trim(); if(!n || /^Cadeau de /.test(n)) n = String(a.email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\d+/g, '').trim().replace(/(^|\s)\S/g, function(x){ return x.toUpperCase(); }) || 'Abonné(e)';
+            return {h:ecHash(a.cle), n:n};
+          });
+          localStorage.setItem('ec_coach_abos', JSON.stringify({at:Date.now(), l:out}));
+        }catch(e){}
+      }
+      window.ecAbosRefresh = function(){
+        var c = code(); if(!c) return Promise.resolve(false);
+        return fetch(EC_SUB_API + '/coach/abonnes', {headers:{authorization:'Bearer ' + c}, cache:'no-store'}).then(function(r){ return r.json(); })
+          .then(function(d){ if(d && d.ok){ aboCache(d.abonnes || []); return true; } return false; }).catch(function(){ return false; });
+      };
+      // Une fois par jour au plus, en arrière-plan, quand l'Espace coach est ouvert
+      setTimeout(function(){ try{ var c0 = JSON.parse(localStorage.getItem('ec_coach_abos') || 'null'); if(document.documentElement.classList.contains('ec-coach') && (!c0 || Date.now() - c0.at > 6 * 3600000)) window.ecAbosRefresh(); }catch(e){} }, 8000);
       function norm(t){ return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
       function fd(ms){ return ms ? new Date(ms).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'}) : ''; }
       function st(a){
@@ -11080,7 +11099,7 @@
           .then(function(x){
             if(x.st === 401){ try{ localStorage.removeItem(CK); }catch(e){} list = null; show(); $('#abSetupErr').textContent = 'Code non reconnu : vérifie le COACH_SECRET dans Cloudflare.'; return; }
             if(!x.d.ok) throw 0;
-            list = x.d.abonnes || []; render();
+            list = x.d.abonnes || []; aboCache(list); render();
           })
           .catch(function(){ $('#abList').innerHTML = '<p class="sv-empty">Liste indisponible : vérifie ta connexion, puis touche Actualiser.</p>'; })
           .then(function(){ loading = false; $('#abReload').textContent = '↻ Actualiser'; });
@@ -11348,8 +11367,10 @@
         if(ibNow === (ibSrv || '{}')) return;
         var ib = lsGet('ec_coach_inbox', {}) || {}, old = {}, boites = {};
         try{ old = JSON.parse(ibSrv || '{}') || {}; }catch(e){}
-        Object.keys(old).forEach(function(h){ boites[h] = []; });
-        Object.keys(ib).forEach(function(h){ boites[h] = ib[h] || []; });
+        // Seulement les boîtes qui ont changé (chaque boîte = une écriture sur le serveur, en nombre limité par jour)
+        Object.keys(old).forEach(function(h){ if((!ib[h] || !ib[h].length) && old[h] && old[h].length) boites[h] = []; });
+        Object.keys(ib).forEach(function(h){ if(JSON.stringify(ib[h] || []) !== JSON.stringify(old[h] || [])) boites[h] = ib[h] || []; });
+        if(!Object.keys(boites).length) return;
         return srv('/coach/boite/ecrire', {boites:boites});
       })
       .then(function(){
@@ -11541,6 +11562,10 @@
             });
             if(!extra.length && !keys.length) return '<option value="" disabled>Aucun athlète : crée d\u2019abord un accès dans l\u2019Espace coach</option>';
             return extra.length ? '<optgroup label="Envoi dans son appli (il a déjà son code) :">' + extra.map(function(h){ return '<option value="h:' + h + '"' + (cur === 'h:' + h ? ' selected' : '') + '>' + escapeHtml(dr[h].n) + '</option>'; }).join('') + '</optgroup>' : '';
+          })()
+        + (function(){
+            var A = (typeof ecAbos === 'function' ? ecAbos() : []).filter(function(a){ return a && a.h; });
+            return A.length ? '<optgroup label="Abonnés (envoi dans son appli) :">' + A.slice().sort(function(a, b){ return a.n.localeCompare(b.n, 'fr'); }).map(function(a){ return '<option value="h:' + a.h + '"' + (cur === 'h:' + a.h ? ' selected' : '') + '>' + escapeHtml(a.n) + '</option>'; }).join('') + '</optgroup>' : '';
           })()
         + (function(){
             var G = (lsGet('ec_coach_acl_draft', {}) || {}).groups || {}, ids = Object.keys(G);
@@ -11869,7 +11894,8 @@
       if(v && v.indexOf('g:') === 0){ var g = ((lsGet('ec_coach_acl_draft', {}) || {}).groups || {})[v.slice(2)]; return g ? g.n : ''; }
       var h = targetHash(v); if(!h) return '';
       var k = lsGet('ec_coach_keys', []).filter(function(r){ return ecHash(r.k) === h; })[0]; if(k) return k.n;
-      var u = ((lsGet('ec_coach_acl_draft', {}) || {}).users || {})[h]; return u && u.n || '';
+      var u = ((lsGet('ec_coach_acl_draft', {}) || {}).users || {})[h]; if(u && u.n) return u.n;
+      var ab = (typeof ecAbos === 'function' ? ecAbos() : []).filter(function(a){ return a.h === h; })[0]; return ab ? ab.n : '';
     }
     // ----- Côté coach : bouton « Envoyer dans son appli »
     var btn = $('#shareInbox'), sel = $('#shareAthlete');
@@ -11943,8 +11969,7 @@
     function onClick(e){ var b = e.target.closest('[data-ib]'); if(b) openItem(b.getAttribute('data-ib')); }
     if(typeof EC_USER !== 'undefined' && EC_USER && !EC_IS_COACH && EC_LOCK_ON){
       render();
-      // Abonnés : pas de boîte de coach sur le serveur (la demander comptait comme un code faux)
-      if(EC_SUB_RE.test(String(EC_KEY || '').trim().toLowerCase())) return;
+      // Abonnés compris : le coach peut aussi leur envoyer une séance dans leur appli
       fetch(EC_SUB_API + '/boite/lire', {method:'POST', cache:'no-store', headers:{'content-type':'application/json'}, body:JSON.stringify({k:String(EC_KEY || '').trim().toLowerCase()})}).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
         if(!d || !d.items) return;
         items = d.items; lsSet(CACHE, items); render();
@@ -23325,6 +23350,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     (lg('ec_coach_keys', []) || []).forEach(function(r){ if(!H || !r || !r.k) return; var h = H(r.k), u = users[h] || {}; if(!live({b:u.b, d:u.d, exp:u.exp || r.exp}) || seen[h] || h === CH) return; seen[h] = 1; out.push({v:'h:' + h, n:r.n || u.n || 'Athlète'}); });
     Object.keys(users).forEach(function(h){ var u = users[h]; if(seen[h] || h === CH || !u || !u.n || !live(u)) return; seen[h] = 1; out.push({v:'h:' + h, n:u.n}); });
     try{ (typeof EC_ACCESS !== 'undefined' ? EC_ACCESS : []).forEach(function(e){ if(e && e.n && e.h && !seen[e.h] && e.h !== CH && live(e)){ seen[e.h] = 1; out.push({v:'h:' + e.h, n:e.n}); } }); }catch(e){}
+    (window.ecAbos ? window.ecAbos() : []).forEach(function(a){ if(!a || !a.h || seen[a.h]) return; seen[a.h] = 1; out.push({v:'h:' + a.h, n:a.n + ' · abonné(e)'}); });
     out.sort(function(a, b){ return a.n.localeCompare(b.n, 'fr'); });
     var G = dr.groups || {}; Object.keys(G).forEach(function(id){ var m = window.ecGroupActive ? window.ecGroupActive(id) : (G[id].m || []); if(m.length) out.push({v:'g:' + id, n:'👥 ' + (G[id].n || 'Groupe') + ' (' + m.length + ')', g:m, gn:G[id].n}); });
     return out;
