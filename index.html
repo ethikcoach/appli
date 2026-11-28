@@ -26413,6 +26413,22 @@ html.ec-p2 #todayView.td-wow .dd-chips button{background:rgba(255,255,255,.16) !
 html.ec-p2 #todayView.td-wow .tf-op{transition:transform .2s, box-shadow .25s; box-shadow:0 8px 22px -10px rgba(10,20,30,.35);}
 html.ec-p2 #todayView.td-wow .tf-op:active{transform:scale(.97);}
 @media (hover:hover){ html.ec-p2 #todayView.td-wow .tf-op:hover{transform:translateY(-3px); box-shadow:0 16px 30px -12px rgba(10,20,30,.4);} }
+/* « Envie d'autre chose ? » : cartes colorées comme dans Créer */
+html.ec-p2 #todayView .tq{--qc:#2E7D4F; --qc2:#1F5A39; background:linear-gradient(180deg, var(--qc) 0%, var(--qc2) 100%) !important; box-shadow:0 10px 22px -10px color-mix(in srgb, var(--qc) 70%, transparent) !important;}
+html.ec-p2 #todayView .tq-recup{--qc:#1E7A78; --qc2:#145856;} html.ec-p2 #todayView .tq-breath{--qc:#2F6DB5; --qc2:#214F86;} html.ec-p2 #todayView .tq-progs{--qc:#5B4BA6; --qc2:#43367D;} html.ec-p2 #todayView .tq-defi{--qc:#C2661B; --qc2:#954C10;}
+html.ec-p2 #todayView .tq .tq-ph{background-color:#fff !important;}
+html.ec-p2 #todayView .tq span:not(.tq-ico):not(.tq-ph){color:#fff !important;}
+html.ec-p2 #todayView .tq b{color:rgba(255,255,255,.82) !important;}
+html.ec-p2 #todayView .tq .tq-ico{box-shadow:0 0 0 2.5px #fff, 0 4px 10px rgba(0,0,0,.2) !important;}
+/* Séance du jour aux couleurs du ciel du moment */
+html.ec-p2 #todayView.td-wow .today-card, html.ec-p2 #todayView.td-wow .today-card.has-media{background:linear-gradient(160deg, color-mix(in srgb, var(--sky1) 92%, #000) 0%, var(--hill1) 100%) !important; color:#fff !important; box-shadow:0 20px 44px -18px color-mix(in srgb, var(--sky1) 85%, transparent) !important;}
+html.ec-p2 #todayView.td-wow .today-card::before{background:linear-gradient(90deg, var(--sky2), var(--sun)) !important;}
+html.ec-p2 #todayView.td-wow .today-card .tc-kicker{background:color-mix(in srgb, var(--sky1) 88%, transparent) !important; color:#fff !important;}
+html.ec-p2 #todayView.td-wow .today-card .tc-go{background:linear-gradient(90deg, #fff 0%, var(--sun) 100%) !important; color:var(--hill1) !important; box-shadow:0 10px 24px -8px var(--glow) !important;}
+html.ec-p2 #todayView.td-wow .today-card .tc-go svg, html.ec-p2 #todayView.td-wow .today-card .tc-go .tmi{color:var(--hill1) !important; fill:currentColor;}
+html.ec-p2 #todayView.td-wow .today-card .tc-see, html.ec-p2 #todayView.td-wow .today-card .tc-ad{background:rgba(255,255,255,.12) !important; color:#fff !important;}
+/* Tests de forme remontés juste sous le ciel */
+html.ec-p2 #todayView.td-wow > .td-duo{margin:0 0 14px !important;}
 @keyframes skRise{from{transform:translateY(60px) scale(.7); opacity:0;} to{transform:none; opacity:1;}}
 @keyframes skFloat{50%{transform:translateY(-6px);}}
 @keyframes skTwinkle{from{opacity:.45;} to{opacity:1;}}
@@ -26439,6 +26455,7 @@ html.ec-p2 #todayView.td-wow .tf-op:active{transform:scale(.97);}
   function wow(){
     var v = document.getElementById('todayView'), intro = v && v.querySelector('.td-intro'); if(!intro || v.style.display === 'none') return;
     v.classList.add('td-wow'); var t = tod(); v.setAttribute('data-tod', t);
+    var duo = v.querySelector(':scope > .td-duo'); if(duo && intro.nextElementSibling !== duo) intro.parentNode.insertBefore(duo, intro.nextSibling);
     if(!intro.querySelector('.td-sky')){ var sk = document.createElement('div'); sk.className = 'td-sky'; sk.setAttribute('aria-hidden', 'true'); sk.innerHTML = '<i class="sk-orb a"></i><i class="sk-orb b"></i><i class="sk-stars"></i><i class="sk-sun"></i><i class="sk-wm"></i>' + HILLS; intro.insertBefore(sk, intro.firstChild); }
     var h1 = intro.querySelector('.td-hello'), sub = intro.querySelector('.td-sub');
     if(h1 && !sub){ sub = document.createElement('span'); sub.className = 'td-sub'; h1.parentNode.insertBefore(sub, h1.nextSibling); }
