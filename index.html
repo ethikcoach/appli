@@ -23122,7 +23122,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function body(){
       var all = months(), rows = [], tot = 0;
       D.clients.forEach(function(c){ var L = c.s.filter(function(x){ var d = isoD(x); return d && d.slice(0, 7) === ym && isDone(x); }).sort(function(a, b){ return a.d < b.d ? -1 : 1; }); if(L.length){ rows.push({c:c, L:L}); tot += L.length; } });
-      rows.sort(function(a, b){ return b.L.length - a.L.length || a.c.nom.localeCompare(b.c.nom, 'fr'); });
+      rows.sort(function(a, b){ var fa = FACM && a.c.fac && a.c.fac[ym] ? 1 : 0, fb = FACM && b.c.fac && b.c.fac[ym] ? 1 : 0; return fa - fb || b.L.length - a.L.length || a.c.nom.localeCompare(b.c.nom, 'fr'); });
       var last12 = []; for(var i = 11; i >= 0; i--) last12.push(shift(ym, -i));
       var mx = Math.max.apply(null, last12.map(function(k){ return all[k] || 0; }).concat([1])), y = ym.slice(0, 4), ty = 0; Object.keys(all).forEach(function(k){ if(k.slice(0, 4) === y) ty += all[k]; });
       return '<div class="cl-ball-nav"><button type="button" data-k="prev" aria-label="Mois précédent">' + IC('prev') + '</button><b>' + esc(mCap(ym)) + '</b><button type="button" data-k="next" aria-label="Mois suivant"' + (ym >= todayIso().slice(0, 7) ? ' disabled' : '') + '>' + IC('next') + '</button></div>'
